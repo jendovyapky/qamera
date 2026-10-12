@@ -14,7 +14,11 @@ ve stylu **Prequel**, na PC se používá spíš jako **Lightroom**. Celá v **�
 - [x] Repo `jendovyapky/qamera` + Cloudflare Pages projekt `qamera` (qamera.pages.dev, produkce = `main`, náhledy větví, **zatím bez odkazu z rozcestníku jendovyapky.eu**)
 - [ ] Fáze 1: klikací HTML náhled hlavních obrazovek (zlatý standard pro vzhled a motion, schvaluje Honza) – hotový v `docs/preview/index.html`, screenshoty v `docs/screens/`, **čeká na schválení**. Kořenový `index.html` zatím jen přesměrovává na náhled.
   - Git na Honzově PC: GitHub účet **jendovyapky** je v Git Credential Manageru vedle `lichicks`; repo má v remote URL `jendovyapky@` → push jde pod správným účtem.
-- [ ] Fáze 2+: viz Plán níže
+- [x] Fáze 2: `tools/bake_luts.py` peče 16 filmů ze spektrafilmu do `luts/*.png` (33³, sRGB→sRGB, `--soften 0.5` zjemní tiskovou křivku – originál moc stahoval stíny). Shader je načte jako 3D texturu (jen přes http/https, z disku zůstává jednoduchý shader). Pečení lokálně: Python 3.13 venv, spektrafilm z gitu, chybějící `exiv2/rawpy/lensfunpy/pyfftw` stačí jako prázdné stuby.
+- [x] Export fotky v plném rozlišení (max 4096 px, i s rámem a datumovkou), sdílení na mobilu / stažení na PC; export blob karty; .cube / JSON / XMP z Film scanu.
+- [x] Hloubka (Depth Anything V2 Small přes transformers.js 3.7.1 z jsDelivr, WebGPU fp16 → WASM q8): Bokeh (ťuknutí = ostření), Mlha, 3D paralaxa, Mapa. Mapa se ukládá do IndexedDB.
+- [x] Datumovka (sedmisegment, 3 formáty, 3 barvy), Rám: Glow / Negativ / Instant. Jednorázovka a role se ukládají, arch je položka galerie se zoomem. `sw.js` (VERSION) pro offline.
+- [ ] Další: skutečná appka mimo `docs/preview` (rozdělení do modulů), ladění na iPhonu/Androidu, dlaždicový export nad 4096 px, video.
 
 ## Přísná pravidla
 - **Nikdy nesahat na nic, co souvisí se studiem** (`studiodepo.cz`, repozitáře DEPO / depo-app, studiový Cloudflare).
@@ -41,7 +45,15 @@ ve stylu **Prequel**, na PC se používá spíš jako **Lightroom**. Celá v **�
 - Kamera: ikona foťáku v hledáčku zapíná skutečnou kameru (žádná pilulka DEMO/ŽIVĚ); nad oběma kolečky proužek (EV / ZOOM); ISO a EV pilulky v hledáčku jen při schovaném ovládání.
 - Efekty v editoru neopakují to, co je v Úpravách. Vlastní filmy: podržení = přejmenovat / smazat. Galerie: filtr podle filmu (čipy).
 - **Ikona appky = tečkové Q** (návrh C, `icons/`: icon.svg, maskable, PNG 180/192/512, favicon), `manifest.webmanifest` v kořeni. Ostatní návrhy v `docs/ikona/`.
-- Náhled už ukládá tvoje fotky do IndexedDB (originál JPEG + úpravy JSON). Recepty, vlastní filmy, oblíbené a presety bloba jsou v localStorage. Jednorázovka a role se zatím neukládají.
+- Náhled ukládá fotky do IndexedDB (originál JPEG + úpravy JSON + hloubková mapa). Recepty, vlastní filmy, oblíbené, skryté filmy, presety bloba, jednorázovka a role jsou v localStorage / IndexedDB.
+
+## Rozhodnutí z připomínek (náhled 0.6–0.7)
+- **Efekty s nastavením (Double, Dither, Pixel art, Rám, Hloubka, Datumovka) se otevírají v panelu místo mřížky efektů** (šipka zpět, Vypnout vpravo). Vysouvací okno jen na výběr fotek.
+- **Zarovnání všude:** přepínače v panelech na celou šířku s rovnoměrnými tlačítky, řádky barev mají popisek ve stejném sloupci jako posuvníky, hlavička panelu symetrická. Textové pole a tlačítko vedle sebe stejně vysoké (focus jen okrajem uvnitř). Honza na to je citlivý – kontrolovat screenshoty.
+- Kostka u blobu = jeden náhodný slot (tvar i parametry), ne nový tvar pokaždé. Dvojťuk na fotku v blobu = vycentrovat.
+- **Moje filmy** (ikona filmu v čipech galerie / menu): náhled každého filmu, podržení = před/po, oko = skrýt z výběru, srdíčko = oblíbený.
+- Jednorázovka: před vyvoláním se ptá na název, arch bez kroužků, uloží se do galerie.
+- Telefon na šířku zůstává v mobilním rozložení (`pointer:coarse`). Kamera: ikona zmizí po povolení, appka si pamatuje zapnutí, DEMO scéna v menu.
 - **Arch** (ne „kontaktní arch“): z role, z dneška (od půlnoci) nebo výběrem fotek. **Jednorázovka** = filtr na den s oknem od–do, ráno vyvolání → arch.
 
 ## Licence a poděkování (povinné)
