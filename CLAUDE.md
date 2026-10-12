@@ -107,7 +107,7 @@ Qamera je **GPL-3.0** (veřejné repo) – kvůli Spektrafilmu. V appce musí b�
 - Zachycení: Android `ImageCapture.takePhoto()` (plné rozlišení), iOS = snímek ze streamu v max rozlišení (požádat o 4K constraints) – ověřit kvalitu.
 - **Slow shutter**: nasbírat N snímků ze streamu do float framebufferu. Režimy: **Světelné stopy** (maximum/lighten), **Rozmazání pohybu** (průměr), **Voda/hedvábí** (průměr + ostřejší statické části). Doporučit stabilní držení / opřít; ukazovat průběh.
 - **Long exposure** až 15 s (kolečko času: ¼, ½, 1, 2, 4, 8, 15 s): snímky se sčítají ve float přesnosti (průměr / maximum), hedvábí vrací ostrost statickým částem podle rozptylu. Do budoucna zarovnání snímků (stabilizace) a odšumění.
-- Další: mřížka (**zlatý řez / třetiny / zlatá spirála**), samospoušť (**3 s → 10 s**), přepnutí kamery, blesk = svítilna kde jde (přední kamera = rozsvícený displej), haptika (Android `vibrate`, iOS nemá).
+- Další: mřížka třetin (zlatý řez a spirálu Honza zamítl – vypadalo to divně), samospoušť (**3 s → 10 s**), přepnutí kamery, blesk = svítilna kde jde (přední kamera = rozsvícený displej), haptika (Android `vibrate`, iOS nemá).
 - **Režim DEMO** (generovaná noční ulice s auty) zůstává – Honzovi se ten vzhled líbí; přepínač DEMO/ŽIVĚ v hledáčku. O appce ukazuje, co kamera zařízení umí (zoom, svítilna, ruční ISO/čas…).
 
 ## Editor
