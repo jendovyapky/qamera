@@ -1,0 +1,160 @@
+# Qamera – poznámky pro Clauda
+
+**Qamera** – webová aplikace (PWA) na focení a úpravu fotek přímo v mobilu, zaměřená na **film a vintage**:
+emulace starých filmů (Kodak, Fuji…), filmové zrno, halace, barvy, saturace. Na mobilu rychlá a jednoduchá
+ve stylu **Prequel**, na PC se používá spíš jako **Lightroom**. Celá v **češtině**, majitel je Honza.
+
+- Plán: https://qamera.jendovyapky.eu (Cloudflare Pages), repo `jendovyapky/qamera` (**veřejné, GPL-3.0**)
+- Další appky ze stejné rodiny: Mraq (`jendovyapky/pocasi`, mraq.jendovyapky.eu), Klapqa (`jendovyapky/klapqa`, privátní).
+  Z nich brát vizuální inspiraci: maskoti s **tečkovýma robotíma očima** (font Doto, styl Cozmo/RoboEyes), úvodní animace,
+  zrnité gradienty, fonty Geist / Geist Mono / Doto. Jak je dělaný maskot a intro: viz `CLAUDE.md` a `mraq.js` / `intro.js` v repu `pocasi`.
+
+## Stav
+- [x] Zadání a rozhodnutí (tento soubor), inspirace v `docs/inspo/`
+- [ ] Repo + Cloudflare Pages projekt `qamera` (subdoména, **zatím bez odkazu z rozcestníku jendovyapky.eu**)
+- [ ] Fáze 1: klikací HTML náhled hlavních obrazovek (zlatý standard pro vzhled a motion, schvaluje Honza)
+- [ ] Fáze 2+: viz Plán níže
+
+## Přísná pravidla
+- **Nikdy nesahat na nic, co souvisí se studiem** (`studiodepo.cz`, repozitáře DEPO / depo-app, studiový Cloudflare).
+  Projekty pod `jendovyapky` drž úplně oddělené.
+- **Na rozcestník jendovyapky.eu Qameru nepřidávat**, dokud Honza neřekne. Subdoménu a vlastní Pages projekt používat smíš.
+- Platby, hesla a API klíče zadává Honza sám. Když je potřeba přístup (GitHub, Cloudflare, Webglobe, Google Drive…), řekni.
+- Nikde nepoužívat slogan „appky pro líný lidi“.
+- **Kód ani modely z `EtonMu/deep-analog` nepoužívat** – licence „All rights reserved“ + patent pending, váhy nejsou veřejné.
+  Funkci (reference → film/LUT + export) stavíme **vlastní** z veřejných metod (viz Reference match).
+- Po větší změně zvýšit `VERSION` v `sw.js`, ať se telefonům stáhne nová verze.
+- Pokud Claude usoudí, že nějaký nástroj / postup dá lepší výsledek, **řekne to předem**.
+
+## Licence a poděkování (povinné)
+Qamera je **GPL-3.0** (veřejné repo) – kvůli Spektrafilmu. V appce musí být obrazovka **„O appce / Poděkování“**, kde jsou klikací:
+> **Spektrafilm for Android** by **Akshay Sharma** — https://github.com/thetechgeekko/Spektrafilm-android
+> Film modeling powered by **spektrafilm** (Andrea Volpato) — https://github.com/andreavolpato/spektrafilm
+
+- **Filmové LUT** upečené ze spektrafilmu jsou podle `SPEKTRAFILM_LICENSE.txt` pod **CC BY-SA 4.0** (ne GPL). Ve složce `luts/`
+  musí ležet kopie té licence (beze změn) + `CHANGELOG.txt` se změnami oproti originálním profilům. Platí i pro LUT/presety,
+  které z appky exportuje uživatel, pokud v sobě nesou film → do exportu dát hlavičku s atribucí a licencí.
+- Depth model: jen **Depth Anything V2 Small** (Apache-2.0). Base/Large jsou nekomerční (CC-BY-NC) → nepoužívat.
+- Port barevného přenosu z `pengbo-learn/python-color-transfer` (MIT) – zachovat copyright v hlavičce souboru.
+- Názvy filmů: **vlastní kódy**, ne ochranné známky v názvu (Kodak/Fuji jen popisně, „ve stylu“). Viz Filmy.
+
+## Zadání od Honzy (shrnutí)
+- Focení i úprava v mobilu. **Jednoduché UI** pro rychlý edit a používání filmů/filtrů; přepínač **Advanced** s pokročilými funkcemi.
+- Úpravy: barvy, saturace, filmový šum/zrno, **emulace starých filmů** (Kodak barvy, Fuji…), halace. Vintage, film.
+- Mobil = styl Prequel. PC = styl Lightroom (postranní panely, histogram, klávesové zkratky).
+- **Slow shutter efekt při focení.**
+- Funkce jako deep-analog: vložíš **referenci**, appka předělá tvoji fotku do jejího stylu / filmu; export **LUT (.cube), JSON preset, Adobe preset**.
+- **Expensive motion design** je základ.
+- **Zablokované přibližování stránky** (jako ve všech Honzových appkách), ALE **pinch zoom při ořezu** v editu a **zoom při focení** zůstává.
+- **Depth efekt jen jako efekt v editu** (ne v kameře).
+- Honza chce průběžné screenshoty / HTML náhledy důležitých věcí a **nápady do budoucna klidně dál navrhovat**.
+- Hotfixy chce dělat i **z mobilu na dálku** (Claude Code v appce/na webu nad tímhle repem).
+
+## Inspirace (`docs/inspo/`)
+- `kamera-dialy.jpg` – hlavní vzor kamery: oranžovo-žluté „LCD“ (clona / ISO / čas, EV, expozimetr −3…+3, MODE MATRIX),
+  pod ním dvě **otočná kolečka** (ISO a čas) s tečkovanou stupnicí a červeným „A“, dole přepínač režimu (žlutý), velká bílá spoušť, kulatá tlačítka GRID / RESET / SET. Font displeje = segmentový/pixelový.
+- `kamera-ui.png` – minimalistický hledáček se zaoblenými rohy, pilulky v náhledu (zoom „1×“, ISO, EV), řada ikon pod ním (ostření, samospoušť, blesk, otočení), dole film vlevo, spoušť jako pilulka, galerie vpravo.
+- `vyber-filmu.png` – výběr filmu jako **vodorovný karusel ikon fotoaparátů/kazet**, vybraný uprostřed větší s názvem nahoře (kód + drobný „chemický“ podtitul), šipka ↓ pro rozbalení.
+- `galerie.jpg` – tmavá galerie: nahoře **„role“ jako skleněné karty** s barevnými objekty uvnitř, pod tím masonry 2 sloupce, dole plovoucí skleněné vyhledávání „Find or create anything…“ s barevnou tečkou.
+- `blob-tvary.jpg` – **organické blob tvary**: vyfocená fotka se ořízne do takového tvaru, pozadí z palety barev (paleta vytažená z fotky, před i po úpravě / podle filmu). Na čtverečkovaném papíře.
+- `ikony-pixel-zlute.jpg`, `ikony-pixel-cerne.jpg` – **pixelové ikony 24 px**: šedé neaktivní, aktivní **žluté se září** na tmavých dlaždicích. Vlastní sada ve stejném stylu (ne kopie Nucleo).
+- `depth-efekt.jpg` – hloubková mapa z fotky → efekty podle hloubky.
+
+## Architektura (jako Mraq: bez frameworku, bez buildu)
+- Čisté statické soubory, ES moduly, **WebGL2**. Každý push do `main` = produkce (Cloudflare Pages). **Vývoj na větvi `dev`**
+  → Pages preview URL (`dev.qamera.pages.dev`) na zkoušení v mobilu; do `main` jen ověřené. Hotfix z mobilu = malá změna + push.
+- Fotky jen **lokálně v zařízení** (IndexedDB: originál + parametry úprav jako JSON → úpravy jsou nedestruktivní). Žádný server, žádné účty.
+- Velká data: filmové LUT jsou malé (33³ ≈ desítky–stovky kB na film) → klidně v repu / na Pages (limit 25 MB na soubor).
+  Depth model (~25 MB) se stahuje z Hugging Face CDN až při prvním použití a cachuje. **Google Drive není potřeba.**
+
+### Plánované soubory
+- `index.html`, `style.css`, `app.js` (router obrazovek, stav), `sw.js`, `manifest.webmanifest`, `icons/`
+- `engine/` – `pipeline.js` (WebGL2 render graf), `shaders/*.glsl`, `lut.js` (načtení LUT do 3D textury), `export.js` (plné rozlišení po dlaždicích)
+- `camera/` – `camera.js` (getUserMedia, schopnosti zařízení), `slowshutter.js`, `dials.js`
+- `edit/` – `editor.js`, `crop.js` (pinch zoom, rotace, poměry), `blob.js`, `depth.js`
+- `match/` – `transfer.js` (Reinhard Lab, Pitié IDT + regrain), `fitlut.js`, `exporters.js` (.cube / JSON / XMP)
+- `gallery/` – galerie, role, jednorázovka
+- `luts/` – upečené filmy (PNG/bin) + `SPEKTRAFILM_LICENSE.txt` + `CHANGELOG.txt` + `films.json` (metadata)
+- `tools/bake_luts.py` – pečení LUT ze spektrafilmu (spouští se lokálně / v GitHub Actions, ne v appce)
+- `docs/inspo/`, `docs/preview/` (HTML náhledy), `docs/screens/` (screenshoty)
+
+## Engine – pipeline (stejný shader pro živý hledáček i export)
+1. vstup sRGB → lineární světlo
+2. základ: expozice (EV), vyvážení bílé (teplota/tint), kontrast, světla/stíny, saturace/vibrance
+3. **film**: 3D LUT ze spektrafilmu (negativ → tisk → sken), síla filmu 0–100 %
+4. **halace** (červeno-oranžová záře kolem světel, prahová, rozmazaná po vrstvách), **bloom**
+5. **zrno** – závislé na jasu a „ISO“ filmu, velikost i barevnost, animované v hledáčku, statické (seed) v exportu
+6. vinětace, light leaky, prach/škrábance (advanced), datumovka, okraje negativu s vlastním značením
+7. výstup sRGB (u exportu volitelně Display P3 tam, kde to prohlížeč umí)
+- Výkon: hledáček v nižším rozlišení (např. 1080 px kratší strana), editace náhled ~2048 px, export plné rozlišení po dlaždicích (bez vytuhnutí telefonu).
+
+## Filmy (zdroj: `andreavolpato/spektrafilm`, `src/spektrafilm/data/profiles`)
+- Profily: Kodak Portra 160/400/800 (+push1/2), Ektar 100, Gold 200, UltraMax 400, Kodachrome 64, Ektachrome 100, Verita 200D,
+  Vision3 50D/250D/200T/500T, tiskové 2383/2393, Endura…; Fujifilm C200, Pro 400H, Superia X-tra 400, Provia 100F, Velvia 100, Crystal Archive.
+- Pečení: `spektrafilm_lut_creator` (`spektrafilm-lut build`, umí `.cube` i `hald_png`). Vstup **sRGB**, výstup sRGB, grid 33³ (ověřit banding; případně 65³ nebo uložit 16bit/Float16 místo 8bit Hald).
+- Kódy v UI vlastní, krátké, ve stylu inspo (např. `P400` „portrait 400“, `G200` „gold 200“, `KC64`, `V3-500T` „cine 500T“, `VEL` …) + drobný podtitul.
+  Karusel: ikona kazety/foťáku pro každý film.
+- Advanced: parametry filmu, které spektrafilm umí měnit (expozice negativu, push/pull, tisková expozice, filtrace tisku) → pro ty se buď peče víc variant LUT, nebo se aproximují.
+
+## Kamera
+- `getUserMedia`, živý náhled přes engine s vybraným filmem, zrno se hýbe. Zoom: pinch + tlačítka 0,5×/1×/2× (constraint `zoom` kde jde, jinak digitální ořez).
+- **iPhone (Safari/PWA) nedovolí ručně ISO ani čas závěrky** – expozici řídí telefon sám. Proto:
+  - kolečko **EV** = korekce expozice v enginu (náhled ukazuje přesně výsledek → živé focení to nekazí),
+  - kolečko **ISO** = „citlivost filmu“ → velikost/síla zrna a lehce kontrast (jako výběr filmu ISO),
+  - kolečko **čas** = délka **slow shutter** (1/4 s … 2 s) – krátké časy = normální snímek.
+  - Na Androidu v Chrome, pokud zařízení hlásí `exposureMode/exposureTime/iso/exposureCompensation` v `getCapabilities()`, použít skutečné hodnoty (ověřit na zařízení).
+- Zachycení: Android `ImageCapture.takePhoto()` (plné rozlišení), iOS = snímek ze streamu v max rozlišení (požádat o 4K constraints) – ověřit kvalitu.
+- **Slow shutter**: nasbírat N snímků ze streamu do float framebufferu. Režimy: **Světelné stopy** (maximum/lighten), **Rozmazání pohybu** (průměr), **Voda/hedvábí** (průměr + ostřejší statické části). Doporučit stabilní držení / opřít; ukazovat průběh.
+- Další: mřížka, samospoušť, přepnutí kamery, blesk/svítilna kde jde, haptika (Android `vibrate`, iOS nemá).
+
+## Editor
+- **Jednoduchý režim** (mobil, Prequel): fotka přes celou plochu, dole karusel filmů s živými náhledy, pod tím pár velkých posuvníků (Síla filmu, Expozice, Teplota, Saturace, Zrno, Halace). **Podržením prstu na fotce = před/po.**
+- **Advanced**: tónová křivka (RGB + kanály), HSL po barvách, color grading (stíny/střed/světla), ostrost, šum, vinětace, light leaky, prach, okraje, datumovka, parametry filmu, histogram.
+- **Ořez**: poměry (orig, 1:1, 4:5, 3:2, 16:9, 9:16), rotace/narovnání, **pinch zoom a posun** (jediné místo spolu s kamerou, kde gesta zoomu fungují).
+- **Depth efekty** (jen v editu): Depth Anything V2 Small přes transformers.js (`onnx-community/depth-anything-v2-small`, WebGPU → záložně WASM), lazy load. Efekty: rozmazání pozadí s volbou bodu ostření (bokeh), **mlha do hloubky**, **3D paralaxa** fotky při naklánění telefonu (DeviceOrientation, na iOS žádost o povolení), náhled hloubkové mapy.
+- **Blob výřez**: vybrat tvar (sada organických blobů jako v inspo + vlastní generátor), posunout/zvětšit fotku uvnitř, pozadí z **palety vytažené z fotky** (k-means; před úpravou i po filmu), papírová textura s mřížkou volitelně. Export jako sdílecí karta.
+- PC (široká obrazovka): Lightroom rozložení – vlevo filmy/presety, vpravo panely úprav, dole filmový pás, klávesové zkratky (`\` před/po, `C` ořez, `Ctrl+Z` atd.).
+- Historie kroků (undo/redo), kopírovat/vložit úpravy mezi fotkami.
+
+## Reference match (vlastní náhrada deep-analog)
+- Uživatel vloží **referenci** (fotku, která se mu líbí) → tvoje fotka dostane její barevnost/tóny, volitelně + vybraný film navrch.
+- Metody (veřejné, bez patentů deep-analogu): **Reinhard** (průměr/odchylka v Lab), **Pitié IDT** (iterativní přenos rozdělení barev) + **regrain** – port z `python-color-transfer` (MIT); plus párování tónové křivky podle histogramu jasu. Síla přenosu 0–100 %.
+- Výsledná transformace se **napasuje do 3D LUT** (projetím identity gridu) → okamžité použití i na další fotky = vlastní uložený „film“.
+- Export: **`.cube`** (DaVinci, Premiere, Photoshop, Lightroom přes profily), **JSON preset** (vlastní formát Qamery – parametry + odkaz na LUT), **Adobe XMP** (preset se základními posuvníky; profil s vloženou LUT tabulkou `crs:RGBTable` = ověřit formát, jinak doporučit .cube). Exporty filmů nesou atribuci CC BY-SA (viz Licence).
+- Do budoucna lze přidat vlastní malou síť trénovanou na otevřených datech – ale až když jednoduché metody nebudou stačit.
+
+## Galerie a role
+- Tmavá galerie podle inspo: nahoře role (skleněné karty), masonry, plovoucí vyhledávání dole (hledá podle filmu, data, barvy).
+- **Role = alba podle filmu / akce.** **Jednorázovka**: role 27 snímků s pevně zvoleným filmem, fotky se „vyvolají“ až později (za hodinu / ráno) – s animací vyvolávání.
+- Sdílení přes Web Share API (soubor), uložení do galerie telefonu.
+
+## Design a motion
+- Tmavé UI, akcent **žlutá/oranžová** (displej z inspo), pixelové ikony 24 px (vlastní SVG na mřížce), aktivní ikona žlutá se září.
+- Fonty: Geist, Geist Mono, Doto (Google Fonts) + segmentový/pixelový styl čísel na „LCD“.
+- **Expensive motion**: pružinové přechody (vlastní spring funkce, ne lineární ease), sdílené přechody prvků (fotka z galerie plynule do editoru), kolečka s setrvačností a „cvaknutím“ na hodnotách, karusel filmů s 3D natočením, zrno a halace živě. Úvodní animace s maskotem (jako Mraq intro). Respektovat úsporné animace v nastavení (ne systémové „omezit pohyb“ – Honza to tak chce i u Mraqu).
+- **Maskot**: tečkované robotí oči (jako Mraq/Klapqa), např. oči v objektivu/kazetě; reaguje na focení (mrknutí = spoušť), nálady.
+- **Zákaz zoomu stránky**: viewport `maximum-scale=1, user-scalable=no`, na iOS navíc blokovat `gesturestart`/`gesturechange` a double-tap zoom (`touch-action: manipulation`) – **kromě** plochy ořezu a hledáčku (`touch-action: none` + vlastní pinch).
+- iOS PWA: černý start bez bílého bliknutí (stejný trik jako Mraq: `apple-touch-startup-image`, černé `html`, kryt do načtení).
+
+## Plán (fáze)
+1. **HTML náhled** (klikací, mobil 390×844 + PC): kamera s koly, karusel filmů, jednoduchý editor, advanced panel, galerie, blob karta, intro s maskotem. Screenshoty do `docs/screens/`. Schválí Honza.
+2. Engine WebGL2 + pečení LUT (`tools/bake_luts.py`, GitHub Actions) + 6–8 hlavních filmů.
+3. Editor jednoduchý + ořez + export + IndexedDB.
+4. Kamera + slow shutter + kolečka.
+5. Reference match + exporty .cube/JSON/XMP.
+6. Advanced, PC rozložení.
+7. Depth efekty, blob karty, galerie/role, jednorázovka, datumovka, okraje.
+8. Poděkování/licence obrazovka, PWA, ladění výkonu na iPhonu i Androidu.
+
+## Nápady do budoucna
+- Kontaktní arch (contact sheet) z role jako exportovaný obrázek.
+- „Expired film“ režim: náhodný posun barev, úniky světla podle data expirace.
+- Simulace dvojexpozice (dva snímky do jednoho políčka).
+- Polaroid / instax rámečky s „vyvoláváním“ (spektrafilm GUI má polaroid animaci – inspirace).
+- Push notifikace „tvoje role je vyvolaná“ (jako Mraq přes Cloudflare Worker).
+- Video s filmovým vzhledem (stejný shader na `<video>`), krátké klipy.
+
+## Testování
+- Playwright, viewport 390×844 (mobil) a 1440×900 (PC); kamera v testech přes podvržený stream (`--use-fake-device-for-media-stream`, vlastní video).
+- Reálné testy na telefonu přes preview URL větve `dev` (kamera vyžaduje HTTPS).
+- Ověřovat výkon (fps hledáčku) na iPhonu i Androidu.
