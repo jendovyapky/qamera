@@ -78,10 +78,11 @@ a{color:var(--amber)}
 .status svg{fill:currentColor}
 .pcwrap{position:absolute;left:50%;top:50%;width:1440px;height:900px;transform-origin:center center;transform:translate(-50%,-50%);border-radius:14px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,.6),0 0 0 1px var(--line)}
 
-@media (max-width:700px){
-  .shell{display:block}
+@media (max-width:700px),(pointer:coarse){
+  html,body{background:#000}
+  .shell{display:block;position:fixed;inset:0}
   .nav{display:none}
-  .stage{height:100%}
+  .stage{position:fixed;inset:0;height:auto;background:#000}
   .device{left:0;top:0;width:100%!important;height:100%!important;transform:none!important}
   .bezel,.island,.status{display:none}
   .phone{border-radius:0}
@@ -90,7 +91,7 @@ a{color:var(--amber)}
 /* ---------- obrazovky ---------- */
 .scr{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--body);will-change:transform;overflow:hidden;overflow:clip}
 .pt{padding-top:50px}
-@media (max-width:700px){.pt{padding-top:env(safe-area-inset-top,0px)}}
+@media (max-width:700px),(pointer:coarse){.pt{padding-top:env(safe-area-inset-top,0px)}}
 .pb{padding-bottom:max(14px,env(safe-area-inset-bottom,0px))}
 .top{height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 14px;gap:6px}
 .top .title{flex:1;text-align:center}
@@ -106,7 +107,7 @@ a{color:var(--amber)}
 .scrim{position:absolute;inset:0;z-index:84;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .25s}
 .scrim.on{opacity:1;pointer-events:auto}
 #actSheet{z-index:86}
-.acts{padding:2px 14px 6px;display:flex;flex-direction:column;gap:6px}
+.acts{padding:0 14px 6px;display:flex;flex-direction:column;gap:8px}
 .acts h4{margin:0 4px 6px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.16em;color:var(--mute);font-weight:500;text-transform:uppercase;display:flex;align-items:center;gap:10px}
 .acts h4 img{width:36px;height:36px;border-radius:9px;object-fit:cover}
 .acts button{display:flex;align-items:center;gap:12px;height:50px;padding:0 14px;border-radius:15px;background:var(--panel);border:1px solid var(--line);font-size:14px;color:var(--fg);text-align:left}
@@ -122,9 +123,47 @@ a{color:var(--amber)}
 .dev .dg{flex:1;display:grid;grid-template-columns:repeat(2,1fr);gap:8px;overflow:auto;align-content:start}
 .dev img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:10px;filter:sepia(1) saturate(2.4) hue-rotate(-18deg) brightness(.16) contrast(.7) blur(5px);transition:filter 2.6s cubic-bezier(.4,0,.2,1)}
 .dev img.done{filter:none}
+/* panely efektů přímo místo mřížky efektů */
+.fxp{display:flex;flex-direction:column;gap:10px;padding:2px 14px 0;height:100%}
+.fxh{display:flex;align-items:center;justify-content:space-between;height:34px;flex:none}
+.fxh b{font-family:var(--f-mono);font-size:11px;letter-spacing:.16em;color:#cfc7bc;font-weight:500}
+.fxh .ib{width:34px;height:34px}
+.fxh .off{height:30px;padding:0 12px;border-radius:10px;border:1px solid var(--line);font-size:12px;color:#cfc7bc}
+.fxrow{display:flex;align-items:center;gap:10px;min-height:34px}
+.fxrow .seg button{padding:6px 10px;font-size:10.5px}
+.fxrow .hs{display:flex;gap:6px;overflow-x:auto;flex:1;min-width:0}
+.fxp .srow{height:34px;grid-template-columns:70px 1fr 36px}
+.dxmini{display:flex;align-items:center;gap:6px;flex:none}
+.dxmini img,.dxmini button{width:34px;height:42px;border-radius:8px;object-fit:cover;display:block}
+.dxmini button{border:1.5px dashed #4a443e;color:var(--mute);font-size:16px;overflow:hidden;padding:0}
+.dxmini button img{width:100%;height:100%}
+.sw2{width:28px;height:28px;border-radius:8px;flex:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);position:relative;overflow:hidden}
+.sw2.on{box-shadow:0 0 0 2px var(--body),0 0 0 4px var(--fg)}
+.sw2 input{position:absolute;inset:0;opacity:0}
+.cambanner{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:5;display:flex;align-items:center;gap:10px;padding:5px 5px 5px 14px;border-radius:999px;background:rgba(10,9,8,.75);border:1px solid rgba(255,196,61,.4);font-size:12px;white-space:nowrap}
+.cambanner button{height:28px;padding:0 12px;border-radius:999px;background:var(--lcd);color:var(--lcd-ink);font-weight:600;font-size:12px}
+/* správce filmů */
+.fmg{flex:1;overflow-y:auto;padding:0 14px 30px;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start}
+.fmg .note{grid-column:1/-1;font-size:12px;color:var(--mute);line-height:1.45;margin:0}
+.fcard{display:flex;flex-direction:column;gap:8px;transition:opacity .25s}
+.fcard.off{opacity:.38}
+.fcard canvas{width:100%;aspect-ratio:4/5;border-radius:14px;display:block;touch-action:none}
+.fcard .ft{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.fcard b{font-family:var(--f-px);font-size:11px;font-weight:400;letter-spacing:.04em}
+.fcard small{display:block;font-size:11px;color:var(--mute);margin-top:2px}
+.fcard .fa{display:flex;gap:6px}
+.fcard .fa button{height:30px;min-width:30px;padding:0 9px;border-radius:9px;border:1px solid var(--line);font-family:var(--f-mono);font-size:10.5px;color:#cfc7bc;display:grid;place-items:center}
+.fcard .fa button .px{width:16px;height:16px}
+.fcard .fa .heart.on{color:#ff5b6e;border-color:rgba(255,91,110,.45)}
+.fcard .fa .vis.on{color:var(--amber);border-color:rgba(255,196,61,.4)}
+.zoomv{position:absolute;inset:0;z-index:86;background:#000;overflow:hidden;touch-action:none}
+.zoomv canvas{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+.zoomv .zx{position:absolute;top:max(54px,env(safe-area-inset-top,0px));right:14px;z-index:2;width:40px;height:40px;border-radius:13px;background:rgba(10,9,8,.6);display:grid;place-items:center;color:#d0c8be}
+.zoomv .zsh{position:absolute;bottom:max(22px,env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:2;height:44px;padding:0 18px;border-radius:14px;background:var(--lcd);color:var(--lcd-ink);font-weight:600;font-size:13px}
 .actnote{margin:0 4px 6px;font-size:12px;color:var(--mute);line-height:1.45}
 .timerow{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px}
 .timerow label{display:flex;flex-direction:column;gap:5px;font-family:var(--f-mono);font-size:10px;color:var(--mute);letter-spacing:.08em;text-transform:uppercase}
+.timerow input:focus-visible,.rsave input:focus-visible{outline:0;border-color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
 .timerow input,.rsave input{height:42px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--fg);font:500 15px var(--f-mono);padding:0 10px;color-scheme:dark;min-width:0;width:100%}
 .acts .go{justify-content:center;background:var(--lcd);color:var(--lcd-ink);font-weight:600;border:0}
 .acts .grid2 button.on{border-color:var(--amber);background:rgba(255,196,61,.08)}
@@ -272,21 +311,22 @@ a{color:var(--amber)}
 .galbtn img{width:100%;height:100%;object-fit:cover;display:block}
 
 /* ---------- sheets ---------- */
-.sheet{position:absolute;left:0;right:0;bottom:0;z-index:30;background:#070606;border-radius:30px 30px 0 0;border-top:1px solid #23201c;padding:0 0 max(18px,env(safe-area-inset-bottom,0px));transform:translateY(110%);visibility:hidden}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:30;display:flex;flex-direction:column;gap:12px;background:#070606;border-radius:30px 30px 0 0;border-top:1px solid #23201c;padding:0 0 max(18px,env(safe-area-inset-bottom,0px));transform:translateY(110%);visibility:hidden}
 .sheet .grab{height:30px;display:grid;place-items:center;touch-action:none;cursor:grab}
 .sheet .grab::before{content:"";width:40px;height:4px;border-radius:2px;background:#3d3731;transition:background .2s,width .2s}
 .sheet .grab:hover::before{background:#5a534c;width:48px}
-.fhead{text-align:center;height:66px;touch-action:none}
+.fhead{text-align:center;touch-action:none}
+#filmSheet .fhead{min-height:58px}
 .fhead .code{font-family:var(--f-dot);font-weight:900;font-size:30px;letter-spacing:.06em;color:var(--fg)}
 .fhead .sub{font-family:var(--f-mono);font-size:11px;color:var(--mute);margin-top:4px;letter-spacing:.06em}
-.carousel{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding:18px calc(50% - 41px) 26px;gap:0;perspective:700px}
+.carousel{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding:14px calc(50% - 41px) 22px;gap:0;perspective:700px}
 .citem{flex:none;width:82px;display:flex;flex-direction:column;align-items:center;gap:8px;scroll-snap-align:center;transform-style:preserve-3d}
 .citem svg{width:64px;height:64px}
 .citem span{font-family:var(--f-mono);font-size:10px;color:var(--mute);letter-spacing:.06em}
 .citem.on span{color:var(--fg)}
 .fdesc{text-align:center;font-size:12px;color:var(--mute);padding:0 30px;height:36px;line-height:1.45;overflow:hidden}
-.flegend{text-align:center;font-size:10.5px;color:var(--dim);padding:6px 30px 0;line-height:1.4}
-.fmtrow{display:flex;justify-content:center;margin-top:12px}
+.flegend{text-align:center;font-size:10.5px;color:var(--dim);padding:0 30px;line-height:1.4}
+.fmtrow{display:flex;justify-content:center}
 .fmtrow .seg button{padding:6px 9px;font-family:var(--f-px);font-size:10px}
 .fhead{position:relative}
 .favbtn{position:absolute;right:18px;top:4px;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;color:#6d655c}
@@ -294,7 +334,7 @@ a{color:var(--amber)}
 .favbtn.on .px{color:#ff5b6e;filter:drop-shadow(0 0 6px rgba(255,80,100,.6))}
 .citem.fav span::before,.fthumb.fav span::before{content:"♥ ";color:#ff5b6e}
 .filmchip .dispo{color:var(--amber)}
-.closebtn{display:grid;place-items:center;margin:8px auto 0;width:40px;height:40px;border-radius:50%;background:#f3eee6;color:#111}
+.closebtn{display:grid;place-items:center;margin:2px auto 0;flex:none;width:40px;height:40px;border-radius:50%;background:#f3eee6;color:#111}
 .menu{padding:4px 16px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .menu button{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:12px;color:#d6cec3}
 .menu button .px{color:#9b9288}
@@ -393,11 +433,11 @@ a{color:var(--amber)}
 .hsldots button.on{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--fg)}
 .srow{display:grid;grid-template-columns:84px 1fr 40px;align-items:center;gap:10px;font-size:12px;color:#bdb5aa;height:32px}
 .srow output{font-family:var(--f-mono);font-size:11px;text-align:right;color:var(--fg);font-variant-numeric:tabular-nums}
-input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:24px;background:transparent;margin:0;cursor:pointer;--lo:0%;--hi:0%;
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:34px;background:transparent;margin:0;cursor:pointer;touch-action:none;-webkit-user-select:none;user-select:none;--lo:0%;--hi:0%;
   --trk:linear-gradient(90deg,#2f2b27 var(--lo),var(--amber) var(--lo),var(--amber) var(--hi),#2f2b27 var(--hi))}
 input[type=range]::-webkit-slider-runnable-track{height:2px;border-radius:2px;background:var(--trk)}
 input[type=range]::-moz-range-track{height:2px;border-radius:2px;background:var(--trk)}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:8px;height:20px;border-radius:4px;background:#f3eee6;margin-top:-9px;box-shadow:0 0 0 3px rgba(18,17,16,.9),0 2px 8px rgba(0,0,0,.6);transition:transform .15s}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:24px;border-radius:6px;background:#f3eee6;margin-top:-11px;box-shadow:0 0 0 3px rgba(18,17,16,.9),0 2px 8px rgba(0,0,0,.6);transition:transform .15s}
 input[type=range]::-moz-range-thumb{width:8px;height:20px;border:0;border-radius:4px;background:#f3eee6;box-shadow:0 0 0 3px rgba(18,17,16,.9)}
 input[type=range]:active::-webkit-slider-thumb{transform:scaleY(1.15);background:var(--amber)}
 input[type=range]:hover::-webkit-slider-thumb{background:#fff}
@@ -409,7 +449,7 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 .wheels span{display:block;font-size:10.5px;color:var(--mute);margin-top:5px}
 
 /* reference sheet */
-.refrow{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;padding:6px 18px 12px}
+.refrow{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;padding:0 18px}
 .refrow figure{margin:0;text-align:center}
 .refrow canvas{width:100%;aspect-ratio:4/5;border-radius:14px;display:block}
 .refrow figcaption{font-size:10.5px;color:var(--mute);margin-top:6px;font-family:var(--f-mono);letter-spacing:.08em}
@@ -419,11 +459,11 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 .refpick img{width:100%;height:100%;object-fit:cover;display:block}
 .refpick .on{border-color:var(--amber)}
 .refpick input{position:absolute;inset:0;opacity:0;cursor:pointer}
-.exports{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 18px 0}
+.exports{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 18px}
 .exports button{padding:12px 4px;border-radius:14px;background:var(--panel);border:1px solid var(--line);font-family:var(--f-mono);font-size:12px}
 .exports button small{display:block;font-family:var(--f-ui);font-size:9.5px;color:var(--dim);margin-top:3px}
 .sheet .srow{padding:0 18px}
-.sheet .segrow{display:flex;justify-content:center;padding:0 18px 8px}
+.sheet .segrow{display:flex;justify-content:center;padding:0 18px}
 
 /* ---------- galerie ---------- */
 #s-gallery{background:#050505}
@@ -439,6 +479,7 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 .roll b{padding:0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fchips{display:flex;gap:6px;overflow-x:auto;padding:0 14px 12px}
 .fchips button{flex:none;height:32px;padding:0 12px;border-radius:10px;background:var(--panel);border:1px solid var(--line);font-family:var(--f-mono);font-size:11px;color:var(--mute)}
+.fchips button .px{width:16px;height:16px}
 .fchips button.on{color:var(--amber);border-color:rgba(255,196,61,.45);background:rgba(255,196,61,.07)}
 .roll.lock small{color:var(--amber)}
 .masonry{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 14px;align-items:start}
@@ -588,6 +629,7 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
             <button class="fmtbadge" id="fmtBadge" aria-label="Přepnout formát">3:4</button>
             <div class="fmtbadge dbl" id="dblBadge" hidden>DOUBLE 1/2</div>
             <div class="hud" id="hud" hidden></div>
+            <div class="cambanner" id="camBanner" hidden><span>Druhá expozice pro Double</span><button id="camBannerBack">Zpět</button></div>
             <div class="pills">
               <span class="pill" id="pIso">ISO 400</span>
               <span class="zoomgrp" id="zoomGrp"><button data-z=".5">0,5×</button><button data-z="1" class="on">1×</button><button data-z="2">2×</button></span>
@@ -731,6 +773,12 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
           <div class="bbar pb"><button class="pbtn ghost" id="bPaper">Tečky: zap</button><button class="pbtn" id="bShare">Sdílet kartu</button></div>
         </section>
 
+        <!-- SPRÁVCE FILMŮ -->
+        <section class="scr pt" id="s-films" hidden>
+          <div class="top"><button class="ib" data-back aria-label="Zpět" data-ic="back"></button><span class="title">Moje filmy</span><span style="width:40px"></span></div>
+          <div class="fmg" id="fmg"></div>
+        </section>
+
         <!-- O APPCE -->
         <section class="scr pt" id="s-about" hidden>
           <div class="top"><button class="ib" data-back aria-label="Zpět" data-ic="back"></button><span class="title">O appce</span><span style="width:40px"></span></div>
@@ -871,7 +919,7 @@ const ICONS = {
   date:   ['', '.##########.', '.#..#..#..#.', '.##########.', '.#........#.', '.#.##.##..#.', '.#........#.', '.#.##.....#.', '.#........#.', '.##########.'],
   border: ['############', '#..........#', '#.########.#', '#.#......#.#', '#.#......#.#', '#.#......#.#', '#.#......#.#', '#.########.#', '#..........#', '############'],
   ref:    ['', '.####..####.', '.#..#..#..#.', '.#..#..#..#.', '.####..####.', '', '...#....#...', '..##....##..', '.###....###.', '.#.##..##.#.', '...######...'],
-  dice:   ['', '.##########.', '.#........#.', '.#.##..##.#.', '.#.##..##.#.', '.#........#.', '.#.##..##.#.', '.#.##..##.#.', '.#........#.', '.##########.'],
+  dice:   ['..########..', '.#........#.', '#.##....##.#', '#.##....##.#', '#....##....#', '#....##....#', '#.##....##.#', '#.##....##.#', '.#........#.', '..########..'],
   eye:    ['', '', '...######...', '..#......#..', '.#...##...#.', '#...####...#', '.#...##...#.', '..#......#..', '...######...'],
   sharp:  ['', '.....#......', '....###.....', '...#####....', '..#######...', '.#########..', '...#####....', '...#####....', '...#####....'],
   sun:    ['', '.....#......', '..#..#..#...', '...#####....', '..#######...', '###.###.###.', '..#######...', '...#####....', '..#..#..#...', '.....#......'],
@@ -932,7 +980,8 @@ const GLOW = { P160: .2, P400: .18, P800: .22, E100: .08, G200: .18, UM400: .12,
 FILMS.forEach(f => f.gl = GLOW[f.code] ?? .12);
 const FILM = Object.fromEntries(FILMS.map(f => [f.code, f]));
 let FAV = store.get('fav', []);
-const filmsOrdered = () => [...FILMS.filter(f => FAV.includes(f.code)), ...FILMS.filter(f => !FAV.includes(f.code))];
+let HIDDEN = store.get('hiddenFilms', []);
+const filmsOrdered = () => { const vis = FILMS.filter(f => !HIDDEN.includes(f.code) || f.code === S.film || (S.P && f.code === S.P.film)); return [...vis.filter(f => FAV.includes(f.code)), ...vis.filter(f => !FAV.includes(f.code))]; };
 function addFilm(f) { if (FILM[f.code]) return; FILMS.unshift(f); FILM[f.code] = f; }
 /* Typy grainu: f = hustota zrn, sh = ostrost/„krystaličnost“, ch = barevnost (oblaka barviv), cl = shlukování, a = síla, mot = skvrnitost (prošlý film) */
 const GRAINS = {
@@ -1084,15 +1133,15 @@ async function liveOn() {
     LIVE.w = nw; LIVE.h = nh; LIVE.canvas = nc; CAM.live = true; CAM.switching = false; drawLive(0);
     spring(1, 0, x => cc.style.filter = x > .01 ? `blur(${x * 14}px) brightness(${1 - x * .35})` : '', { k: 140, c: 22 });
     try { CAM.devices = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'videoinput'); } catch {}
-    CAM.live = true; CAM.err = ''; updLive(); renderCamInfo(); return true;
+    CAM.live = true; CAM.err = ''; store.set('cam', true); updLive(); renderCamInfo(); return true;
   } catch (e) {
     CAM.err = e && e.name === 'NotAllowedError' ? 'Přístup ke kameře je zamítnutý. Povol ho v nastavení prohlížeče.' : 'Kameru se nepodařilo spustit (' + (e && e.name || 'chyba') + ').';
-    toast(CAM.err); CAM.live = false; CAM.switching = false; $('#camCanvas').style.filter = ''; updLive(); renderCamInfo(); return false;
+    store.set('cam', false); toast(CAM.err); CAM.live = false; CAM.switching = false; $('#camCanvas').style.filter = ''; updLive(); renderCamInfo(); return false;
   }
 }
 function liveStop() { if (CAM.stream) CAM.stream.getTracks().forEach(t => t.stop()); CAM.stream = null; CAM.track = null; }
 function liveOff() { liveStop(); CAM.live = false; CAM.deviceId = null; CAM.ultra = false; LIVE.w = 480; LIVE.h = 640; LIVE.canvas = mk(480, 640); updLive(); }
-function updLive() { const b = $('#liveBtn'); b.classList.toggle('on', CAM.live); b.setAttribute('aria-label', CAM.live ? 'Vypnout kameru (DEMO)' : 'Zapnout skutečnou kameru'); }
+function updLive() { $('#liveBtn').hidden = CAM.live; }
 async function setTorch(on) { if (!CAM.track || !CAM.caps.torch) return false; try { await CAM.track.applyConstraints({ advanced: [{ torch: on }] }); return true; } catch { return false; } }
 function renderCamInfo() {
   const el = $('#camInfo'); if (!el) return;
@@ -1531,7 +1580,7 @@ const SLOW_MODES = ['STOPY', 'POHYB', 'HEDVÁBÍ'];
 /* =====================================================================
    Router + přechody
    ===================================================================== */
-const SCREENS = { camera: '#s-camera', gallery: '#s-gallery', editor: '#s-editor', blob: '#s-blob', about: '#s-about' };
+const SCREENS = { camera: '#s-camera', gallery: '#s-gallery', editor: '#s-editor', blob: '#s-blob', about: '#s-about', films: '#s-films' };
 const stack = [];
 let trans = null;
 function go(to, { back = false, onShown } = {}) {
@@ -1554,7 +1603,17 @@ function go(to, { back = false, onShown } = {}) {
   trans = { sp, done };
 }
 function goBack() { const to = stack.pop() || 'camera'; go(to, { back: true }); }
-function onEnter(s) { if (s === 'camera') startCam(); if (s === 'gallery') renderGallery(); if (s === 'blob') openBlob(); if (s === 'about') renderCamInfo(); if (s === 'editor') requestAnimationFrame(() => layoutEditor()); }
+function renderFilmsMgr() { // všechny filmy na tvojí fotce: podrž = před/po, srdíčko = oblíbený, oko = skrýt z výběru
+  const ph = S.photos.find(p => p.kind !== 'arch') || S.photos[0], src = srcOf(ph, ph.P);
+  $('#fmg').innerHTML = `<p class="note">Ukázka na fotce z galerie. Podrž náhled = původní fotka. Skryté filmy nebudou ve výběru ve foťáku ani v editoru.</p>` + FILMS.map(f => `<div class="fcard ${HIDDEN.includes(f.code) ? 'off' : ''}" data-c="${f.code}"><canvas width="240" height="300"></canvas>
+    <div class="ft"><div><b>${f.code}</b><small>${f.sub}</small></div><div class="fa"><button class="heart ${FAV.includes(f.code) ? 'on' : ''}" aria-label="Oblíbený">${iconSVG(FAV.includes(f.code) ? 'heart' : 'heartO')}</button><button class="vis ${HIDDEN.includes(f.code) ? '' : 'on'}" aria-label="Zobrazit ve výběru">${iconSVG('eye')}</button></div></div></div>`).join('');
+  const P = JSON.parse(JSON.stringify(ph.P)); P.crop = DEF().crop; P.gtype = null;
+  $$('#fmg .fcard').forEach(card => { const code = card.dataset.c, cv = $('canvas', card), paint = byp => { P.film = code; cv.getContext('2d').drawImage(utilRender(src, P, 240, 300, { bypass: byp }), 0, 0); }; paint(false);
+    let t = 0; cv.onpointerdown = () => { t = setTimeout(() => { paint(true); buzz(6); }, 140); }; cv.onpointerup = cv.onpointercancel = cv.onpointerleave = () => { clearTimeout(t); paint(false); };
+    $('.heart', card).onclick = () => { FAV = FAV.includes(code) ? FAV.filter(c => c !== code) : [code, ...FAV]; store.set('fav', FAV); renderFilmsMgr(); buildCarousel(); buzz(6); };
+    $('.vis', card).onclick = () => { HIDDEN = HIDDEN.includes(code) ? HIDDEN.filter(c => c !== code) : [...HIDDEN, code]; store.set('hiddenFilms', HIDDEN); card.classList.toggle('off', HIDDEN.includes(code)); $('.vis', card).classList.toggle('on', !HIDDEN.includes(code)); buildCarousel(); buzz(4); }; });
+}
+function onEnter(s) { if (s === 'films') renderFilmsMgr(); if (s === 'camera') startCam(); if (s === 'gallery') renderGallery(); if (s === 'blob') openBlob(); if (s === 'about') renderCamInfo(); if (s === 'editor') requestAnimationFrame(() => layoutEditor()); }
 function onLeave(s) { if (s === 'camera' && S.screen !== 'camera') stopCam(); }
 
 /* spodní panely: tah za úchyt dolů = zavřít */
@@ -1827,7 +1886,7 @@ function finishCapture(src0) {
     const a = S.dblFirst, c = mk(a.width, a.height), g = c.getContext('2d'); g.drawImage(a, 0, 0); g.globalCompositeOperation = 'screen'; g.drawImage(src, 0, 0, a.width, a.height); src = c; S.dblFirst = null; showGhost(null); updFmt();
   }
   const P = camParams();
-  if (S.dispo) { S.dispo.shots.push({ src, P, date: new Date() }); blink(); updDispo(); return; }
+  if (S.dispo) { const sh = { id: uid(), src, P, date: new Date(), roll: 'active' }; S.dispo.shots.push(sh); dbPutShot(sh); blink(); updDispo(); return; }
   const fl = $('#flash');
   if (S.flash || +fl.style.opacity > 0) spring(+fl.style.opacity || 1, 0, v => fl.style.opacity = v * .9, { k: 60, c: 14 });
   blink();
@@ -1879,11 +1938,14 @@ async function dbLoad() {
   try { const db = await idb(), all = await new Promise((res, rej) => { const r = db.transaction('photos').objectStore('photos').getAll(); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
     all.sort((a, b) => a.date - b.date);
     for (const it of all) { const bmp = await createImageBitmap(it.blob), c = mk(bmp.width, bmp.height); c.getContext('2d').drawImage(bmp, 0, 0);
-      const ph = addPhoto(c, Object.assign(DEF(), it.P), it.kind, it.tags, false, it.id); ph.date = new Date(it.date); ph.saved = true; ph.blob = it.blob; }
+      if (it.roll) { const sh = { id: it.id, src: c, P: Object.assign(DEF(), it.P), date: new Date(it.date), roll: it.roll, blob: it.blob }; // snímek z jednorázovky / zamčené role
+        if (it.roll === 'active' && S.dispo) S.dispo.shots.push(sh); else { const ro = ROLLS.find(r => r.id === it.roll); if (ro) ro.shots.push(sh); } continue; }
+      const ph = addPhoto(c, Object.assign(DEF(), it.P), it.kind, it.tags, false, it.id); ph.date = new Date(it.date); ph.saved = true; ph.blob = it.blob; if (it.kind === 'arch') ph.film = 'ARCH'; }
+    if (S.dispo) updDispo();
     if (all.length) { $('#galThumb').src = S.photos[0].thumb; if (S.screen === 'gallery') renderGallery(); }
   } catch {}
 }
-function rethumb(ph) { const o = utilRender(srcOf(ph, ph.P), ph.P, 300, Math.round(300 / (ph.src.width / ph.src.height)), {}); ph.thumb = o.toDataURL('image/jpeg', .85); ph.film = ph.P.film; }
+function rethumb(ph) { const o = utilRender(srcOf(ph, ph.P), ph.P, 300, Math.round(300 / (ph.src.width / ph.src.height)), {}); ph.thumb = o.toDataURL('image/jpeg', .85); ph.film = ph.kind === 'arch' ? 'ARCH' : ph.P.film; }
 function seedPhotos() {
   const list = [['plaz', 720, 900, 'G200', ['léto', 'moře', 'modrá', 'červená'], 14, 32], ['les', 720, 960, '400H', ['les', 'zelená', 'ráno'], 7, 12], ['zapad', 900, 720, 'P400', ['západ', 'moře', 'oranžová'], 19, 48],
     ['hory', 720, 960, 'VEL', ['hory', 'růžová', 'fialová'], 6, 21], ['kvet', 720, 720, 'E100', ['květina', 'růžová', 'zelená'], 11, 5], ['mesto', 720, 960, 'V3-500T', ['noc', 'ulice', 'praha'], 22, 17],
@@ -1901,12 +1963,12 @@ let ROLLS = [
 function renderGallery() {
   $('#rolls').innerHTML = ROLLS.map(r => `<button class="roll ${r.lock ? 'lock' : ''}"><div class="glow" style="background:radial-gradient(circle at 30% 40%,${r.glow[0]},transparent 55%),radial-gradient(circle at 75% 60%,${r.glow[1]},transparent 55%)"></div>${cassette(FILM[r.film])}<div class="glass"><b>${r.name}</b><small>${r.meta}</small></div></button>`).join('');
   const cnt = {}; S.photos.forEach(p => cnt[p.film] = (cnt[p.film] || 0) + 1);
-  $('#fChips').innerHTML = `<button data-f="" class="${S.gFilm ? '' : 'on'}">VŠE</button>` + Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]).map(f => `<button data-f="${f}" class="${S.gFilm === f ? 'on' : ''}">${f} · ${cnt[f]}</button>`).join('');
-  $$('#fChips button').forEach(b => b.onclick = () => { S.gFilm = b.dataset.f || null; $$('#fChips button').forEach(x => x.classList.toggle('on', x === b)); filterGallery(); buzz(3); });
+  $('#fChips').innerHTML = `<button data-f="__m">${iconSVG('film')}</button><button data-f="" class="${S.gFilm ? '' : 'on'}">VŠE</button>` + Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]).map(f => `<button data-f="${f}" class="${S.gFilm === f ? 'on' : ''}">${f} · ${cnt[f]}</button>`).join('');
+  $$('#fChips button').forEach(b => b.onclick = () => { if (b.dataset.f === '__m') return go('films'); S.gFilm = b.dataset.f || null; $$('#fChips button').forEach(x => x.classList.toggle('on', x === b)); filterGallery(); buzz(3); });
   $$('.roll').forEach((b, i) => { const ro = ROLLS[i];
     const acts = () => openActs(`<h4>${ro.name}</h4>${ro.lock ? actBtn('dev', 'film', 'Vyvolat hned (ukázka)') : actBtn('show', 'gallery', 'Ukázat fotky z role')}${ro.lock ? '' : actBtn('sheet', 'sheet', 'Arch z role')}`, root => {
       $$('[data-a]', root).forEach(x => x.onclick = () => { closeActs(); const a = x.dataset.a;
-        if (a === 'dev') develop(ro); if (a === 'show') { S.gFilm = ro.film; renderGallery(); }
+        if (a === 'dev') setTimeout(() => developAsk(ro), 250); if (a === 'show') { S.gFilm = ro.film; renderGallery(); }
         if (a === 'sheet') showArch(S.photos.filter(p => p.film === ro.film).concat(S.photos.filter(p => p.film !== ro.film)).slice(0, 12), ro.name.toUpperCase(), ro.film); }); });
     longPress(b, acts); b.onclick = () => { if (ro.lock) acts(); else { S.gFilm = S.gFilm === ro.film ? null : ro.film; renderGallery(); } }; });
   filterGallery();
@@ -1919,7 +1981,7 @@ function filterGallery() {
   $('#masonry').innerHTML = cols.map(c => `<div class="mcol">${c.map(item).join('')}</div>`).join('');
   list.forEach(p => p.fresh = false);
   $('#gEmpty').hidden = list.length > 0;
-  $$('.gitem').forEach(b => { const ph = S.photos.find(p => p.id === +b.dataset.id);
+  $$('.gitem').forEach(b => { const ph = S.photos.find(p => p.id === +b.dataset.id); if (ph.kind === 'arch' && !S.sel) { longPress(b, () => photoActs(ph, b)); b.onclick = () => viewImage(ph.src, ph); return; }
     if (S.sel) { b.onclick = () => { S.sel.has(ph.id) ? S.sel.delete(ph.id) : S.sel.add(ph.id); b.classList.toggle('sel'); updSel(); buzz(4); }; return; }
     longPress(b, () => photoActs(ph, b)); b.onclick = () => openEditor(ph, b.querySelector('img')); });
 }
@@ -1941,7 +2003,7 @@ function photoActs(ph, el) {
     $$('[data-a]', root).forEach(b => b.onclick = () => { closeActs(); const a = b.dataset.a;
       if (a === 'edit') openEditor(ph, el.querySelector('img'));
       if (a === 'blob') { S.blobFrom = ph; go('blob'); }
-      if (a === 'dx') { openEditor(ph, el.querySelector('img')); setTimeout(openDxSheet, 450); }
+      if (a === 'dx') { openEditor(ph, el.querySelector('img')); setTimeout(() => { setTab('fx', true); openFx('double'); }, 450); }
       if (a === 'del') deletePhoto(ph, el); });
   });
 }
@@ -1987,7 +2049,7 @@ function dispoPick() {
     <button class="go" id="dpGo">Spustit jednorázovku</button>`, root => {
     let film = list[0];
     $$('[data-c]', root).forEach(b => b.onclick = () => { film = b.dataset.c; $$('[data-c]', root).forEach(x => x.classList.toggle('on', x === b)); buzz(4); });
-    $('#dpGo').onclick = () => { closeActs(); S.dispo = { film, from: $('#dpFrom').value, to: $('#dpTo').value, dev: $('#dpDev').value, shots: [] }; S.camRecipe = null; setFilm(film); updDispo(); stack.length = 0; go('camera', { back: true });
+    $('#dpGo').onclick = () => { closeActs(); S.dispo = { film, from: $('#dpFrom').value, to: $('#dpTo').value, dev: $('#dpDev').value, shots: [] }; saveDispo(); S.camRecipe = null; setFilm(film); updDispo(); stack.length = 0; go('camera', { back: true });
       toast(`Jednorázovka ${film}: fotky z ${S.dispo.from}–${S.dispo.to} se vyvolají v ${S.dispo.dev}`); };
   });
 }
@@ -1995,11 +2057,20 @@ function updDispo() {
   const d = S.dispo; $('#chipCode').innerHTML = d ? `<span class="dispo">${d.film} · ${d.shots.length}</span>` : S.film;
   if (d) $('#galThumb').src = 'data:image/svg+xml;utf8,' + encodeURIComponent(cassette(FILM[d.film]).replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg" style="background:#221f1c"'));
 }
+const saveDispo = () => store.set('dispo', S.dispo ? { film: S.dispo.film, from: S.dispo.from, to: S.dispo.to, dev: S.dispo.dev } : null);
+const saveRolls = () => store.set('rolls', ROLLS.filter(r => r.id).map(r => ({ id: r.id, name: r.name, meta: r.meta, film: r.film, glow: r.glow, lock: true, dev: r.dev })));
 function endDispo() {
-  const d = S.dispo; S.dispo = null; updDispo(); if (S.photos[0]) $('#galThumb').src = S.photos[0].thumb;
+  const d = S.dispo; S.dispo = null; saveDispo(); updDispo(); if (S.photos[0]) $('#galThumb').src = S.photos[0].thumb;
   if (!d || !d.shots.length) return toast('Jednorázovka ukončená');
-  ROLLS.unshift({ name: 'Jednorázovka ' + d.film, meta: `${d.shots.length} ${d.shots.length < 5 ? 'snímky' : 'snímků'} · ${d.dev}`, film: d.film, glow: ['#e6493a', '#efa73b'], lock: true, shots: d.shots });
-  toast(`Role je zamčená, vyvolá se v ${d.dev}`);
+  const id = uid(); d.shots.forEach(sh => { sh.roll = id; dbPutShot(sh); });
+  ROLLS.unshift({ id, name: 'Jednorázovka ' + d.film, meta: `${d.shots.length} ${d.shots.length < 5 ? 'snímky' : 'snímků'} · ${d.dev}`, film: d.film, dev: d.dev, glow: ['#e6493a', '#efa73b'], lock: true, shots: d.shots });
+  saveRolls(); toast(`Role je zamčená, vyvolá se v ${d.dev}`);
+}
+async function dbPutShot(sh) { try { if (!sh.blob) sh.blob = await new Promise(r => sh.src.toBlob(r, 'image/jpeg', .93)); const db = await idb();
+  db.transaction('photos', 'readwrite').objectStore('photos').put({ id: sh.id, kind: 'dispo', tags: [], date: +sh.date, P: sh.P, blob: sh.blob, roll: sh.roll }); } catch {} }
+function developAsk(roll) { // před vyvoláním se zeptá na název role
+  openActs(`<h4>Vyvolat roli</h4><p class="actnote">Jak se má role jmenovat? Název bude na archu.</p><div class="rsave"><input id="dvName" value="${roll.name}" maxlength="28" autocomplete="off"><button class="go" id="dvGo">Vyvolat</button></div>`, root => {
+    $('#dvGo', root).onclick = () => { roll.name = $('#dvName', root).value.trim() || roll.name; closeActs(); setTimeout(() => develop(roll), 250); }; });
 }
 function develop(roll) {
   const el = document.createElement('div'); el.className = 'dev';
@@ -2007,12 +2078,12 @@ function develop(roll) {
   el.innerHTML = `<h3>VYVOLÁVÁM</h3><p>${roll.name.toUpperCase()} · ${shots.length} SNÍMKŮ</p><div class="dg">${shots.map(s => `<img src="${utilRender(s.src, s.P, 300, Math.round(300 / (s.src.width / s.src.height)), {}).toDataURL('image/jpeg', .85)}" alt="">`).join('')}</div>`;
   $('#phone').appendChild(el); buzz(10);
   const imgs = $$('img', el); imgs.forEach((im, i) => setTimeout(() => im.classList.add('done'), 500 + i * 420));
-  setTimeout(() => { const added = shots.map(s => { const ph = addPhoto(s.src, s.P, 'dispo', ['jednorázovka', s.P.film], true, uid()); ph.date = s.date; return keep(ph); }); ROLLS.splice(ROLLS.indexOf(roll), 1);
-    el.style.transition = 'opacity .4s'; el.style.opacity = 0; setTimeout(() => { el.remove(); renderGallery(); showArch(added, roll.name.toUpperCase(), roll.film); }, 420); }, 1300 + imgs.length * 420 + 1600);
+  setTimeout(() => { const added = shots.map(s => { const ph = addPhoto(s.src, s.P, 'dispo', ['jednorázovka', roll.name.toLowerCase(), s.P.film], true, s.id || uid()); ph.date = s.date; ph.blob = s.blob; return keep(ph); }); ROLLS.splice(ROLLS.indexOf(roll), 1); saveRolls();
+    el.style.transition = 'opacity .4s'; el.style.opacity = 0; setTimeout(() => { el.remove(); renderGallery(); showArch(added, roll.name.toUpperCase(), roll.film, { marks: false }); }, 420); }, 1300 + imgs.length * 420 + 1600);
 }
 
 /* arch: pruhy 35 mm s perforací, čísly políček a značkami fixou */
-function showArch(photos, title, film) {
+function showArch(photos, title, film, opt = {}) {
   if (!photos.length) return toast('Na arch tu zatím nic není');
   const fw = 300, fh = 200, per = 6, rows = Math.ceil(photos.length / per), sh = 290, W = per * (fw + 14) + 120, H = rows * (sh + 18) + 190;
   const c = mk(W, H), g = c.getContext('2d'), r = rng(9);
@@ -2031,14 +2102,35 @@ function showArch(photos, title, film) {
     g.fillStyle = '#e8a33a'; g.font = '600 15px "Geist Mono", monospace'; g.fillText(`▸${i + 1}   ${i + 1}A`, x + 6, sy + sh - 44 + 30 > sy + sh - 8 ? sy + sh - 8 : sy + sh - 40 + 26);
     if (col === 0) { g.fillText(`QAMERA ${ph.P.film}`, x + 120, y - 10); }
   });
-  // značky fixou: kroužek kolem nejlepšího a fajfka
+  if (opt.marks !== false) { // značky fixou: kroužek kolem nejlepšího a fajfka
   const best = Math.floor(r() * photos.length), bx = 60 + (best % per) * (fw + 14) + fw / 2, by = 140 + Math.floor(best / per) * (sh + 18) + 45 + fh / 2;
   g.strokeStyle = 'rgba(220,40,30,.85)'; g.lineWidth = 7; g.lineCap = 'round'; g.beginPath(); g.ellipse(bx, by, fw * .62, fh * .72, -.06, .3, Math.PI * 2 + .1); g.stroke();
-  g.beginPath(); g.moveTo(bx + fw * .48, by - fh * .74); g.lineTo(bx + fw * .55, by - fh * .64); g.lineTo(bx + fw * .7, by - fh * .9); g.stroke();
-  const v = $('#fsView'), cv = $('#fsCanvas'), phone = $('#phone'); cv.width = W; cv.height = H; cv.getContext('2d').drawImage(c, 0, 0);
-  const k = Math.min(phone.clientWidth / W, phone.clientHeight / H) * .98; cv.style.width = W * k + 'px'; cv.style.height = H * k + 'px';
-  v.hidden = false; v.style.opacity = 1; cv.style.transform = ''; $('#fsHint').textContent = 'ŤUKNI = ZAVŘÍT';
-  v.onpointerdown = null; v.onpointerup = () => { spring(1, 0, t => v.style.opacity = t, { k: 260, c: 28, onDone: () => v.hidden = true }); };
+  g.beginPath(); g.moveTo(bx + fw * .48, by - fh * .74); g.lineTo(bx + fw * .55, by - fh * .64); g.lineTo(bx + fw * .7, by - fh * .9); g.stroke(); }
+  // arch se uloží do galerie (nezmizí) a otevře se v prohlížeči se zoomem
+  const N = Object.assign(DEF(), { str: 0, grain: 0, hal: 0, bloom: 0, glow: 0, vig: 0 }), ph = addPhoto(c, N, 'arch', ['arch', title.toLowerCase()], true, uid()); ph.film = 'ARCH'; keep(ph);
+  if (S.screen === 'gallery') renderGallery(); viewImage(c, ph);
+}
+/* prohlížeč obrázku: pinch / kolečko = zoom, tažení = posun, dvojťuk = 1× / 2,5× */
+function viewImage(src, ph) {
+  const el = document.createElement('div'); el.className = 'zoomv'; el.innerHTML = `<canvas></canvas><button class="zx" aria-label="Zavřít">${iconSVG('x')}</button>${ph ? '<button class="zsh">Uložit / sdílet</button>' : ''}`;
+  $('#phone').appendChild(el); const cv = $('canvas', el); cv.width = src.width; cv.height = src.height; cv.getContext('2d').drawImage(src, 0, 0);
+  const W = el.clientWidth, H = el.clientHeight, k0 = Math.min(W / src.width, H / src.height); let z = { s: k0, x: (W - src.width * k0) / 2, y: (H - src.height * k0) / 2 };
+  const apply = () => cv.style.transform = `translate(${z.x}px,${z.y}px) scale(${z.s})`; apply();
+  const clampZ = () => { z.s = clamp(z.s, k0, k0 * 6); const w = src.width * z.s, h = src.height * z.s; z.x = w <= W ? (W - w) / 2 : clamp(z.x, W - w, 0); z.y = h <= H ? (H - h) / 2 : clamp(z.y, H - h, 0); };
+  const zoomAt = (f, cx, cy) => { const ns = clamp(z.s * f, k0, k0 * 6), r = ns / z.s; z.x = cx - (cx - z.x) * r; z.y = cy - (cy - z.y) * r; z.s = ns; clampZ(); apply(); };
+  const pts = new Map(); let base = null, lastTap = 0;
+  const rel = e => { const b = el.getBoundingClientRect(), sc = b.width / el.offsetWidth; return [(e.clientX - b.left) / sc, (e.clientY - b.top) / sc]; };
+  el.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; el.setPointerCapture(e.pointerId); pts.set(e.pointerId, rel(e)); const a = [...pts.values()];
+    base = { ...z, d: a[1] ? Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]) : 0, c: a[1] ? [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2] : a[0] }; });
+  el.addEventListener('pointermove', e => { if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, rel(e)); const a = [...pts.values()];
+    if (a[1] && base.d) { const c = [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2], ns = base.s * Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]) / base.d, r = ns / base.s; z.s = ns; z.x = c[0] - (base.c[0] - base.x) * r; z.y = c[1] - (base.c[1] - base.y) * r; }
+    else { z.x = base.x + a[0][0] - base.c[0]; z.y = base.y + a[0][1] - base.c[1]; } clampZ(); apply(); });
+  el.addEventListener('pointerup', e => { const p = pts.get(e.pointerId); pts.delete(e.pointerId); if (!p) return; if (pts.size) { const a = [...pts.values()]; base = { ...z, d: 0, c: a[0] }; return; }
+    const n = performance.now(); if (n - lastTap < 300) { const f = z.s > k0 * 1.2 ? k0 / z.s : 2.5; spring(0, 1, t => {}, {}); zoomAt(f, p[0], p[1]); lastTap = 0; } else lastTap = n; });
+  el.addEventListener('wheel', e => { e.preventDefault(); const p = rel(e); zoomAt(1 - e.deltaY * .002, p[0], p[1]); }, { passive: false });
+  $('.zx', el).onclick = () => { el.style.transition = 'opacity .25s'; el.style.opacity = 0; setTimeout(() => el.remove(), 260); };
+  const sb = $('.zsh', el); if (sb) sb.onclick = () => exportCanvas(src, `qamera-arch-${Date.now()}.jpg`);
+  el.style.opacity = 0; requestAnimationFrame(() => { el.style.transition = 'opacity .25s'; el.style.opacity = 1; });
 }
 
 /* =====================================================================
@@ -2047,7 +2139,7 @@ function showArch(photos, title, film) {
 let edE, edRaf = 0, before = false;
 const PANEL_H = 186;
 function openEditor(ph, fromImg) {
-  S.cur = ph; S.P = JSON.parse(JSON.stringify(ph.P)); S.cur._last = JSON.parse(JSON.stringify(ph.P)); S.hist = []; S.fut = [];
+  S.cur = ph; S.fxOpen = null; S.P = JSON.parse(JSON.stringify(ph.P)); S.cur._last = JSON.parse(JSON.stringify(ph.P)); S.hist = []; S.fut = [];
   edE.setSource(srcOf(ph, S.P));
   go('editor');
   setTab(S.tab, true);
@@ -2067,9 +2159,10 @@ function layoutEditor() {
   const box = $('#ePhoto'), W = box.clientWidth - 24, H = box.clientHeight - 12; const cr = S.P.crop, ar = cr.ar || S.cur.src.width / S.cur.src.height;
   if (W <= 0 || H <= 0) return;
   const fr = S.P.frame === 'glow', fit = (mw, mh) => { let w = mw, h = mw / ar; if (h > mh) { h = mh; w = mh * ar; } return [w, h]; };
-  const wrap = $('#eWrap'), cv = $('#edCanvas'), [w, h] = fr ? [W + 24, H + 12] : fit(W, H); wrap.style.width = w + 'px'; wrap.style.height = h + 'px'; wrap.classList.toggle('framed', fr);
-  let pw = w, ph = h; // glow rám: tmavá „místnost“ přes celou plochu, fotka menší uprostřed
-  if (fr) { [pw, ph] = fit(w * .72, h * .72); Object.assign(cv.style, { left: (w - pw) / 2 + 'px', top: (h - ph) / 2 + 'px', width: pw + 'px', height: ph + 'px' }); S._fr = { x: (w - pw) / 2, y: (h - ph) / 2, w: pw, h: ph }; }
+  const fo = S.P.fo || { pad: .72, ar: 0 }, fitA = (a, mw, mh) => { let w = mw, h = mw / a; if (h > mh) { h = mh; w = mh * a; } return [w, h]; };
+  const wrap = $('#eWrap'), cv = $('#edCanvas'), [w, h] = fr ? (fo.ar ? fitA(fo.ar, W + 24, H + 12) : [W + 24, H + 12]) : fit(W, H); wrap.style.width = w + 'px'; wrap.style.height = h + 'px'; wrap.classList.toggle('framed', fr);
+  let pw = w, ph = h; // glow rám: tmavá „místnost“ (volitelný poměr stran), fotka menší uprostřed, prostor kolem nastavitelný
+  if (fr) { [pw, ph] = fit(w * fo.pad, h * fo.pad); Object.assign(cv.style, { left: (w - pw) / 2 + 'px', top: (h - ph) / 2 + 'px', width: pw + 'px', height: ph + 'px' }); S._fr = { x: (w - pw) / 2, y: (h - ph) / 2, w: pw, h: ph }; }
   else Object.assign(cv.style, { left: '', top: '', width: '', height: '' });
   const dpr = Math.min(2, devicePixelRatio || 1);
   if (edE.size(Math.round(pw * dpr), Math.round(ph * dpr))) renderEd(true); else renderEd();
@@ -2102,8 +2195,23 @@ function glowFrame(cv, src, cw, ch, rect, scale) {
   g.globalCompositeOperation = 'source-over';
   const rg = g.createRadialGradient(ix + iw / 2, iy + ih * .55, M * .5, ix + iw / 2, iy + ih * .55, Math.hypot(W, H) * .6); rg.addColorStop(0, 'rgba(8,8,10,0)'); rg.addColorStop(1, 'rgba(8,8,10,.75)'); g.fillStyle = rg; g.fillRect(0, 0, W, H);
 }
-function framed(src, P) { if (P.frame !== 'glow') return src; const c = mk(Math.round(src.width / .72), Math.round(src.height / .72)), r = { x: (c.width - src.width) / 2, y: (c.height - src.height) / 2, w: src.width, h: src.height };
+function framed(src, P) { if (P.frame !== 'glow') return src; const fo = P.fo || { pad: .72, ar: 0 }, a = src.width / src.height, A = fo.ar || a;
+  let cw = src.width / fo.pad, ch = cw / A; if (ch < src.height / fo.pad) { ch = src.height / fo.pad; cw = ch * A; }
+  const c = mk(Math.round(cw), Math.round(ch)), r = { x: (c.width - src.width) / 2, y: (c.height - src.height) / 2, w: src.width, h: src.height };
   glowFrame(c, src, c.width, c.height, r, 1); const g = c.getContext('2d'); g.drawImage(src, r.x, r.y); return c; }
+/* export v plném rozlišení: render celé fotky přes stejný shader, glow rám, pak sdílení (iPhone: Uložit obrázek) nebo stažení */
+async function exportCanvas(c, name) {
+  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .95)), file = new File([blob], name, { type: 'image/jpeg' });
+  try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Qamera' }); return toast('Hotovo'); } } catch (e) { if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); toast('Fotka stažená');
+}
+function renderFull(ph, P) {
+  const src = srcOf(ph, P), ar = P.crop.ar || src.width / src.height, max = Math.min(util.e.gl.getParameter(util.e.gl.MAX_TEXTURE_SIZE), 4096);
+  let w = Math.round(Math.min(src.width, max)), h = Math.round(w / ar); if (h > max) { h = max; w = Math.round(h * ar); }
+  const cr = P.crop, o = utilRender(src, P, w, h, { zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180, transfer: P.tr ? transferFor() : null, seed: 7 });
+  return framed(copyCanvas(o), P);
+}
+async function exportPhoto() { if (!S.cur) return; toast('Připravuju fotku v plném rozlišení…'); await new Promise(r => setTimeout(r, 50)); const c = renderFull(S.cur, S.P); exportCanvas(c, `qamera-${S.P.film}-${Date.now()}.jpg`); }
 function commit() { S.hist.push(JSON.stringify(S.cur._last || S.cur.P)); if (S.hist.length > 60) S.hist.shift(); S.fut = []; S.cur._last = JSON.parse(JSON.stringify(S.P)); S.cur.P = JSON.parse(JSON.stringify(S.P)); rethumb(S.cur); dbPut(S.cur); }
 function undo() { if (!S.hist.length) return toast('Není co vracet'); S.fut.push(JSON.stringify(S.P)); S.P = JSON.parse(S.hist.pop()); syncCur(); }
 function redo() { if (!S.fut.length) return; S.hist.push(JSON.stringify(S.P)); S.P = JSON.parse(S.fut.pop()); syncCur(); }
@@ -2178,6 +2286,7 @@ function setTab(t, quiet) {
       spring(0, 1, t => { S.P.crop.ar = lerp(from, to, t); layoutEditor(); }, { k: 200, c: 24, onDone: () => { S.P.crop.ar = +b.dataset.a; fitCrop(); layoutEditor(); commit(); } }); });
     $('#cropReset').onclick = () => { S.P.crop = { ar: 0, s: 1, x: 0, y: 0, rot: 0 }; setTab('crop', true); layoutEditor(); commit(); };
     hscroll($('#aspRow')); requestAnimationFrame(placeCropBox);
+  } else if (t === 'fx' && S.fxOpen) { renderFxPanel(p);
   } else if (t === 'fx') {
     const fx = [['scan', 'Film scan', 'ref'], ['double', 'Double', 'double'], ['dither', 'Dither', 'dither'], ['pixel', 'Pixel art', 'pixel'], ['frame', 'Glow rám', 'frame'],
       ['recipe', 'Recepty', 'recipe'], ['blob', 'Blob karta', 'blob'], ['depth', 'Hloubka', 'depth', 'FÁZE 7'], ['date', 'Datumovka', 'date', 'FÁZE 7']]; // co jde nastavit v Úpravách, tady není
@@ -2191,16 +2300,58 @@ function setTab(t, quiet) {
 function fxClick(b) {
   const k = b.dataset.fx;
   if (k === 'scan') { openRef(); return; }
-  if (k === 'double') { openDxSheet(); return; }
+  if (k === 'double' || k === 'dither' || k === 'pixel' || k === 'frame') { openFx(k); return; }
   if (k === 'recipe') { recipeActs(); return; }
   if (k === 'blob') { S.blobFrom = S.cur; go('blob'); return; }
   if (k === 'grain') { S.adjKey = 'grain'; setTab('adj'); return; }
-  if (k === 'dither' || k === 'pixel') { if (!S.P.style || S.P.style.type !== k) { S.P.style = k === 'dither' ? { type: 'dither', pal: ['#0B0C0E', '#F5C542'], pn: 'amber', cells: 240, levels: 2 } : { type: 'pixel', pal: photoPal(6), pn: 'photo', cells: 110 }; renderEd(true); commit(); setTab('fx', true); } styleActs(); return; }
-  if (k === 'frame') { S.P.frame = S.P.frame ? null : 'glow'; layoutEditor(); renderEd(true); }
-  else if (k === 'glowfx') S.P.glow = (S.P.glow ?? 0) > .45 ? null : .8;
+  if (k === 'glowfx') S.P.glow = (S.P.glow ?? 0) > .45 ? null : .8;
   else if (k === 'sharp') S.P.sharp = S.P.sharp ? 0 : .6;
   else { toast('Hloubka a datumovka přijdou ve fázi 7'); return; }
   b.classList.toggle('on'); renderEd(); commit(); buzz(5);
+}
+/* panel efektu nahradí mřížku efektů (zpět šipkou), výběr fotek zůstává ve vysouvacím panelu */
+function openFx(k) {
+  if (k === 'double') S.P.dx = S.P.dx || { other: null, mode: 'sil', who: 'this', th: .42, inv: false, bg: DXBG, mix: .6 };
+  if ((k === 'dither' || k === 'pixel') && (!S.P.style || S.P.style.type !== k)) S.P.style = k === 'dither' ? { type: 'dither', pal: ['#0B0C0E', '#F5C542'], pn: 'amber', cells: 240, levels: 2 } : { type: 'pixel', pal: photoPal(6), pn: 'photo', cells: 110 };
+  if (k === 'frame' && !S.P.frame) { S.P.frame = 'glow'; S.P.fo = S.P.fo || { pad: .72, ar: 0 }; }
+  S.fxOpen = k; layoutEditor(); dxChanged(); commit(); setTab('fx', true); buzz(5);
+  if (k === 'double' && !S.P.dx.other) setTimeout(dxPickGallery, 200);
+}
+function closeFx() { S.fxOpen = null; setTab('fx', true); }
+function renderFxPanel(p) {
+  const k = S.fxOpen, name = { double: 'DOUBLE', dither: 'DITHER', pixel: 'PIXEL ART', frame: 'GLOW RÁM' }[k];
+  let body = '';
+  if (k === 'double') { const dx = S.P.dx, o = S.photos.find(x => x.id === dx.other), sil = dx.mode === 'sil', blend = !sil;
+    const pal = [...new Set([DXBG, '#e33a22', '#F2EFE8', ...(o ? [...kmeansOf(S.cur.src, 2), ...kmeansOf(o.src, 2)] : [])])];
+    body = `<div class="fxrow"><div class="dxmini"><img src="${S.cur.thumb}" alt=""><span style="color:var(--amber)">+</span><button id="fxPick">${o ? `<img src="${o.thumb}" alt="">` : '+'}</button></div><div class="seg" id="fxMode"><button data-m="blend" class="${blend ? 'on' : ''}">PROLNUTÍ</button><button data-m="sil" class="${sil ? 'on' : ''}">SILUETA</button></div></div>
+      ${sil ? `<div class="fxrow"><div class="seg" id="fxWho"><button data-w="this" class="${dx.who === 'this' ? 'on' : ''}">TVAR: TATO</button><button data-w="other" class="${dx.who === 'other' ? 'on' : ''}">DRUHÁ</button></div><div class="hs" id="fxBg">${pal.map(c => `<button class="sw2 ${c === dx.bg ? 'on' : ''}" data-c="${c}" style="background:${c}"></button>`).join('')}<label class="sw2" style="display:grid;place-items:center;color:var(--mute)">+<input type="color" id="fxColor" value="#e33a22"></label><button class="sw2" id="fxInv" style="width:auto;padding:0 8px;font-family:var(--f-mono);font-size:10px;color:var(--fg)">⇄</button></div></div>` : ''}
+      <label class="srow"><span>${blend ? 'Síla' : 'Práh'}</span><input type="range" id="fxSl" min="${blend ? 10 : 5}" max="${blend ? 100 : 95}" value="${Math.round((blend ? dx.mix : dx.th) * 100)}" data-def="${blend ? 60 : 42}"><output>${Math.round((blend ? dx.mix : dx.th) * 100)}</output></label>`; }
+  else if (k === 'dither' || k === 'pixel') { const st = S.P.style, dith = k === 'dither';
+    const pals = dith ? [['amber', 'Amber'], ['lime', 'Lime'], ['paper', 'Papír'], ['ir', 'Neon'], ['photo', 'Z fotky']] : [['photo4', 'Styl 1'], ['photo', 'Styl 2'], ['photo8', 'Styl 3']];
+    body = `<div class="fxrow"><div class="hs" id="fxPal">${pals.map(([q, l]) => `<button class="gpill ${st.pn === q ? 'on' : ''}" data-p="${q}">${l}</button>`).join('')}</div></div>
+      <label class="srow"><span>${dith ? 'Hustota' : 'Pixely'}</span><input type="range" id="fxCells" min="${dith ? 80 : 40}" max="${dith ? 420 : 220}" value="${st.cells}" data-def="${dith ? 240 : 110}"><output>${st.cells}</output></label>
+      ${dith ? `<label class="srow"><span>Úrovně</span><input type="range" id="fxLev" min="2" max="4" value="${st.levels}" data-def="2"><output>${st.levels}</output></label>` : ''}`; }
+  else if (k === 'frame') { const fo = S.P.fo = S.P.fo || { pad: .72, ar: 0 };
+    body = `<div class="fxrow"><div class="seg" id="fxAr">${[['AUTO', 0], ['1:1', 1], ['4:5', .8], ['9:16', 9 / 16], ['16:9', 16 / 9]].map(([l, v]) => `<button data-a="${v}" class="${fo.ar === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+      <label class="srow"><span>Prostor</span><input type="range" id="fxPad" min="0" max="60" value="${Math.round((1 - fo.pad) * 100)}" data-def="28"><output>${Math.round((1 - fo.pad) * 100)}</output></label>`; }
+  p.innerHTML = `<div class="fxp"><div class="fxh"><button class="ib" id="fxBack" aria-label="Zpět na efekty">${iconSVG('back')}</button><b>${name}</b><button class="off" id="fxOff">Vypnout</button></div>${body}</div>`;
+  $('#fxBack').onclick = closeFx;
+  $('#fxOff').onclick = () => { if (k === 'double') S.P.dx = null; if (k === 'dither' || k === 'pixel') S.P.style = null; if (k === 'frame') S.P.frame = null; S.fxOpen = null; dxChanged(); layoutEditor(); commit(); setTab('fx', true); };
+  const rng = (id, f) => { const i = $(id); if (!i) return; paintRange(i); i.oninput = () => { i.nextElementSibling.textContent = i.value; paintRange(i); f(+i.value); }; i.onchange = commit; };
+  if (k === 'double') { const dx = S.P.dx;
+    $('#fxPick').onclick = dxPickGallery;
+    $$('#fxMode button').forEach(b => b.onclick = () => { dx.mode = b.dataset.m; dxChanged(); commit(); setTab('fx', true); });
+    $$('#fxWho button').forEach(b => b.onclick = () => { dx.who = b.dataset.w; dxChanged(); commit(); setTab('fx', true); });
+    $$('#fxBg [data-c]').forEach(b => b.onclick = () => { dx.bg = b.dataset.c; $$('#fxBg [data-c]').forEach(x => x.classList.toggle('on', x === b)); dxChanged(); commit(); });
+    const ci = $('#fxColor'); if (ci) ci.onchange = () => { dx.bg = ci.value; dxChanged(); commit(); setTab('fx', true); };
+    const iv = $('#fxInv'); if (iv) iv.onclick = () => { dx.inv = !dx.inv; dxChanged(); commit(); buzz(4); };
+    rng('#fxSl', v => { dx.mode === 'blend' ? dx.mix = v / 100 : dx.th = v / 100; dxChanged(); }); if ($('#fxBg')) hscroll($('#fxBg')); }
+  if (k === 'dither' || k === 'pixel') { const st = S.P.style, dith = k === 'dither';
+    $$('#fxPal [data-p]').forEach(b => b.onclick = () => { const q = b.dataset.p; st.pn = q; st.pal = dith ? (q === 'photo' ? photoPal(2) : DPALS[q]) : photoPal(+q.replace('photo', '') || 6); $$('#fxPal [data-p]').forEach(x => x.classList.toggle('on', x === b)); renderEd(true); commit(); buzz(4); });
+    rng('#fxCells', v => { st.cells = v; renderEd(); }); rng('#fxLev', v => { st.levels = v; renderEd(); }); hscroll($('#fxPal')); }
+  if (k === 'frame') { const fo = S.P.fo;
+    $$('#fxAr button').forEach(b => b.onclick = () => { fo.ar = +b.dataset.a; $$('#fxAr button').forEach(x => x.classList.toggle('on', x === b)); layoutEditor(); renderEd(true); commit(); buzz(4); });
+    rng('#fxPad', v => { fo.pad = 1 - v / 100; layoutEditor(); renderEd(true); }); }
 }
 function photoPal(n) { const P = JSON.parse(JSON.stringify(S.P)); P.style = null; P.grain = 0; utilRender(srcOf(S.cur, S.P), P, 60, 75, {}); return kmeans(util.e.pixels(), n).map(c => '#' + rgbOf(c).map(v => v.toString(16).padStart(2, '0')).join('')); }
 const DPALS = { amber: ['#0B0C0E', '#F5C542'], lime: ['#050505', '#D4FF3A'], paper: ['#1b1a18', '#F2EFE8'], ir: ['#1a0d2e', '#ff4f8b'] };
@@ -2260,7 +2411,7 @@ function openFs() {
   const v = $('#fsView'), cv = $('#fsCanvas'), phone = $('#phone'), dpr = Math.min(2, devicePixelRatio || 1);
   const ar = S.P.crop.ar || S.cur.src.width / S.cur.src.height, W = phone.clientWidth, H = phone.clientHeight;
   let w = W, h = W / ar; if (h > H) { h = H; w = H * ar; }
-  const paint = byp => { const fr = S.P.frame === 'glow' && !byp, k = fr ? .72 : 1, o0 = utilRender(srcOf(S.cur, S.P), S.P, Math.round(w * k * dpr), Math.round(h * k * dpr), edOpts({ bypass: byp })), o = fr ? framed(copyCanvas(o0), S.P) : o0; cv.width = o.width; cv.height = o.height; cv.getContext('2d').drawImage(o, 0, 0); };
+  const paint = byp => { const fr = S.P.frame === 'glow' && !byp, k = fr ? (S.P.fo ? S.P.fo.pad : .72) : 1, o0 = utilRender(srcOf(S.cur, S.P), S.P, Math.round(w * k * dpr), Math.round(h * k * dpr), edOpts({ bypass: byp })), o = fr ? framed(copyCanvas(o0), S.P) : o0; cv.width = o.width; cv.height = o.height; cv.getContext('2d').drawImage(o, 0, 0); };
   cv.style.width = w + 'px'; cv.style.height = h + 'px'; paint(false); $('#fsHint').textContent = '';
   v.hidden = false; spring(0, 1, t => { v.style.opacity = Math.min(1, t * 1.3); cv.style.transform = `scale(${.92 + .08 * t})`; }, { k: 220, c: 24 });
   let hold = 0, held = false;
@@ -2418,10 +2569,11 @@ function openDxSheet() {
 function kmeansOf(src, n) { utilRender(src, DEF(), 48, 60, { bypass: true }); return kmeans(util.e.pixels(), n).map(c => '#' + rgbOf(c).map(v => v.toString(16).padStart(2, '0')).join('')); }
 function dxPickGallery() {
   const list = S.photos.filter(p => p !== S.cur);
-  openActs(`<h4>Druhá fotka</h4><div class="grid2">${list.map(p => `<button data-id="${p.id}" style="padding:4px"><img src="${p.thumb}" alt="" style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:10px"></button>`).join('')}</div>`, root => {
-    $$('[data-id]', root).forEach(b => b.onclick = () => { closeActs(); S.P.dx.other = +b.dataset.id; dxChanged(); commit(); openDxSheet(); buzz(6); }); });
+  openActs(`<h4>Druhá fotka</h4>${actBtn('shoot', 'camera', 'Vyfotit druhou expozici')}<div class="grid2">${list.map(p => `<button data-id="${p.id}" style="padding:4px"><img src="${p.thumb}" alt="" style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:10px"></button>`).join('')}</div>`, root => {
+    $('[data-a=shoot]', root).onclick = () => { closeActs(); S.dxReturn = S.cur.id; go('camera'); $('#camBanner').hidden = false; };
+    $$('[data-id]', root).forEach(b => b.onclick = () => { closeActs(); S.P.dx.other = +b.dataset.id; dxChanged(); commit(); S.fxOpen = 'double'; setTab('fx', true); buzz(6); }); });
 }
-function useDxOther(ph) { const cur = S.cur; S.dxReturn = null; if (stack[stack.length - 1] === 'editor') stack.pop(); go('editor', { back: true, onShown: () => { if (S.cur !== cur) return; S.P.dx.other = ph.id; dxChanged(); commit(); setTimeout(openDxSheet, 120); } }); }
+function useDxOther(ph) { const cur = S.cur; S.dxReturn = null; $('#camBanner').hidden = true; if (stack[stack.length - 1] === 'editor') stack.pop(); go('editor', { back: true, onShown: () => { if (S.cur !== cur) return; S.P.dx.other = ph.id; dxChanged(); commit(); S.fxOpen = 'double'; setTab('fx', true); } }); }
 
 /* =====================================================================
    Recepty: uložený vzhled (film + grain + úpravy), sdílení odkazem a QR
@@ -2466,8 +2618,7 @@ function smoothOpen(pts, t = .2) { let d = `M${f2(pts[0][0])} ${f2(pts[0][1])}`;
     d += `C${f2(p1[0] + (p2[0] - p0[0]) * t)} ${f2(p1[1] + (p2[1] - p0[1]) * t)} ${f2(p2[0] - (p3[0] - p1[0]) * t)} ${f2(p2[1] - (p3[1] - p1[1]) * t)} ${f2(p2[0])} ${f2(p2[1])}`; }
   return d; }
 function blobPath(b, cx = 50, cy = 50, R = 40) {
-  if (b.pts) { const xs = b.pts.map(p => p[0]), ys = b.pts.map(p => p[1]), x0 = Math.min(...xs), y0 = Math.min(...ys), k = 2 * R / Math.max(Math.max(...xs) - x0, Math.max(...ys) - y0), w = (Math.max(...xs) - x0) * k, h = (Math.max(...ys) - y0) * k;
-    return smoothClosed(b.pts.map(p => [cx - w / 2 + (p[0] - x0) * k, cy - h / 2 + (p[1] - y0) * k])); }
+  if (b.pts) return smoothClosed(b.pts); // nakreslený tvar zůstává přesně tam, kde jsi ho nakreslil
   const r = rng(b.s * 97 + 3), N = Math.max(8, b.n * 2), ph = r() * 6.28, pts = [];
   for (let i = 0; i < N; i++) { const a = i / N * Math.PI * 2, k = 1 + Math.sin(a * b.n + ph) * b.a + (r() - .5) * b.a * .7; pts.push([cx + Math.cos(a) * R * k, cy + Math.sin(a) * R * k]); }
   return smoothClosed(pts);
@@ -2545,10 +2696,14 @@ function selectShape(i) {
   if (blobby(from) && blobby(SHAPES[i])) { morphBlob(from); return; }
   drawBlob(); spring(.94, 1, v => $('#bCard').style.transform = `scale(${v})`, { k: 300, c: 16 });
 }
-function diceShape() {
-  const kinds = ['blob', 'blob', 'splat', 'star', 'sparkle', 'flower', 'stars', 'dots', 'flowers', 'sparkles', 'waves'];
-  const sh = { k: kinds[Math.floor(Math.random() * kinds.length)], s: 1 + Math.floor(Math.random() * 9999), n: 3 + Math.floor(Math.random() * 6), a: .1 + Math.random() * .3 };
-  SHAPES.push(sh); renderShapes(); selectShape(SHAPES.length - 1); const row = $('#bShapes'); row.scrollLeft = row.scrollWidth;
+function diceShape() { // kostka: jeden „náhodný“ slot, náhodný tvar i nastavení; líbí-li se, ulož ho jako preset
+  const kinds = ['blob', 'blob', 'splat', 'star', 'sparkle', 'flower', 'stars', 'dots', 'flowers', 'sparkles', 'waves'], rnd = a => a[Math.floor(Math.random() * a.length)];
+  const sh = { k: rnd(kinds), s: 1 + Math.floor(Math.random() * 9999), n: 3 + Math.floor(Math.random() * 6), a: .1 + Math.random() * .25, rnd: true };
+  let i = SHAPES.findIndex(x => x.rnd); if (i < 0) { SHAPES.push(sh); i = SHAPES.length - 1; } else SHAPES[i] = sh;
+  Object.assign(B, { inv: Math.random() < .3, dis: Math.random() < .35 ? +(.15 + Math.random() * .45).toFixed(2) : 0, blend: rnd(['normal', 'normal', 'screen', 'glow']), size: +(.75 + Math.random() * .3).toFixed(2), bg: Math.floor(Math.random() * 5) });
+  renderShapes(); syncBlobCtl(); B.shape = i; $$('#bShapes [data-i]').forEach(x => x.classList.toggle('on', +x.dataset.i === i)); drawPal(); buzz(8);
+  spring(.94, 1, v => $('#bCard').style.transform = `scale(${v})`, { k: 300, c: 16 });
+  const btn = $(`#bShapes [data-i="${i}"]`); if (btn) btn.scrollIntoView({ inline: 'nearest', block: 'nearest' });
 }
 function drawPal() {
   const pal = [...B[B.palMode], ...B.custom]; B.bg = clamp(B.bg, 0, pal.length - 1);
@@ -2596,14 +2751,18 @@ function blobGestures() {
     if (a[1] && base.d) B.sc = clamp(base.sc * Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]) / base.d, .5, 4);
     B.ox = base.ox + (cx - base.cx) * k; B.oy = base.oy + (cy - base.cy) * k;
     if (!raf) raf = requestAnimationFrame(() => { raf = 0; placeImg(); }); });
-  const end = e => { if (ptrs.has(e.pointerId)) { ptrs.delete(e.pointerId); if (ptrs.size) rebase(); }
+  let lastTap = 0, downAt = 0, downXY = [0, 0];
+  el.addEventListener('pointerdown', e => { downAt = performance.now(); downXY = [e.clientX, e.clientY]; });
+  const recenter = () => { const f = { ox: B.ox, oy: B.oy, sc: B.sc }; spring(0, 1, t => { B.ox = lerp(f.ox, 0, t); B.oy = lerp(f.oy, 0, t); B.sc = lerp(f.sc, 1, t); placeImg(); }, { k: 220, c: 26 }); buzz(6); };
+  const end = e => { if (!B.drawing && ptrs.size === 1 && performance.now() - downAt < 250 && Math.hypot(e.clientX - downXY[0], e.clientY - downXY[1]) < 8) { const n = performance.now(); if (n - lastTap < 320) { recenter(); lastTap = 0; } else lastTap = n; } // dvojťuk = vycentrovat
+    if (ptrs.has(e.pointerId)) { ptrs.delete(e.pointerId); if (ptrs.size) rebase(); }
     if (!B.drawing || !pts) return; B.drawing = false; el.classList.remove('drawing'); const raw = pts; pts = null;
     if (raw.length < 10) { drawBlob(); toast('Tvar je moc malý, zkus to znovu přes +'); return; }
     raw.push(raw[0]); // konec se napojí na začátek
     let L = 0; const acc = [0]; for (let i = 1; i < raw.length; i++) { L += Math.hypot(raw[i][0] - raw[i - 1][0], raw[i][1] - raw[i - 1][1]); acc.push(L); }
     const N = 40; let out = []; for (let j = 0; j < N; j++) { const t = j / N * L; let i = acc.findIndex(v => v >= t); i = Math.max(1, i); const f = (t - acc[i - 1]) / ((acc[i] - acc[i - 1]) || 1); out.push([lerp(raw[i - 1][0], raw[i][0], f), lerp(raw[i - 1][1], raw[i][1], f)]); }
     for (let it = 0; it < 3; it++) out = out.map((p, i) => { const q0 = out[(i - 1 + N) % N], q1 = out[(i + 1) % N]; return [(q0[0] + 2 * p[0] + q1[0]) / 4, (q0[1] + 2 * p[1] + q1[1]) / 4]; }); // vyhlazení dokola, bez zubů na spoji
-    SHAPES.push({ k: 'draw', pts: out }); renderShapes(); selectShape(SHAPES.length - 1); buzz(12); toast('Vlastní tvar přidaný'); };
+    B.size = 1; syncBlobCtl(); SHAPES.push({ k: 'draw', pts: out }); renderShapes(); selectShape(SHAPES.length - 1); buzz(12); toast('Vlastní tvar přidaný'); };
   el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
   el.addEventListener('wheel', e => { e.preventDefault(); B.sc = clamp(B.sc * (1 - e.deltaY * .0015), .5, 4); placeImg(); }, { passive: false });
   $$('.lbl span').forEach(s => { s.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); s.blur(); } }); s.addEventListener('focus', () => toast('Přepiš text a potvrď Enterem')); });
@@ -2675,7 +2834,7 @@ function navTo(k) {
   if (k === 'advanced') editorWith(() => { if (!S.adv) toggleAdv(); });
   if (k === 'crop') editorWith(() => { if (S.adv) toggleAdv(); setTab('crop'); });
   if (k === 'scan') editorWith(() => { if (S.adv) toggleAdv(); setTab('fx'); setTimeout(openRef, 380); });
-  if (k === 'double') editorWith(() => { if (S.adv) toggleAdv(); setTab('fx'); setTimeout(openDxSheet, 380); });
+  if (k === 'double') editorWith(() => { if (S.adv) toggleAdv(); setTab('fx'); setTimeout(() => openFx('double'), 380); });
   if (k === 'styles') editorWith(() => { if (S.adv) toggleAdv(); setTab('fx'); });
   if (k === 'gallery') { go('gallery'); stack.length = 0; stack.push('camera'); }
   if (k === 'blob') { S.blobFrom = S.blobFrom || S.photos[0]; go('blob'); stack.length = 0; stack.push('gallery'); }
@@ -2688,8 +2847,9 @@ function setView(v) {
   if (v === 'pc') { if (INTRO) INTRO.kill(); stopCam(); openPc(); } else if (S.screen === 'camera') startCam();
   fit(); syncNav();
 }
+const isMobile = () => matchMedia('(max-width:700px),(pointer:coarse)').matches; // telefon i na šířku zůstane v mobilním rozložení
 function fit() {
-  if (innerWidth > 700) {
+  if (!isMobile()) {
     const st = $('#stage'), W = st.clientWidth, H = st.clientHeight;
     $('#device').style.transform = `translate(-50%,-50%) scale(${Math.min(1, (H - 48) / 868, (W - 48) / 414)})`;
     $('#pcwrap').style.transform = `translate(-50%,-50%) scale(${Math.min(1, (W - 48) / 1440, (H - 48) / 900)})`;
@@ -2718,7 +2878,10 @@ function boot2(h) {
   if (camE.dead) document.body.insertAdjacentHTML('beforeend', '<p style="position:fixed;inset:auto 0 20px;text-align:center;color:#efa73b">Tenhle prohlížeč neumí WebGL2, náhled filmu nepoběží.</p>');
   store.get('scans', []).forEach(addFilm);
   if (!FILM[S.film]) S.film = 'P400';
-  initLive(); seedPhotos(); dbLoad(); buildCarousel(); buildShutter(); setFilm(S.film);
+  initLive(); seedPhotos();
+  const sd = store.get('dispo', null); if (sd) S.dispo = Object.assign(sd, { shots: [] });
+  store.get('rolls', []).reverse().forEach(r => ROLLS.unshift(Object.assign(r, { shots: [] })));
+  dbLoad(); buildCarousel(); buildShutter(); setFilm(S.film);
   const iso = isoApi = dial($('#isoDial'), ISO_STOPS, S.isoIdx, 124, i => { S.isoIdx = i; updLcd(); });
   const tim = timApi = dial($('#timeDial'), TIME_STOPS, S.timeIdx, 124, i => { S.timeIdx = i; updLcd(); }, 1);
   const ev = evStrip(); evApi = ev; zoomApi = zoomStrip(); updLcd();
@@ -2742,8 +2905,13 @@ function boot2(h) {
   $('#selCancel').onclick = endSelect; $('#selGo').onclick = () => { const list = S.photos.filter(p => S.sel.has(p.id)); endSelect(); showArch(list, 'VÝBĚR', list[0].film); };
   $('#gAdd').onclick = galleryAdd; $('#scrim').onclick = closeActs; sheetDrag($('#actSheet'));
   $('#fileImport').onchange = e => { importFiles([...e.target.files]); e.target.value = ''; };
+  $('#camBannerBack').onclick = () => { S.dxReturn = null; $('#camBanner').hidden = true; goBack(); };
   document.addEventListener('pointerdown', () => { lastAct = performance.now(); }, true);
   document.addEventListener('contextmenu', e => { if (!e.target.closest('input,[contenteditable]')) e.preventDefault(); });
+  document.addEventListener('pointerdown', e => { const rg = e.target.closest && e.target.closest('input[type=range]'); if (!rg) return; e.preventDefault(); rg.setPointerCapture(e.pointerId);
+    const set = ev => { const b = rg.getBoundingClientRect(), k = clamp((ev.clientX - b.left - 6) / (b.width - 12), 0, 1), mn = +rg.min, mx = +rg.max, st = +rg.step || 1, v = Math.round((mn + k * (mx - mn)) / st) * st; if (+rg.value !== v) { rg.value = v; rg.dispatchEvent(new Event('input', { bubbles: true })); } };
+    set(e); const mv = ev => set(ev), up = () => { rg.removeEventListener('pointermove', mv); rg.removeEventListener('pointerup', up); rg.removeEventListener('pointercancel', up); rg.dispatchEvent(new Event('change', { bubbles: true })); };
+    rg.addEventListener('pointermove', mv); rg.addEventListener('pointerup', up); rg.addEventListener('pointercancel', up); }, true);
   setCollapsed(!!S.collapsed, true); updFmt(); layoutVf();
   $('#navlist').innerHTML = NAV.map(([k, l, ic]) => `<button data-k="${k}">${iconSVG(ic)}${l}</button>`).join('');
   $$('#navlist button').forEach(b => b.onclick = () => navTo(b.dataset.k));
@@ -2778,11 +2946,13 @@ function boot2(h) {
       miniEyes.look(((e.clientX - r.left) / r.width - .5) * 2, ((e.clientY - r.top) / r.height - .5)); setTimeout(() => miniEyes.look(0, 0), 1200); buzz(4); });
     vf.addEventListener('wheel', e => { e.preventDefault(); S.zoom = clamp(S.zoom * (1 - e.deltaY * .0015), 1, 5); zoomApi.sync(); syncZoomBtns(); }, { passive: false }); })();
   // menu
-  $('#menuGrid').innerHTML = [['gallery', 'Galerie', 'gallery'], ['dbl', 'Double ve foťáku', 'double'], ['dispo', 'Jednorázovka', 'film'], ['about', 'O appce', 'info'], ['intro', 'Intro znovu', 'eye'], ['reset', 'Reset koleček', 'undo']].map(([k, l, ic]) => `<button data-k="${k}">${iconSVG(ic)}${l}</button>`).join('');
+  $('#menuGrid').innerHTML = [['gallery', 'Galerie', 'gallery'], ['films', 'Moje filmy', 'film'], ['dbl', 'Double ve foťáku', 'double'], ['dispo', 'Jednorázovka', 'clock'], ['demo', 'DEMO scéna', 'camera'], ['about', 'O appce', 'info']].map(([k, l, ic]) => `<button data-k="${k}">${iconSVG(ic)}${l}</button>`).join('');
   $$('#menuGrid button').forEach(b => b.onclick = () => { sheet($('#menuSheet'), false); const k = b.dataset.k;
     if (k === 'reset') { S.isoIdx = 0; S.timeIdx = 0; iso.set(0); tim.set(0); ev.reset(); updLcd(); toast('Kolečka na výchozích hodnotách'); return; }
     if (k === 'dbl') { S.dbl = !S.dbl; S.dblFirst = null; showGhost(null); updFmt(); buzz(6); toast(S.dbl ? 'Double: první snímek zůstane v hledáčku, druhý se přes něj prolne' : 'Double vypnutý'); return; }
     if (k === 'dispo') { setTimeout(dispoPick, 200); return; }
+    if (k === 'films') { setTimeout(() => go('films'), 120); return; }
+    if (k === 'demo') { if (CAM.live) { liveOff(); store.set('cam', false); toast('DEMO scéna, kameru zapneš ikonou v hledáčku'); } else toast('Už běží DEMO scéna'); return; }
     setTimeout(() => navTo(k), 120); });
   $('#menuBtn').onclick = () => sheet($('#menuSheet'), true);
   $('#mClose').onclick = () => sheet($('#menuSheet'), false);
@@ -2793,7 +2963,7 @@ function boot2(h) {
   $$('#eTabs button').forEach(b => b.onclick = () => { if (S.adv) { S.adv = false; $('#advKnob').classList.remove('on'); } setTab(b.dataset.t); syncNav(); });
   $('#advSw').onclick = () => { toggleAdv(); syncNav(); };
   $('#undoBtn').onclick = undo; $('#redoBtn').onclick = redo; $('#resetBtn').onclick = resetAll;
-  $('#expBtn').onclick = () => toast('Export v plném rozlišení přijde ve fázi 3');
+  $('#expBtn').onclick = exportPhoto;
   $('#fsBtn').onclick = openFs;
   $('#refClose').onclick = () => { sheet($('#refSheet'), false); setTab(S.tab, true); };
   $$('#refMethod button').forEach(b => b.onclick = () => { $$('#refMethod button').forEach(x => x.classList.toggle('on', x === b)); toast(b.dataset.m === 'r' ? 'Reinhard: průměr a odchylka barev v Lab' : 'Pitié IDT + regrain: přesnější, pomalejší'); });
@@ -2829,6 +2999,7 @@ function boot2(h) {
   else if (h && NAV.some(n => n[0] === h) && h !== 'intro') { startCam(); navTo(h); }
   else if (h === 'intro') playIntro();
   else if (!INTRO) startCam();
+  if (store.get('cam', false)) setTimeout(() => { if (!CAM.live) liveOn(); }, h ? 300 : 2900); // povolení si pamatuje prohlížeč, appka si pamatuje, že ho chceš
 }
 (document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 900))]) : Promise.resolve()).then(boot);
 </script>
