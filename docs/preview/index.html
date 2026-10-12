@@ -27,6 +27,9 @@
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:10px;border:3px solid transparent;background-clip:padding-box}
 ::-webkit-scrollbar-thumb:hover{background-color:rgba(255,196,61,.45)}
 ::-webkit-scrollbar-button{display:none;height:0;width:0}
+*{-webkit-touch-callout:none}
+img,canvas,svg{-webkit-user-drag:none;user-select:none}
+[contenteditable],input[type=text],input:not([type]){-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 html,body{height:100%;margin:0;background:var(--ink);color:var(--fg);font-family:var(--f-ui);font-size:14px;overflow:hidden;
   touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-text-size-adjust:100%}
 [hidden]{display:none!important}
@@ -81,7 +84,8 @@ a{color:var(--amber)}
 .pt{padding-top:50px}
 @media (max-width:700px){.pt{padding-top:env(safe-area-inset-top,0px)}}
 .pb{padding-bottom:max(14px,env(safe-area-inset-bottom,0px))}
-.top{height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 14px;gap:6px}
+.top{height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 14px;gap:6px}
+.top .title{flex:1;text-align:center}
 .ib{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;color:#b4aca2;flex:none;transition:transform .15s}
 .ib:active{transform:scale(.9)}
 .ib.tile{background:var(--panel)}
@@ -89,6 +93,28 @@ a{color:var(--amber)}
 .toast{position:absolute;left:50%;bottom:120px;transform:translateX(-50%);background:rgba(30,27,24,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border:1px solid var(--line);padding:10px 16px;border-radius:14px;font-size:13px;z-index:95;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .25s;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis}
 .toast.show{opacity:1}
+.toast.act{pointer-events:auto;display:flex;align-items:center;gap:14px;padding:6px 6px 6px 16px}
+.toast button{padding:6px 12px;border-radius:9px;background:var(--lcd);color:var(--lcd-ink);font-weight:600;font-size:12.5px}
+.scrim{position:absolute;inset:0;z-index:84;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .25s}
+.scrim.on{opacity:1;pointer-events:auto}
+#actSheet{z-index:86}
+.acts{padding:2px 14px 6px;display:flex;flex-direction:column;gap:6px}
+.acts h4{margin:0 4px 6px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.16em;color:var(--mute);font-weight:500;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.acts h4 img{width:36px;height:36px;border-radius:9px;object-fit:cover}
+.acts button{display:flex;align-items:center;gap:12px;height:50px;padding:0 14px;border-radius:15px;background:var(--panel);border:1px solid var(--line);font-size:14px;color:var(--fg);text-align:left}
+.acts button .px{color:#9b9288}
+.acts button.danger{color:#ff7a6b}
+.acts button.danger .px{color:#ff7a6b}
+.acts .grid2{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.acts .grid2 button{height:auto;flex-direction:column;gap:6px;padding:10px 0;font-family:var(--f-mono);font-size:10.5px;align-items:center}
+.acts .grid2 svg{width:44px;height:44px}
+.dev{position:absolute;inset:0;z-index:85;background:#0b0806;display:flex;flex-direction:column;padding:60px 14px 24px;gap:14px}
+.dev h3{margin:0;text-align:center;font-family:var(--f-dot);font-weight:900;font-size:26px;color:var(--amber);filter:var(--glow);letter-spacing:.06em}
+.dev p{margin:0;text-align:center;font-family:var(--f-mono);font-size:11px;color:var(--mute);letter-spacing:.1em}
+.dev .dg{flex:1;display:grid;grid-template-columns:repeat(2,1fr);gap:8px;overflow:auto;align-content:start}
+.dev img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:10px;filter:sepia(1) saturate(2.4) hue-rotate(-18deg) brightness(.16) contrast(.7) blur(5px);transition:filter 2.6s cubic-bezier(.4,0,.2,1)}
+.dev img.done{filter:none}
+
 .intro{position:absolute;inset:0;width:100%;height:100%;z-index:80;display:block;touch-action:none;cursor:pointer}
 
 /* ---------- kamera ---------- */
@@ -124,7 +150,15 @@ a{color:var(--amber)}
 .slowbar i{display:block;width:70px;height:3px;border-radius:2px;background:#3a332b;overflow:hidden;flex:none}
 .slowbar i b{display:block;height:100%;width:0;background:var(--amber)}
 
-.lcd{margin:10px 12px 0;border-radius:18px;background:linear-gradient(180deg,var(--lcd-hi),var(--lcd));color:var(--lcd-ink);padding:10px 16px 9px;flex:none;position:relative;
+.camhandle{flex:none;height:22px;display:grid;place-items:center;touch-action:none;cursor:pointer}
+.camhandle i{display:block;width:34px;height:4px;border-radius:2px;background:#3d3731;transition:background .2s,width .2s}
+.camhandle:hover i{background:var(--amber);width:42px}
+.camctl{flex:none;overflow:hidden;overflow:clip}
+.fmtmask{position:absolute;inset:0;pointer-events:none;transition:opacity .3s}
+.fmtmask i{position:absolute;box-shadow:0 0 0 2000px rgba(6,5,4,.62);border:1px solid rgba(255,255,255,.28);border-radius:6px;transition:all .45s cubic-bezier(.3,1.3,.5,1)}
+.halfbadge{position:absolute;top:56px;right:14px;padding:5px 9px;border-radius:9px;background:rgba(10,9,8,.6);font-family:var(--f-mono);font-size:10.5px;color:var(--amber)}
+#pTime{width:62px}
+.lcd{margin:0 12px;border-radius:18px;background:linear-gradient(180deg,var(--lcd-hi),var(--lcd));color:var(--lcd-ink);padding:10px 16px 9px;flex:none;position:relative;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -2px 6px rgba(120,60,0,.25),0 8px 24px rgba(239,167,59,.12)}
 .lcd::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:.22;
   background-image:radial-gradient(rgba(60,30,0,.5) .6px,transparent .7px);background-size:3px 3px}
@@ -156,7 +190,7 @@ a{color:var(--amber)}
 .evstrip .t::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,#d8d0c5 0 2px,transparent 2px 27px)}
 .evstrip .c{position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--amber);filter:var(--glow)}
 
-.bottom{flex:none;height:96px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 22px}
+.bottom{flex:none;height:100px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 22px}
 .shutter{width:76px;height:76px;border-radius:50%;background:#f3eee6;position:relative;box-shadow:0 0 0 4px #0a0908,0 0 0 6px #3b3631;transition:transform .12s}
 .shutter:active{transform:scale(.93)}
 .shutter svg{position:absolute;inset:-8px;width:92px;height:92px;transform:rotate(-90deg);pointer-events:none}
@@ -181,6 +215,9 @@ a{color:var(--amber)}
 .citem span{font-family:var(--f-mono);font-size:10px;color:var(--mute);letter-spacing:.06em}
 .citem.on span{color:var(--fg)}
 .fdesc{text-align:center;font-size:12px;color:var(--mute);padding:0 30px;height:36px;line-height:1.45;overflow:hidden}
+.flegend{text-align:center;font-size:10.5px;color:var(--dim);padding:6px 30px 0;line-height:1.4}
+.fmtrow{display:flex;justify-content:center;margin-top:12px}
+.filmchip .dispo{color:var(--amber)}
 .closebtn{display:grid;place-items:center;margin:8px auto 0;width:40px;height:40px;border-radius:50%;background:#f3eee6;color:#111}
 .menu{padding:4px 16px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .menu button{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:12px;color:#d6cec3}
@@ -196,7 +233,6 @@ a{color:var(--amber)}
 .fsbtn{position:absolute;top:8px;right:14px;width:36px;height:36px;border-radius:12px;background:rgba(10,9,8,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#d0c8be;z-index:3}
 .badge{position:absolute;top:12px;left:50%;transform:translateX(-50%);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.2em;padding:5px 10px;border-radius:8px;background:rgba(0,0,0,.6);color:#fff;opacity:0;transition:opacity .15s;pointer-events:none;z-index:3}
 .badge.show{opacity:1}
-.hint{position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:11px;color:var(--dim);pointer-events:none}
 .epanel{flex:none;min-height:0;overflow:hidden;overflow:clip;position:relative}
 .ftabs{flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid #1c1a17;padding-top:6px}
 .ftabs button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;color:var(--dim);padding:4px 0}
@@ -298,6 +334,11 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 .refrow canvas{width:100%;aspect-ratio:4/5;border-radius:14px;display:block}
 .refrow figcaption{font-size:10.5px;color:var(--mute);margin-top:6px;font-family:var(--f-mono);letter-spacing:.08em}
 .refrow .arrow{color:var(--amber);font-family:var(--f-dot);font-size:22px;font-weight:900}
+.refpick{display:flex;gap:8px;overflow-x:auto;padding:0 18px 12px}
+.refpick button,.refpick label{flex:none;width:52px;height:52px;border-radius:12px;overflow:hidden;border:2px solid transparent;background:var(--panel);display:grid;place-items:center;cursor:pointer;color:var(--mute);font-size:20px;position:relative}
+.refpick img{width:100%;height:100%;object-fit:cover;display:block}
+.refpick .on{border-color:var(--amber)}
+.refpick input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .exports{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 18px 0}
 .exports button{padding:12px 4px;border-radius:14px;background:var(--panel);border:1px solid var(--line);font-family:var(--f-mono);font-size:12px}
 .exports button small{display:block;font-family:var(--f-ui);font-size:9.5px;color:var(--dim);margin-top:3px}
@@ -308,18 +349,21 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 #s-gallery{background:#050505}
 .gscroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 0 110px}
 .rolls{display:flex;gap:10px;overflow-x:auto;padding:6px 14px 14px}
-.roll{flex:none;width:136px;height:116px;border-radius:22px;position:relative;overflow:hidden;text-align:center;
+.roll{display:block;flex:none;width:136px;height:116px;border-radius:22px;position:relative;overflow:hidden;text-align:center;isolation:isolate;-webkit-mask-image:-webkit-radial-gradient(white,black);transform:translateZ(0);
   background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08)}
 .roll .glow{position:absolute;inset:-20%;filter:blur(18px);opacity:.75}
-.roll svg{position:relative;display:block;width:50px;height:50px;margin:8px auto 0;filter:drop-shadow(0 8px 10px rgba(0,0,0,.5))}
-.roll .glass{position:absolute;left:0;right:0;bottom:0;height:52px;backdrop-filter:blur(16px) saturate(1.3);-webkit-backdrop-filter:blur(16px) saturate(1.3);background:rgba(20,18,16,.35);border-top:1px solid rgba(255,255,255,.09);padding-top:9px}
+.roll svg{position:absolute;left:50%;top:8px;width:50px;height:50px;margin-left:-25px;filter:drop-shadow(0 8px 10px rgba(0,0,0,.5))}
+.roll .glass{position:absolute;left:0;right:0;bottom:0;height:52px;border-radius:0 0 21px 21px;backdrop-filter:blur(16px) saturate(1.3);-webkit-backdrop-filter:blur(16px) saturate(1.3);background:rgba(20,18,16,.35);border-top:1px solid rgba(255,255,255,.09);padding-top:9px}
 .roll b{display:block;font-size:11.5px;font-weight:500}
 .roll small{display:block;font-family:var(--f-mono);font-size:9.5px;color:#aaa197;margin-top:2px}
 .roll.lock small{color:var(--amber)}
-.masonry{columns:2;column-gap:8px;padding:0 10px}
+.masonry{columns:2;column-gap:8px;padding:0 14px}
 .gitem{break-inside:avoid;margin:0 0 8px;border-radius:16px;overflow:hidden;position:relative;display:block;width:100%}
 .gitem img{display:block;width:100%}
-.gitem span{position:absolute;left:8px;bottom:8px;font-family:var(--f-mono);font-size:9.5px;padding:3px 7px;border-radius:7px;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.gitem span{position:absolute;left:10px;bottom:10px;line-height:1.2;font-family:var(--f-mono);font-size:9.5px;padding:3px 7px;border-radius:7px;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.gitem{transition:transform .25s cubic-bezier(.3,1.5,.5,1),opacity .25s}
+.gitem.press{transform:scale(.95)}
+.gitem.gone{transform:scale(.6);opacity:0}
 .gitem.new{animation:pop .6s cubic-bezier(.2,1.4,.4,1)}
 @keyframes pop{from{transform:scale(.6);opacity:0}}
 .search{position:absolute;left:14px;right:14px;bottom:max(18px,env(safe-area-inset-bottom,0px));height:52px;border-radius:26px;display:flex;align-items:center;gap:10px;padding:0 10px 0 16px;z-index:5;
@@ -349,6 +393,19 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 .shapes button.on{background:rgba(27,26,24,.08)}
 .shapes svg{width:40px;height:40px}
 .bctl{display:flex;justify-content:center;gap:10px;align-items:center;margin-top:4px}
+.bcard canvas{position:absolute;inset:0;width:100%;height:100%}
+.dxrow{display:grid;grid-template-columns:62px 1fr;align-items:center;gap:8px;padding:4px 16px}
+.dxrow b{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.12em;color:#5b5650;font-weight:500}
+.dxpick{display:flex;gap:6px;overflow-x:auto;padding:2px 0}
+.dxpick button{flex:none;width:44px;height:44px;border-radius:10px;overflow:hidden;border:2px solid transparent}
+.dxpick button.on{border-color:var(--paper-ink)}
+.dxpick img{width:100%;height:100%;object-fit:cover;display:block}
+#s-blob .srow{color:#3a3732;padding:0 16px;grid-template-columns:62px 1fr 40px}
+#s-blob .srow span{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.12em;color:#5b5650}
+#s-blob .srow output{color:var(--paper-ink)}
+#s-blob input[type=range]{--trk:linear-gradient(90deg,rgba(27,26,24,.25) var(--lo),var(--paper-ink) var(--lo),var(--paper-ink) var(--hi),rgba(27,26,24,.25) var(--hi))}
+#s-blob input[type=range]::-webkit-slider-thumb{background:var(--paper-ink);box-shadow:0 0 0 3px var(--paper)}
+.bscroll{flex:1;overflow-y:auto;min-height:0;padding-bottom:10px}
 #s-blob .seg{background:rgba(255,255,255,.6);border-color:rgba(0,0,0,.08)}
 #s-blob .seg button{color:#5b5650}
 #s-blob .seg button.on{background:var(--paper-ink);color:var(--paper)}
@@ -445,10 +502,13 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
               <button class="pill livepill" id="liveBtn"><i></i><span id="liveTxt">DEMO</span></button>
               <div class="grp"><button class="ib" id="tFlash" data-ic="flash" aria-label="Blesk"></button><button class="ib" id="tFlip" data-ic="flip" aria-label="Otočit kameru"></button></div>
             </div>
+            <div class="fmtmask" id="fmtMask"><i id="fmtBox"></i></div>
+            <div class="halfbadge" id="halfBadge" hidden>HALF · 1/2</div>
             <div class="pills">
               <span class="pill" id="pIso">ISO 400</span>
               <span class="zoomgrp" id="zoomGrp"><button data-z=".5">0,5×</button><button data-z="1" class="on">1×</button><button data-z="2">2×</button></span>
               <span class="pill" id="pEv">EV ±0</span>
+              <span class="pill on" id="pTime" hidden>½ s</span>
             </div>
             <div class="focus" id="focus"></div>
             <div class="slowbar" id="slowBar" hidden><span id="slowTxt">STOPY</span><i><b id="slowProg"></b></i></div>
@@ -456,6 +516,8 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
             <div class="iris" id="iris"></div>
             <div class="flash" id="flash"></div>
           </div>
+          <button class="camhandle" id="camHandle" aria-label="Schovat nebo ukázat ovládání"><i></i></button>
+          <div class="camctl" id="camCtl">
           <div class="lcd" id="lcd">
             <div class="row1">
               <div><div class="v">f/1,8</div><div class="k">Clona</div></div>
@@ -479,6 +541,7 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
               <div class="dial" id="timeDial"></div>
             </div>
           </div>
+          </div>
           <div class="bottom pb">
             <button class="cassbtn" id="cassBtn" aria-label="Vybrat film"></button>
             <button class="shutter" id="shutter" aria-label="Spoušť"><svg viewBox="0 0 92 92"><circle id="shutRing" cx="46" cy="46" r="43" stroke-dasharray="270.2" stroke-dashoffset="270.2"/></svg></button>
@@ -489,6 +552,8 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
             <div class="fhead"><div class="code" id="fCode">P400</div><div class="sub" id="fSub"></div></div>
             <div class="carousel hs" id="carousel"></div>
             <div class="fdesc" id="fDesc"></div>
+            <div class="flegend">Číslo v kódu je citlivost ISO: vyšší = víc grainu a lepší do tmy.</div>
+            <div class="fmtrow"><div class="seg" id="fmtSeg"><button data-f="35" class="on">35 MM</button><button data-f="half">HALF</button><button data-f="66">6×6</button><button data-f="67">6×7</button></div></div>
             <button class="closebtn" id="fClose" aria-label="Zavřít"><svg class="px" viewBox="0 0 24 24" data-raw="down"></svg></button>
           </div>
           <div class="sheet" id="menuSheet">
@@ -503,7 +568,7 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
           <div class="top">
             <button class="ib tile" data-back aria-label="Zpět na kameru" data-ic="camera"></button>
             <span class="title">Galerie</span>
-            <button class="ib tile" id="gAdd" aria-label="Nová role" data-ic="plus"></button>
+            <button class="ib tile" id="gAdd" aria-label="Přidat" data-ic="plus"></button>
           </div>
           <div class="gscroll" id="gScroll">
             <div class="rolls hs" id="rolls"></div>
@@ -526,7 +591,6 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
             <div class="croplayer" id="cropLayer" hidden><div class="cropbox" id="cropBox"></div></div>
             <button class="ib fsbtn" id="fsBtn" data-ic="expand" aria-label="Celá obrazovka"></button>
             <div class="badge" id="beforeBadge">PŘED</div>
-            <div class="hint" id="eHint">Podrž fotku = před / po</div>
           </div>
           <div class="epanel" id="ePanel"></div>
           <nav class="ftabs pb" id="eTabs">
@@ -539,6 +603,7 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
             <div class="grab"></div>
             <div class="fhead" style="height:48px"><div class="code" style="font-size:22px">REFERENCE</div><div class="sub">tvoje fotka dostane barvy reference</div></div>
             <div class="refrow"><figure><canvas id="refA" width="160" height="200"></canvas><figcaption>REFERENCE</figcaption></figure><span class="arrow">→</span><figure><canvas id="refB" width="160" height="200"></canvas><figcaption>VÝSLEDEK</figcaption></figure></div>
+            <div class="refpick hs" id="refPick"></div>
             <div class="segrow"><div class="seg" id="refMethod"><button class="on" data-m="r">REINHARD</button><button data-m="i">IDT + REGRAIN</button></div></div>
             <div class="srow"><span>Síla přenosu</span><input type="range" id="refStr" min="0" max="100" value="80" data-def="0"><output id="refStrO">80</output></div>
             <div class="exports"><button data-x=".cube">.cube<small>DaVinci, Photoshop</small></button><button data-x="JSON">JSON<small>preset Qamery</small></button><button data-x="XMP">XMP<small>Lightroom</small></button></div>
@@ -553,11 +618,20 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
             <span class="title">Blob karta</span>
             <button class="ib" id="bRand" aria-label="Nový tvar" data-ic="dice"></button>
           </div>
-          <div class="bcard" id="bCard"><svg id="bSvg" viewBox="0 0 100 125" preserveAspectRatio="none"></svg><div class="lbl" id="bLbl"><span id="bL" contenteditable="true" spellcheck="false"></span><span id="bR" contenteditable="true" spellcheck="false"></span></div></div>
+          <div class="bscroll">
+          <div class="bctl" style="margin:0 0 10px"><div class="seg" id="bMode"><button data-m="blob" class="on">BLOB TVAR</button><button data-m="dx">DVOJEXPOZICE</button></div></div>
+          <div class="bcard" id="bCard"><svg id="bSvg" viewBox="0 0 100 125" preserveAspectRatio="none"></svg><canvas id="bDx" hidden></canvas><div class="lbl" id="bLbl"><span id="bL" contenteditable="true" spellcheck="false"></span><span id="bR" contenteditable="true" spellcheck="false"></span></div></div>
           <div class="palette" id="bPal"></div>
           <div class="bctl"><div class="seg" id="bPalSeg"><button data-p="pre">PALETA PŘED</button><button data-p="post" class="on">PO FILMU</button></div></div>
           <div class="shapes hs" id="bShapes"></div>
-          <div class="bctl pb"><button class="pbtn ghost" id="bPaper">Mřížka: zap</button><button class="pbtn" id="bShare">Sdílet kartu</button></div>
+          <div id="dxCtl" hidden>
+            <div class="dxrow"><b>SILUETA</b><div class="dxpick hs" id="dxA"></div></div>
+            <div class="dxrow"><b>VÝPLŇ</b><div class="dxpick hs" id="dxB"></div></div>
+            <label class="srow"><span>PRÁH</span><input type="range" id="dxTh" min="5" max="95" value="42" data-def="42"><output id="dxThO">42</output></label>
+            <div class="bctl" style="margin:2px 0 8px"><button class="pbtn ghost" id="dxInv" style="padding:8px 14px">Obrátit siluetu</button></div>
+          </div>
+          </div>
+          <div class="bctl pb" style="padding-top:8px"><button class="pbtn ghost" id="bPaper">Mřížka: zap</button><button class="pbtn" id="bShare">Sdílet kartu</button></div>
         </section>
 
         <!-- O APPCE -->
@@ -583,7 +657,10 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
           </div>
         </section>
 
-        <div class="fsview" id="fsView" hidden><canvas id="fsCanvas"></canvas><span>ŤUKNI = ZAVŘÍT · PODRŽ = PŘED</span></div>
+        <div class="scrim" id="scrim"></div>
+        <div class="sheet" id="actSheet"><div class="grab"></div><div class="acts" id="acts"></div></div>
+        <input type="file" id="fileImport" accept="image/*" multiple hidden>
+        <div class="fsview" id="fsView" hidden><canvas id="fsCanvas"></canvas><span id="fsHint"></span></div>
         <div class="toast" id="toast"></div>
       </div>
     </div>
@@ -643,7 +720,11 @@ function spring(from, to, onUpdate, { k = 180, c = 24, v = 0, onDone } = {}) {
 }
 function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 let toastT = 0;
-function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2400); }
+function toast(msg, act) {
+  const t = $('#toast'); t.classList.toggle('act', !!act); t.textContent = msg;
+  if (act) { const b = document.createElement('button'); b.textContent = act.label; b.onclick = () => { t.classList.remove('show'); act.fn(); }; t.appendChild(b); }
+  t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), act ? 4500 : 2400);
+}
 
 /** Vodorovné pásy: kolečko myši posouvá do stran, myší jde táhnout se setrvačností. */
 function hscroll(el) {
@@ -697,11 +778,15 @@ const ICONS = {
   eye:    ['', '', '...######...', '..#......#..', '.#...##...#.', '#...####...#', '.#...##...#.', '..#......#..', '...######...'],
   sharp:  ['', '.....#......', '....###.....', '...#####....', '..#######...', '.#########..', '...#####....', '...#####....', '...#####....'],
   sun:    ['', '.....#......', '..#..#..#...', '...#####....', '..#######...', '###.###.###.', '..#######...', '...#####....', '..#..#..#...', '.....#......'],
+  trash:  ['', '....####....', '.##########.', '', '..#......#..', '..#.#..#.#..', '..#.#..#.#..', '..#.#..#.#..', '..#.#..#.#..', '..#......#..', '...######...'],
+  sheet:  ['', '############', '#.##.##.##.#', '############', '#..#..#..#.#', '############', '', '############', '#.##.##.##.#', '############'],
   temp:   ['', '....##......', '...#..#.....', '...#..#.....', '...#..#.....', '...####.....', '..######....', '..######....', '...####.....'],
 };
-function iconSVG(name, cls = 'px') {
-  const rows = ICONS[name] || []; let d = '';
-  rows.forEach((r, y) => { for (let x = 0; x < r.length; x++) if (r[x] === '#') d += `M${x * 2} ${y * 2 + (rows.length < 12 ? 1 : 0)}h2v2h-2z`; });
+function iconSVG(name, cls = 'px') { // ikona se vždy opticky vycentruje v mřížce 12×12
+  const rows = ICONS[name] || []; let d = '', x0 = 12, x1 = -1, y0 = 12, y1 = -1;
+  rows.forEach((r, y) => { for (let x = 0; x < r.length; x++) if (r[x] === '#') { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); } });
+  const ox = Math.floor((12 - (x1 - x0 + 1)) / 2) - x0, oy = Math.floor((12 - (y1 - y0 + 1)) / 2) - y0;
+  rows.forEach((r, y) => { for (let x = 0; x < r.length; x++) if (r[x] === '#') d += `M${(x + ox) * 2} ${(y + oy) * 2}h2v2h-2z`; });
   return `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg>`;
 }
 function hydrateIcons(root = document) {
@@ -824,6 +909,14 @@ const SCENES = {
     for (let i = 0; i < 60; i++) { const a = r() * 7, d = r() * w * .06; g.fillStyle = r() < .5 ? '#7a4a10' : '#ffe08a'; g.fillRect(cx + Math.cos(a) * d, cy + Math.sin(a) * d, 3, 3); }
   },
 };
+SCENES.postava = (g, w, h, r) => {
+  g.fillStyle = lgrad(g, 0, h, [[0, '#cfd9e6'], [.55, '#f3dcc4'], [1, '#e9b48f']]); g.fillRect(0, 0, w, h);
+  g.globalCompositeOperation = 'lighter'; glow(g, w * .62, h * .3, w * .7, 'rgba(255,230,190,.5)'); g.globalCompositeOperation = 'source-over';
+  const P = [[.28, 1.02], [.3, .62], [.3, .5, .26, .44, .3, .36], [.33, .24, .44, .19, .53, .21], [.62, .23, .67, .3, .66, .37], [.7, .43], [.665, .45], [.67, .48, .66, .5, .64, .51], [.66, .54, .7, .56, .74, .6], [.78, .66, .79, .8, .77, 1.02]];
+  g.fillStyle = '#121016'; g.beginPath(); g.moveTo(P[0][0] * w, P[0][1] * h);
+  P.slice(1).forEach(q => q.length === 2 ? g.lineTo(q[0] * w, q[1] * h) : g.bezierCurveTo(q[0] * w, q[1] * h, q[2] * w, q[3] * h, q[4] * w, q[5] * h)); g.closePath(); g.fill();
+  g.strokeStyle = 'rgba(255,220,180,.35)'; g.lineWidth = 2; g.stroke();
+};
 function drawScene(kind, w, h, seed) { const c = mk(w, h), g = c.getContext('2d'); SCENES[kind](g, w, h, rng(seed)); return c; }
 
 /** Živý obraz: DEMO = noční ulice s jedoucími auty (selfie = západ), ŽIVĚ = skutečná kamera přes getUserMedia. */
@@ -836,6 +929,7 @@ function initLive() {
 }
 function drawLive(t) {
   const g = LIVE.canvas.getContext('2d'), w = LIVE.w, h = LIVE.h;
+  if (CAM.switching) return; // při přepínání objektivu drží poslední snímek (žádné probliknutí dema)
   if (CAM.live && CAM.video && CAM.video.readyState >= 2) {
     if (CAM.facing === 'user') { g.save(); g.translate(w, 0); g.scale(-1, 1); g.drawImage(CAM.video, 0, 0, w, h); g.restore(); } else g.drawImage(CAM.video, 0, 0, w, h);
     return;
@@ -857,6 +951,7 @@ function drawLive(t) {
 const CAM = { live: false, stream: null, video: null, track: null, caps: {}, facing: 'environment', deviceId: null, ultra: false, devices: [], err: '' };
 async function liveOn() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('Kamera potřebuje HTTPS a podporovaný prohlížeč'); return false; }
+  CAM.switching = true; const cc = $('#camCanvas'); spring(0, 1, v => cc.style.filter = `blur(${v * 14}px) brightness(${1 - v * .35})`, { k: 260, c: 30 });
   liveStop();
   try {
     const sel = CAM.deviceId ? { deviceId: { exact: CAM.deviceId } } : { facingMode: { ideal: CAM.facing } };
@@ -867,12 +962,15 @@ async function liveOn() {
     CAM.stream = s; CAM.track = s.getVideoTracks()[0]; CAM.caps = (CAM.track.getCapabilities && CAM.track.getCapabilities()) || {};
     const st = CAM.track.getSettings ? CAM.track.getSettings() : {}; if (st.facingMode) CAM.facing = st.facingMode;
     const k = Math.min(1, 1280 / Math.max(v.videoWidth, v.videoHeight));
-    LIVE.w = Math.round(v.videoWidth * k); LIVE.h = Math.round(v.videoHeight * k); LIVE.canvas = mk(LIVE.w, LIVE.h);
+    const nw = Math.round(v.videoWidth * k), nh = Math.round(v.videoHeight * k), nc = (nw === LIVE.w && nh === LIVE.h) ? LIVE.canvas : mk(nw, nh);
+    await new Promise(r => (v.requestVideoFrameCallback ? v.requestVideoFrameCallback(() => r()) : setTimeout(r, 120)));
+    LIVE.w = nw; LIVE.h = nh; LIVE.canvas = nc; CAM.live = true; CAM.switching = false; drawLive(0);
+    spring(1, 0, x => cc.style.filter = x > .01 ? `blur(${x * 14}px) brightness(${1 - x * .35})` : '', { k: 140, c: 22 });
     try { CAM.devices = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'videoinput'); } catch {}
     CAM.live = true; CAM.err = ''; updLive(); renderCamInfo(); return true;
   } catch (e) {
     CAM.err = e && e.name === 'NotAllowedError' ? 'Přístup ke kameře je zamítnutý. Povol ho v nastavení prohlížeče.' : 'Kameru se nepodařilo spustit (' + (e && e.name || 'chyba') + ').';
-    toast(CAM.err); CAM.live = false; updLive(); renderCamInfo(); return false;
+    toast(CAM.err); CAM.live = false; CAM.switching = false; $('#camCanvas').style.filter = ''; updLive(); renderCamInfo(); return false;
   }
 }
 function liveStop() { if (CAM.stream) CAM.stream.getTracks().forEach(t => t.stop()); CAM.stream = null; CAM.track = null; }
@@ -904,7 +1002,10 @@ uniform float uGrain,uGFreq,uGSharp,uGChroma,uGClump,uGMot;
 uniform vec3 uSh,uHi; uniform float uFCon,uFSat,uFFade;
 uniform vec3 uHsl[8]; uniform vec3 uGSh,uGMid,uGHi;
 uniform vec3 uTrMs,uTrSs,uTrMr,uTrSr; uniform float uTr;
-float hash(vec2 p){ p = fract(p*vec2(443.897,441.423)); p += dot(p, p.yx+19.19); return fract((p.x+p.y)*p.x); }
+uniform float uSeed;
+uint pcg(uint v){ uint s = v*747796405u+2891336453u; uint w = ((s>>((s>>28u)+4u))^s)*277803737u; return (w>>22u)^w; }
+/* celočíselný hash – žádné opakování vzoru ani na velkých souřadnicích (fract hash se tam opakoval) */
+float hash(vec2 p){ ivec2 q = ivec2(floor(p)) + 65536; return float(pcg(uint(q.x) + pcg(uint(q.y) + pcg(uint(uSeed))))) * (1./4294967295.); }
 float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f);
   return mix(mix(hash(i),hash(i+vec2(1,0)),f.x), mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x), f.y)*2.-1.; }
 const mat2 R1 = mat2(.8,-.6,.6,.8), R2 = mat2(-.47,-.88,.88,-.47), R3 = mat2(.31,.95,-.95,.31);
@@ -954,14 +1055,14 @@ void main(){
   if (uGrain > 0.) {
     vec2 gp = vUv*vec2(ar,1.)*uGFreq;
     float t = uStatic>.5 ? 0. : floor(uTime*24.);
-    vec2 jit = vec2(hash(vec2(t,1.7)), hash(vec2(t,7.3)))*173.;
+    vec2 jit = vec2(hash(vec2(t,17.)), hash(vec2(t,71.)))*997.;
     float clump = mix(1., .45 + 1.1*(vnoise(gp*.21+jit*.7)*.5+.5), uGClump);
     float nm = grainN(gp+jit);
     vec3 nc = vec3(grainN(gp*1.09+jit+11.), grainN(gp*.93+jit+23.), grainN(gp*1.04+jit+37.));
     vec3 n = mix(vec3(nm), nc, uGChroma) * clump;
     n = sign(n)*pow(abs(n)*1.25, vec3(1./uGSharp));
     float w = (1.-smoothstep(.6,1.,L)*.75)*(.5+.5*smoothstep(0.,.22,L));
-    c += n*uGrain*.13*w;
+    c += n*uGrain*.13*w + (hash(gl_FragCoord.xy + jit*3.1) - .5)*uGrain*.018; // jemný nepravidelný šum navrch
     if (uGMot > 0.) { vec2 mp = vUv*vec2(ar,1.)*2.3; c += vec3(vnoise(mp+3.), vnoise(mp+17.), vnoise(mp+29.))*.045*uGMot*uGrain; }
   }
   o = vec4(clamp(c,0.,1.), 1.);
@@ -1021,7 +1122,7 @@ class Engine {
     gl.uniform1f(u.uExp, P.exp); gl.uniform1f(u.uTemp, P.temp); gl.uniform1f(u.uTint, P.tint); gl.uniform1f(u.uCon, P.con); gl.uniform1f(u.uSat, P.sat);
     gl.uniform1f(u.uStr, P.str); gl.uniform1f(u.uHal, P.hal * f.hal); gl.uniform1f(u.uBloom, P.bloom);
     gl.uniform1f(u.uGrain, P.grain * G.a * (.6 + .4 * isoK)); gl.uniform1f(u.uGFreq, 560 / P.gsize * G.f / (.72 + .38 * isoK));
-    gl.uniform1f(u.uGSharp, G.sh); gl.uniform1f(u.uGChroma, G.ch); gl.uniform1f(u.uGClump, G.cl); gl.uniform1f(u.uGMot, G.mot);
+    gl.uniform1f(u.uSeed, o.seed != null ? o.seed : 7); gl.uniform1f(u.uGSharp, G.sh); gl.uniform1f(u.uGChroma, G.ch); gl.uniform1f(u.uGClump, G.cl); gl.uniform1f(u.uGMot, G.mot);
     gl.uniform1f(u.uVig, P.vig); gl.uniform1f(u.uFade, P.fade); gl.uniform1f(u.uSharp, P.sharp);
     gl.uniform3fv(u.uSh, f.sh); gl.uniform3fv(u.uHi, f.hi); gl.uniform1f(u.uFCon, f.con); gl.uniform1f(u.uFSat, f.sat); gl.uniform1f(u.uFFade, f.fade);
     gl.uniform3fv(u.uHsl, P.hsl.flat());
@@ -1069,11 +1170,24 @@ function mascot(svg, { idle = true } = {}) {
   m.blink = () => { m.blinkT = performance.now(); };
   MASCOTS.push(m); return m;
 }
+let lastAct = performance.now();
+/* idle: rozhlíží se, mrká, občas se usměje, dvakrát mrkne nebo se zamyslí; po 25 s bez dotyku usíná */
+function idleAct(m, now) {
+  if (now - lastAct > 25000) { if (Math.random() < .3) m.blink(); return; }
+  const r = Math.random(), back = (ms) => setTimeout(() => { m.look(0, 0); m.tgt.happy = 0; }, ms);
+  if (r < .32) m.blink();
+  else if (r < .55) { m.look(-.9, .1); setTimeout(() => m.look(.9, .1), 520); back(1100); }
+  else if (r < .68) { m.blink(); setTimeout(() => m.blink(), 230); }
+  else if (r < .8) { m.tgt.happy = 1; back(900); }
+  else if (r < .9) { m.look(.6, -.7); back(1300); }
+  else { m.look((Math.random() - .5) * 1.6, (Math.random() - .5) * .8); back(1000); }
+}
 function tickMascots(now) {
   for (const m of MASCOTS) {
     if (!m.svg.isConnected || m.svg.closest('[hidden]')) continue;
     for (const k of ['open', 'lookX', 'lookY', 'happy']) m.cur[k] = LOWMO ? m.tgt[k] : lerp(m.cur[k], m.tgt[k], .18);
-    if (m.idle && now > m.blinkAt) { m.blink(); m.blinkAt = now + 2200 + Math.random() * 3000; if (Math.random() < .3) { m.look((Math.random() - .5) * 1.4, (Math.random() - .5) * .6); setTimeout(() => m.look(0, 0), 900); } }
+    if (m.idle && now > m.blinkAt) { idleAct(m, now); m.blinkAt = now + 1800 + Math.random() * 2600; }
+    if (m.idle) { const asleep = now - lastAct > 25000; m.tgt.open = asleep ? .38 : 1; if (asleep) m.tgt.lookY = .45; }
     let open = m.cur.open; const bt = now - m.blinkT; if (bt < 180) open *= Math.abs(Math.cos(bt / 180 * Math.PI));
     const d = dPath([...eyeDots(42, 60, { ...m.cur, open }), ...eyeDots(78, 60, { ...m.cur, open })]);
     if (d !== m.lastD) { m.path.setAttribute('d', d); m.lastD = d; }
@@ -1265,7 +1379,7 @@ function playIntro() {
    ===================================================================== */
 const S = {
   screen: 'camera', film: store.get('film', 'P400'), grid: 0, timer: 0, flash: false, zoom: 1,
-  isoIdx: 0, timeIdx: 2, ev: 0, slowMode: 0, photos: [], cur: null, P: DEF(), tab: 'film', adv: false, adjKey: 'exp',
+  isoIdx: 0, timeIdx: 2, ev: 0, collapsed: store.get('collapsed', false), fmt: '35', halfPending: null, dispo: null, slowMode: 0, photos: [], cur: null, P: DEF(), tab: 'film', adv: false, adjKey: 'exp',
   hist: [], fut: [], view: 'm',
 };
 const ISO_STOPS = ['A', '100', '200', '400', '800', '1600', '3200'];
@@ -1330,6 +1444,15 @@ function closeSheets() { ['#filmSheet', '#menuSheet', '#refSheet'].forEach(s => 
 let camE, camRaf = 0, camT0 = performance.now(), capturing = null, miniEyes;
 function camParams() { const P = DEF(); P.film = S.film; P.exp = S.ev; return P; }
 function camIso() { const v = ISO_STOPS[S.isoIdx]; return v === 'A' ? FILM[S.film].iso : +v; }
+let ctlSp = null;
+function setCollapsed(c, instant) {
+  S.collapsed = c; store.set('collapsed', c); const el = $('#camCtl'); el.style.height = 'auto'; const H = el.scrollHeight;
+  $('#camHandle').setAttribute('aria-expanded', String(!c)); $('#pTime').hidden = !(c && S.timeIdx >= 5);
+  ctlSp && ctlSp.stop(); const from = el.offsetHeight, to = c ? 0 : H;
+  const upd = v => { el.style.height = v + 'px'; el.style.opacity = clamp(v / H, 0, 1); drawFmt(); drawGrid(); };
+  if (instant) { upd(to); if (!c) el.style.height = 'auto'; return; }
+  ctlSp = spring(from, to, upd, { k: 240, c: 28, onDone: () => { if (!c) el.style.height = 'auto'; } });
+}
 function startCam() {
   if (camRaf || !READY) return;
   const loop = (now) => {
@@ -1379,7 +1502,7 @@ function evStrip() {
   el.addEventListener('pointerup', () => { const tgt = clamp(Math.round((x + vx * 5) / 9) * 9, -3 * PX, 3 * PX); sp = spring(x, tgt, v => { x = v; apply(); set(-x / PX); }, { k: 240, c: 24 }); });
   el.addEventListener('dblclick', () => { sp = spring(x, 0, v => { x = v; apply(); set(-x / PX); }); });
   el.addEventListener('wheel', e => { e.preventDefault(); sp && sp.stop(); x = clamp(Math.round((x - Math.sign(e.deltaY) * 9) / 9) * 9, -3 * PX, 3 * PX); apply(); set(-x / PX); buzz(3); }, { passive: false });
-  return { reset() { x = 0; apply(); set(0); } };
+  return { reset() { x = 0; apply(); set(0); }, sync() { x = -S.ev * PX; apply(); } };
 }
 function fmtEv(v) { if (Math.abs(v) < .01) return '±0'; const s = v > 0 ? '+' : '−', a = Math.abs(v), w = Math.floor(a + 1e-6), fr = Math.round((a - w) * 3); return s + (w || '') + (fr ? ['', '⅓', '⅔'][fr] : ''); }
 function updLcd() {
@@ -1392,11 +1515,13 @@ function updLcd() {
   $('#lMeter').style.left = (50 + S.ev / 3 * 50) + '%';
   $('#lModeV').textContent = slow ? SLOW_MODES[S.slowMode] : 'FOTO';
   $('#shutter').classList.toggle('slow', slow);
+  $('#pTime').hidden = !(S.collapsed && slow); $('#pTime').textContent = tm.includes('"') ? tm.replace('"', ' s') : '1/' + tm + ' s';
 }
 function setFilm(code) {
   S.film = code; store.set('film', code); const f = FILM[code];
   $('#chipCode').textContent = code; $('#chipCass').innerHTML = cassette(f); $('#cassBtn').innerHTML = cassette(f);
-  $('#fCode').textContent = code; $('#fSub').innerHTML = `${f.sub} · ${f.chem}`; $('#fDesc').textContent = f.desc;
+  const kind = /E-6|K-14/.test(f.chem) ? 'diapozitiv' : /ECN/.test(f.chem) ? 'kinofilm' : 'barevný negativ';
+  $('#fCode').textContent = code; $('#fSub').innerHTML = `${f.sub} · ${kind} · ISO ${f.iso}`; $('#fDesc').textContent = f.desc;
   updLcd();
 }
 function buildCarousel() {
@@ -1415,7 +1540,7 @@ function buildCarousel() {
   c._sync = () => { const it = items.find(i => i.dataset.c === S.film); if (it) c.scrollLeft = it.offsetLeft + it.offsetWidth / 2 - c.clientWidth / 2; upd(); };
   hscroll(c);
 }
-function openFilmSheet() { sheet($('#filmSheet'), true); requestAnimationFrame(() => $('#carousel')._sync()); }
+function openFilmSheet() { if (S.dispo) { toast('Jednorázovka má pevný film ' + S.dispo.film, { label: 'Ukončit', fn: endDispo }); return; } sheet($('#filmSheet'), true); requestAnimationFrame(() => $('#carousel')._sync()); }
 
 /* mřížka: třetiny */
 function drawGrid() {
@@ -1452,19 +1577,52 @@ async function capture() {
     $('#slowProg').style.width = k * 100 + '%'; $('#shutRing').style.strokeDashoffset = 270.2 * (1 - k);
     if (k >= 1) { capturing = null;
       const out = mk(w, h), og = out.getContext('2d'), id = og.createImageData(w, h), o = id.data, fd = first.getContext('2d').getImageData(0, 0, w, h).data;
-      for (let i = 0; i < N; i += 4) {
+      /* stopy: k průměru se přidá jen to, co je výrazně jasnější než šum (jinak maximum zesílí šum senzoru do „pixelů“);
+         hedvábí: mapa pohybu z jasového rozptylu se rozmaže, aby přechod ostrá/rozmazaná část nebyl po pixelech */
+      let still = null;
+      if (mode === 2) { const P = w * h, vm = new Float32Array(P);
+        for (let q = 0, i = 0; q < P; q++, i += 4) { let v = 0; for (let c = 0; c < 3; c++) { const a = sum[i + c] / n; v += Math.max(0, sq[i + c] / n - a * a); } vm[q] = v / 3; }
+        still = boxBlur(boxBlur(vm, w, h, 4), w, h, 4).map(v => Math.exp(-v / 140)); }
+      for (let i = 0, q = 0; i < N; i += 4, q++) {
         for (let c = 0; c < 3; c++) { const j = i + c, avg = sum[j] / n;
-          if (mode === 0) o[j] = Math.max(avg, mx[j] * .96);
+          if (mode === 0) o[j] = avg + Math.max(0, mx[j] - avg - 28) * 1.1;
           else if (mode === 1) o[j] = avg;
-          else { const vr = Math.max(0, sq[j] / n - avg * avg), still = Math.exp(-vr / 90); o[j] = avg + (fd[j] - avg) * still * .85; } }
+          else o[j] = avg + (fd[j] - avg) * still[q] * .8; }
         o[i + 3] = 255; }
       og.putImageData(id, 0, 0);
       $('#slowBar').hidden = true; $('#shutRing').style.strokeDashoffset = 270.2; if (torch) setTorch(false); finishCapture(out); }
   } };
 }
+function boxBlur(a, w, h, r) { // dvouprůchodové rozmazání jednokanálové mapy
+  const t = new Float32Array(a.length), o = new Float32Array(a.length), k = 1 / (2 * r + 1);
+  for (let y = 0; y < h; y++) { let s = 0; const row = y * w; for (let x = -r; x <= r; x++) s += a[row + clamp(x, 0, w - 1)];
+    for (let x = 0; x < w; x++) { t[row + x] = s * k; s += a[row + Math.min(w - 1, x + r + 1)] - a[row + Math.max(0, x - r)]; } }
+  for (let x = 0; x < w; x++) { let s = 0; for (let y = -r; y <= r; y++) s += t[clamp(y, 0, h - 1) * w + x];
+    for (let y = 0; y < h; y++) { o[y * w + x] = s * k; s += t[Math.min(h - 1, y + r + 1) * w + x] - t[Math.max(0, y - r) * w + x]; } }
+  return o;
+}
 function videoFrame() { const v = CAM.video, c = mk(v.videoWidth, v.videoHeight), g = c.getContext('2d'); if (CAM.facing === 'user') { g.translate(c.width, 0); g.scale(-1, 1); } g.drawImage(v, 0, 0); return c; }
 function copyCanvas(src) { const c = mk(src.width, src.height); c.getContext('2d').drawImage(src, 0, 0); return c; }
-function finishCapture(src) {
+const FORMATS = { '35': { l: '35 mm', ar: 2 / 3 }, half: { l: 'Half-frame', ar: 3 / 4 }, '66': { l: '6×6', ar: 1 }, '67': { l: '6×7', ar: 6 / 7 } };
+function cropAr(src, ar) { const sar = src.width / src.height; let w = src.width, h = src.height; if (sar > ar) w = Math.round(h * ar); else h = Math.round(w / ar);
+  const c = mk(w, h); c.getContext('2d').drawImage(src, (src.width - w) / 2, (src.height - h) / 2, w, h, 0, 0, w, h); return c; }
+function drawFmt() {
+  const vf = $('#vf'), W = vf.clientWidth, H = vf.clientHeight, ar = FORMATS[S.fmt].ar; let w = W - 24, h = w / ar; if (h > H - 110) { h = H - 110; w = h * ar; }
+  Object.assign($('#fmtBox').style, { left: (W - w) / 2 + 'px', top: (H - h) / 2 - 10 + 'px', width: w + 'px', height: h + 'px' });
+  $('#fmtMask').style.opacity = 1; $('#halfBadge').hidden = S.fmt !== 'half'; $('#halfBadge').textContent = S.halfPending ? 'HALF · 2/2' : 'HALF · 1/2';
+}
+function finishCapture(src0) {
+  let src = cropAr(src0, FORMATS[S.fmt].ar);
+  if (S.fmt === 'half') { // half-frame: dva snímky vedle sebe na jedno políčko 35 mm
+    if (!S.halfPending) { S.halfPending = src; drawFmt(); spring(1, 0, v => $('#iris').style.opacity = v * .85, { k: 160, c: 22 }); toast('Půlka políčka hotová, vyfoť druhou'); return; }
+    const a = S.halfPending, gap = Math.round(a.width * .035), c = mk(a.width * 2 + gap, a.height), g = c.getContext('2d');
+    g.fillStyle = '#100d0a'; g.fillRect(0, 0, c.width, c.height); g.drawImage(a, 0, 0); g.drawImage(src, a.width + gap, 0, a.width, a.height); src = c; S.halfPending = null; drawFmt();
+  }
+  if (S.dispo) { // jednorázovka: fotka se schová do role a „vyvolá se“ později
+    const P = DEF(); P.film = S.dispo.film; P.exp = S.ev; S.dispo.shots.push({ src, P, date: new Date() }); S.dispo.left--;
+    spring(1, 0, v => $('#iris').style.opacity = v * .85, { k: 160, c: 22 }); updDispo();
+    if (!S.dispo.left) { endDispo(); } return;
+  }
   const fl = $('#flash'), ir = $('#iris');
   if (S.flash || +fl.style.opacity > 0) spring(+fl.style.opacity || 1, 0, v => fl.style.opacity = v * .9, { k: 60, c: 14 });
   spring(1, 0, v => ir.style.opacity = v * .85, { k: 160, c: 22 });
@@ -1508,19 +1666,25 @@ function rethumb(ph) { const o = utilRender(ph.src, ph.P, 300, Math.round(300 / 
 function seedPhotos() {
   const list = [['plaz', 720, 900, 'G200', ['léto', 'moře', 'modrá', 'červená'], 14, 32], ['les', 720, 960, '400H', ['les', 'zelená', 'ráno'], 7, 12], ['zapad', 900, 720, 'P400', ['západ', 'moře', 'oranžová'], 19, 48],
     ['hory', 720, 960, 'VEL', ['hory', 'růžová', 'fialová'], 6, 21], ['kvet', 720, 720, 'E100', ['květina', 'růžová', 'zelená'], 11, 5], ['mesto', 720, 960, 'V3-500T', ['noc', 'ulice', 'praha'], 22, 17],
-    ['plaz', 720, 960, 'P160', ['léto', 'moře'], 16, 40], ['hory', 900, 600, 'EC100', ['hory', 'modrá'], 9, 3], ['les', 720, 900, 'SX400', ['les', 'zelená'], 13, 27], ['zapad', 720, 960, 'KC64', ['západ', 'červená'], 20, 2]];
+    ['postava', 720, 960, 'P400', ['postava', 'silueta', 'portrét'], 18, 12], ['plaz', 720, 960, 'P160', ['léto', 'moře'], 16, 40], ['hory', 900, 600, 'EC100', ['hory', 'modrá'], 9, 3], ['les', 720, 900, 'SX400', ['les', 'zelená'], 13, 27], ['zapad', 720, 960, 'KC64', ['západ', 'červená'], 20, 2]];
   list.reverse().forEach(([k, w, h, f, tags, hh, mm], i) => { const P = DEF(); P.film = f; const ph = addPhoto(drawScene(k, w, h, 100 + i * 7), P, k, tags); ph.date = new Date(2026, 9, 12 - i, hh, mm); });
   $('#galThumb').src = S.photos[0].thumb;
+  const jr = ROLLS.find(x => x.seed); jr.shots = [['plaz', 31], ['les', 32], ['zapad', 33], ['kvet', 34]].map(([k, sd]) => { const P = DEF(); P.film = 'P800'; return { src: drawScene(k, 480, 640, sd), P, date: new Date(2026, 9, 11, 15, 20) }; });
 }
-const ROLLS = [
+let ROLLS = [
   { name: 'Léto u moře', meta: 'G200 · 24/36', film: 'G200', glow: ['#f2c230', '#1f6fb0'] },
   { name: 'Noční Praha', meta: 'V3-500T · 12/36', film: 'V3-500T', glow: ['#ff4f8b', '#3f6fd6'] },
-  { name: 'Jednorázovka', meta: '13/27 · vyvolá se ráno', film: 'P800', glow: ['#e6493a', '#efa73b'], lock: true },
+  { name: 'Jednorázovka', meta: '13/27 · vyvolá se ráno', film: 'P800', glow: ['#e6493a', '#efa73b'], lock: true, seed: true },
   { name: 'Hory', meta: 'VEL · 8/36', film: 'VEL', glow: ['#7d2a8f', '#2bb04a'] },
 ];
 function renderGallery() {
   $('#rolls').innerHTML = ROLLS.map(r => `<button class="roll ${r.lock ? 'lock' : ''}"><div class="glow" style="background:radial-gradient(circle at 30% 40%,${r.glow[0]},transparent 55%),radial-gradient(circle at 75% 60%,${r.glow[1]},transparent 55%)"></div>${cassette(FILM[r.film])}<div class="glass"><b>${r.name}</b><small>${r.meta}</small></div></button>`).join('');
-  $$('.roll').forEach((b, i) => b.onclick = () => { if (ROLLS[i].lock) toast('Jednorázovka se vyvolá zítra v 8:00'); else { $('#gSearch').value = ROLLS[i].film; filterGallery(); } });
+  $$('.roll').forEach((b, i) => { const ro = ROLLS[i];
+    const acts = () => openActs(`<h4>${ro.name}</h4>${ro.lock ? actBtn('dev', 'film', 'Vyvolat hned (ukázka)') : actBtn('show', 'gallery', 'Ukázat fotky z role')}${actBtn('sheet', 'sheet', 'Kontaktní arch')}`, root => {
+      $$('[data-a]', root).forEach(x => x.onclick = () => { closeActs(); const a = x.dataset.a;
+        if (a === 'dev') develop(ro); if (a === 'show') { $('#gSearch').value = ro.film; filterGallery(); }
+        if (a === 'sheet') showContact(ro.lock ? (ro.shots || []).map(s => ({ src: s.src, P: s.P })) : S.photos.filter(p => p.film === ro.film).concat(S.photos).slice(0, 12), ro.name.toUpperCase(), ro.film); }); });
+    longPress(b, acts); b.onclick = () => { if (ro.lock) acts(); else { $('#gSearch').value = ro.film; filterGallery(); } }; });
   filterGallery();
 }
 function filterGallery() {
@@ -1529,7 +1693,108 @@ function filterGallery() {
   $('#masonry').innerHTML = list.map(p => `<button class="gitem ${p.fresh ? 'new' : ''}" data-id="${p.id}"><img src="${p.thumb}" alt=""><span>${p.film}</span></button>`).join('');
   list.forEach(p => p.fresh = false);
   $('#gEmpty').hidden = list.length > 0;
-  $$('.gitem').forEach(b => b.onclick = () => openEditor(S.photos.find(p => p.id === +b.dataset.id), b.querySelector('img')));
+  $$('.gitem').forEach(b => { const ph = S.photos.find(p => p.id === +b.dataset.id);
+    longPress(b, () => photoActs(ph, b)); b.onclick = () => openEditor(ph, b.querySelector('img')); });
+}
+/* podržení prstu (na PC pravé tlačítko) → nabídka; klik po podržení se zahodí */
+function longPress(el, fn, ms = 430) {
+  let t = 0, fired = false, sx = 0, sy = 0;
+  el.addEventListener('pointerdown', e => { if (e.button) return; fired = false; sx = e.clientX; sy = e.clientY; el.classList.add('press'); t = setTimeout(() => { fired = true; el.classList.remove('press'); buzz(12); fn(); }, ms); });
+  const stop = () => { clearTimeout(t); el.classList.remove('press'); };
+  el.addEventListener('pointermove', e => { if (Math.hypot(e.clientX - sx, e.clientY - sy) > 8) stop(); });
+  el.addEventListener('pointerup', stop); el.addEventListener('pointercancel', stop); el.addEventListener('pointerleave', stop);
+  el.addEventListener('click', e => { if (fired) { e.stopImmediatePropagation(); e.preventDefault(); fired = false; } }, true);
+  el.addEventListener('contextmenu', e => { e.preventDefault(); stop(); fn(); });
+}
+function openActs(html, bind) { $('#acts').innerHTML = html; hydrateIcons($('#acts')); bind && bind($('#acts')); $('#scrim').classList.add('on'); sheet($('#actSheet'), true); }
+function closeActs() { $('#scrim').classList.remove('on'); if ($('#actSheet')._open) sheet($('#actSheet'), false); }
+const actBtn = (k, ic, l, cls = '') => `<button data-a="${k}" class="${cls}">${iconSVG(ic)}${l}</button>`;
+function photoActs(ph, el) {
+  openActs(`<h4><img src="${ph.thumb}" alt="">${ph.film} · ${ph.date.toLocaleDateString('cs-CZ')}</h4>${actBtn('edit', 'sliders', 'Upravit')}${actBtn('blob', 'blob', 'Blob karta')}${actBtn('dx', 'ref', 'Použít jako siluetu (dvojexpozice)')}${actBtn('del', 'trash', 'Smazat', 'danger')}`, root => {
+    $$('[data-a]', root).forEach(b => b.onclick = () => { closeActs(); const a = b.dataset.a;
+      if (a === 'edit') openEditor(ph, el.querySelector('img'));
+      if (a === 'blob') { S.blobFrom = ph; B.mode = 'blob'; go('blob'); }
+      if (a === 'dx') { B.mode = 'dx'; B.dxA = ph; go('blob'); }
+      if (a === 'del') deletePhoto(ph, el); });
+  });
+}
+function deletePhoto(ph, el) {
+  const i = S.photos.indexOf(ph); if (i < 0) return; el && el.classList.add('gone'); buzz(10);
+  setTimeout(() => { S.photos.splice(i, 1); filterGallery(); if (S.photos[0]) $('#galThumb').src = S.photos[0].thumb; }, 230);
+  toast('Fotka smazaná', { label: 'Vrátit', fn: () => { S.photos.splice(i, 0, ph); ph.fresh = true; filterGallery(); $('#galThumb').src = S.photos[0].thumb; } });
+}
+function galleryAdd() {
+  openActs(`<h4>Přidat</h4>${actBtn('imp', 'gallery', 'Importovat fotky z telefonu')}${actBtn('dispo', 'film', 'Jednorázovka · 27 snímků')}${actBtn('sheet', 'sheet', 'Kontaktní arch z galerie')}`, root => {
+    $$('[data-a]', root).forEach(b => b.onclick = () => { closeActs(); const a = b.dataset.a;
+      if (a === 'imp') $('#fileImport').click();
+      if (a === 'dispo') dispoPick();
+      if (a === 'sheet') showContact(S.photos.slice(0, 12), 'GALERIE', S.photos[0] ? S.photos[0].film : 'P400'); });
+  });
+}
+async function importFiles(files) {
+  let n = 0;
+  for (const f of files) {
+    try { const url = URL.createObjectURL(f), img = new Image(); img.src = url; await img.decode();
+      const k = Math.min(1, 2048 / Math.max(img.naturalWidth, img.naturalHeight)), c = mk(Math.round(img.naturalWidth * k), Math.round(img.naturalHeight * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      const P = DEF(); P.film = S.film; const ph = addPhoto(c, P, 'import', ['import', 'moje'], true); ph.date = new Date(f.lastModified || Date.now()); n++; } catch {}
+  }
+  if (n) { filterGallery(); $('#galThumb').src = S.photos[0].thumb; toast(n === 1 ? 'Fotka přidaná s filmem ' + S.film : `${n} fotek přidáno s filmem ${S.film}`); }
+  else toast('Fotku se nepodařilo načíst');
+}
+/* jednorázovka */
+function dispoPick() {
+  const list = ['P400', 'G200', 'UM400', 'P800', 'SX400', 'C200', 'V3-500T', 'KC64'];
+  openActs(`<h4>Jednorázovka: vyber film</h4><div class="grid2">${list.map(c => `<button data-c="${c}">${cassette(FILM[c])}${c}</button>`).join('')}</div>`, root => {
+    $$('[data-c]', root).forEach(b => b.onclick = () => { closeActs(); S.dispo = { film: b.dataset.c, left: 27, shots: [] }; setFilm(b.dataset.c); updDispo(); go('camera', { back: true }); toast(`Jednorázovka ${b.dataset.c}: 27 snímků, uvidíš je až po vyvolání`); }); });
+}
+function updDispo() {
+  const d = S.dispo; $('#chipCode').innerHTML = d ? `<span class="dispo">${d.film} · ${String(d.left).padStart(2, '0')}</span>` : S.film;
+  if (d) $('#galThumb').src = 'data:image/svg+xml;utf8,' + encodeURIComponent(cassette(FILM[d.film]).replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg" style="background:#221f1c"'));
+}
+function endDispo() {
+  const d = S.dispo; S.dispo = null; updDispo(); if (S.photos[0]) $('#galThumb').src = S.photos[0].thumb;
+  if (!d || !d.shots.length) return;
+  ROLLS.unshift({ name: 'Jednorázovka ' + d.film, meta: `${d.shots.length}/27 · vyvolá se ráno`, film: d.film, glow: ['#e6493a', '#efa73b'], lock: true, shots: d.shots });
+  toast('Role je plná, vyvolá se zítra v 8:00');
+}
+function develop(roll) {
+  const el = document.createElement('div'); el.className = 'dev';
+  const shots = roll.shots || [];
+  el.innerHTML = `<h3>VYVOLÁVÁM</h3><p>${roll.name.toUpperCase()} · ${shots.length} SNÍMKŮ</p><div class="dg">${shots.map(s => `<img src="${utilRender(s.src, s.P, 300, Math.round(300 / (s.src.width / s.src.height)), {}).toDataURL('image/jpeg', .85)}" alt="">`).join('')}</div>`;
+  $('#phone').appendChild(el); buzz(10);
+  const imgs = $$('img', el); imgs.forEach((im, i) => setTimeout(() => im.classList.add('done'), 500 + i * 420));
+  setTimeout(() => { shots.forEach(s => { const ph = addPhoto(s.src, s.P, 'dispo', ['jednorázovka', s.P.film], true); ph.date = s.date; }); ROLLS.splice(ROLLS.indexOf(roll), 1);
+    el.style.transition = 'opacity .4s'; el.style.opacity = 0; setTimeout(() => { el.remove(); renderGallery(); }, 420); }, 1300 + imgs.length * 420 + 1600);
+}
+
+/* kontaktní arch: pruhy 35 mm s perforací, čísly políček a značkami fixou */
+function showContact(photos, title, film) {
+  if (!photos.length) return toast('Na arch tu zatím nic není');
+  const fw = 300, fh = 200, per = 6, rows = Math.ceil(photos.length / per), sh = 290, W = per * (fw + 14) + 120, H = rows * (sh + 18) + 190;
+  const c = mk(W, H), g = c.getContext('2d'), r = rng(9);
+  g.fillStyle = '#efeae0'; g.fillRect(0, 0, W, H);
+  g.fillStyle = '#1b1a18'; g.font = '600 26px "Geist Mono", monospace'; g.fillText(`${title} · ${film} · ${new Date().toLocaleDateString('cs-CZ')}`, 60, 74);
+  g.font = '400 18px "Geist Mono", monospace'; g.fillStyle = '#6b655c'; g.fillText('QAMERA · KONTAKTNÍ ARCH', 60, 106);
+  photos.forEach((ph, i) => {
+    const row = Math.floor(i / per), col = i % per, sx = 60, sy = 140 + row * (sh + 18);
+    if (col === 0) { g.fillStyle = '#14100c'; g.fillRect(sx - 10, sy, per * (fw + 14) + 8, sh);
+      g.fillStyle = '#efeae0'; for (let x = sx; x < sx + per * (fw + 14) - 10; x += 26) { g.beginPath(); g.roundRect(x, sy + 12, 14, 20, 3); g.roundRect(x, sy + sh - 32, 14, 20, 3); g.fill(); } }
+    const x = sx + col * (fw + 14), y = sy + 45, src = utilRender(ph.src, ph.P, ph.src.width > ph.src.height ? fw * 2 : fh * 2, ph.src.width > ph.src.height ? fh * 2 : fw * 2, {});
+    g.save(); g.beginPath(); g.rect(x, y, fw, fh); g.clip();
+    if (src.width < src.height) { g.translate(x + fw / 2, y + fh / 2); g.rotate(-Math.PI / 2); const s = Math.max(fh / src.width, fw / src.height); g.drawImage(src, -src.width * s / 2, -src.height * s / 2, src.width * s, src.height * s); }
+    else { const s = Math.max(fw / src.width, fh / src.height); g.drawImage(src, x + fw / 2 - src.width * s / 2, y + fh / 2 - src.height * s / 2, src.width * s, src.height * s); }
+    g.restore();
+    g.fillStyle = '#e8a33a'; g.font = '600 15px "Geist Mono", monospace'; g.fillText(`▸${i + 1}   ${i + 1}A`, x + 6, sy + sh - 44 + 30 > sy + sh - 8 ? sy + sh - 8 : sy + sh - 40 + 26);
+    if (col === 0) { g.fillText(`QAMERA ${ph.P.film}`, x + 120, y - 10); }
+  });
+  // značky fixou: kroužek kolem nejlepšího a fajfka
+  const best = Math.floor(r() * photos.length), bx = 60 + (best % per) * (fw + 14) + fw / 2, by = 140 + Math.floor(best / per) * (sh + 18) + 45 + fh / 2;
+  g.strokeStyle = 'rgba(220,40,30,.85)'; g.lineWidth = 7; g.lineCap = 'round'; g.beginPath(); g.ellipse(bx, by, fw * .62, fh * .72, -.06, .3, Math.PI * 2 + .1); g.stroke();
+  g.beginPath(); g.moveTo(bx + fw * .48, by - fh * .74); g.lineTo(bx + fw * .55, by - fh * .64); g.lineTo(bx + fw * .7, by - fh * .9); g.stroke();
+  const v = $('#fsView'), cv = $('#fsCanvas'), phone = $('#phone'); cv.width = W; cv.height = H; cv.getContext('2d').drawImage(c, 0, 0);
+  const k = Math.min(phone.clientWidth / W, phone.clientHeight / H) * .98; cv.style.width = W * k + 'px'; cv.style.height = H * k + 'px';
+  v.hidden = false; v.style.opacity = 1; cv.style.transform = ''; $('#fsHint').textContent = 'ŤUKNI = ZAVŘÍT';
+  v.onpointerdown = null; v.onpointerup = () => { spring(1, 0, t => v.style.opacity = t, { k: 260, c: 28, onDone: () => v.hidden = true }); };
 }
 
 /* =====================================================================
@@ -1570,7 +1835,7 @@ function renderEd(now) {
   if (edRaf) return; edRaf = requestAnimationFrame(run);
 }
 let refStats = null, refSrc = null;
-function transferFor() { if (!refStats) { refSrc = drawScene('plaz', 320, 400, 5); refStats = stats(utilRender(refSrc, Object.assign(DEF(), { film: 'VEL', grain: 0 }), 160, 200)); }
+function transferFor() { if (!refStats) { refSrc = copyCanvas(utilRender(drawScene('plaz', 320, 400, 5), Object.assign(DEF(), { film: 'VEL', grain: 0 }), 320, 400)); refStats = stats(refSrc); }
   const s = S.cur._stats || (S.cur._stats = stats(S.cur.src)); return { k: S.P.tr, ms: s.m, ss: s.s, mr: refStats.m, sr: refStats.s }; }
 function commit() { S.hist.push(JSON.stringify(S.cur._last || S.cur.P)); if (S.hist.length > 60) S.hist.shift(); S.fut = []; S.cur._last = JSON.parse(JSON.stringify(S.P)); S.cur.P = JSON.parse(JSON.stringify(S.P)); rethumb(S.cur); }
 function undo() { if (!S.hist.length) return toast('Není co vracet'); S.fut.push(JSON.stringify(S.P)); S.P = JSON.parse(S.hist.pop()); syncCur(); }
@@ -1621,7 +1886,7 @@ const grainPills = () => Object.entries(GRAINS).map(([k, g]) => `<button class="
 function bindGrainPills(root, after) { $$('.gpill', root).forEach(b => b.onclick = () => { S.P.gtype = b.dataset.g; $$('.gpill', root).forEach(x => x.classList.toggle('on', x === b)); renderEd(); commit(); buzz(4); toast(`Grain ${GRAINS[b.dataset.g].l}: ${GRAINS[b.dataset.g].d}`); after && after(); }); }
 function setTab(t, quiet) {
   S.tab = t; $$('#eTabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
-  const p = $('#ePanel'); $('#cropLayer').hidden = t !== 'crop' || S.adv; $('#eHint').hidden = t === 'crop';
+  const p = $('#ePanel'); $('#cropLayer').hidden = t !== 'crop' || S.adv;
   if (S.adv) { renderAdv(); sizePanel(quiet); return; }
   if (t === 'film') {
     p.innerHTML = `<div class="ruler" id="strR"></div><div class="strip" id="fStrip">${FILMS.map(f => `<button class="fthumb ${f.code === S.P.film ? 'on' : ''}" data-c="${f.code}"><canvas width="128" height="160"></canvas><span>${f.code}</span></button>`).join('')}</div>`;
@@ -1708,7 +1973,7 @@ function openFs() {
   const ar = S.P.crop.ar || S.cur.src.width / S.cur.src.height, W = phone.clientWidth, H = phone.clientHeight;
   let w = W, h = W / ar; if (h > H) { h = H; w = H * ar; }
   const paint = byp => { const o = utilRender(S.cur.src, S.P, Math.round(w * dpr), Math.round(h * dpr), edOpts({ bypass: byp })); cv.width = o.width; cv.height = o.height; cv.getContext('2d').drawImage(o, 0, 0); };
-  cv.style.width = w + 'px'; cv.style.height = h + 'px'; paint(false);
+  cv.style.width = w + 'px'; cv.style.height = h + 'px'; paint(false); $('#fsHint').textContent = '';
   v.hidden = false; spring(0, 1, t => { v.style.opacity = Math.min(1, t * 1.3); cv.style.transform = `scale(${.92 + .08 * t})`; }, { k: 220, c: 24 });
   let hold = 0, held = false;
   v.onpointerdown = () => { held = false; hold = setTimeout(() => { held = true; paint(true); buzz(8); }, 160); };
@@ -1786,11 +2051,19 @@ function wheel(el, v, set, end) {
 function toggleAdv() { S.adv = !S.adv; $('#advKnob').classList.toggle('on', S.adv); setTab(S.tab); buzz(6); }
 
 /* Reference */
+function setRef(src) { refSrc = src; refStats = stats(src); $('#refA').getContext('2d').drawImage(cropAr(src, .8), 0, 0, 160, 200); renderEd(); if (openRef._upd) openRef._upd(); }
+function buildRefPick() {
+  const el = $('#refPick');
+  el.innerHTML = `<label aria-label="Nahrát referenci">+<input type="file" accept="image/*" id="refFile"></label>` + S.photos.filter(p => p !== S.cur).slice(0, 14).map(p => `<button data-id="${p.id}"><img src="${p.thumb}" alt=""></button>`).join('');
+  $$('button', el).forEach(b => b.onclick = () => { $$('button', el).forEach(x => x.classList.toggle('on', x === b)); const ph = S.photos.find(p => p.id === +b.dataset.id); setRef(copyCanvas(utilRender(ph.src, ph.P, 320, Math.round(320 / (ph.src.width / ph.src.height)), {}))); buzz(4); });
+  $('#refFile').onchange = async e => { const f = e.target.files[0]; if (!f) return; try { const url = URL.createObjectURL(f), img = new Image(); img.src = url; await img.decode();
+    const k = Math.min(1, 640 / Math.max(img.naturalWidth, img.naturalHeight)), c = mk(Math.round(img.naturalWidth * k), Math.round(img.naturalHeight * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); setRef(c); toast('Reference nahraná'); } catch { toast('Fotku se nepodařilo načíst'); } };
+}
 function openRef() {
-  transferFor(); $('#refA').getContext('2d').drawImage(utilRender(refSrc, Object.assign(DEF(), { film: 'VEL', grain: .3 }), 160, 200), 0, 0);
+  transferFor(); buildRefPick(); $('#refA').getContext('2d').drawImage(cropAr(refSrc, .8), 0, 0, 160, 200);
   if (!S.P.tr) { S.P.tr = .8; renderEd(); }
   const upd = () => { $('#refB').getContext('2d').drawImage(utilRender(S.cur.src, S.P, 160, 200, { transfer: transferFor() }), 0, 0); };
-  upd(); const r = $('#refStr'); r.value = Math.round(S.P.tr * 100); $('#refStrO').textContent = r.value; paintRange(r);
+  openRef._upd = upd; upd(); const r = $('#refStr'); r.value = Math.round(S.P.tr * 100); $('#refStrO').textContent = r.value; paintRange(r);
   r.oninput = () => { S.P.tr = r.value / 100; $('#refStrO').textContent = r.value; paintRange(r); renderEd(); upd(); };
   r.onchange = commit;
   sheet($('#refSheet'), true);
@@ -1816,7 +2089,7 @@ function kmeans(d, k = 5) {
     c = c.map((q, j) => s[j][3] ? [s[j][0] / s[j][3], s[j][1] / s[j][3], s[j][2] / s[j][3]] : q); }
   return c.map(q => `rgb(${q.map(v => Math.round(v)).join(',')})`);
 }
-const B = { shape: 0, palMode: 'post', bg: 1, ox: 0, oy: 0, sc: 1, paper: true, custom: [], photo: null };
+const B = { shape: 0, palMode: 'post', bg: 1, ox: 0, oy: 0, sc: 1, paper: true, custom: [], photo: null, mode: 'blob', dxA: null, dxB: null, th: .42, inv: false };
 function rgbOf(c) { if (c[0] === '#') return [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)); return c.match(/\d+/g).slice(0, 3).map(Number); }
 function openBlob() {
   const ph = S.blobFrom || S.photos[0]; S.blobFrom = ph;
@@ -1828,7 +2101,32 @@ function openBlob() {
   if (B.photo !== ph) { B.photo = ph; $('#bL').textContent = ph.date.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }); $('#bR').textContent = ph.date.toLocaleDateString('cs-CZ'); }
   $('#bShapes').innerHTML = BLOBS.map((b, i) => `<button data-i="${i}" class="${i === B.shape ? 'on' : ''}"><svg viewBox="0 0 100 100"><path d="${blobPath(b)}" fill="#1b1a18"/></svg></button>`).join('');
   $$('#bShapes button').forEach(b => b.onclick = () => { B.shape = +b.dataset.i; $$('#bShapes button').forEach(x => x.classList.toggle('on', x === b)); morphBlob(); buzz(4); });
-  drawBlob(); drawPal();
+  $$('#bMode button').forEach(x => x.classList.toggle('on', x.dataset.m === B.mode));
+  $('#bShapes').hidden = B.mode === 'dx'; $('#dxCtl').hidden = B.mode !== 'dx'; $('#bSvg').style.display = B.mode === 'dx' ? 'none' : ''; $('#bDx').hidden = B.mode !== 'dx';
+  if (B.mode === 'dx') openDx(); else { drawBlob(); drawPal(); }
+}
+/* dvojexpozice: tvar = silueta z první fotky (v appce hloubková mapa / segmentace postavy, v náhledu práh jasu),
+   uvnitř druhá fotka, kolem barva z palety – jako plakát s postavou plnou oken */
+function openDx() {
+  B.dxA = B.dxA || S.photos.find(p => p.kind === 'postava') || S.photos[0]; B.dxB = B.dxB || S.photos.find(p => p.kind === 'mesto') || S.photos[1];
+  const thumbs = (id, sel) => S.photos.map(p => `<button data-id="${p.id}" class="${p === sel ? 'on' : ''}"><img src="${p.thumb}" alt=""></button>`).join('');
+  $('#dxA').innerHTML = thumbs('a', B.dxA); $('#dxB').innerHTML = thumbs('b', B.dxB);
+  $$('#dxA button').forEach(b => b.onclick = () => { B.dxA = S.photos.find(p => p.id === +b.dataset.id); $$('#dxA button').forEach(x => x.classList.toggle('on', x === b)); drawDx(); buzz(4); });
+  $$('#dxB button').forEach(b => b.onclick = () => { B.dxB = S.photos.find(p => p.id === +b.dataset.id); $$('#dxB button').forEach(x => x.classList.toggle('on', x === b)); B.post = kmeans(utilRender(B.dxB.src, B.dxB.P, 60, 75, {}) && util.e.pixels()); drawPal(); drawDx(); buzz(4); });
+  B.post = kmeans(utilRender(B.dxB.src, B.dxB.P, 60, 75, {}) && util.e.pixels());
+  if (!B.custom.includes('#e33a22')) B.custom.unshift('#e33a22');
+  B.bg = B.post.length + B.custom.indexOf('#e33a22'); drawPal(); drawDx();
+}
+function drawDx() {
+  const cv = $('#bDx'), W = 600, H = 750; cv.width = W; cv.height = H; const g = cv.getContext('2d');
+  const fit = (src) => { const s = Math.max(W / src.width, H / src.height) * B.sc; return [W / 2 - src.width * s / 2 + B.ox * 6, H / 2 - src.height * s / 2 + B.oy * 6, src.width * s, src.height * s]; };
+  const A = B.dxA.src, m = mk(W, H), mg = m.getContext('2d'); mg.drawImage(A, ...fit(A));
+  const id = mg.getImageData(0, 0, W, H), d = id.data, th = B.th * 255, soft = 18;
+  for (let i = 0; i < d.length; i += 4) { const L = d[i] * .299 + d[i + 1] * .587 + d[i + 2] * .114; let a = clamp((th - L) / soft + .5, 0, 1); if (B.inv) a = 1 - a; d[i] = d[i + 1] = d[i + 2] = 0; d[i + 3] = a * 255; }
+  mg.putImageData(id, 0, 0);
+  const fill = utilRender(B.dxB.src, B.dxB.P, 600, Math.round(600 / (B.dxB.src.width / B.dxB.src.height)), {});
+  const s = Math.max(W / fill.width, H / fill.height); g.drawImage(fill, W / 2 - fill.width * s / 2, H / 2 - fill.height * s / 2, fill.width * s, fill.height * s);
+  g.globalCompositeOperation = 'destination-in'; g.drawImage(m, 0, 0); g.globalCompositeOperation = 'source-over';
 }
 function drawPal() {
   const pal = [...B[B.palMode], ...B.custom]; B.bg = Math.min(B.bg, pal.length - 1);
@@ -1838,7 +2136,7 @@ function drawPal() {
   const bg = pal[B.bg], [r, g, b] = rgbOf(bg), L = (r * .299 + g * .587 + b * .114) / 255;
   $('#bCard').style.backgroundColor = bg; $('#bLbl').style.setProperty('--lc', L > .55 ? 'rgba(20,18,16,.75)' : 'rgba(255,250,240,.88)');
 }
-function drawBlob(d) {
+function drawBlob(d) { if (B.mode === 'dx') { drawDx(); return; }
   const path = d || blobPath(BLOBS[B.shape], 50, 62.5, 38), w = Math.max(100 * B.sc, 125 * B.ar * B.sc), h = w / B.ar;
   $('#bSvg').innerHTML = `<defs><clipPath id="bc"><path d="${path}"/></clipPath></defs><g clip-path="url(#bc)"><image href="${B.img}" x="${50 - w / 2 + B.ox}" y="${62.5 - h / 2 + B.oy}" width="${w}" height="${h}" preserveAspectRatio="none"/></g>`;
 }
@@ -1856,6 +2154,9 @@ function blobGestures() {
   el.addEventListener('pointermove', e => { if (!on) return; const k = 100 / el.clientWidth; B.ox = ox + (e.clientX - sx) * k; B.oy = oy + (e.clientY - sy) * k; drawBlob(); });
   el.addEventListener('pointerup', () => on = false);
   el.addEventListener('wheel', e => { e.preventDefault(); B.sc = clamp(B.sc * (1 - e.deltaY * .0015), .6, 3); drawBlob(); }, { passive: false });
+  $$('#bMode button').forEach(b => b.onclick = () => { B.mode = b.dataset.m; openBlob(); buzz(4); });
+  const th = $('#dxTh'); paintRange(th); th.oninput = () => { B.th = th.value / 100; $('#dxThO').textContent = th.value; paintRange(th); drawDx(); };
+  $('#dxInv').onclick = () => { B.inv = !B.inv; drawDx(); buzz(4); };
   $$('.lbl span').forEach(s => { s.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); s.blur(); } }); s.addEventListener('focus', () => toast('Přepiš text a potvrď Enterem')); });
 }
 
@@ -1936,6 +2237,7 @@ function fit() {
     $('#device').style.transform = `translate(-50%,-50%) scale(${Math.min(1, (H - 48) / 868, (W - 48) / 414)})`;
     $('#pcwrap').style.transform = `translate(-50%,-50%) scale(${Math.min(1, (W - 48) / 1440, (H - 48) / 900)})`;
   } else $('#device').style.transform = '';
+  if (READY) drawFmt();
   if (S.view === 'pc' && S.cur) requestAnimationFrame(layoutPc);
   if (READY) drawGrid();
 }
@@ -1943,7 +2245,7 @@ function fit() {
 /* =====================================================================
    Start: intro běží hned, těžká příprava (scény, miniatury, WebGL) až za ním
    ===================================================================== */
-let READY = false;
+let READY = false, evApi = null;
 function boot() {
   hydrateIcons();
   miniEyes = mascot($('#miniEyes')); mascot($('#aboutEyes'));
@@ -1959,7 +2261,17 @@ function boot2(h) {
   initLive(); seedPhotos(); buildCarousel(); setFilm(S.film);
   const iso = dial($('#isoDial'), ISO_STOPS, S.isoIdx, 120, i => { S.isoIdx = i; updLcd(); });
   const tim = dial($('#timeDial'), TIME_STOPS, S.timeIdx, 138, i => { S.timeIdx = i; updLcd(); }, 5);
-  const ev = evStrip(); updLcd();
+  const ev = evStrip(); evApi = ev; updLcd();
+  $('#camHandle').onclick = () => { setCollapsed(!S.collapsed); buzz(5); };
+  (() => { const h = $('#camHandle'); let sy = 0, on = false; h.addEventListener('pointerdown', e => { on = true; sy = e.clientY; });
+    h.addEventListener('pointerup', e => { if (!on) return; on = false; const dy = e.clientY - sy; if (Math.abs(dy) > 20) { setCollapsed(dy > 0); buzz(5); } }); })();
+  $$('#fmtSeg button').forEach(b => b.onclick = () => { S.fmt = b.dataset.f; S.halfPending = null; $$('#fmtSeg button').forEach(x => x.classList.toggle('on', x === b)); drawFmt(); buzz(4);
+    toast({ '35': '35 mm: klasické políčko 2:3', half: 'Half-frame: dva snímky vedle sebe na jedno políčko', '66': '6×6: čtverec středního formátu', '67': '6×7: „ideální formát“ středního formátu' }[S.fmt]); });
+  $('#gAdd').onclick = galleryAdd; $('#scrim').onclick = closeActs; sheetDrag($('#actSheet'));
+  $('#fileImport').onchange = e => { importFiles([...e.target.files]); e.target.value = ''; };
+  document.addEventListener('pointerdown', () => { lastAct = performance.now(); }, true);
+  document.addEventListener('contextmenu', e => { if (!e.target.closest('input,[contenteditable]')) e.preventDefault(); });
+  setCollapsed(!!S.collapsed, true); drawFmt();
   $('#navlist').innerHTML = NAV.map(([k, l, ic]) => `<button data-k="${k}">${iconSVG(ic)}${l}</button>`).join('');
   $$('#navlist button').forEach(b => b.onclick = () => navTo(b.dataset.k));
   $$('#viewSeg button').forEach(b => b.onclick = () => setView(b.dataset.v));
@@ -1980,8 +2292,10 @@ function boot2(h) {
   $('#lMode').onclick = () => { if (S.timeIdx < 5) { toast('Slow shutter: otoč čas na ¼ s a delší (až 15 s)'); return; } S.slowMode = (S.slowMode + 1) % 3; updLcd(); buzz(5);
     toast(['Světelné stopy: světla se sčítají', 'Rozmazání pohybu: průměr snímků', 'Voda / hedvábí: průměr + ostřejší statické části'][S.slowMode]); };
   (() => { const vf = $('#vf'), pts = new Map(); let d0 = 0, z0 = 1, moved = false;
-    vf.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; vf.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); moved = false; if (pts.size === 2) { const [a, b] = [...pts.values()]; d0 = Math.hypot(a[0] - b[0], a[1] - b[1]); z0 = S.zoom; } });
-    vf.addEventListener('pointermove', e => { if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, [e.clientX, e.clientY]); if (pts.size === 2) { moved = true; const [a, b] = [...pts.values()]; S.zoom = clamp(z0 * Math.hypot(a[0] - b[0], a[1] - b[1]) / d0, 1, 6); } });
+    let sy = 0, ev0 = 0; // tažení jedním prstem nahoru/dolů = EV (i se sbaleným ovládáním)
+    vf.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; vf.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); moved = false; sy = e.clientY; ev0 = S.ev; if (pts.size === 2) { const [a, b] = [...pts.values()]; d0 = Math.hypot(a[0] - b[0], a[1] - b[1]); z0 = S.zoom; } });
+    vf.addEventListener('pointermove', e => { if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, [e.clientX, e.clientY]); if (pts.size === 2) { moved = true; const [a, b] = [...pts.values()]; S.zoom = clamp(z0 * Math.hypot(a[0] - b[0], a[1] - b[1]) / d0, 1, 6); return; }
+      const dy = sy - e.clientY; if (Math.abs(dy) > 12 || moved) { moved = true; const v = Math.round(clamp(ev0 + dy / 60, -3, 3) * 3) / 3; if (v !== S.ev) { S.ev = v; evApi.sync(); updLcd(); buzz(3); } } });
     vf.addEventListener('pointerup', e => { pts.delete(e.pointerId); if (moved || e.target.closest('button')) return; const r = vf.getBoundingClientRect(), sc = r.width / vf.offsetWidth, f = $('#focus');
       f.style.left = (e.clientX - r.left) / sc + 'px'; f.style.top = (e.clientY - r.top) / sc + 'px'; spring(1.5, 1, v => { f.style.transform = `scale(${v})`; f.style.opacity = 1; }, { k: 300, c: 18, onDone: () => setTimeout(() => f.style.opacity = 0, 700) });
       miniEyes.look(((e.clientX - r.left) / r.width - .5) * 2, ((e.clientY - r.top) / r.height - .5)); setTimeout(() => miniEyes.look(0, 0), 1200); buzz(4); });
@@ -1996,7 +2310,6 @@ function boot2(h) {
   $$('[data-back]').forEach(b => b.onclick = () => { if (S.screen === 'editor' && S.cur) rethumb(S.cur); goBack(); });
   // galerie
   $('#gSearch').oninput = filterGallery;
-  $('#gAdd').onclick = () => toast('Nová role: vybereš film a počet snímků');
   // editor
   $$('#eTabs button').forEach(b => b.onclick = () => { if (S.adv) { S.adv = false; $('#advKnob').classList.remove('on'); } setTab(b.dataset.t); syncNav(); });
   $('#advSw').onclick = () => { toggleAdv(); syncNav(); };

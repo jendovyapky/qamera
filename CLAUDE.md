@@ -84,7 +84,7 @@ Qamera je **GPL-3.0** (veřejné repo) – kvůli Spektrafilmu. V appce musí b�
 2. základ: expozice (EV), vyvážení bílé (teplota/tint), kontrast, světla/stíny, saturace/vibrance
 3. **film**: 3D LUT ze spektrafilmu (negativ → tisk → sken), síla filmu 0–100 %
 4. **Halation** (červeno-oranžová záře kolem světel, prahová, rozmazaná po vrstvách), **Bloom** (měkká bílá záře světel)
-5. **Grain** – v souřadnicích fotky (stejný v náhledu i exportu), hladký šum ve 3 natočených oktávách, shluky, barevná oblaka barviv, odezva podle jasu a „ISO“; animovaný v hledáčku, statický (seed) v exportu. Typy: **Fine, Classic, Cine, Push, Mono, Expired** (výchozí podle filmu)
+5. **Grain** – v souřadnicích fotky (stejný v náhledu i exportu), hladký šum ve 3 natočených oktávách, shluky, barevná oblaka barviv, odezva podle jasu a „ISO“; animovaný v hledáčku, statický (seed) v exportu. Typy: **Fine, Classic, Cine, Push, Mono, Expired** (výchozí podle filmu). Hash šumu **celočíselný (PCG)** – fract hash se na velkých souřadnicích viditelně opakoval
 6. Vignette, Fade, datumovka, okraje negativu s vlastním značením. **Light leaky ani prach nedělat** (Honza: levný efekt / vtip)
 7. výstup sRGB (u exportu volitelně Display P3 tam, kde to prohlížeč umí)
 - Výkon: hledáček v nižším rozlišení (např. 1080 px kratší strana), editace náhled ~2048 px, export plné rozlišení po dlaždicích (bez vytuhnutí telefonu).
@@ -93,6 +93,7 @@ Qamera je **GPL-3.0** (veřejné repo) – kvůli Spektrafilmu. V appce musí b�
 - Profily: Kodak Portra 160/400/800 (+push1/2), Ektar 100, Gold 200, UltraMax 400, Kodachrome 64, Ektachrome 100, Verita 200D,
   Vision3 50D/250D/200T/500T, tiskové 2383/2393, Endura…; Fujifilm C200, Pro 400H, Superia X-tra 400, Provia 100F, Velvia 100, Crystal Archive.
 - Pečení: `spektrafilm_lut_creator` (`spektrafilm-lut build`, umí `.cube` i `hald_png`). Vstup **sRGB**, výstup sRGB, grid 33³ (ověřit banding; případně 65³ nebo uložit 16bit/Float16 místo 8bit Hald).
+- V UI vysvětlit čísla: číslo v kódu = ISO (citlivost); typ česky (barevný negativ / diapozitiv / kinofilm) místo C-41/E-6.
 - Kódy v UI vlastní, krátké, ve stylu inspo (např. `P400` „portrait 400“, `G200` „gold 200“, `KC64`, `V3-500T` „cine 500T“, `VEL` …) + drobný podtitul.
   Karusel: ikona kazety/foťáku pro každý film.
 - Advanced: parametry filmu, které spektrafilm umí měnit (expozice negativu, push/pull, tisková expozice, filtrace tisku) → pro ty se buď peče víc variant LUT, nebo se aproximují.
@@ -107,6 +108,10 @@ Qamera je **GPL-3.0** (veřejné repo) – kvůli Spektrafilmu. V appce musí b�
 - Zachycení: Android `ImageCapture.takePhoto()` (plné rozlišení), iOS = snímek ze streamu v max rozlišení (požádat o 4K constraints) – ověřit kvalitu.
 - **Slow shutter**: nasbírat N snímků ze streamu do float framebufferu. Režimy: **Světelné stopy** (maximum/lighten), **Rozmazání pohybu** (průměr), **Voda/hedvábí** (průměr + ostřejší statické části). Doporučit stabilní držení / opřít; ukazovat průběh.
 - **Long exposure** až 15 s (kolečko času: ¼, ½, 1, 2, 4, 8, 15 s): snímky se sčítají ve float přesnosti (průměr / maximum), hedvábí vrací ostrost statickým částem podle rozptylu. Do budoucna zarovnání snímků (stabilizace) a odšumění.
+- **Formát**: 35 mm (2:3), **Half-frame** (dva snímky 3:4 vedle sebe na jedno políčko), 6×6, 6×7 – maska v hledáčku, ořez při focení.
+- Ovládání (LCD + kolečka) jde **schovat** úchytem nad displejem → velký hledáček; EV jde měnit tažením prstem nahoru/dolů v hledáčku.
+- **Jednorázovka**: start z galerie (+) → výběr filmu → 27 snímků, film zamčený, počítadlo v čipu, fotky schované do role; „vyvolání“ s animací (z hnědé mlhy do barev).
+- Přepnutí objektivu/kamery: drží poslední snímek + rozmazání, žádné probliknutí.
 - Další: mřížka třetin (zlatý řez a spirálu Honza zamítl – vypadalo to divně), samospoušť (**3 s → 10 s**), přepnutí kamery, blesk = svítilna kde jde (přední kamera = rozsvícený displej), haptika (Android `vibrate`, iOS nemá).
 - **Režim DEMO** (generovaná noční ulice s auty) zůstává – Honzovi se ten vzhled líbí; přepínač DEMO/ŽIVĚ v hledáčku. O appce ukazuje, co kamera zařízení umí (zoom, svítilna, ruční ISO/čas…).
 
@@ -116,6 +121,11 @@ Qamera je **GPL-3.0** (veřejné repo) – kvůli Spektrafilmu. V appce musí b�
 - **Ořez**: poměry (orig, 1:1, 4:5, 3:2, 16:9, 9:16), rotace/narovnání, **pinch zoom a posun** (jediné místo spolu s kamerou, kde gesta zoomu fungují).
 - **Depth efekty** (jen v editu): Depth Anything V2 Small přes transformers.js (`onnx-community/depth-anything-v2-small`, WebGPU → záložně WASM), lazy load. Efekty: rozmazání pozadí s volbou bodu ostření (bokeh), **mlha do hloubky**, **3D paralaxa** fotky při naklánění telefonu (DeviceOrientation, na iOS žádost o povolení), náhled hloubkové mapy.
 - **Blob výřez**: popisky na kartě jdou přepsat (výchozí vlevo čas pořízení, vpravo datum), paleta má **+** pro vlastní barvu. Vybrat tvar (sada organických blobů jako v inspo + vlastní generátor), posunout/zvětšit fotku uvnitř, pozadí z **palety vytažené z fotky** (k-means; před úpravou i po filmu), papírová textura s mřížkou volitelně. Export jako sdílecí karta.
+- **Bez nápovědných textů typu „podrž fotku“** – Honza je považuje za nevkusné, gesta mají být samozřejmá.
+- Galerie: **podržení fotky** (na PC pravé tlačítko) → nabídka Upravit / Blob karta / Silueta pro dvojexpozici / **Smazat** (s „Vrátit“). Import vlastních fotek přes + v galerii.
+- **Dvojexpozice** (v Blob kartě): tvar = silueta z první fotky, uvnitř druhá fotka, kolem barva z palety (vzor: plakát s postavou plnou oken na červené). V náhledu silueta prahem jasu, v appce **segmentace postavy** (MediaPipe Selfie/Image Segmenter, Apache-2.0) nebo hloubková mapa. Do budoucna i **video** (pohybující se silueta s jiným záběrem uvnitř).
+- **Kontaktní arch** z role / galerie: pruhy 35 mm s perforací, čísly políček, kroužek a fajfka fixou.
+- Reference: vlastní fotka (nahrát) nebo z galerie.
 - PC (široká obrazovka): Lightroom rozložení – vlevo filmy/presety, vpravo panely úprav, dole filmový pás, klávesové zkratky (`\` před/po, `C` ořez, `Ctrl+Z` atd.).
 - Historie kroků (undo/redo), kopírovat/vložit úpravy mezi fotkami.
 
