@@ -338,6 +338,7 @@ a{color:var(--amber)}
 .fhead{position:relative}
 .favbtn{position:absolute;right:18px;top:4px;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;color:#6d655c}
 .favbtn.on{color:#ff5b6e}
+.newfilm{position:absolute;left:18px;top:4px;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;color:var(--fg);font-size:22px;box-shadow:inset 0 0 0 1.5px #3d3731}
 .favbtn.on .px{color:#ff5b6e;filter:drop-shadow(0 0 6px rgba(255,80,100,.6))}
 .citem.fav span::before,.fthumb.fav span::before{content:"♥ ";color:#ff5b6e}
 .filmchip .dispo{color:var(--amber)}
@@ -469,6 +470,16 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 /* reference sheet */
 .refrow{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;padding:0 18px}
 .refrow figure{margin:0;text-align:center}
+.scanbody{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:18px;padding:6px 0 24px}
+.scanbody .snote{margin:0;padding:0 20px;font-size:12.5px;line-height:1.5;color:var(--mute);text-align:center}
+.scanbody .bh{padding:0 18px 8px}
+.scanbody .srow{padding:0 18px}
+.scanbody .segrow{display:flex;padding:0 18px}
+.scanbody .segrow .seg{display:flex;flex:1}
+.scanbody .segrow .seg button{flex:1;height:32px;padding:0}
+.menu button:last-child:nth-child(3n+1){grid-column:1/-1;flex-direction:row;justify-content:center;padding:14px 8px}
+.fcard.addcard{align-items:stretch}
+.fcard.addcard .ab{aspect-ratio:4/5;border-radius:14px;border:1.5px dashed #4a443e;display:grid;place-items:center;color:var(--fg);font-size:30px}
 .refrow canvas{width:100%;aspect-ratio:4/5;border-radius:14px;display:block}
 .refrow figcaption{font-size:10.5px;color:var(--mute);margin-top:6px;font-family:var(--f-mono);letter-spacing:.08em}
 .refrow .arrow{color:var(--amber);font-family:var(--f-dot);font-size:22px;font-weight:900}
@@ -606,7 +617,7 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 <body>
 <div class="shell" id="shell">
   <aside class="nav">
-    <div class="brand">QAMERA<small>Náhled 0.7.2</small></div>
+    <div class="brand">QAMERA<small>Náhled 0.7.3</small></div>
     <div>
       <div class="navlabel">Zobrazení</div>
       <div class="seg" id="viewSeg"><button class="on" data-v="m">MOBIL 390×844</button><button data-v="pc">PC 1440×900</button></div>
@@ -697,7 +708,7 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
           </div>
           <div class="sheet" id="filmSheet">
             <div class="grab"></div>
-            <div class="fhead"><div class="code" id="fCode">P400</div><div class="sub" id="fSub"></div><button class="favbtn" id="favBtn" aria-label="Oblíbený film"></button></div>
+            <div class="fhead"><div class="code" id="fCode">P400</div><div class="sub" id="fSub"></div><button class="favbtn" id="favBtn" aria-label="Oblíbený film"></button><button class="newfilm" id="newFilm" aria-label="Nový film z fotky">+</button></div>
             <div class="carousel hs" id="carousel"></div>
             <div class="fdesc" id="fDesc"></div>
             <div class="flegend">Číslo v kódu je citlivost ISO: vyšší = víc grainu a lepší do tmy.</div>
@@ -748,17 +759,6 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
             <button data-t="crop"><svg class="px" viewBox="0 0 24 24" data-raw="crop"></svg>Ořez</button>
             <button data-t="fx"><svg class="px" viewBox="0 0 24 24" data-raw="magic"></svg>Efekty</button>
           </nav>
-          <div class="sheet" id="refSheet">
-            <div class="grab"></div>
-            <div class="fhead" style="height:48px"><div class="code" style="font-size:22px">FILM SCAN</div><div class="sub">vytvoř si vlastní film z fotky, která se ti líbí</div></div>
-            <div class="refrow"><figure><canvas id="refA" width="160" height="200"></canvas><figcaption>REFERENCE</figcaption></figure><span class="arrow">→</span><figure><canvas id="refB" width="160" height="200"></canvas><figcaption>VÝSLEDEK</figcaption></figure></div>
-            <div class="refpick hs" id="refPick"></div>
-            <div class="segrow"><div class="seg" id="refMethod"><button class="on" data-m="r">REINHARD</button><button data-m="i">IDT + REGRAIN</button></div></div>
-            <div class="srow"><span>Síla přenosu</span><input type="range" id="refStr" min="0" max="100" value="80" data-def="0"><output id="refStrO">80</output></div>
-            <div class="segrow" style="gap:8px"><button class="pbtn ghost" id="scanOff">Vypnout</button><button class="pbtn" id="scanSave">Uložit jako vlastní film</button></div>
-            <div class="exports"><button data-x=".cube">.cube<small>DaVinci, Photoshop</small></button><button data-x="JSON">JSON<small>preset Qamery</small></button><button data-x="XMP">XMP<small>Lightroom</small></button></div>
-            <button class="closebtn" id="refClose" aria-label="Zavřít"><svg class="px" viewBox="0 0 24 24" data-raw="down"></svg></button>
-          </div>
           <div class="sheet" id="dxSheet">
             <div class="grab"></div>
             <div class="fhead" style="height:48px"><div class="code" style="font-size:22px">DOUBLE</div><div class="sub">dvojexpozice s další fotkou</div></div>
@@ -791,6 +791,19 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
           <div class="bbar pb"><button class="pbtn ghost" id="bText">Text: zap</button><button class="pbtn ghost" id="bSave">Uložit blob</button><button class="pbtn" id="bShare">Export</button></div>
         </section>
 
+        <!-- FILM SCAN -->
+        <section class="scr pt" id="s-scan" hidden>
+          <div class="top"><button class="ib" data-back aria-label="Zpět" data-ic="back"></button><span class="title">Film scan</span><span style="width:40px"></span></div>
+          <div class="scanbody">
+            <p class="snote">Vyber fotku, jejíž barvy se ti líbí. Qamera z ní přenese barvy a tóny a uloží je jako tvůj vlastní film.</p>
+            <div class="refrow"><figure><canvas id="refA" width="160" height="200"></canvas><figcaption>REFERENCE</figcaption></figure><span class="arrow">→</span><figure><canvas id="refB" width="160" height="200"></canvas><figcaption>TVŮJ ZÁBĚR</figcaption></figure></div>
+            <div><div class="bh">VYBER FOTKU</div><div class="refpick hs" id="refPick"></div></div>
+            <div class="segrow"><div class="seg" id="refMethod"><button class="on" data-m="r">REINHARD</button><button data-m="i">IDT + REGRAIN</button></div></div>
+            <div class="srow"><span>Síla přenosu</span><input type="range" id="refStr" min="0" max="100" value="80" data-def="0"><output id="refStrO">80</output></div>
+          </div>
+          <div class="bbar pb"><button class="pbtn" id="scanSave">Uložit jako nový film</button></div>
+        </section>
+
         <!-- SPRÁVCE FILMŮ -->
         <section class="scr pt" id="s-films" hidden>
           <div class="top"><button class="ib" data-back aria-label="Zpět" data-ic="back"></button><span class="title">Moje filmy</span><span style="width:40px"></span></div>
@@ -801,7 +814,7 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
         <section class="scr pt" id="s-about" hidden>
           <div class="top"><button class="ib" data-back aria-label="Zpět" data-ic="back"></button><span class="title">O appce</span><span style="width:40px"></span></div>
           <div class="about">
-            <div class="hero"><div class="lens"><svg class="eyes" id="aboutEyes" viewBox="14 24 92 72"></svg></div><h2>QAMERA</h2><div class="ver">NÁHLED 0.7.2</div></div>
+            <div class="hero"><div class="lens"><svg class="eyes" id="aboutEyes" viewBox="14 24 92 72"></svg></div><h2>QAMERA</h2><div class="ver">NÁHLED 0.7.3</div></div>
             <div class="card"><h3>Poděkování</h3>
               <p><a href="https://github.com/thetechgeekko/Spektrafilm-android" target="_blank" rel="noopener">Spektrafilm for Android</a> by <b>Akshay Sharma</b></p>
               <p>Film modeling powered by <a href="https://github.com/andreavolpato/spektrafilm" target="_blank" rel="noopener">spektrafilm</a> (Andrea Volpato)</p>
@@ -1353,7 +1366,7 @@ class Engine {
     gl.uniform3fv(u.uHsl, P.hsl.flat());
     const g = P.grade; gl.uniform3fv(u.uGSh, hue2rgb(g.sh[0], g.sh[1])); gl.uniform3fv(u.uGMid, hue2rgb(g.mid[0], g.mid[1])); gl.uniform3fv(u.uGHi, hue2rgb(g.hi[0], g.hi[1]));
     let T = o.transfer;
-    if (!T && f.scan && this.srcEl) { if (!this.st) this.st = stats(this.srcEl); T = { k: Math.min(1, P.str), ms: this.st.m, ss: this.st.s, mr: f.scan.m, sr: f.scan.s }; }
+    if (!T && f.scan && this.srcEl) { if (!this.st) this.st = stats(this.srcEl); T = { k: Math.min(1, P.str) * (f.scan.k ?? 1), ms: this.st.m, ss: this.st.s, mr: f.scan.m, sr: f.scan.s }; }
     gl.uniform1f(u.uGlow, P.glow ?? f.gl ?? .12); gl.uniform1f(u.uIR, f.ir ? 1 : 0);
     const st = (!o.bypass && P.style) || {}, sty = st.type === 'dither' ? 1 : st.type === 'pixel' ? 2 : 0, pal = (st.pal || []).slice(0, 6), pf = new Float32Array(18);
     pal.forEach((c, i) => { const v = rgbOf(c); pf.set([v[0] / 255, v[1] / 255, v[2] / 255], i * 3); });
@@ -1637,7 +1650,7 @@ const SLOW_MODES = ['STOPY', 'POHYB', 'HEDVÁBÍ'];
 /* =====================================================================
    Router + přechody
    ===================================================================== */
-const SCREENS = { camera: '#s-camera', gallery: '#s-gallery', editor: '#s-editor', blob: '#s-blob', about: '#s-about', films: '#s-films' };
+const SCREENS = { camera: '#s-camera', gallery: '#s-gallery', editor: '#s-editor', blob: '#s-blob', about: '#s-about', films: '#s-films', scan: '#s-scan' };
 const stack = [];
 let trans = null;
 function go(to, { back = false, onShown } = {}) {
@@ -1663,14 +1676,16 @@ function goBack() { const to = stack.pop() || 'camera'; go(to, { back: true }); 
 function renderFilmsMgr() { // všechny filmy na tvojí fotce: podrž = před/po, srdíčko = oblíbený, oko = skrýt z výběru
   const ph = S.photos.find(p => p.kind !== 'arch') || S.photos[0], src = srcOf(ph, ph.P);
   $('#fmg').innerHTML = `<p class="note">Ukázka na fotce z galerie. Podrž náhled = původní fotka. Skryté filmy nebudou ve výběru ve foťáku ani v editoru.</p>` + FILMS.map(f => `<div class="fcard ${HIDDEN.includes(f.code) ? 'off' : ''}" data-c="${f.code}"><canvas width="240" height="300"></canvas>
-    <div class="ft"><div><b>${f.code}</b><small>${f.sub}</small></div><div class="fa"><button class="heart ${FAV.includes(f.code) ? 'on' : ''}" aria-label="Oblíbený">${iconSVG(FAV.includes(f.code) ? 'heart' : 'heartO')}</button><button class="vis ${HIDDEN.includes(f.code) ? '' : 'on'}" aria-label="Zobrazit ve výběru">${iconSVG('eye')}</button></div></div></div>`).join('');
+    <div class="ft"><div><b>${f.code}</b><small>${f.sub}</small></div><div class="fa"><button class="heart ${FAV.includes(f.code) ? 'on' : ''}" aria-label="Oblíbený">${iconSVG(FAV.includes(f.code) ? 'heart' : 'heartO')}</button><button class="vis ${HIDDEN.includes(f.code) ? '' : 'on'}" aria-label="Zobrazit ve výběru">${iconSVG('eye')}</button></div></div></div>`).join('')
+    + `<button class="fcard addcard" id="fmAdd"><span class="ab">+</span><div class="ft"><div><b>NOVÝ FILM</b><small>film scan z fotky</small></div></div></button>`;
   const P = JSON.parse(JSON.stringify(ph.P)); P.crop = DEF().crop; P.gtype = null;
-  $$('#fmg .fcard').forEach(card => { const code = card.dataset.c, cv = $('canvas', card), paint = byp => { P.film = code; cv.getContext('2d').drawImage(utilRender(src, P, 240, 300, { bypass: byp }), 0, 0); }; paint(false);
+  $('#fmAdd').onclick = () => go('scan');
+  $$('#fmg .fcard[data-c]').forEach(card => { const code = card.dataset.c, cv = $('canvas', card), paint = byp => { P.film = code; cv.getContext('2d').drawImage(utilRender(src, P, 240, 300, { bypass: byp }), 0, 0); }; paint(false);
     let t = 0; cv.onpointerdown = () => { t = setTimeout(() => { paint(true); buzz(6); }, 140); }; cv.onpointerup = cv.onpointercancel = cv.onpointerleave = () => { clearTimeout(t); paint(false); };
     $('.heart', card).onclick = () => { FAV = FAV.includes(code) ? FAV.filter(c => c !== code) : [code, ...FAV]; store.set('fav', FAV); renderFilmsMgr(); buildCarousel(); buzz(6); };
     $('.vis', card).onclick = () => { HIDDEN = HIDDEN.includes(code) ? HIDDEN.filter(c => c !== code) : [...HIDDEN, code]; store.set('hiddenFilms', HIDDEN); card.classList.toggle('off', HIDDEN.includes(code)); $('.vis', card).classList.toggle('on', !HIDDEN.includes(code)); buildCarousel(); buzz(4); }; });
 }
-function onEnter(s) { if (s === 'films') renderFilmsMgr(); if (s === 'camera') startCam(); if (s === 'gallery') renderGallery(); if (s === 'blob') openBlob(); if (s === 'about') renderCamInfo(); if (s === 'editor') requestAnimationFrame(() => layoutEditor()); }
+function onEnter(s) { if (s === 'films') renderFilmsMgr(); if (s === 'scan') openScan(); if (s === 'camera') startCam(); if (s === 'gallery') renderGallery(); if (s === 'blob') openBlob(); if (s === 'about') renderCamInfo(); if (s === 'editor') requestAnimationFrame(() => layoutEditor()); }
 function onLeave(s) { if (s === 'camera' && S.screen !== 'camera') stopCam(); }
 
 /* spodní panely: tah za úchyt dolů = zavřít */
@@ -1691,8 +1706,8 @@ function sheetDrag(el) {
     h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
   });
 }
-function onSheetClosed(el) { if (el.id === 'refSheet') setTab(S.tab, true); }
-function closeSheets() { ['#filmSheet', '#menuSheet', '#refSheet', '#dxSheet'].forEach(s => { const el = $(s); if (el._open) sheet(el, false); }); }
+function onSheetClosed(el) {}
+function closeSheets() { ['#filmSheet', '#menuSheet', '#dxSheet'].forEach(s => { const el = $(s); if (el._open) sheet(el, false); }); }
 
 /* =====================================================================
    Kamera
@@ -2198,7 +2213,7 @@ function viewImage(src, ph) {
    ===================================================================== */
 let edE, edRaf = 0, before = false;
 const PANEL_H = 186;
-function cleanP(P) { if (P.frame && !FRAMES[P.frame]) P.frame = null; P.date = null; if (P.depth && P.depth.mode === 'par') P.depth.mode = 'bokeh'; return P; } // zrušené efekty
+function cleanP(P) { if (P.frame && !FRAMES[P.frame]) P.frame = null; P.date = null; P.tr = 0; if (P.depth && P.depth.mode === 'par') P.depth.mode = 'bokeh'; return P; } // zrušené efekty
 function openEditor(ph, fromImg) {
   stopPar(); S.cur = ph; S.fxOpen = null; cleanP(ph.P); S.P = JSON.parse(JSON.stringify(ph.P)); S.cur._last = JSON.parse(JSON.stringify(ph.P)); S.hist = []; S.fut = [];
   edE.setSource(srcOf(ph, S.P));
@@ -2337,7 +2352,7 @@ function bakeCube(P, name) {
   for (let b = 0; b < n; b++) for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const i = (y * n * n + b * n + x) * 4; im.data[i] = Math.round(x / (n - 1) * 255); im.data[i + 1] = Math.round(y / (n - 1) * 255); im.data[i + 2] = Math.round(b / (n - 1) * 255); im.data[i + 3] = 255; }
   g.putImageData(im, 0, 0);
   const Q = Object.assign(JSON.parse(JSON.stringify(P)), { grain: 0, hal: 0, bloom: 0, glow: 0, vig: 0, sharp: 0, style: null, depth: null, crop: DEF().crop }); // jen barvy a tóny
-  const T = P.tr ? transferFor() : (FILM[P.film] && FILM[P.film].scan ? (() => { const st = S.cur._stats || (S.cur._stats = stats(S.cur.src)), f = FILM[P.film]; return { k: Math.min(1, P.str), ms: st.m, ss: st.s, mr: f.scan.m, sr: f.scan.s }; })() : null);
+  const f0 = FILM[P.film], T = f0 && f0.scan ? { k: Math.min(1, P.str) * (f0.scan.k ?? 1), ms: [.45, .43, .41], ss: [.24, .24, .24], mr: f0.scan.m, sr: f0.scan.s } : null; // pro LUT průměrná fotka
   const out = copyCanvas(utilRender(id, Q, n * n, n, { transfer: T })), d = out.getContext('2d').getImageData(0, 0, n * n, n).data;
   let txt = ATTR.map(a => '# ' + a).join('\n') + `\n# Qamera look: ${name}\nTITLE "${name.replace(/"/g, '')}"\nLUT_3D_SIZE ${n}\nDOMAIN_MIN 0 0 0\nDOMAIN_MAX 1 1 1\n`;
   for (let b = 0; b < n; b++) for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const i = (y * n * n + b * n + x) * 4; txt += `${(d[i] / 255).toFixed(5)} ${(d[i + 1] / 255).toFixed(5)} ${(d[i + 2] / 255).toFixed(5)}\n`; }
@@ -2348,8 +2363,8 @@ async function saveFile(name, text, type) {
   try { if (isMobile() && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: name }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
   const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); toast(`Uloženo: ${name}`);
 }
-function exportLook(kind) {
-  if (!S.cur) return; const P = S.P, name = `Qamera ${P.film}`, base = `qamera-${P.film.replace(/[^\w-]/g, '')}`;
+function exportLook(kind, P0) {
+  const P = P0 || S.P; if (!P) return; const name = `Qamera ${P.film}`, base = `qamera-${P.film.replace(/[^\w-]/g, '')}`;
   if (kind === '.cube') return saveFile(base + '.cube', bakeCube(P, name), 'text/plain');
   if (kind === 'JSON') return saveFile(base + '.json', JSON.stringify({ qamera: 1, name, film: P.film, lut: `luts/${P.film}.png`, attribution: ATTR, params: Object.fromEntries(Object.entries(P).filter(([k]) => !['crop', 'dx', 'depth'].includes(k))) }, null, 1), 'application/json');
   const f = FILM[P.film] || {}, num = v => (v > 0 ? '+' : '') + Math.round(v);
@@ -2446,7 +2461,7 @@ function setTab(t, quiet) {
     hscroll($('#aspRow')); requestAnimationFrame(placeCropBox);
   } else if (t === 'fx' && S.fxOpen) { renderFxPanel(p);
   } else if (t === 'fx') {
-    const fx = [['scan', 'Film scan', 'ref'], ['double', 'Double', 'double'], ['dither', 'Dither', 'dither'], ['pixel', 'Pixel art', 'pixel'], ['frame', 'Rám', 'frame'],
+    const fx = [['double', 'Double', 'double'], ['dither', 'Dither', 'dither'], ['pixel', 'Pixel art', 'pixel'], ['frame', 'Rám', 'frame'],
       ['depth', 'Hloubka', 'depth'], ['recipe', 'Recepty', 'recipe'], ['blob', 'Blob karta', 'blob']]; // co jde nastavit v Úpravách, tady není
     const st = S.P.style && S.P.style.type, on = k => (k === 'glowfx' && (S.P.glow ?? 0) > .45) || (k === 'sharp' && S.P.sharp) || (k === 'scan' && S.P.tr) || (k === 'double' && S.P.dx && S.P.dx.other) || (k === 'dither' && st === 'dither') || (k === 'pixel' && st === 'pixel') || (k === 'frame' && S.P.frame) || (k === 'depth' && S.P.depth) || (k === 'date' && S.P.date);
     p.innerHTML = `<div class="fx hs" id="fxRow">${fx.map(([k, l, ic, e]) => `<button data-fx="${k}" class="${on(k) ? 'on' : ''}">${iconSVG(ic)}${l}${e ? `<em>${e}</em>` : ''}</button>`).join('')}</div>`;
@@ -2457,7 +2472,6 @@ function setTab(t, quiet) {
 }
 function fxClick(b) {
   const k = b.dataset.fx;
-  if (k === 'scan') { openRef(); return; }
   if (['double', 'dither', 'pixel', 'frame', 'depth', 'date'].includes(k)) { openFx(k); return; }
   if (k === 'recipe') { recipeActs(); return; }
   if (k === 'blob') { S.blobFrom = S.cur; go('blob'); return; }
@@ -2717,7 +2731,8 @@ function wheel(el, v, set, end) {
 function toggleAdv() { S.adv = !S.adv; $('#advKnob').classList.toggle('on', S.adv); setTab(S.tab); buzz(6); }
 
 /* Reference */
-function setRef(src) { refSrc = src; refStats = stats(src); $('#refA').getContext('2d').drawImage(cropAr(src, .8), 0, 0, 160, 200); renderEd(); if (openRef._upd) openRef._upd(); }
+function setRef(src) { refSrc = src; refStats = stats(src); $('#refA').getContext('2d').drawImage(cropAr(src, .8), 0, 0, 160, 200); if (openRef._upd) openRef._upd(); }
+function openRef() {}
 function buildRefPick() {
   const el = $('#refPick');
   el.innerHTML = `<label aria-label="Nahrát referenci">+<input type="file" accept="image/*" id="refFile"></label>` + S.photos.filter(p => p !== S.cur).slice(0, 14).map(p => `<button data-id="${p.id}"><img src="${p.thumb}" alt=""></button>`).join('');
@@ -2727,7 +2742,9 @@ function buildRefPick() {
 }
 function filmActs(code) {
   const f = FILM[code];
-  openActs(`<h4>Vlastní film ${code}</h4><div class="rsave"><input id="fmName" value="${code}" maxlength="8" autocomplete="off"><button class="go" id="fmRen">Přejmenovat</button></div>${actBtn('del', 'trash', 'Smazat film', 'danger')}`, root => {
+  openActs(`<h4>Vlastní film ${code}</h4><div class="rsave"><input id="fmName" value="${code}" maxlength="8" autocomplete="off"><button class="go" id="fmRen">Přejmenovat</button></div>${actBtn('cube', 'share', 'Export .cube (DaVinci, Photoshop)')}${actBtn('json', 'share', 'Export JSON preset')}${actBtn('del', 'trash', 'Smazat film', 'danger')}`, root => {
+    $('[data-a=cube]', root).onclick = () => { closeActs(); exportLook('.cube', Object.assign(DEF(), { film: code })); };
+    $('[data-a=json]', root).onclick = () => { closeActs(); exportLook('JSON', Object.assign(DEF(), { film: code })); };
     $('#fmRen', root).onclick = () => { const n = $('#fmName', root).value.trim().toUpperCase().replace(/[^A-Z0-9-]/g, ''); if (!n || (FILM[n] && n !== code)) return toast('Kód je prázdný nebo už existuje'); closeActs(); renameFilm(code, n); };
     $('[data-a=del]', root).onclick = () => { closeActs(); deleteFilm(code); };
   });
@@ -2744,20 +2761,24 @@ function deleteFilm(code) {
   S.photos.forEach(p => { if (p.P.film === code) { p.P.film = 'P400'; rethumb(p); } }); if (S.P.film === code) S.P.film = 'P400'; if (S.film === code) setFilm('P400');
   FAV = FAV.filter(c => c !== code); store.set('fav', FAV); saveScans(); refreshFilmUI(); buzz(10); toast(`Film ${code} smazaný`);
 }
+/* nový film z reference (ve foťáku): přenos barev Reinhard v Lab, náhled na aktuálním záběru */
+const SCAN = { k: .8, sample: null, st: null };
+function ensureRef() { if (!refStats) { refSrc = copyCanvas(utilRender(drawScene('plaz', 320, 400, 5), Object.assign(DEF(), { film: 'VEL', grain: 0 }), 320, 400)); refStats = stats(refSrc); } }
+function scanSample() { const el = camE && camE.srcEl, c = mk(240, 300), g = c.getContext('2d'); const w = el ? (el.videoWidth || el.width) : 0, h = el ? (el.videoHeight || el.height) : 0;
+  if (w && h) { const k = Math.max(240 / w, 300 / h); g.drawImage(el, (240 - w * k) / 2, (300 - h * k) / 2, w * k, h * k); return c; }
+  const ph = S.photos.find(p => p.kind !== 'arch'); return ph ? cropAr(ph.src, .8) : c; }
+function scanPreview() { const P = Object.assign(DEF(), { film: 'P400', str: 0, grain: .3, hal: 0, bloom: 0, vig: .2 });
+  $('#refB').getContext('2d').drawImage(utilRender(SCAN.sample, P, 160, 200, { transfer: { k: SCAN.k, ms: SCAN.st.m, ss: SCAN.st.s, mr: refStats.m, sr: refStats.s } }), 0, 0); }
+function openScan() {
+  ensureRef(); SCAN.sample = scanSample(); SCAN.st = stats(SCAN.sample); buildRefPick(); $('#refA').getContext('2d').drawImage(cropAr(refSrc, .8), 0, 0, 160, 200);
+  openRef._upd = scanPreview; scanPreview(); const rg = $('#refStr'); rg.value = Math.round(SCAN.k * 100); $('#refStrO').textContent = rg.value; paintRange(rg);
+  rg.oninput = () => { SCAN.k = rg.value / 100; $('#refStrO').textContent = rg.value; paintRange(rg); scanPreview(); };
+}
 function saveScan() {
   const n = FILMS.filter(f => f.scan).length + 1, code = 'SCAN' + n; utilRender(refSrc, DEF(), 60, 75, { bypass: true }); const pal = kmeans(util.e.pixels(), 3);
-  const f = { code, sub: 'film scan ' + n, chem: 'vlastní', desc: 'Tvůj vlastní film naskenovaný z reference. Funguje jako filtr na jakoukoli fotku i ve foťáku.', iso: 400, g: 'classic', sh: [0, 0, 0], hi: [1, 1, 1], con: 1, sat: 1, fade: .02, hal: .3, gl: .15, c: [pal[4] || pal[2], pal[2], pal[0]], scan: { m: refStats.m, s: refStats.s } };
-  addFilm(f); store.set('scans', FILMS.filter(x => x.scan)); buildCarousel();
-  S.P.tr = 0; S.P.film = code; S.P.str = 1; commit(); renderEd(true); sheet($('#refSheet'), false); setTab('film', true); buzz(12); toast(`Film ${code} uložený, najdeš ho mezi filmy i ve foťáku`);
-}
-function openRef() {
-  transferFor(); buildRefPick(); $('#refA').getContext('2d').drawImage(cropAr(refSrc, .8), 0, 0, 160, 200);
-  if (!S.P.tr) { S.P.tr = .8; renderEd(); }
-  const upd = () => { $('#refB').getContext('2d').drawImage(utilRender(srcOf(S.cur, S.P), S.P, 160, 200, { transfer: transferFor() }), 0, 0); };
-  openRef._upd = upd; upd(); const r = $('#refStr'); r.value = Math.round(S.P.tr * 100); $('#refStrO').textContent = r.value; paintRange(r);
-  r.oninput = () => { S.P.tr = r.value / 100; $('#refStrO').textContent = r.value; paintRange(r); renderEd(); upd(); };
-  r.onchange = commit;
-  sheet($('#refSheet'), true);
+  const f = { code, sub: 'film scan ' + n, chem: 'vlastní', desc: 'Tvůj vlastní film naskenovaný z reference. Podržením ho přejmenuješ, smažeš nebo vyexportuješ.', iso: 400, g: 'classic', sh: [0, 0, 0], hi: [1, 1, 1], con: 1, sat: 1, fade: .02, hal: .3, gl: .15, c: [pal[4] || pal[2], pal[2], pal[0]], scan: { m: refStats.m, s: refStats.s, k: SCAN.k } };
+  addFilm(f); store.set('scans', FILMS.filter(x => x.scan)); buildCarousel(); S.camRecipe = null; setFilm(code);
+  buzz(12); toast(`Film ${code} je ve výběru filmů`); goBack();
 }
 
 /* =====================================================================
@@ -3169,7 +3190,7 @@ function boot2(h) {
   $('#navlist').innerHTML = NAV.map(([k, l, ic]) => `<button data-k="${k}">${iconSVG(ic)}${l}</button>`).join('');
   $$('#navlist button').forEach(b => b.onclick = () => navTo(b.dataset.k));
   $$('#viewSeg button').forEach(b => b.onclick = () => setView(b.dataset.v));
-  ['#filmSheet', '#menuSheet', '#refSheet'].forEach(s => sheetDrag($(s)));
+  ['#filmSheet', '#menuSheet'].forEach(s => sheetDrag($(s)));
   addEventListener('resize', () => layoutVf());
   // kamera
   $('#filmChip').onclick = $('#cassBtn').onclick = openFilmSheet;
@@ -3201,12 +3222,13 @@ function boot2(h) {
       miniEyes.look(((e.clientX - r.left) / r.width - .5) * 2, ((e.clientY - r.top) / r.height - .5)); setTimeout(() => miniEyes.look(0, 0), 1200); buzz(4); });
     vf.addEventListener('wheel', e => { e.preventDefault(); S.zoom = clamp(S.zoom * (1 - e.deltaY * .0015), 1, 5); zoomApi.sync(); syncZoomBtns(); }, { passive: false }); })();
   // menu
-  $('#menuGrid').innerHTML = [['gallery', 'Galerie', 'gallery'], ['films', 'Moje filmy', 'film'], ['dbl', 'Double ve foťáku', 'double'], ['dispo', 'Jednorázovka', 'clock'], ['demo', 'DEMO scéna', 'camera'], ['about', 'O appce', 'info']].map(([k, l, ic]) => `<button data-k="${k}">${iconSVG(ic)}${l}</button>`).join('');
+  $('#menuGrid').innerHTML = [['gallery', 'Galerie', 'gallery'], ['films', 'Moje filmy', 'film'], ['scan', 'Film scan', 'ref'], ['dbl', 'Double ve foťáku', 'double'], ['dispo', 'Jednorázovka', 'clock'], ['demo', 'DEMO scéna', 'camera'], ['about', 'O appce', 'info']].map(([k, l, ic]) => `<button data-k="${k}">${iconSVG(ic)}${l}</button>`).join('');
   $$('#menuGrid button').forEach(b => b.onclick = () => { sheet($('#menuSheet'), false); const k = b.dataset.k;
     if (k === 'reset') { S.isoIdx = 0; S.timeIdx = 0; iso.set(0); tim.set(0); ev.reset(); updLcd(); toast('Kolečka na výchozích hodnotách'); return; }
     if (k === 'dbl') { S.dbl = !S.dbl; S.dblFirst = null; showGhost(null); updFmt(); buzz(6); toast(S.dbl ? 'Double: první snímek zůstane v hledáčku, druhý se přes něj prolne' : 'Double vypnutý'); return; }
     if (k === 'dispo') { setTimeout(dispoPick, 200); return; }
     if (k === 'films') { setTimeout(() => go('films'), 120); return; }
+    if (k === 'scan') { setTimeout(() => go('scan'), 120); return; }
     if (k === 'demo') { if (CAM.live) { liveOff(); store.set('cam', false); toast('DEMO scéna, kameru zapneš ikonou v hledáčku'); } else toast('Už běží DEMO scéna'); return; }
     setTimeout(() => navTo(k), 120); });
   $('#menuBtn').onclick = () => sheet($('#menuSheet'), true);
@@ -3224,10 +3246,8 @@ function boot2(h) {
     const px = D.getContext('2d', { willReadFrequently: true }).getImageData(Math.floor(u * (D.width - 1)), Math.floor(v * (D.height - 1)), 1, 1).data[0] / 255;
     const from = d.focus; d.fset = 1; spring(0, 1, t => { d.focus = lerp(from, px, t); renderEd(); const i = $('#fxDf'); if (i) { i.value = Math.round(d.focus * 100); i.nextElementSibling.textContent = i.value; paintRange(i); } }, { k: 200, c: 26, onDone: commit }); buzz(6); });
   $('#fsBtn').onclick = openFs;
-  $('#refClose').onclick = () => { sheet($('#refSheet'), false); setTab(S.tab, true); };
-  $('#scanOff').onclick = () => { S.P.tr = 0; renderEd(true); commit(); sheet($('#refSheet'), false); setTab(S.tab, true); buzz(6); toast('Film scan vypnutý'); };
+  $('#newFilm').onclick = () => { sheet($('#filmSheet'), false); setTimeout(() => go('scan'), 200); };
   $$('#refMethod button').forEach(b => b.onclick = () => { $$('#refMethod button').forEach(x => x.classList.toggle('on', x === b)); toast(b.dataset.m === 'r' ? 'Reinhard: průměr a odchylka barev v Lab' : 'Pitié IDT + regrain: přesnější, pomalejší'); });
-  $$('#refSheet .exports button').forEach(b => b.onclick = () => exportLook(b.dataset.x));
   cropGestures();
   // blob
   $('#bRand').onclick = diceShape;
