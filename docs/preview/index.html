@@ -136,9 +136,9 @@ a{color:var(--amber)}
 .acts .opt button{height:38px;padding:0 12px;font-family:var(--f-mono);font-size:11px}
 .acts .opt button.on{border-color:var(--amber);color:var(--amber)}
 .acts .srow{padding:0 4px}
-.dxpair{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;padding:4px 18px 12px}
+.dxpair{display:flex;justify-content:center;gap:16px;align-items:center;padding:0 18px 10px}
 .dxpair figure{margin:0;text-align:center}
-.dxpair img,.dxslot{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:14px;display:block}
+.dxpair img,.dxslot{width:72px;aspect-ratio:4/5;object-fit:cover;border-radius:12px;display:block}
 .dxslot{background:var(--panel);border:1.5px dashed #3d3731;display:grid;place-items:center;color:var(--mute);font-size:12px;position:relative;overflow:hidden}
 .dxslot img{position:absolute;inset:0;width:100%;height:100%}
 .dxpair figcaption{font-size:10.5px;color:var(--mute);margin-top:6px;font-family:var(--f-mono);letter-spacing:.08em}
@@ -189,9 +189,11 @@ a{color:var(--amber)}
 .vtools{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}
 .vtools .grp{display:flex;gap:6px}
 .vtools .ib{pointer-events:auto;width:36px;height:36px;border-radius:12px;background:rgba(10,9,8,.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#d0c8be}
-.livepill{width:86px;height:28px;font-size:10px;letter-spacing:.08em}
-.livepill i{width:6px;height:6px;border-radius:50%;background:var(--mute);flex:none}
-.livepill.live i{background:#ff4a3d;box-shadow:0 0 8px #ff4a3d}
+.vf.exp #pIso,.vf.exp #pEv{display:none}
+.vf.narrow .vtools .ib{width:32px;height:32px;border-radius:10px}
+.vf.narrow .vtools .grp{gap:4px}
+.vf.narrow .zoomgrp button{width:38px}
+.stripl{font-family:var(--f-px);font-size:8px;color:var(--dim);letter-spacing:.12em;margin-top:-3px}
 .focus{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;border:1.5px solid var(--amber);border-radius:12px;pointer-events:none;opacity:0;filter:var(--glow)}
 .count{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--f-dot);font-weight:900;font-size:120px;color:var(--amber);filter:var(--glow);pointer-events:none}
 .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
@@ -296,9 +298,9 @@ a{color:var(--amber)}
 .ecanvas{position:relative;max-width:100%;max-height:100%;border-radius:6px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.5)}
 .ecanvas canvas{display:block;width:100%;height:100%}
 #eGlow,#pcGlow{position:absolute;inset:0;width:100%;height:100%;display:none}
-.ecanvas.framed{background:#0a0a0c}
+.ecanvas.framed{background:#0a0a0d;border-radius:0;box-shadow:none}
 .ecanvas.framed #eGlow,.ecanvas.framed #pcGlow{display:block}
-.ecanvas.framed #edCanvas,.ecanvas.framed #pcCanvas{position:absolute;left:9%;top:9%;width:82%;height:82%;box-shadow:0 8px 30px rgba(0,0,0,.55)}
+.ecanvas.framed #edCanvas,.ecanvas.framed #pcCanvas{position:absolute;border-radius:3px;box-shadow:0 0 0 1px rgba(255,255,255,.05)}
 .fsbtn{position:absolute;top:8px;right:14px;width:36px;height:36px;border-radius:12px;background:rgba(10,9,8,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#d0c8be;z-index:3}
 .badge{position:absolute;top:12px;left:50%;transform:translateX(-50%);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.2em;padding:5px 10px;border-radius:8px;background:rgba(0,0,0,.6);color:#fff;opacity:0;transition:opacity .15s;pointer-events:none;z-index:3}
 .badge.show{opacity:1}
@@ -424,7 +426,11 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 .roll svg{position:absolute;left:50%;top:8px;width:50px;height:50px;margin-left:-25px;filter:drop-shadow(0 8px 10px rgba(0,0,0,.5))}
 .roll .glass{position:absolute;left:0;right:0;bottom:0;height:52px;border-radius:0 0 21px 21px;backdrop-filter:blur(16px) saturate(1.3);-webkit-backdrop-filter:blur(16px) saturate(1.3);background:rgba(20,18,16,.35);border-top:1px solid rgba(255,255,255,.09);padding-top:9px}
 .roll b{display:block;font-size:11.5px;font-weight:500}
-.roll small{display:block;font-family:var(--f-mono);font-size:9.5px;color:#aaa197;margin-top:2px}
+.roll small{display:block;font-family:var(--f-mono);font-size:9.5px;color:#aaa197;margin-top:2px;padding:0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.roll b{padding:0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fchips{display:flex;gap:6px;overflow-x:auto;padding:0 14px 12px}
+.fchips button{flex:none;height:32px;padding:0 12px;border-radius:10px;background:var(--panel);border:1px solid var(--line);font-family:var(--f-px);font-size:10px;color:var(--mute)}
+.fchips button.on{color:var(--amber);border-color:rgba(255,196,61,.45);background:rgba(255,196,61,.07)}
 .roll.lock small{color:var(--amber)}
 .masonry{columns:2;column-gap:8px;padding:0 14px}
 .gitem{break-inside:avoid;margin:0 0 8px;border-radius:16px;overflow:hidden;position:relative;display:block;width:100%}
@@ -444,17 +450,17 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 
 /* ---------- blob ---------- */
 #s-blob{background-color:#0B0C0E;color:var(--fg);background-image:radial-gradient(#26282D 1px,transparent 1.2px);background-size:24px 24px;background-position:12px 12px}
-.bcard{margin:6px auto 0;width:300px;max-width:calc(100% - 40px);aspect-ratio:4/5;border-radius:26px;position:relative;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.05);transition:background-color .5s;touch-action:none;flex:none}
+.bcard{margin:0 auto;width:300px;max-width:calc(100% - 40px);aspect-ratio:4/5;border-radius:26px;position:relative;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.05);transition:background-color .5s;touch-action:none;flex:none}
 .bcard svg{position:absolute;inset:0;width:100%;height:100%}
 .bcard .lbl{position:absolute;left:14px;bottom:12px;right:14px;display:flex;justify-content:space-between;gap:10px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;color:var(--lc,rgba(20,18,16,.72));z-index:2}
 .bcard .lbl span{min-width:2ch;padding:2px 4px;margin:-2px -4px;border-radius:5px;outline:none;-webkit-user-select:text;user-select:text;cursor:text;white-space:nowrap}
 .bcard .lbl span:focus{background:rgba(255,255,255,.35)}
-.palette{display:flex;justify-content:center;gap:8px;margin:16px 0 4px;flex-wrap:wrap;padding:0 16px}
+.palette{display:flex;justify-content:center;gap:8px;margin:0;flex-wrap:wrap;padding:0 16px}
 .palette button{width:38px;height:38px;border-radius:12px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);transition:transform .3s cubic-bezier(.3,1.6,.5,1)}
 .palette button.on{transform:translateY(-4px);box-shadow:0 0 0 2px #0B0C0E,0 0 0 4px var(--fg)}
 .palette .add{width:38px;height:38px;border-radius:12px;cursor:pointer;background:transparent;box-shadow:inset 0 0 0 1.5px #3d3731;color:var(--fg);font-size:20px;display:grid;place-items:center;position:relative;overflow:hidden}
 .palette .add input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.shapes{display:flex;gap:6px;overflow-x:auto;padding:10px 16px}
+.shapes{display:flex;gap:6px;overflow-x:auto;padding:0 16px}
 .shapes button{flex:none;width:52px;height:52px;border-radius:14px;display:grid;place-items:center}
 .shapes button.on{background:rgba(255,255,255,.08)}
 .shapes .drawbtn{box-shadow:inset 0 0 0 1.5px #3d3731;color:var(--fg);font-size:22px}
@@ -466,7 +472,16 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 .bcard .draft{fill:none;stroke:var(--amber);stroke-width:.8;stroke-linecap:round;stroke-linejoin:round}
 .shapes svg{width:40px;height:40px}
 .bctl{display:flex;justify-content:center;gap:10px;align-items:center;margin-top:4px}
-.bscroll{flex:1;overflow-y:auto;min-height:0;padding-bottom:10px}
+.bscroll{flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column;gap:16px;padding:4px 0 18px}
+.brow{display:flex;justify-content:center;align-items:center;gap:10px;padding:0 16px}
+.bsl{padding:0 16px}
+.bh{font-family:var(--f-mono);font-size:10px;letter-spacing:.16em;color:var(--dim);padding:0 16px 8px}
+.bpresets{display:flex;gap:8px;overflow-x:auto;padding:0 16px}
+.bpresets button{flex:none;height:52px;border-radius:14px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;gap:8px;padding:0 12px 0 6px;font-family:var(--f-mono);font-size:10.5px;color:#cfc7bc}
+.bpresets svg{width:32px;height:40px;border-radius:7px;flex:none}
+.bpresets .save{padding:0 14px;color:var(--amber);border-color:rgba(255,196,61,.4)}
+.bbar{flex:none;display:flex;justify-content:center;gap:10px;padding-top:12px;border-top:1px solid #1a1b1f;background:#0B0C0E}
+.pbtn.sm{padding:8px 14px}
 .pbtn{padding:11px 18px;border-radius:14px;background:var(--lcd);color:var(--lcd-ink);font-weight:600;font-size:13px}
 .pbtn.ghost{background:transparent;color:var(--fg);box-shadow:inset 0 0 0 1.5px #3d3731;font-weight:500}
 
@@ -533,8 +548,8 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
     </div>
     <div class="navnote">
       <b>Na co sáhnout:</b> v hledáčku táhni prstem <b>nahoru/dolů = EV</b> (cvakne na nule), <b>doprava = dlouhá expozice</b> (z AUTO až na 15 s).
-      Dvojklik na pilulku EV ji vrátí na 0. Formát přepneš ťuknutím na štítek vpravo nahoře nebo na FORMÁT v displeji, hledáček pak ukazuje přesně výslednou fotku.
-      <b>DEMO</b> přepne na skutečnou kameru. V editoru <b>podrž fotku</b> = před/po.
+      Dvojklik na pilulku EV (při schovaném ovládání) ji vrátí na 0. Formát přepneš ťuknutím na štítek vpravo nahoře nebo na FORMÁT v displeji, hledáček pak ukazuje přesně výslednou fotku.
+      Ikona foťáku v hledáčku zapne skutečnou kameru. V editoru <b>podrž fotku</b> = před/po.
       <br><br>Filmy zatím aproximuje jednoduchý shader; skutečné LUT ze spektrafilmu přijdou ve fázi 2.
     </div>
   </aside>
@@ -558,8 +573,7 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
             <svg class="gridov" id="gridOv" aria-hidden="true"></svg>
             <div class="vtools">
               <div class="grp"><button class="ib" id="tGrid" data-ic="grid" aria-label="Mřížka"></button><button class="ib" id="tTimer" data-ic="timer" aria-label="Samospoušť"></button><button class="ib" id="tMeter" data-ic="meter" aria-label="Expozimetr"></button></div>
-              <button class="pill livepill" id="liveBtn"><i></i><span id="liveTxt">DEMO</span></button>
-              <div class="grp"><button class="ib" id="tFlash" data-ic="flash" aria-label="Blesk"></button><button class="ib" id="tFlip" data-ic="flip" aria-label="Otočit kameru"></button></div>
+              <div class="grp"><button class="ib" id="liveBtn" data-ic="camera" aria-label="Zapnout skutečnou kameru"></button><button class="ib" id="tFlash" data-ic="flash" aria-label="Blesk"></button><button class="ib" id="tFlip" data-ic="flip" aria-label="Otočit kameru"></button></div>
             </div>
             <button class="fmtbadge" id="fmtBadge" aria-label="Přepnout formát">3:4</button>
             <div class="fmtbadge dbl" id="dblBadge" hidden>DOUBLE 1/2</div>
@@ -593,10 +607,13 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
           <div class="dials">
             <div class="dialcol">
               <div class="evstrip" id="evStrip"><div class="t" id="evT"></div><div class="c"></div></div>
+              <div class="stripl">EV</div>
               <div class="dial-ptr"></div>
               <div class="dial" id="isoDial"></div>
             </div>
             <div class="dialcol">
+              <div class="evstrip" id="zoomStrip"><div class="t" id="zoomT"></div><div class="c"></div></div>
+              <div class="stripl">ZOOM</div>
               <div class="dial-ptr"></div>
               <div class="dial" id="timeDial"></div>
             </div>
@@ -632,6 +649,7 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
           </div>
           <div class="gscroll" id="gScroll">
             <div class="rolls hs" id="rolls"></div>
+            <div class="fchips hs" id="fChips"></div>
             <div class="masonry" id="masonry"></div>
             <div class="gempty" id="gEmpty" hidden>Nic takového tu není. Zkus kód filmu (P400), barvu nebo „noc“.</div>
           </div>
@@ -692,13 +710,16 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
             <button class="ib" id="bRand" aria-label="Nový tvar" data-ic="dice"></button>
           </div>
           <div class="bscroll">
-          <div class="bcard" id="bCard"><svg id="bSvg" viewBox="0 0 100 125" preserveAspectRatio="none"></svg><div class="lbl" id="bLbl"><span id="bL" contenteditable="true" spellcheck="false"></span><span id="bR" contenteditable="true" spellcheck="false"></span></div></div>
-          <div class="palette" id="bPal"></div>
-          <div class="bctl"><div class="seg" id="bPalSeg"><button data-p="pre">PALETA PŘED</button><button data-p="post" class="on">PO FILMU</button></div></div>
-          <div class="bopts"><button class="pbtn ghost" id="bInv" style="padding:9px 14px">Obrátit</button><label class="bop">Krytí<input type="range" id="bOp" min="10" max="100" value="100" data-def="100"></label></div>
-          <div class="shapes hs" id="bShapes"></div>
+            <div class="bcard" id="bCard"><svg id="bSvg" viewBox="0 0 100 125" preserveAspectRatio="none"></svg><div class="lbl" id="bLbl"><span id="bL" contenteditable="true" spellcheck="false"></span><span id="bR" contenteditable="true" spellcheck="false"></span></div></div>
+            <div class="palette" id="bPal"></div>
+            <div class="brow"><div class="seg" id="bPalSeg"><button data-p="pre">PALETA PŘED</button><button data-p="post" class="on">PO FILMU</button></div></div>
+            <div class="brow"><button class="pbtn ghost sm" id="bInv">Obrátit</button><div class="seg" id="bBlend"><button data-b="normal" class="on">NORMÁL</button><button data-b="screen">SCREEN</button><button data-b="glow">GLOW</button></div></div>
+            <div class="bsl"><label class="srow"><span>Dissolve</span><input type="range" id="bDis" min="0" max="100" value="0" data-def="0"><output>0</output></label>
+              <label class="srow"><span>Velikost</span><input type="range" id="bSize" min="40" max="160" value="100" data-def="100"><output id="bSizeO">100</output></label></div>
+            <div><div class="bh">TVARY</div><div class="shapes hs" id="bShapes"></div></div>
+            <div><div class="bh">PRESETY</div><div class="bpresets hs" id="bPresets"></div></div>
           </div>
-          <div class="bctl pb" style="padding-top:8px"><button class="pbtn ghost" id="bPaper">Tečky: zap</button><button class="pbtn" id="bShare">Sdílet kartu</button></div>
+          <div class="bbar pb"><button class="pbtn ghost" id="bPaper">Tečky: zap</button><button class="pbtn" id="bShare">Sdílet kartu</button></div>
         </section>
 
         <!-- O APPCE -->
@@ -851,8 +872,8 @@ const ICONS = {
   meter:  ['', '.##########.', '.#..#..#..#.', '.#.#..#..##.', '.##..#..#.#.', '.#..#..#..#.', '.#.#..#..##.', '.##..#..#.#.', '.#..#..#..#.', '.##########.'],
   clock:  ['', '...######...', '..#......#..', '.#...#....#.', '.#...#....#.', '.#...####.#.', '.#........#.', '.#........#.', '..#......#..', '...######...'],
   double: ['', '.####.......', '#....#......', '#...####....', '#..#.#..#...', '#..#.#..#...', '.###.#..#...', '...#....#...', '....####....'],
-  dither: ['#.#.#.#.#.#.', '.#.#.#.#.#.#', '#.#.#.#.#.#.', '.#...#...#..', '...#...#...#', '.#...#...#..', '............', '..#.....#...', '............', '.....#......'],
-  pixel:  ['', '##..####....', '##..####....', '....####....', '######..##..', '######..##..', '..##....####', '..##....####', '......##....', '......##....'],
+  dither: ['##########', '#.#.#.#.##', '##########', '.#.#.#.#.#', '#...#...#.', '..#...#...', '#.......#.', '....#.....', '..........', '#.........'],
+  pixel:  ['..#.....#..', '...#...#...', '..#######..', '.##.###.##.', '###########', '#.#######.#', '#.#.....#.#', '...##.##...'],
   frame:  ['', '############', '#..........#', '#.########.#', '#.#......#.#', '#.#......#.#', '#.########.#', '#..........#', '############'],
   mist:   ['', '...####.....', '..#....#....', '.#..##..#...', '.#.#..#.#...', '.#..##..#...', '..#....#....', '...####.....'],
   recipe: ['', '.#########..', '.#.......#..', '.#.#####.#..', '.#.......#..', '.#.####..#..', '.#.......#..', '.#.###...#..', '.#.......#..', '.#########..'],
@@ -1062,11 +1083,11 @@ async function liveOn() {
 }
 function liveStop() { if (CAM.stream) CAM.stream.getTracks().forEach(t => t.stop()); CAM.stream = null; CAM.track = null; }
 function liveOff() { liveStop(); CAM.live = false; CAM.deviceId = null; CAM.ultra = false; LIVE.w = 480; LIVE.h = 640; LIVE.canvas = mk(480, 640); updLive(); }
-function updLive() { $('#liveBtn').classList.toggle('live', CAM.live); $('#liveTxt').textContent = CAM.live ? 'ŽIVĚ' : 'DEMO'; }
+function updLive() { const b = $('#liveBtn'); b.classList.toggle('on', CAM.live); b.setAttribute('aria-label', CAM.live ? 'Vypnout kameru (DEMO)' : 'Zapnout skutečnou kameru'); }
 async function setTorch(on) { if (!CAM.track || !CAM.caps.torch) return false; try { await CAM.track.applyConstraints({ advanced: [{ torch: on }] }); return true; } catch { return false; } }
 function renderCamInfo() {
   const el = $('#camInfo'); if (!el) return;
-  if (!CAM.track) { el.innerHTML = `<p>${CAM.err || 'Zatím běží DEMO. Ťukni v hledáčku na <b>DEMO</b>, prohlížeč se zeptá na kameru a tady se ukáže, co tvůj telefon dovolí.'}</p>`; return; }
+  if (!CAM.track) { el.innerHTML = `<p>${CAM.err || 'Zatím běží DEMO. Ťukni v hledáčku na ikonu foťáku, prohlížeč se zeptá na kameru a tady se ukáže, co tvůj telefon dovolí.'}</p>`; return; }
   const c = CAM.caps, s = CAM.track.getSettings ? CAM.track.getSettings() : {}, r = (o, u = '') => o && o.max != null ? `${+(+o.min).toFixed(2)}–${+(+o.max).toFixed(2)}${u}` : null;
   const rows = [['Objektiv', CAM.track.label || '—'], ['Rozlišení', s.width ? `${s.width}×${s.height}` : '—'], ['Zoom', r(c.zoom, '×') || 'jen digitální'], ['Svítilna / blesk', c.torch ? 'ano' : 'ne'],
     ['Ruční ISO', r(c.iso) || 'ne, řídí telefon'], ['Ruční čas', r(c.exposureTime) ? r(c.exposureTime) + ' (×100 µs)' : 'ne, řídí telefon'], ['Korekce EV', r(c.exposureCompensation) || 'ne (EV dělá Qamera)'],
@@ -1165,7 +1186,8 @@ void main(){
     c += n*uGrain*.13*w + (hash(gl_FragCoord.xy + jit*3.1) - .5)*uGrain*.018; // jemný nepravidelný šum navrch
     if (uGMot > 0.) { vec2 mp = vUv*vec2(ar,1.)*2.3; c += vec3(vnoise(mp+3.), vnoise(mp+17.), vnoise(mp+29.))*.045*uGMot*uGrain; }
   }
-  if (uZebra > .5) { float Lz = luma(c), st = step(5., mod(gl_FragCoord.x + gl_FragCoord.y, 10.)); if (Lz > .96) c = mix(c, vec3(1.,.77,.24), .8*st); if (Lz < .025) c = mix(c, vec3(.2,.45,1.), .6*st); }
+  if (uZebra > .5) { float Lz = luma(pow(clamp(pow(max(col,0.),vec3(2.2))*exp2(uExp),0.,1.), vec3(1./2.2))), st = step(5., mod(gl_FragCoord.x + gl_FragCoord.y, 10.)); // měří scénu před filmem, ne výsledek
+    if (Lz > .9) c = mix(c, vec3(1.,.77,.24), .85*st); if (Lz < .07) c = mix(c, vec3(.2,.45,1.), .7*st); }
   o = vec4(clamp(c,0.,1.), 1.);
 }`;
 const DEF = () => ({ film: 'P400', str: 1, exp: 0, temp: 0, tint: 0, con: 0, sat: 0, grain: .5, gsize: 1, gtype: null, hal: 1, bloom: .15, glow: null, vig: .25, fade: 0, sharp: 0, style: null, frame: null, dx: null,
@@ -1562,7 +1584,7 @@ function camIso() { const v = ISO_STOPS[S.isoIdx]; return v === 'A' ? FILM[S.fil
 let ctlSp = null;
 function setCollapsed(c, instant) { // kriticky tlumená pružina (bez překmitu) → po vysunutí nic neposkočí
   S.collapsed = c; store.set('collapsed', c); const el = $('#camCtl'), prev = el.style.height; el.style.height = 'auto'; const H = el.offsetHeight; el.style.height = prev;
-  $('#camHandle').classList.toggle('col', c); $('#pTime').hidden = !(c && S.timeIdx > 0);
+  $('#camHandle').classList.toggle('col', c); $('#pTime').hidden = !(c && S.timeIdx > 0); $('#vf').classList.toggle('exp', !c); // ISO a EV jsou na displeji, v hledáčku jen při schovaném ovládání
   ctlSp && ctlSp.stop(); const from = el.offsetHeight, to = c ? 0 : H;
   const upd = v => { v = clamp(v, 0, H); el.style.height = v + 'px'; el.style.opacity = clamp(v / H, 0, 1); layoutVf(); };
   if (instant) { upd(to); if (!c) el.style.height = 'auto'; layoutVf(); return; }
@@ -1574,7 +1596,7 @@ function layoutVf(animate) {
   const wr = $('#vfWrap'), vf = $('#vf'); if (!wr) return; const W = wr.clientWidth - 24, H = wr.clientHeight - 4, ar = FORMATS[S.fmt].ar;
   if (W <= 0 || H <= 0) return;
   const w = Math.min(W, H * ar), h = w / ar, t = { w, h, x: (wr.clientWidth - w) / 2, y: (wr.clientHeight - h) / 2 };
-  const apply = q => { Object.assign(vf.style, { width: q.w + 'px', height: q.h + 'px', left: q.x + 'px', top: q.y + 'px' }); drawGrid(); };
+  const apply = q => { Object.assign(vf.style, { width: q.w + 'px', height: q.h + 'px', left: q.x + 'px', top: q.y + 'px' }); vf.classList.toggle('narrow', q.w < 310); drawGrid(); };
   vfSp && vfSp.stop();
   if (!animate || !vfCur || LOWMO) { vfCur = t; apply(t); return; }
   const f0 = { ...vfCur }; vfSp = spring(0, 1, k => { vfCur = { w: lerp(f0.w, t.w, k), h: lerp(f0.h, t.h, k), x: lerp(f0.x, t.x, k), y: lerp(f0.y, t.y, k) }; apply(vfCur); }, { k: 230, c: 30 });
@@ -1658,6 +1680,21 @@ function evStrip() {
   el.addEventListener('wheel', e => { e.preventDefault(); sp && sp.stop(); x = clamp(Math.round((x - Math.sign(e.deltaY) * 9) / 9) * 9, -3 * PX, 3 * PX); apply(); set(-x / PX); buzz(3); }, { passive: false });
   return { reset() { x = 0; apply(); set(0); }, sync() { x = -S.ev * PX; apply(); } };
 }
+function zoomStrip() { // proužek nad kolečkem času: digitální zoom 1×–5×
+  const el = $('#zoomStrip'), t = $('#zoomT'), PX = 27; let x = 0, sp = null; const W = () => el.clientWidth;
+  const apply = () => { t.style.transform = `translateX(${W() / 2 - 1000 + x}px)`; };
+  const set = v => { S.zoom = clamp(v, 1, 5); syncZoomBtns(); };
+  apply(); let sx = 0, x0 = 0, last = 0, vx = 0, lt = 0;
+  el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); sp && sp.stop(); sx = e.clientX; x0 = x; last = e.clientX; lt = performance.now(); vx = 0; });
+  el.addEventListener('pointermove', e => { if (!el.hasPointerCapture(e.pointerId)) return; const now = performance.now(); vx = (e.clientX - last) / Math.max(1, now - lt) * 16; last = e.clientX; lt = now;
+    const before = Math.round(S.zoom * 2); x = clamp(x0 + e.clientX - sx, -4 * PX, 0); apply(); set(1 - x / PX); if (before !== Math.round(S.zoom * 2)) buzz(3); });
+  el.addEventListener('pointerup', () => { const tgt = clamp(x + vx * 5, -4 * PX, 0); sp = spring(x, tgt, v => { x = v; apply(); set(1 - x / PX); }, { k: 240, c: 30 }); });
+  el.addEventListener('dblclick', () => { sp = spring(x, 0, v => { x = v; apply(); set(1 - x / PX); }); });
+  el.addEventListener('wheel', e => { e.preventDefault(); x = clamp(x - Math.sign(e.deltaY) * 6.75, -4 * PX, 0); apply(); set(1 - x / PX); }, { passive: false });
+  return { sync() { x = -(S.zoom - 1) * PX; apply(); } };
+}
+let zoomApi = null;
+function syncZoomBtns() { $$('#zoomGrp button').forEach(b => b.classList.toggle('on', Math.abs(+b.dataset.z - S.zoom) < .06 || (+b.dataset.z < 1 && CAM.ultra))); }
 function fmtEv(v) { if (Math.abs(v) < .01) return '±0'; return (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1).replace('.', ','); }
 function updLcd() {
   const iso = ISO_STOPS[S.isoIdx], slow = S.timeIdx > 0, k = pushK();
@@ -1690,6 +1727,7 @@ function buildCarousel() {
     items.forEach(it => it.classList.toggle('on', it === best));
     if (best && best.dataset.c !== S.film) { S.camRecipe = null; setFilm(best.dataset.c); buzz(4); }
   };
+  $$('.citem', c).forEach(it => { const f = FILM[it.dataset.c]; if (f && f.scan) longPress(it, () => filmActs(f.code)); });
   c._sync = () => { const it = $$('.citem', c).find(i => i.dataset.c === S.film); if (it) c.scrollLeft = it.offsetLeft + it.offsetWidth / 2 - c.clientWidth / 2; upd(); };
   if (c._init) return; c._init = true;
   c.addEventListener('scroll', () => requestAnimationFrame(upd), { passive: true });
@@ -1808,7 +1846,7 @@ async function setZoom(z) {
     if (CAM.ultra) { CAM.deviceId = null; CAM.ultra = false; await liveOn(); }
     if (CAM.caps.zoom && CAM.caps.zoom.max >= z) { try { await CAM.track.applyConstraints({ advanced: [{ zoom: Math.max(CAM.caps.zoom.min, z) }] }); S.zoom = 1; return; } catch {} }
   } else if (z < 1) toast('V DEMO režimu jen ukázka; na telefonu přepne objektiv');
-  spring(S.zoom, Math.max(1, z), v => S.zoom = v, { k: 160, c: 22 });
+  spring(S.zoom, Math.max(1, z), v => { S.zoom = v; zoomApi && zoomApi.sync(); }, { k: 160, c: 22 });
 }
 
 /* =====================================================================
@@ -1827,7 +1865,7 @@ function seedPhotos() {
     ['postava', 720, 960, 'P400', ['postava', 'silueta', 'portrét'], 18, 12], ['plaz', 720, 960, 'P160', ['léto', 'moře'], 16, 40], ['hory', 900, 600, 'EC100', ['hory', 'modrá'], 9, 3], ['les', 720, 900, 'SX400', ['les', 'zelená'], 13, 27], ['zapad', 720, 960, 'KC64', ['západ', 'červená'], 20, 2]];
   list.reverse().forEach(([k, w, h, f, tags, hh, mm], i) => { const P = DEF(); P.film = f; const ph = addPhoto(drawScene(k, w, h, 100 + i * 7), P, k, tags); ph.date = new Date(2026, 9, 12 - i, hh, mm); });
   $('#galThumb').src = S.photos[0].thumb;
-  const jr = ROLLS.find(x => x.seed); jr.meta = '4 snímky · vyvolá se v 8:00'; jr.shots = [['plaz', 31], ['les', 32], ['zapad', 33], ['kvet', 34]].map(([k, sd]) => { const P = DEF(); P.film = 'P800'; return { src: drawScene(k, 480, 640, sd), P, date: new Date(2026, 9, 11, 15, 20) }; });
+  const jr = ROLLS.find(x => x.seed); jr.meta = '4 snímky · 8:00'; jr.shots = [['plaz', 31], ['les', 32], ['zapad', 33], ['kvet', 34]].map(([k, sd]) => { const P = DEF(); P.film = 'P800'; return { src: drawScene(k, 480, 640, sd), P, date: new Date(2026, 9, 11, 15, 20) }; });
 }
 let ROLLS = [
   { name: 'Léto u moře', meta: 'G200 · 24/36', film: 'G200', glow: ['#f2c230', '#1f6fb0'] },
@@ -1837,17 +1875,20 @@ let ROLLS = [
 ];
 function renderGallery() {
   $('#rolls').innerHTML = ROLLS.map(r => `<button class="roll ${r.lock ? 'lock' : ''}"><div class="glow" style="background:radial-gradient(circle at 30% 40%,${r.glow[0]},transparent 55%),radial-gradient(circle at 75% 60%,${r.glow[1]},transparent 55%)"></div>${cassette(FILM[r.film])}<div class="glass"><b>${r.name}</b><small>${r.meta}</small></div></button>`).join('');
+  const cnt = {}; S.photos.forEach(p => cnt[p.film] = (cnt[p.film] || 0) + 1);
+  $('#fChips').innerHTML = `<button data-f="" class="${S.gFilm ? '' : 'on'}">VŠE</button>` + Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]).map(f => `<button data-f="${f}" class="${S.gFilm === f ? 'on' : ''}">${f} · ${cnt[f]}</button>`).join('');
+  $$('#fChips button').forEach(b => b.onclick = () => { S.gFilm = b.dataset.f || null; $$('#fChips button').forEach(x => x.classList.toggle('on', x === b)); filterGallery(); buzz(3); });
   $$('.roll').forEach((b, i) => { const ro = ROLLS[i];
     const acts = () => openActs(`<h4>${ro.name}</h4>${ro.lock ? actBtn('dev', 'film', 'Vyvolat hned (ukázka)') : actBtn('show', 'gallery', 'Ukázat fotky z role')}${ro.lock ? '' : actBtn('sheet', 'sheet', 'Arch z role')}`, root => {
       $$('[data-a]', root).forEach(x => x.onclick = () => { closeActs(); const a = x.dataset.a;
-        if (a === 'dev') develop(ro); if (a === 'show') { $('#gSearch').value = ro.film; filterGallery(); }
+        if (a === 'dev') develop(ro); if (a === 'show') { S.gFilm = ro.film; renderGallery(); }
         if (a === 'sheet') showArch(S.photos.filter(p => p.film === ro.film).concat(S.photos.filter(p => p.film !== ro.film)).slice(0, 12), ro.name.toUpperCase(), ro.film); }); });
-    longPress(b, acts); b.onclick = () => { if (ro.lock) acts(); else { $('#gSearch').value = ro.film; filterGallery(); } }; });
+    longPress(b, acts); b.onclick = () => { if (ro.lock) acts(); else { S.gFilm = S.gFilm === ro.film ? null : ro.film; renderGallery(); } }; });
   filterGallery();
 }
 function filterGallery() {
   const q = $('#gSearch').value.trim().toLowerCase();
-  const list = S.photos.filter(p => !q || p.film.toLowerCase().includes(q) || p.tags.some(t => t.includes(q)) || p.date.toLocaleDateString('cs-CZ').includes(q));
+  const list = S.photos.filter(p => !S.gFilm || p.film === S.gFilm).filter(p => !q || p.film.toLowerCase().includes(q) || p.tags.some(t => t.includes(q)) || p.date.toLocaleDateString('cs-CZ').includes(q));
   $('#masonry').innerHTML = list.map(p => `<button class="gitem ${p.fresh ? 'new' : ''} ${S.sel && S.sel.has(p.id) ? 'sel' : ''}" data-id="${p.id}"><img src="${p.thumb}" alt=""><span>${p.film}</span></button>`).join('');
   list.forEach(p => p.fresh = false);
   $('#gEmpty').hidden = list.length > 0;
@@ -1930,7 +1971,7 @@ function updDispo() {
 function endDispo() {
   const d = S.dispo; S.dispo = null; updDispo(); if (S.photos[0]) $('#galThumb').src = S.photos[0].thumb;
   if (!d || !d.shots.length) return toast('Jednorázovka ukončená');
-  ROLLS.unshift({ name: 'Jednorázovka ' + d.film, meta: `${d.shots.length} ${d.shots.length < 5 ? 'snímky' : 'snímků'} · vyvolá se v ${d.dev}`, film: d.film, glow: ['#e6493a', '#efa73b'], lock: true, shots: d.shots });
+  ROLLS.unshift({ name: 'Jednorázovka ' + d.film, meta: `${d.shots.length} ${d.shots.length < 5 ? 'snímky' : 'snímků'} · ${d.dev}`, film: d.film, glow: ['#e6493a', '#efa73b'], lock: true, shots: d.shots });
   toast(`Role je zamčená, vyvolá se v ${d.dev}`);
 }
 function develop(roll) {
@@ -1998,33 +2039,44 @@ function layoutEditor() {
   if (!S.cur) return;
   const box = $('#ePhoto'), W = box.clientWidth - 24, H = box.clientHeight - 12; const cr = S.P.crop, ar = cr.ar || S.cur.src.width / S.cur.src.height;
   if (W <= 0 || H <= 0) return;
-  let w = W, h = W / ar; if (h > H) { h = H; w = H * ar; }
-  const wrap = $('#eWrap'), fr = S.P.frame === 'glow'; wrap.style.width = w + 'px'; wrap.style.height = h + 'px'; wrap.classList.toggle('framed', fr);
-  const dpr = Math.min(2, devicePixelRatio || 1), k = fr ? .82 : 1;
-  if (edE.size(Math.round(w * k * dpr), Math.round(h * k * dpr))) renderEd(true); else renderEd();
+  const fr = S.P.frame === 'glow', fit = (mw, mh) => { let w = mw, h = mw / ar; if (h > mh) { h = mh; w = mh * ar; } return [w, h]; };
+  const wrap = $('#eWrap'), cv = $('#edCanvas'), [w, h] = fr ? [W + 24, H + 12] : fit(W, H); wrap.style.width = w + 'px'; wrap.style.height = h + 'px'; wrap.classList.toggle('framed', fr);
+  let pw = w, ph = h; // glow rám: tmavá „místnost“ přes celou plochu, fotka menší uprostřed
+  if (fr) { [pw, ph] = fit(w * .72, h * .72); Object.assign(cv.style, { left: (w - pw) / 2 + 'px', top: (h - ph) / 2 + 'px', width: pw + 'px', height: ph + 'px' }); S._fr = { x: (w - pw) / 2, y: (h - ph) / 2, w: pw, h: ph }; }
+  else Object.assign(cv.style, { left: '', top: '', width: '', height: '' });
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  if (edE.size(Math.round(pw * dpr), Math.round(ph * dpr))) renderEd(true); else renderEd();
   if (S.tab === 'crop') placeCropBox();
 }
 function edOpts(extra = {}) { const cr = S.P.crop; return { bypass: before, zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180, transfer: S.P.tr ? transferFor() : null, ...extra }; }
 function renderEd(now) {
-  const run = () => { edRaf = 0; if (!S.cur) return; edE.render(S.P, edOpts()); if (S.P.frame === 'glow') glowFrame($('#eGlow'), edE.c, $('#eWrap')); if (S.adv) drawHist(); if (S.view === 'pc') renderPc(); };
+  const run = () => { edRaf = 0; if (!S.cur) return; edE.render(S.P, edOpts()); if (S.P.frame === 'glow' && S._fr) { const wr = $('#eWrap'); glowFrame($('#eGlow'), edE.c, wr.clientWidth, wr.clientHeight, S._fr); } if (S.adv) drawHist(); if (S.view === 'pc') renderPc(); };
   if (now) { cancelAnimationFrame(edRaf); run(); return; }
   if (edRaf) return; edRaf = requestAnimationFrame(run);
 }
 let refStats = null, refSrc = null;
 function transferFor() { if (!refStats) { refSrc = copyCanvas(utilRender(drawScene('plaz', 320, 400, 5), Object.assign(DEF(), { film: 'VEL', grain: 0 }), 320, 400)); refStats = stats(refSrc); }
   const s = S.cur._stats || (S.cur._stats = stats(S.cur.src)); return { k: S.P.tr, ms: s.m, ss: s.s, mr: refStats.m, sr: refStats.s }; }
-/* glow rám: tmavý okraj, do kterého „prosvítají“ barvy z krajů fotky (jako ambilight za televizí) */
-function glowFrame(cv, src, wrap) {
-  const dpr = Math.min(2, devicePixelRatio || 1), W = Math.round(wrap.clientWidth * dpr), H = Math.round(wrap.clientHeight * dpr); if (!W || !H) return;
+/* glow rám: fotka jako obrazovka v tmavé místnosti – barvy z jejích krajů se rozlévají do okolí, fotka sama se nerozmazává */
+function glowFrame(cv, src, cw, ch, rect, scale) {
+  const k = scale || Math.min(2, devicePixelRatio || 1), W = Math.round(cw * k), H = Math.round(ch * k); if (!W || !H) return;
   if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
-  const g = cv.getContext('2d'), t1 = mk(12, 15), t2 = mk(60, 75); t1.getContext('2d').drawImage(src, 0, 0, 12, 15); const g2 = t2.getContext('2d'); g2.imageSmoothingEnabled = true; g2.drawImage(t1, 0, 0, 60, 75);
-  g.fillStyle = '#0a0a0c'; g.fillRect(0, 0, W, H); g.imageSmoothingEnabled = true;
-  g.globalAlpha = .95; g.drawImage(t2, -W * .06, -H * .06, W * 1.12, H * 1.12); g.globalAlpha = 1;
-  const rg = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .38, W / 2, H / 2, Math.hypot(W, H) * .56); rg.addColorStop(0, 'rgba(10,10,12,.05)'); rg.addColorStop(1, 'rgba(10,10,12,.94)');
-  g.fillStyle = rg; g.fillRect(0, 0, W, H);
+  const g = cv.getContext('2d'), t = mk(16, 20), tg = t.getContext('2d', { willReadFrequently: true }); tg.drawImage(src, 0, 0, 16, 20); const d = tg.getImageData(0, 0, 16, 20).data;
+  const px = (x, y) => { const i = (y * 16 + x) * 4; return [d[i], d[i + 1], d[i + 2]]; };
+  const ix = rect.x * k, iy = rect.y * k, iw = rect.w * k, ih = rect.h * k, M = Math.max(iw, ih);
+  g.globalCompositeOperation = 'source-over'; g.fillStyle = '#0a0a0d'; g.fillRect(0, 0, W, H);
+  g.globalCompositeOperation = 'lighter';
+  const light = (x, y, c, r, a) => { const L = (c[0] * .3 + c[1] * .59 + c[2] * .11) / 255, aa = a * (.2 + L * 1.2), gr = g.createRadialGradient(x, y, 0, x, y, r), s = c.join(',');
+    gr.addColorStop(0, `rgba(${s},${aa})`); gr.addColorStop(.25, `rgba(${s},${aa * .5})`); gr.addColorStop(.6, `rgba(${s},${aa * .14})`); gr.addColorStop(1, `rgba(${s},0)`); g.fillStyle = gr; g.fillRect(x - r, y - r, 2 * r, 2 * r); };
+  for (let i = 0; i < 16; i++) { const x = ix + (i + .5) / 16 * iw; light(x, iy, px(i, 0), M * .55, .2); light(x, iy + ih, px(i, 19), M * .7, .3); }
+  for (let j = 0; j < 20; j++) { const y = iy + (j + .5) / 20 * ih; light(ix, y, px(0, j), M * .55, .18); light(ix + iw, y, px(15, j), M * .55, .18); }
+  let av = [0, 0, 0]; for (let i = 0; i < d.length; i += 4) { av[0] += d[i]; av[1] += d[i + 1]; av[2] += d[i + 2]; } av = av.map(v => Math.round(v / (d.length / 4)));
+  light(ix + iw / 2, iy + ih / 2, av, M * 1.3, .22);
+  g.globalCompositeOperation = 'source-over';
+  const rg = g.createRadialGradient(ix + iw / 2, iy + ih * .55, M * .5, ix + iw / 2, iy + ih * .55, Math.hypot(W, H) * .6); rg.addColorStop(0, 'rgba(8,8,10,0)'); rg.addColorStop(1, 'rgba(8,8,10,.75)'); g.fillStyle = rg; g.fillRect(0, 0, W, H);
 }
-function framed(src, P) { if (P.frame !== 'glow') return src; const c = mk(Math.round(src.width / .82), Math.round(src.height / .82)), fake = { clientWidth: c.width, clientHeight: c.height }, bg = mk(2, 2);
-  const dpr = Math.min(2, devicePixelRatio || 1); fake.clientWidth /= dpr; fake.clientHeight /= dpr; glowFrame(bg, src, fake); const g = c.getContext('2d'); g.drawImage(bg, 0, 0, c.width, c.height); g.drawImage(src, c.width * .09, c.height * .09, src.width, src.height); return c; }
+function framed(src, P) { if (P.frame !== 'glow') return src; const c = mk(Math.round(src.width / .72), Math.round(src.height / .72)), r = { x: (c.width - src.width) / 2, y: (c.height - src.height) / 2, w: src.width, h: src.height };
+  glowFrame(c, src, c.width, c.height, r, 1); const g = c.getContext('2d'); g.drawImage(src, r.x, r.y); return c; }
 function commit() { S.hist.push(JSON.stringify(S.cur._last || S.cur.P)); if (S.hist.length > 60) S.hist.shift(); S.fut = []; S.cur._last = JSON.parse(JSON.stringify(S.P)); S.cur.P = JSON.parse(JSON.stringify(S.P)); rethumb(S.cur); }
 function undo() { if (!S.hist.length) return toast('Není co vracet'); S.fut.push(JSON.stringify(S.P)); S.P = JSON.parse(S.hist.pop()); syncCur(); }
 function redo() { if (!S.fut.length) return; S.hist.push(JSON.stringify(S.P)); S.P = JSON.parse(S.fut.pop()); syncCur(); }
@@ -2080,7 +2132,7 @@ function setTab(t, quiet) {
   if (t === 'film') {
     p.innerHTML = `<div class="ruler" id="strR"></div><div class="strip" id="fStrip">${filmsOrdered().map(f => `<button class="fthumb ${f.code === S.P.film ? 'on' : ''} ${FAV.includes(f.code) ? 'fav' : ''}" data-c="${f.code}"><canvas width="128" height="160"></canvas><span>${f.code}</span></button>`).join('')}</div>`;
     makeRuler($('#strR'), { min: 0, max: 1, step: .01, value: S.P.str, label: 'Síla filmu · ' + S.P.film, fmt: v => Math.round(v * 100), def: 1, onInput: v => { S.P.str = v; renderEd(); }, onEnd: commit });
-    drawFilmThumbs(); hscroll($('#fStrip'));
+    drawFilmThumbs(); hscroll($('#fStrip')); $$('.fthumb').forEach(b => { const f = FILM[b.dataset.c]; if (f && f.scan) longPress(b, () => filmActs(f.code)); });
     $$('.fthumb').forEach(b => b.onclick = () => { S.P.film = b.dataset.c; $$('.fthumb').forEach(x => x.classList.toggle('on', x === b)); $('#strR .rl').textContent = 'Síla filmu · ' + S.P.film; renderEd(); commit(); buzz(4);
       spring(.9, 1, v => b.querySelector('canvas').style.transform = `scale(${v})`, { k: 300, c: 14 }); });
     requestAnimationFrame(() => { const on = $('.fthumb.on'), s = $('#fStrip'); if (on && s) s.scrollLeft = on.offsetLeft - s.clientWidth / 2 + on.offsetWidth / 2; });
@@ -2100,8 +2152,8 @@ function setTab(t, quiet) {
     $('#cropReset').onclick = () => { S.P.crop = { ar: 0, s: 1, x: 0, y: 0, rot: 0 }; setTab('crop', true); layoutEditor(); commit(); };
     hscroll($('#aspRow')); requestAnimationFrame(placeCropBox);
   } else if (t === 'fx') {
-    const fx = [['scan', 'Film scan', 'ref'], ['double', 'Double', 'double'], ['glowfx', 'Soft glow', 'mist'], ['dither', 'Dither', 'dither'], ['pixel', 'Pixel art', 'pixel'], ['frame', 'Glow rám', 'frame'],
-      ['recipe', 'Recepty', 'recipe'], ['blob', 'Blob karta', 'blob'], ['grain', 'Grain', 'grain'], ['sharp', 'Ostrost', 'sharp'], ['depth', 'Hloubka', 'depth', 'FÁZE 7'], ['date', 'Datumovka', 'date', 'FÁZE 7']];
+    const fx = [['scan', 'Film scan', 'ref'], ['double', 'Double', 'double'], ['dither', 'Dither', 'dither'], ['pixel', 'Pixel art', 'pixel'], ['frame', 'Glow rám', 'frame'],
+      ['recipe', 'Recepty', 'recipe'], ['blob', 'Blob karta', 'blob'], ['depth', 'Hloubka', 'depth', 'FÁZE 7'], ['date', 'Datumovka', 'date', 'FÁZE 7']]; // co jde nastavit v Úpravách, tady není
     const st = S.P.style && S.P.style.type, on = k => (k === 'glowfx' && (S.P.glow ?? 0) > .45) || (k === 'sharp' && S.P.sharp) || (k === 'scan' && S.P.tr) || (k === 'double' && S.P.dx && S.P.dx.other) || (k === 'dither' && st === 'dither') || (k === 'pixel' && st === 'pixel') || (k === 'frame' && S.P.frame);
     p.innerHTML = `<div class="fx hs" id="fxRow">${fx.map(([k, l, ic, e]) => `<button data-fx="${k}" class="${on(k) ? 'on' : ''}">${iconSVG(ic)}${l}${e ? `<em>${e}</em>` : ''}</button>`).join('')}</div>`;
     hscroll($('#fxRow'));
@@ -2127,7 +2179,7 @@ function photoPal(n) { const P = JSON.parse(JSON.stringify(S.P)); P.style = null
 const DPALS = { amber: ['#0B0C0E', '#F5C542'], lime: ['#050505', '#D4FF3A'], paper: ['#1b1a18', '#F2EFE8'], ir: ['#1a0d2e', '#ff4f8b'] };
 function styleActs() {
   const st = S.P.style, dith = st.type === 'dither';
-  const pals = dith ? [['amber', 'Amber'], ['lime', 'Lime'], ['paper', 'Papír'], ['ir', 'Neon'], ['photo', 'Z fotky']] : [['photo', 'Z fotky 6'], ['photo4', 'Z fotky 4'], ['photo8', 'Z fotky 8']];
+  const pals = dith ? [['amber', 'Amber'], ['lime', 'Lime'], ['paper', 'Papír'], ['ir', 'Neon'], ['photo', 'Z fotky']] : [['photo4', 'Styl 1'], ['photo', 'Styl 2'], ['photo8', 'Styl 3']];
   openActs(`<h4>${dith ? 'Dither' : 'Pixel art'}</h4><div class="opt">${pals.map(([k, l]) => `<button data-p="${k}" class="${st.pn === k ? 'on' : ''}">${l}</button>`).join('')}</div>
     <label class="srow"><span>${dith ? 'Hustota' : 'Pixely'}</span><input type="range" id="stCells" min="${dith ? 80 : 40}" max="${dith ? 420 : 220}" value="${st.cells}" data-def="${dith ? 240 : 110}"><output>${st.cells}</output></label>
     ${dith ? `<label class="srow"><span>Úrovně</span><input type="range" id="stLev" min="2" max="4" value="${st.levels}" data-def="2"><output>${st.levels}</output></label>` : ''}
@@ -2181,7 +2233,7 @@ function openFs() {
   const v = $('#fsView'), cv = $('#fsCanvas'), phone = $('#phone'), dpr = Math.min(2, devicePixelRatio || 1);
   const ar = S.P.crop.ar || S.cur.src.width / S.cur.src.height, W = phone.clientWidth, H = phone.clientHeight;
   let w = W, h = W / ar; if (h > H) { h = H; w = H * ar; }
-  const paint = byp => { const fr = S.P.frame === 'glow' && !byp, k = fr ? .82 : 1, o0 = utilRender(srcOf(S.cur, S.P), S.P, Math.round(w * k * dpr), Math.round(h * k * dpr), edOpts({ bypass: byp })), o = fr ? framed(copyCanvas(o0), S.P) : o0; cv.width = o.width; cv.height = o.height; cv.getContext('2d').drawImage(o, 0, 0); };
+  const paint = byp => { const fr = S.P.frame === 'glow' && !byp, k = fr ? .72 : 1, o0 = utilRender(srcOf(S.cur, S.P), S.P, Math.round(w * k * dpr), Math.round(h * k * dpr), edOpts({ bypass: byp })), o = fr ? framed(copyCanvas(o0), S.P) : o0; cv.width = o.width; cv.height = o.height; cv.getContext('2d').drawImage(o, 0, 0); };
   cv.style.width = w + 'px'; cv.style.height = h + 'px'; paint(false); $('#fsHint').textContent = '';
   v.hidden = false; spring(0, 1, t => { v.style.opacity = Math.min(1, t * 1.3); cv.style.transform = `scale(${.92 + .08 * t})`; }, { k: 220, c: 24 });
   let hold = 0, held = false;
@@ -2268,6 +2320,25 @@ function buildRefPick() {
   $$('button', el).forEach(b => b.onclick = () => { $$('button', el).forEach(x => x.classList.toggle('on', x === b)); const ph = S.photos.find(p => p.id === +b.dataset.id); setRef(copyCanvas(utilRender(ph.src, ph.P, 320, Math.round(320 / (ph.src.width / ph.src.height)), {}))); buzz(4); });
   $('#refFile').onchange = async e => { const f = e.target.files[0]; if (!f) return; try { const url = URL.createObjectURL(f), img = new Image(); img.src = url; await img.decode();
     const k = Math.min(1, 640 / Math.max(img.naturalWidth, img.naturalHeight)), c = mk(Math.round(img.naturalWidth * k), Math.round(img.naturalHeight * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); setRef(c); toast('Reference nahraná'); } catch { toast('Fotku se nepodařilo načíst'); } };
+}
+function filmActs(code) {
+  const f = FILM[code];
+  openActs(`<h4>Vlastní film ${code}</h4><div class="rsave"><input id="fmName" value="${code}" maxlength="8" autocomplete="off"><button class="go" id="fmRen">Přejmenovat</button></div>${actBtn('del', 'trash', 'Smazat film', 'danger')}`, root => {
+    $('#fmRen', root).onclick = () => { const n = $('#fmName', root).value.trim().toUpperCase().replace(/[^A-Z0-9-]/g, ''); if (!n || (FILM[n] && n !== code)) return toast('Kód je prázdný nebo už existuje'); closeActs(); renameFilm(code, n); };
+    $('[data-a=del]', root).onclick = () => { closeActs(); deleteFilm(code); };
+  });
+}
+const saveScans = () => store.set('scans', FILMS.filter(x => x.scan));
+function refreshFilmUI() { buildCarousel(); $('#carousel')._sync(); if (S.screen === 'editor' && S.cur) { renderEd(true); setTab(S.tab, true); } }
+function renameFilm(a, b) {
+  if (a === b) return; const f = FILM[a]; delete FILM[a]; f.code = b; f.sub = 'film scan · ' + b.toLowerCase(); FILM[b] = f;
+  S.photos.forEach(p => { if (p.P.film === a) { p.P.film = b; p.film = b; } }); if (S.P.film === a) S.P.film = b; if (S.film === a) setFilm(b);
+  FAV = FAV.map(c => c === a ? b : c); store.set('fav', FAV); saveScans(); refreshFilmUI(); toast(`Film přejmenovaný na ${b}`);
+}
+function deleteFilm(code) {
+  const i = FILMS.findIndex(f => f.code === code); if (i < 0) return; FILMS.splice(i, 1); delete FILM[code];
+  S.photos.forEach(p => { if (p.P.film === code) { p.P.film = 'P400'; rethumb(p); } }); if (S.P.film === code) S.P.film = 'P400'; if (S.film === code) setFilm('P400');
+  FAV = FAV.filter(c => c !== code); store.set('fav', FAV); saveScans(); refreshFilmUI(); buzz(10); toast(`Film ${code} smazaný`);
 }
 function saveScan() {
   const n = FILMS.filter(f => f.scan).length + 1, code = 'SCAN' + n; utilRender(refSrc, DEF(), 60, 75, { bypass: true }); const pal = kmeans(util.e.pixels(), 3);
@@ -2409,14 +2480,19 @@ function kmeans(d, k = 5) {
     c = c.map((q, j) => s[j][3] ? [s[j][0] / s[j][3], s[j][1] / s[j][3], s[j][2] / s[j][3]] : q); }
   return c.map(q => `rgb(${q.map(v => Math.round(v)).join(',')})`);
 }
-const B = { shape: 0, palMode: 'post', bg: 1, ox: 0, oy: 0, sc: 1, paper: true, custom: [], photo: null, drawing: false, inv: false, op: 1, color: '#e33a22' };
+const B = { shape: 0, palMode: 'post', bg: 1, ox: 0, oy: 0, sc: 1, paper: true, custom: [], photo: null, drawing: false, inv: false, op: 1, color: '#e33a22', blend: 'normal', size: 1, dis: 0 };
+let BPRE = store.get('blobPresets', []);
 function rgbOf(c) { if (c[0] === '#') return [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)); return c.match(/\d+/g).slice(0, 3).map(Number); }
 function openBlob() {
   const ph = S.blobFrom || S.photos[0]; S.blobFrom = ph; const P = ph === S.cur ? S.P : ph.P, src = srcOf(ph, P);
   B.post = kmeans(utilRender(src, P, 60, 75, {}) && util.e.pixels()); B.pre = kmeans(utilRender(src, P, 60, 75, { bypass: true }) && util.e.pixels());
   B.img = utilRender(src, Object.assign(JSON.parse(JSON.stringify(P)), { crop: DEF().crop }), 600, Math.round(600 / (src.width / src.height)), {}).toDataURL('image/jpeg', .9); B.ar = src.width / src.height;
   if (B.photo !== ph) { B.photo = ph; $('#bL').textContent = ph.date.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }); $('#bR').textContent = ph.date.toLocaleDateString('cs-CZ'); }
-  renderShapes(); $('#bInv').classList.toggle('on', B.inv); const op = $('#bOp'); op.value = Math.round(B.op * 100); paintRange(op); drawPal();
+  renderShapes(); renderPresets(); syncBlobCtl(); drawPal();
+}
+function syncBlobCtl() {
+  $('#bInv').classList.toggle('on', B.inv); $$('#bBlend button').forEach(x => x.classList.toggle('on', x.dataset.b === B.blend));
+  [['#bDis', B.dis], ['#bSize', B.size]].forEach(([id, v]) => { const i = $(id); i.value = Math.round(v * 100); i.nextElementSibling.textContent = i.value; paintRange(i); });
 }
 function renderShapes() {
   $('#bShapes').innerHTML = SHAPES.map((sh, i) => `<button data-i="${i}" class="${i === B.shape ? 'on' : ''}"><svg viewBox="0 0 100 125"><defs><filter id="ts${i}" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4"/></filter></defs>${shapeSvg(sh, '#e9e2d6', '#1a1b1f', 'ts' + i)}</svg></button>`).join('')
@@ -2424,6 +2500,17 @@ function renderShapes() {
   $$('#bShapes [data-i]').forEach(b => b.onclick = () => selectShape(+b.dataset.i));
   $('#bDraw').onclick = () => { B.drawing = true; $('#bCard').classList.add('drawing'); buzz(6); toast('Nakresli prstem tvar přímo na kartu'); };
   $('#bDice').onclick = diceShape;
+}
+function renderPresets() {
+  $('#bPresets').innerHTML = BPRE.map((p, i) => { const fg = p.inv ? p.color : '#cfc7bc', bg = p.inv ? '#cfc7bc' : p.color;
+    return `<button data-i="${i}"><svg viewBox="0 0 100 125" style="background:${bg}"><defs><filter id="tp${i}"><feGaussianBlur stdDeviation="2.4"/></filter></defs><g transform="translate(50 62.5) scale(${p.size || 1}) translate(-50 -62.5)">${shapeSvg(p.sh, fg, bg, 'tp' + i)}</g></svg>${p.name}</button>`; }).join('')
+    + `<button class="save" id="bSave">+ Uložit preset</button>`;
+  $$('#bPresets [data-i]').forEach(b => { const pr = BPRE[+b.dataset.i];
+    b.onclick = () => { SHAPES.push(JSON.parse(JSON.stringify(pr.sh))); Object.assign(B, { inv: pr.inv, op: pr.op, blend: pr.blend, size: pr.size || 1, dis: pr.dis || 0 });
+      if (!B.custom.includes(pr.color)) B.custom.push(pr.color); B.bg = B[B.palMode].length + B.custom.indexOf(pr.color); B.shape = SHAPES.length - 1; renderShapes(); syncBlobCtl(); drawPal(); buzz(6); toast(`Preset ${pr.name}`); };
+    longPress(b, () => { const i = BPRE.indexOf(pr); BPRE.splice(i, 1); store.set('blobPresets', BPRE); renderPresets(); toast('Preset smazaný', { label: 'Vrátit', fn: () => { BPRE.splice(i, 0, pr); store.set('blobPresets', BPRE); renderPresets(); } }); }); });
+  $('#bSave').onclick = () => { BPRE.unshift({ name: `Preset ${BPRE.length + 1}`, sh: JSON.parse(JSON.stringify(SHAPES[B.shape])), inv: B.inv, op: B.op, blend: B.blend, size: B.size, dis: B.dis, color: B.color });
+    store.set('blobPresets', BPRE); renderPresets(); buzz(10); toast('Preset uložený, podržením ho smažeš'); };
 }
 const blobby = sh => sh && (sh.k === 'blob' || sh.k === 'draw');
 function selectShape(i) {
@@ -2437,48 +2524,65 @@ function diceShape() {
   SHAPES.push(sh); renderShapes(); selectShape(SHAPES.length - 1); const row = $('#bShapes'); row.scrollLeft = row.scrollWidth;
 }
 function drawPal() {
-  const pal = [...B[B.palMode], ...B.custom]; B.bg = Math.min(B.bg, pal.length - 1);
+  const pal = [...B[B.palMode], ...B.custom]; B.bg = clamp(B.bg, 0, pal.length - 1);
   $('#bPal').innerHTML = pal.map((c, i) => `<button data-i="${i}" class="${i === B.bg ? 'on' : ''}" style="background:${c}" aria-label="Barva ${i + 1}"></button>`).join('') + `<label class="add" aria-label="Vlastní barva">+<input type="color" id="bColor" value="#e33a22"></label>`;
   $$('#bPal button').forEach(b => b.onclick = () => { B.bg = +b.dataset.i; drawPal(); });
   const ci = $('#bColor'); ci.oninput = () => { B.color = ci.value; drawBlob(); }; ci.onchange = () => { B.custom.push(ci.value); B.bg = B[B.palMode].length + B.custom.length - 1; drawPal(); };
   B.color = pal[B.bg]; const [r, g, b] = rgbOf(B.color), L = (r * .299 + g * .587 + b * .114) / 255;
   $('#bCard').style.backgroundColor = B.color; $('#bLbl').style.setProperty('--lc', L > .55 && B.op > .6 && !B.inv ? 'rgba(20,18,16,.75)' : 'rgba(255,250,240,.88)'); drawBlob();
 }
-/* karta: fotka přes celou plochu, nad ní barevná vrstva s maskou tvaru (normálně fotka uvnitř tvaru, obráceně barva uvnitř tvaru) */
+/* karta: fotka přes celou plochu, nad ní barevná vrstva s maskou tvaru (normál / screen / glow);
+   při posunu a zoomu se mění jen atributy obrázku → žádné blikání */
 function drawBlob(path) {
-  const sh = SHAPES[B.shape] || SHAPES[0], inv = B.inv, w = Math.max(100, 125 * B.ar) * B.sc, h = w / B.ar;
-  const shapes = path ? `<path d="${path}" fill="${inv ? '#fff' : '#000'}"/>` : shapeSvg(sh, inv ? '#fff' : '#000', inv ? '#000' : '#fff');
-  $('#bSvg').innerHTML = `<defs><filter id="bsoft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4"/></filter>
-    <mask id="bm" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="125"><rect width="100" height="125" fill="${inv ? '#000' : '#fff'}"/>${shapes}</mask></defs>
-    <image href="${B.img}" x="${50 - w / 2 + B.ox}" y="${62.5 - h / 2 + B.oy}" width="${w}" height="${h}" preserveAspectRatio="none"/>
-    <rect width="100" height="125" fill="${B.color}" opacity="${B.op}" mask="url(#bm)"/>`;
+  const sh = SHAPES[B.shape] || SHAPES[0], inv = B.inv, fg = inv ? '#fff' : '#000', bgc = inv ? '#000' : '#fff';
+  const inner = path ? `<path class="ms" d="${path}" fill="${fg}"/>` : shapeSvg(sh, fg, bgc), grp = `<g transform="translate(50 62.5) scale(${B.size}) translate(-50 -62.5)">${inner}</g>`;
+  const scr = B.blend === 'normal' ? '' : 'style="mix-blend-mode:screen"';
+  $('#bSvg').innerHTML = `<defs><filter id="bsoft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4"/></filter><filter id="bblur" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="6"/></filter>
+    ${B.dis > 0 ? `<filter id="bdis" filterUnits="userSpaceOnUse" x="0" y="0" width="100" height="125"><feGaussianBlur in="SourceGraphic" stdDeviation="${(B.dis * 5).toFixed(2)}" result="b"/><feTurbulence type="fractalNoise" baseFrequency="1.9" numOctaves="2" seed="7" result="n"/><feColorMatrix in="n" type="saturate" values="0" result="g"/><feComposite in="b" in2="g" operator="arithmetic" k1="0" k2="1" k3="${(.5 + B.dis * .9).toFixed(2)}" k4="${(-(.5 + B.dis * .9) / 2).toFixed(2)}" result="m"/><feComponentTransfer in="m"><feFuncR type="linear" slope="14" intercept="-6.5"/><feFuncG type="linear" slope="14" intercept="-6.5"/><feFuncB type="linear" slope="14" intercept="-6.5"/><feFuncA type="linear" slope="0" intercept="1"/></feComponentTransfer></filter>` : ''}
+    <mask id="bm" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="125"><g ${B.dis > 0 ? 'filter="url(#bdis)"' : ''}><rect width="100" height="125" fill="${inv ? '#000' : '#fff'}"/>${grp}</g></mask>
+    ${B.blend === 'glow' ? `<mask id="bmg" maskUnits="userSpaceOnUse" x="-30" y="-30" width="160" height="185"><rect x="-30" y="-30" width="160" height="185" fill="${inv ? '#000' : '#fff'}"/><g filter="url(#bblur)">${grp}</g></mask>` : ''}</defs>
+    <image href="${B.img}" preserveAspectRatio="none"/>
+    ${B.blend === 'glow' ? `<rect x="-30" y="-30" width="160" height="185" fill="${B.color}" opacity="${B.op}" mask="url(#bmg)" style="mix-blend-mode:screen"/>` : ''}
+    <rect width="100" height="125" fill="${B.color}" opacity="${B.op}" mask="url(#bm)" ${scr}/>`;
+  placeImg();
 }
+function placeImg() { const im = $('#bSvg image'); if (!im) return; const w = Math.max(100, 125 * B.ar) * B.sc, h = w / B.ar;
+  im.setAttribute('x', 50 - w / 2 + B.ox); im.setAttribute('y', 62.5 - h / 2 + B.oy); im.setAttribute('width', w); im.setAttribute('height', h); }
 let morphSp = null;
 function morphBlob(from) {
   const to = blobPath(SHAPES[B.shape], 50, 62.5, 38), cur = blobPath(from, 50, 62.5, 38); morphSp && morphSp.stop();
   const na = cur.match(/-?\d+(\.\d+)?/g).map(Number), nb = to.match(/-?\d+(\.\d+)?/g).map(Number);
   if (na.length !== nb.length) { drawBlob(); spring(.94, 1, v => $('#bCard').style.transform = `scale(${v})`, { k: 300, c: 16 }); return; }
-  let i = 0; const tpl = to.replace(/-?\d+(\.\d+)?/g, () => `{${i++}}`);
-  morphSp = spring(0, 1, t => drawBlob(tpl.replace(/\{(\d+)\}/g, (_, j) => lerp(na[j], nb[j], t).toFixed(2))), { k: 170, c: 16, onDone: () => drawBlob() });
+  let i = 0; const tpl = to.replace(/-?\d+(\.\d+)?/g, () => `{${i++}}`); drawBlob(cur);
+  morphSp = spring(0, 1, t => { const d = tpl.replace(/\{(\d+)\}/g, (_, j) => lerp(na[j], nb[j], t).toFixed(2)); $$('#bSvg .ms').forEach(p => p.setAttribute('d', d)); }, { k: 170, c: 16, onDone: () => drawBlob() });
 }
 function blobGestures() {
-  const el = $('#bCard'); let sx, sy, ox, oy, on = false, pts = null;
+  const el = $('#bCard'), ptrs = new Map(); let base = null, pts = null, raf = 0;
   const loc = e => { const r = el.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * 100, (e.clientY - r.top) / r.height * 125]; };
-  el.addEventListener('pointerdown', e => { if (e.target.closest('[contenteditable]')) return; on = true; el.setPointerCapture(e.pointerId);
-    if (B.drawing) { pts = [loc(e)]; return; } sx = e.clientX; sy = e.clientY; ox = B.ox; oy = B.oy; });
-  el.addEventListener('pointermove', e => { if (!on) return;
+  const rebase = () => { const a = [...ptrs.values()]; base = { sc: B.sc, ox: B.ox, oy: B.oy, cx: (a[0][0] + (a[1] || a[0])[0]) / 2, cy: (a[0][1] + (a[1] || a[0])[1]) / 2, d: a[1] ? Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]) : 0 }; };
+  el.addEventListener('pointerdown', e => { if (e.target.closest('[contenteditable]')) return; el.setPointerCapture(e.pointerId);
+    if (B.drawing) { pts = [loc(e)]; return; } ptrs.set(e.pointerId, [e.clientX, e.clientY]); rebase(); });
+  el.addEventListener('pointermove', e => {
     if (B.drawing && pts) { pts.push(loc(e)); let dr = $('#bSvg .draft'); if (!dr) { dr = document.createElementNS('http://www.w3.org/2000/svg', 'polyline'); dr.setAttribute('class', 'draft'); $('#bSvg').appendChild(dr); } dr.setAttribute('points', pts.map(p => p.join(',')).join(' ')); return; }
-    const k = 100 / el.clientWidth; B.ox = ox + (e.clientX - sx) * k; B.oy = oy + (e.clientY - sy) * k; drawBlob(); });
-  el.addEventListener('pointerup', () => { on = false; if (!B.drawing || !pts) return;
-    B.drawing = false; el.classList.remove('drawing'); const raw = pts; pts = null;
+    if (!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId, [e.clientX, e.clientY]); const a = [...ptrs.values()], k = 100 / el.clientWidth;
+    const cx = (a[0][0] + (a[1] || a[0])[0]) / 2, cy = (a[0][1] + (a[1] || a[0])[1]) / 2;
+    if (a[1] && base.d) B.sc = clamp(base.sc * Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]) / base.d, .5, 4);
+    B.ox = base.ox + (cx - base.cx) * k; B.oy = base.oy + (cy - base.cy) * k;
+    if (!raf) raf = requestAnimationFrame(() => { raf = 0; placeImg(); }); });
+  const end = e => { if (ptrs.has(e.pointerId)) { ptrs.delete(e.pointerId); if (ptrs.size) rebase(); }
+    if (!B.drawing || !pts) return; B.drawing = false; el.classList.remove('drawing'); const raw = pts; pts = null;
     if (raw.length < 10) { drawBlob(); toast('Tvar je moc malý, zkus to znovu přes +'); return; }
+    raw.push(raw[0]); // konec se napojí na začátek
     let L = 0; const acc = [0]; for (let i = 1; i < raw.length; i++) { L += Math.hypot(raw[i][0] - raw[i - 1][0], raw[i][1] - raw[i - 1][1]); acc.push(L); }
-    const N = 28, out = []; for (let j = 0; j < N; j++) { const t = j / N * L; let i = acc.findIndex(a => a >= t); i = Math.max(1, i); const f = (t - acc[i - 1]) / ((acc[i] - acc[i - 1]) || 1); out.push([lerp(raw[i - 1][0], raw[i][0], f), lerp(raw[i - 1][1], raw[i][1], f)]); }
-    SHAPES.push({ k: 'draw', pts: out }); renderShapes(); selectShape(SHAPES.length - 1); buzz(12); toast('Vlastní tvar přidaný'); });
-  el.addEventListener('wheel', e => { e.preventDefault(); B.sc = clamp(B.sc * (1 - e.deltaY * .0015), .6, 3); drawBlob(); }, { passive: false });
+    const N = 40; let out = []; for (let j = 0; j < N; j++) { const t = j / N * L; let i = acc.findIndex(v => v >= t); i = Math.max(1, i); const f = (t - acc[i - 1]) / ((acc[i] - acc[i - 1]) || 1); out.push([lerp(raw[i - 1][0], raw[i][0], f), lerp(raw[i - 1][1], raw[i][1], f)]); }
+    for (let it = 0; it < 3; it++) out = out.map((p, i) => { const q0 = out[(i - 1 + N) % N], q1 = out[(i + 1) % N]; return [(q0[0] + 2 * p[0] + q1[0]) / 4, (q0[1] + 2 * p[1] + q1[1]) / 4]; }); // vyhlazení dokola, bez zubů na spoji
+    SHAPES.push({ k: 'draw', pts: out }); renderShapes(); selectShape(SHAPES.length - 1); buzz(12); toast('Vlastní tvar přidaný'); };
+  el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+  el.addEventListener('wheel', e => { e.preventDefault(); B.sc = clamp(B.sc * (1 - e.deltaY * .0015), .5, 4); placeImg(); }, { passive: false });
   $$('.lbl span').forEach(s => { s.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); s.blur(); } }); s.addEventListener('focus', () => toast('Přepiš text a potvrď Enterem')); });
   $('#bInv').onclick = () => { B.inv = !B.inv; $('#bInv').classList.toggle('on', B.inv); drawPal(); buzz(6); };
-  const op = $('#bOp'); paintRange(op); op.oninput = () => { B.op = op.value / 100; paintRange(op); drawBlob(); };
+  $$('#bBlend button').forEach(b => b.onclick = () => { B.blend = b.dataset.b; syncBlobCtl(); drawBlob(); buzz(4); });
+  [['#bDis', 'dis'], ['#bSize', 'size']].forEach(([id, key]) => { const i = $(id); paintRange(i); i.oninput = () => { B[key] = i.value / 100; i.nextElementSibling.textContent = i.value; paintRange(i); drawBlob(); }; });
 }
 
 /* =====================================================================
@@ -2503,11 +2607,14 @@ function openPc() {
 function pcSelect(ph) { if (!ph) return; S.cur = ph; S.P = JSON.parse(JSON.stringify(ph.P)); S.cur._last = JSON.parse(JSON.stringify(S.P)); S.hist = []; S.fut = []; edE.setSource(srcOf(ph, S.P)); openPc(); }
 function layoutPc() {
   const box = $('#pcCenter'), W = box.clientWidth - 48, H = box.clientHeight - 48, ar = S.P.crop.ar || S.cur.src.width / S.cur.src.height;
-  let w = W, h = W / ar; if (h > H) { h = H; w = H * ar; } const wr = $('#pcWrap'), fr = S.P.frame === 'glow'; wr.style.width = w + 'px'; wr.style.height = h + 'px'; wr.classList.toggle('framed', fr);
-  pcE.size(Math.round(w * (fr ? .82 : 1)), Math.round(h * (fr ? .82 : 1))); renderPc();
+  let w = W, h = W / ar; if (h > H) { h = H; w = H * ar; } const wr = $('#pcWrap'), fr = S.P.frame === 'glow', cv = $('#pcCanvas'); wr.classList.toggle('framed', fr);
+  if (fr) { const fw = W + 48, fh = H + 48; wr.style.width = fw + 'px'; wr.style.height = fh + 'px'; let pw = fw * .72, ph = pw / ar; if (ph > fh * .72) { ph = fh * .72; pw = ph * ar; }
+    S._pfr = { x: (fw - pw) / 2, y: (fh - ph) / 2, w: pw, h: ph }; Object.assign(cv.style, { left: S._pfr.x + 'px', top: S._pfr.y + 'px', width: pw + 'px', height: ph + 'px' }); pcE.size(Math.round(pw), Math.round(ph)); }
+  else { wr.style.width = w + 'px'; wr.style.height = h + 'px'; Object.assign(cv.style, { left: '', top: '', width: '', height: '' }); pcE.size(Math.round(w), Math.round(h)); }
+  renderPc();
   Object.assign($('#pcCropBox').style, { left: (box.clientWidth - w) / 2 + 'px', top: (box.clientHeight - h) / 2 + 'px', width: w + 'px', height: h + 'px' });
 }
-function renderPc() { if (S.view !== 'pc' || !S.cur) return; const cr = S.P.crop; pcE.render(S.P, { bypass: pcBefore, zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180, transfer: S.P.tr ? transferFor() : null }); if (S.P.frame === 'glow') glowFrame($('#pcGlow'), pcE.c, $('#pcWrap')); const c = $('#pcHist'); if (c) histInto(c); }
+function renderPc() { if (S.view !== 'pc' || !S.cur) return; const cr = S.P.crop; pcE.render(S.P, { bypass: pcBefore, zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180, transfer: S.P.tr ? transferFor() : null }); if (S.P.frame === 'glow' && S._pfr) { const wr = $('#pcWrap'); glowFrame($('#pcGlow'), pcE.c, wr.clientWidth, wr.clientHeight, S._pfr, 1); } const c = $('#pcHist'); if (c) histInto(c); }
 function buildPcRight() {
   const P = S.P, f = FILM[P.film];
   $('#pcRight').innerHTML = `<div class="pcsec"><h4>Histogram <span>${P.film}</span></h4><canvas class="hist" id="pcHist" width="580" height="150"></canvas></div>
@@ -2585,9 +2692,9 @@ function boot2(h) {
   store.get('scans', []).forEach(addFilm);
   if (!FILM[S.film]) S.film = 'P400';
   initLive(); seedPhotos(); buildCarousel(); buildShutter(); setFilm(S.film);
-  const iso = isoApi = dial($('#isoDial'), ISO_STOPS, S.isoIdx, 120, i => { S.isoIdx = i; updLcd(); });
-  const tim = timApi = dial($('#timeDial'), TIME_STOPS, S.timeIdx, 132, i => { S.timeIdx = i; updLcd(); }, 1);
-  const ev = evStrip(); evApi = ev; updLcd();
+  const iso = isoApi = dial($('#isoDial'), ISO_STOPS, S.isoIdx, 124, i => { S.isoIdx = i; updLcd(); });
+  const tim = timApi = dial($('#timeDial'), TIME_STOPS, S.timeIdx, 124, i => { S.timeIdx = i; updLcd(); }, 1);
+  const ev = evStrip(); evApi = ev; zoomApi = zoomStrip(); updLcd();
   $('#camHandle').onclick = () => { setCollapsed(!S.collapsed); buzz(5); };
   (() => { const h = $('#camHandle'); let sy = 0, on = false; h.addEventListener('pointerdown', e => { on = true; sy = e.clientY; });
     h.addEventListener('pointerup', e => { if (!on) return; on = false; const dy = e.clientY - sy; if (Math.abs(dy) > 20) { setCollapsed(dy > 0); buzz(5); } }); })();
@@ -2635,14 +2742,14 @@ function boot2(h) {
     /* jeden prst: nahoru/dolů = EV (zaklapne na nule), doprava = dlouhá expozice od AUTO až po 15 s */
     let sx = 0, sy = 0, ev0 = 0, ti0 = 0, axis = null;
     vf.addEventListener('pointerdown', e => { if (e.target.closest('button,.pill')) return; vf.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); moved = false; axis = null; sx = e.clientX; sy = e.clientY; ev0 = S.ev; ti0 = S.timeIdx; if (pts.size === 2) { const [a, b] = [...pts.values()]; d0 = Math.hypot(a[0] - b[0], a[1] - b[1]); z0 = S.zoom; } });
-    vf.addEventListener('pointermove', e => { if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, [e.clientX, e.clientY]); if (pts.size === 2) { moved = true; axis = 'z'; const [a, b] = [...pts.values()]; S.zoom = clamp(z0 * Math.hypot(a[0] - b[0], a[1] - b[1]) / d0, 1, 6); return; }
+    vf.addEventListener('pointermove', e => { if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, [e.clientX, e.clientY]); if (pts.size === 2) { moved = true; axis = 'z'; const [a, b] = [...pts.values()]; S.zoom = clamp(z0 * Math.hypot(a[0] - b[0], a[1] - b[1]) / d0, 1, 5); zoomApi.sync(); syncZoomBtns(); return; }
       const dx = e.clientX - sx, dy = sy - e.clientY; if (!axis && Math.hypot(dx, dy) > 12) axis = Math.abs(dy) > Math.abs(dx) ? 'y' : 'x'; if (!axis || axis === 'z') return; moved = true;
       if (axis === 'y') { const raw = ev0 + dy / 60, v = Math.abs(raw) < .3 ? 0 : Math.round(clamp(raw, -3, 3) * 3) / 3; if (v !== S.ev) { const cross = (S.ev === 0) !== (v === 0); S.ev = v; evApi.sync(); updLcd(); buzz(cross ? 14 : 3); } hud('ev'); }
       else { const i = clamp(ti0 + Math.round(dx / 40), 0, TIME_STOPS.length - 1); if (i !== S.timeIdx) { const cross = (S.timeIdx === 0) !== (i === 0); S.timeIdx = i; timApi.set(i); updLcd(); buzz(cross ? 14 : 4); } hud('t'); } });
     vf.addEventListener('pointerup', e => { pts.delete(e.pointerId); if (axis === 'x' || axis === 'y') hud(null); if (moved || e.target.closest('button,.pill')) return; const r = vf.getBoundingClientRect(), sc = r.width / vf.offsetWidth, f = $('#focus');
       f.style.left = (e.clientX - r.left) / sc + 'px'; f.style.top = (e.clientY - r.top) / sc + 'px'; spring(1.5, 1, v => { f.style.transform = `scale(${v})`; f.style.opacity = 1; }, { k: 300, c: 18, onDone: () => setTimeout(() => f.style.opacity = 0, 700) });
       miniEyes.look(((e.clientX - r.left) / r.width - .5) * 2, ((e.clientY - r.top) / r.height - .5)); setTimeout(() => miniEyes.look(0, 0), 1200); buzz(4); });
-    vf.addEventListener('wheel', e => { e.preventDefault(); S.zoom = clamp(S.zoom * (1 - e.deltaY * .0015), 1, 6); }, { passive: false }); })();
+    vf.addEventListener('wheel', e => { e.preventDefault(); S.zoom = clamp(S.zoom * (1 - e.deltaY * .0015), 1, 5); zoomApi.sync(); syncZoomBtns(); }, { passive: false }); })();
   // menu
   $('#menuGrid').innerHTML = [['gallery', 'Galerie', 'gallery'], ['dbl', 'Double ve foťáku', 'double'], ['dispo', 'Jednorázovka', 'film'], ['about', 'O appce', 'info'], ['intro', 'Intro znovu', 'eye'], ['reset', 'Reset koleček', 'undo']].map(([k, l, ic]) => `<button data-k="${k}">${iconSVG(ic)}${l}</button>`).join('');
   $$('#menuGrid button').forEach(b => b.onclick = () => { sheet($('#menuSheet'), false); const k = b.dataset.k;

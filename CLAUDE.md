@@ -36,6 +36,11 @@ ve stylu **Prequel**, na PC se používá spíš jako **Lightroom**. Celá v **�
 - **Recepty** = uložený vzhled, sdílení odkazem a QR (#recept=…), použití i ve foťáku.
 - Efekty: **Soft glow** (difúze, výchozí podle filmu), **Dither**, **Pixel art**, **Glow rám** (ambilight okraj), **IR** film (Aerochrome). **Double** je efekt v editoru (prolnutí / silueta jedné fotky vyplněná druhou, tmavé pozadí jako Klapqa) a „double ve foťáku“ (duch prvního snímku).
 - **Blob karta:** tmavé tečkované pozadí jako Klapqa; tvary podle `docs/inspo/blob inspo*` (rozlitý rám, hvězdy, jiskry, kytky, puntíky, vlnovky, známka, měkký rám, vzory), **Obrátit**, **Krytí**, **+** nakreslit vlastní, **kostka** = náhodný tvar.
+- **Blob v2:** Krytí nahradil **Dissolve** (okraj tvaru se rozpadá do zrnitých teček, inspo `dissolve effect*`), prolnutí NORMÁL / SCREEN / GLOW, **Velikost** tvaru, **presety** bloba, kreslený tvar se sám uzavře a vyhladí.
+- **Glow rám** = fotka jako obrazovka v tmavé místnosti, světlo z krajů se rozlévá do okolí (inspo `glow background efekt.mp4`), fotku nerozmazávat.
+- Kamera: ikona foťáku v hledáčku zapíná skutečnou kameru (žádná pilulka DEMO/ŽIVĚ); nad oběma kolečky proužek (EV / ZOOM); ISO a EV pilulky v hledáčku jen při schovaném ovládání.
+- Efekty v editoru neopakují to, co je v Úpravách. Vlastní filmy: podržení = přejmenovat / smazat. Galerie: filtr podle filmu (čipy).
+- Ikona appky: návrhy v `docs/ikona/` (A objektiv, B clona, C tečkové Q, D LCD, E mrknutí) – čeká na výběr.
 - **Arch** (ne „kontaktní arch“): z role, z dneška (od půlnoci) nebo výběrem fotek. **Jednorázovka** = filtr na den s oknem od–do, ráno vyvolání → arch.
 
 ## Licence a poděkování (povinné)
