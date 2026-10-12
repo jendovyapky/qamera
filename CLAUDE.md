@@ -83,9 +83,9 @@ Qamera je **GPL-3.0** (veřejné repo) – kvůli Spektrafilmu. V appce musí b�
 1. vstup sRGB → lineární světlo
 2. základ: expozice (EV), vyvážení bílé (teplota/tint), kontrast, světla/stíny, saturace/vibrance
 3. **film**: 3D LUT ze spektrafilmu (negativ → tisk → sken), síla filmu 0–100 %
-4. **halace** (červeno-oranžová záře kolem světel, prahová, rozmazaná po vrstvách), **bloom**
-5. **zrno** – závislé na jasu a „ISO“ filmu, velikost i barevnost, animované v hledáčku, statické (seed) v exportu
-6. vinětace, light leaky, prach/škrábance (advanced), datumovka, okraje negativu s vlastním značením
+4. **Halation** (červeno-oranžová záře kolem světel, prahová, rozmazaná po vrstvách), **Bloom** (měkká bílá záře světel)
+5. **Grain** – v souřadnicích fotky (stejný v náhledu i exportu), hladký šum ve 3 natočených oktávách, shluky, barevná oblaka barviv, odezva podle jasu a „ISO“; animovaný v hledáčku, statický (seed) v exportu. Typy: **Fine, Classic, Cine, Push, Mono, Expired** (výchozí podle filmu)
+6. Vignette, Fade, datumovka, okraje negativu s vlastním značením. **Light leaky ani prach nedělat** (Honza: levný efekt / vtip)
 7. výstup sRGB (u exportu volitelně Display P3 tam, kde to prohlížeč umí)
 - Výkon: hledáček v nižším rozlišení (např. 1080 px kratší strana), editace náhled ~2048 px, export plné rozlišení po dlaždicích (bez vytuhnutí telefonu).
 
@@ -106,14 +106,16 @@ Qamera je **GPL-3.0** (veřejné repo) – kvůli Spektrafilmu. V appce musí b�
   - Na Androidu v Chrome, pokud zařízení hlásí `exposureMode/exposureTime/iso/exposureCompensation` v `getCapabilities()`, použít skutečné hodnoty (ověřit na zařízení).
 - Zachycení: Android `ImageCapture.takePhoto()` (plné rozlišení), iOS = snímek ze streamu v max rozlišení (požádat o 4K constraints) – ověřit kvalitu.
 - **Slow shutter**: nasbírat N snímků ze streamu do float framebufferu. Režimy: **Světelné stopy** (maximum/lighten), **Rozmazání pohybu** (průměr), **Voda/hedvábí** (průměr + ostřejší statické části). Doporučit stabilní držení / opřít; ukazovat průběh.
-- Další: mřížka, samospoušť, přepnutí kamery, blesk/svítilna kde jde, haptika (Android `vibrate`, iOS nemá).
+- **Long exposure** až 15 s (kolečko času: ¼, ½, 1, 2, 4, 8, 15 s): snímky se sčítají ve float přesnosti (průměr / maximum), hedvábí vrací ostrost statickým částem podle rozptylu. Do budoucna zarovnání snímků (stabilizace) a odšumění.
+- Další: mřížka (**zlatý řez / třetiny / zlatá spirála**), samospoušť (**3 s → 10 s**), přepnutí kamery, blesk = svítilna kde jde (přední kamera = rozsvícený displej), haptika (Android `vibrate`, iOS nemá).
+- **Režim DEMO** (generovaná noční ulice s auty) zůstává – Honzovi se ten vzhled líbí; přepínač DEMO/ŽIVĚ v hledáčku. O appce ukazuje, co kamera zařízení umí (zoom, svítilna, ruční ISO/čas…).
 
 ## Editor
-- **Jednoduchý režim** (mobil, Prequel): fotka přes celou plochu, dole karusel filmů s živými náhledy, pod tím pár velkých posuvníků (Síla filmu, Expozice, Teplota, Saturace, Zrno, Halace). **Podržením prstu na fotce = před/po.**
+- **Jednoduchý režim** (mobil, Prequel): fotka přes celou plochu, dole karusel filmů s živými náhledy, pod tím pravítko (Síla filmu, Expozice, Teplota, Saturace, Grain, Halation, Bloom…). **Podržením prstu na fotce = před/po.** Tlačítko celá obrazovka, **reset úprav na výchozí film**, panel má pevnou výšku (fotka při přepínání záložek neposkakuje).
 - **Advanced**: tónová křivka (RGB + kanály), HSL po barvách, color grading (stíny/střed/světla), ostrost, šum, vinětace, light leaky, prach, okraje, datumovka, parametry filmu, histogram.
 - **Ořez**: poměry (orig, 1:1, 4:5, 3:2, 16:9, 9:16), rotace/narovnání, **pinch zoom a posun** (jediné místo spolu s kamerou, kde gesta zoomu fungují).
 - **Depth efekty** (jen v editu): Depth Anything V2 Small přes transformers.js (`onnx-community/depth-anything-v2-small`, WebGPU → záložně WASM), lazy load. Efekty: rozmazání pozadí s volbou bodu ostření (bokeh), **mlha do hloubky**, **3D paralaxa** fotky při naklánění telefonu (DeviceOrientation, na iOS žádost o povolení), náhled hloubkové mapy.
-- **Blob výřez**: vybrat tvar (sada organických blobů jako v inspo + vlastní generátor), posunout/zvětšit fotku uvnitř, pozadí z **palety vytažené z fotky** (k-means; před úpravou i po filmu), papírová textura s mřížkou volitelně. Export jako sdílecí karta.
+- **Blob výřez**: popisky na kartě jdou přepsat (výchozí vlevo čas pořízení, vpravo datum), paleta má **+** pro vlastní barvu. Vybrat tvar (sada organických blobů jako v inspo + vlastní generátor), posunout/zvětšit fotku uvnitř, pozadí z **palety vytažené z fotky** (k-means; před úpravou i po filmu), papírová textura s mřížkou volitelně. Export jako sdílecí karta.
 - PC (široká obrazovka): Lightroom rozložení – vlevo filmy/presety, vpravo panely úprav, dole filmový pás, klávesové zkratky (`\` před/po, `C` ořez, `Ctrl+Z` atd.).
 - Historie kroků (undo/redo), kopírovat/vložit úpravy mezi fotkami.
 
@@ -130,10 +132,14 @@ Qamera je **GPL-3.0** (veřejné repo) – kvůli Spektrafilmu. V appce musí b�
 - Sdílení přes Web Share API (soubor), uložení do galerie telefonu.
 
 ## Design a motion
+- **Názvy efektů anglicky**: Halation, Grain, Bloom, Vignette, Fade (zbytek UI česky: Expozice, Teplota, Kontrast…).
+- **Žádné poskakování layoutu**: měnící se texty (hodnoty, režimy, pilulky) mají pevnou šířku / tabular-nums, nic se nesmí posouvat při změně textu.
+- Vodorovné pásy jdou na PC posouvat kolečkem myši i tažením; vlastní tenké scrollbary (ne výchozí z Windows). Spodní panely jdou zavřít stažením za úchyt.
 - Tmavé UI, akcent **žlutá/oranžová** (displej z inspo), pixelové ikony 24 px (vlastní SVG na mřížce), aktivní ikona žlutá se září.
 - Fonty: Geist, Geist Mono, Doto (Google Fonts) + segmentový/pixelový styl čísel na „LCD“.
 - **Expensive motion**: pružinové přechody (vlastní spring funkce, ne lineární ease), sdílené přechody prvků (fotka z galerie plynule do editoru), kolečka s setrvačností a „cvaknutím“ na hodnotách, karusel filmů s 3D natočením, zrno a halace živě. Úvodní animace s maskotem (jako Mraq intro). Respektovat úsporné animace v nastavení (ne systémové „omezit pohyb“ – Honza to tak chce i u Mraqu).
 - **Maskot**: tečkované robotí oči (jako Mraq/Klapqa), např. oči v objektivu/kazetě; reaguje na focení (mrknutí = spoušť), nálady.
+- **Intro** (canvas, ~2,7 s, virtuální čas – zaseknutí vlákna ho jen pozdrží): objektiv s rytinou a reflexy povlaků → oči se tečka po tečce probudí, rozhlédnou, mrknou → tečkový nápis QAMERA (bez podtitulu) → zavře se 7lamelová clona (cvak) → průlet čočkou, appka se vynoří otevřenou clonou. Ťuknutí = přeskočit.
 - **Zákaz zoomu stránky**: viewport `maximum-scale=1, user-scalable=no`, na iOS navíc blokovat `gesturestart`/`gesturechange` a double-tap zoom (`touch-action: manipulation`) – **kromě** plochy ořezu a hledáčku (`touch-action: none` + vlastní pinch).
 - iOS PWA: černý start bez bílého bliknutí (stejný trik jako Mraq: `apple-touch-startup-image`, černé `html`, kryt do načtení).
 

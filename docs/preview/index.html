@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0c0b0a">
-<!--ARTIFACT-START-->
 <title>Qamera náhled</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,15 +21,24 @@
   --glow:drop-shadow(0 0 4px rgba(255,196,61,.75)) drop-shadow(0 0 10px rgba(255,170,40,.35));
   color-scheme:dark;
 }
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.14) transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:10px;border:3px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background-color:rgba(255,196,61,.45)}
+::-webkit-scrollbar-button{display:none;height:0;width:0}
 html,body{height:100%;margin:0;background:var(--ink);color:var(--fg);font-family:var(--f-ui);font-size:14px;overflow:hidden;
   touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-text-size-adjust:100%}
 [hidden]{display:none!important}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
-button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+button:focus-visible,input:focus-visible,a:focus-visible,[contenteditable]:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 a{color:var(--amber)}
 .px{width:24px;height:24px;display:block;shape-rendering:crispEdges;fill:currentColor}
 .on .px,.px.on{color:var(--amber);filter:var(--glow)}
+.hs{scrollbar-width:none}
+.hs::-webkit-scrollbar{display:none}
+.hs.dragging{cursor:grabbing}
+.hs.dragging *{pointer-events:none}
 
 /* ---------- shell (PC) ---------- */
 .shell{display:grid;grid-template-columns:270px 1fr;height:100%}
@@ -49,82 +57,72 @@ a{color:var(--amber)}
 .navnote{font-size:12px;color:var(--mute);line-height:1.55;border-top:1px solid var(--line);padding-top:14px}
 .navnote b{color:#d7cfc4;font-weight:500}
 .navlabel{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;margin-bottom:4px}
-.stage{position:relative;overflow:hidden;display:grid;place-items:center;
-  background:radial-gradient(1200px 700px at 60% 40%,#1b1712 0%,var(--ink) 60%)}
+.stage{position:relative;overflow:hidden;background:radial-gradient(1200px 700px at 60% 40%,#1b1712 0%,var(--ink) 60%)}
 .device{position:absolute;left:50%;top:50%;width:390px;height:844px;transform-origin:center center;transform:translate(-50%,-50%)}
 .bezel{position:absolute;inset:-12px;border-radius:66px;background:linear-gradient(145deg,#3a3631,#151311 40%,#2a2723);box-shadow:0 40px 90px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.06)}
-.phone{position:absolute;inset:0;border-radius:54px;overflow:hidden;background:var(--body);isolation:isolate}
-.island{position:absolute;top:11px;left:50%;width:122px;height:35px;margin-left:-61px;border-radius:20px;background:#000;z-index:60;pointer-events:none}
-.status{position:absolute;top:0;left:0;right:0;height:50px;display:flex;justify-content:space-between;align-items:center;padding:6px 34px 0 42px;font-weight:600;font-size:15px;z-index:59;pointer-events:none}
+.phone{position:absolute;inset:0;border-radius:54px;overflow:hidden;overflow:clip;background:var(--body);isolation:isolate}
+.island{position:absolute;top:11px;left:50%;width:122px;height:35px;margin-left:-61px;border-radius:20px;background:#000;z-index:90;pointer-events:none}
+.status{position:absolute;top:0;left:0;right:0;height:50px;display:flex;justify-content:space-between;align-items:center;padding:6px 34px 0 42px;font-weight:600;font-size:15px;z-index:89;pointer-events:none}
 .status i{display:inline-flex;gap:5px;align-items:center}
 .status svg{fill:currentColor}
 .pcwrap{position:absolute;left:50%;top:50%;width:1440px;height:900px;transform-origin:center center;transform:translate(-50%,-50%);border-radius:14px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,.6),0 0 0 1px var(--line)}
 
-/* mobil = appka přes celou plochu */
 @media (max-width:700px){
   .shell{display:block}
   .nav{display:none}
-  .stage{display:block;height:100%}
+  .stage{height:100%}
   .device{left:0;top:0;width:100%!important;height:100%!important;transform:none!important}
   .bezel,.island,.status{display:none}
   .phone{border-radius:0}
 }
 
 /* ---------- obrazovky ---------- */
-.scr{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--body);will-change:transform}
+.scr{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--body);will-change:transform;overflow:hidden;overflow:clip}
 .pt{padding-top:50px}
 @media (max-width:700px){.pt{padding-top:env(safe-area-inset-top,0px)}}
 .pb{padding-bottom:max(14px,env(safe-area-inset-bottom,0px))}
-.top{height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 14px;gap:10px}
-.ib{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;color:#b4aca2;flex:none}
-.ib:active{transform:scale(.92)}
+.top{height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 14px;gap:6px}
+.ib{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;color:#b4aca2;flex:none;transition:transform .15s}
+.ib:active{transform:scale(.9)}
 .ib.tile{background:var(--panel)}
 .title{font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#cfc7bc}
 .toast{position:absolute;left:50%;bottom:120px;transform:translateX(-50%);background:rgba(30,27,24,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  border:1px solid var(--line);padding:10px 16px;border-radius:14px;font-size:13px;z-index:90;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .25s}
+  border:1px solid var(--line);padding:10px 16px;border-radius:14px;font-size:13px;z-index:95;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .25s;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis}
 .toast.show{opacity:1}
-
-/* ---------- intro ---------- */
-#s-intro{background:#000;align-items:center;justify-content:center;z-index:50;gap:26px}
-.lens{position:relative;width:220px;height:220px;border-radius:50%;
-  background:radial-gradient(circle at 50% 50%,#050505 0 46%,#121212 47% 49%,#070707 50% 60%,#1a1816 61% 62%,#0b0a09 63% 74%,#23201c 75% 76%,#0d0c0b 77% 100%);
-  box-shadow:0 0 0 1px #2a2622,0 30px 80px rgba(0,0,0,.8)}
-.lens::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.14),transparent 22%),radial-gradient(circle at 68% 74%,rgba(120,150,255,.07),transparent 26%)}
-.lens svg{position:absolute;inset:0;width:100%;height:100%}
-.eyes path{fill:var(--amber)}
-.eyes .sp{fill:#fff6d8}
-.wordmark{font-family:var(--f-dot);font-weight:900;font-size:46px;letter-spacing:.06em;color:var(--fg);display:flex;gap:2px;height:56px}
-.wordmark span{display:inline-block;opacity:0;transform:translateY(14px)}
-.intro-sub{font-family:var(--f-mono);font-size:11px;letter-spacing:.3em;color:var(--dim);text-transform:uppercase;opacity:0}
-.intro-skip{position:absolute;bottom:40px;font-family:var(--f-mono);font-size:10.5px;color:#3d3833;letter-spacing:.14em}
+.intro{position:absolute;inset:0;width:100%;height:100%;z-index:80;display:block;touch-action:none;cursor:pointer}
 
 /* ---------- kamera ---------- */
 #s-camera{background:#0a0908}
-.filmchip{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-family:var(--f-mono);font-size:12px;letter-spacing:.06em}
+.filmchip{display:flex;align-items:center;justify-content:center;gap:8px;min-width:128px;padding:5px 12px 5px 6px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-family:var(--f-mono);font-size:12px;letter-spacing:.06em}
 .filmchip svg{width:22px;height:22px}
 .minieyes{width:44px;height:28px}
+.eyes path{fill:var(--amber)}
 .vf{position:relative;flex:1;margin:4px 12px 0;border-radius:26px;overflow:hidden;background:#000;touch-action:none;min-height:0}
 .vf canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.gridov{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;
-  background:linear-gradient(90deg,transparent calc(33.33% - .5px),rgba(255,255,255,.35) 33.33%,transparent calc(33.33% + .5px),transparent calc(66.66% - .5px),rgba(255,255,255,.35) 66.66%,transparent calc(66.66% + .5px)),
-  linear-gradient(0deg,transparent calc(33.33% - .5px),rgba(255,255,255,.35) 33.33%,transparent calc(33.33% + .5px),transparent calc(66.66% - .5px),rgba(255,255,255,.35) 66.66%,transparent calc(66.66% + .5px))}
+.gridov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .35s}
 .gridov.on{opacity:1}
+.gridov path,.gridov line{fill:none;stroke:rgba(255,255,255,.42);stroke-width:1;vector-effect:non-scaling-stroke}
+.gridov .gold{stroke:rgba(255,196,61,.7)}
 .pills{position:absolute;left:0;right:0;bottom:12px;display:flex;justify-content:center;gap:6px;pointer-events:none}
-.pill{pointer-events:auto;height:30px;min-width:30px;padding:0 10px;border-radius:999px;background:rgba(10,9,8,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  font-family:var(--f-mono);font-size:11.5px;display:inline-flex;align-items:center;justify-content:center;gap:4px;color:#e9e2d8;border:1px solid rgba(255,255,255,.08)}
+.pill{pointer-events:auto;height:30px;padding:0 10px;border-radius:999px;background:rgba(10,9,8,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  font-family:var(--f-mono);font-size:11.5px;display:inline-flex;align-items:center;justify-content:center;gap:5px;color:#e9e2d8;border:1px solid rgba(255,255,255,.08);white-space:nowrap;font-variant-numeric:tabular-nums}
 .pill.on{color:var(--amber);border-color:rgba(255,196,61,.35)}
+#pIso{width:84px}#pEv{width:76px}
 .zoomgrp{display:inline-flex;gap:2px;padding:2px;border-radius:999px;background:rgba(10,9,8,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);pointer-events:auto;border:1px solid rgba(255,255,255,.08)}
-.zoomgrp button{height:26px;min-width:26px;padding:0 6px;border-radius:999px;font-family:var(--f-mono);font-size:11px;color:#cfc7bc}
-.zoomgrp button.on{background:rgba(255,196,61,.16);color:var(--amber)}
-.vtools{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;pointer-events:none}
+.zoomgrp button{width:38px;height:26px;border-radius:999px;font-family:var(--f-mono);font-size:10.5px;color:#cfc7bc;transition:background .25s,color .25s}
+.zoomgrp button.on{background:rgba(255,196,61,.18);color:var(--amber)}
+.vtools{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}
 .vtools .grp{display:flex;gap:6px}
 .vtools .ib{pointer-events:auto;width:36px;height:36px;border-radius:12px;background:rgba(10,9,8,.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#d0c8be}
+.livepill{width:82px;height:28px;font-size:10.5px;letter-spacing:.12em}
+.livepill i{width:6px;height:6px;border-radius:50%;background:var(--mute);flex:none}
+.livepill.live i{background:#ff4a3d;box-shadow:0 0 8px #ff4a3d}
 .focus{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;border:1.5px solid var(--amber);border-radius:12px;pointer-events:none;opacity:0;filter:var(--glow)}
 .count{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--f-dot);font-weight:900;font-size:120px;color:var(--amber);filter:var(--glow);pointer-events:none}
 .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
 .iris{position:absolute;inset:0;pointer-events:none;background:#000;opacity:0}
-.slowbar{position:absolute;top:14px;left:50%;transform:translateX(-50%);padding:6px 12px;border-radius:999px;background:rgba(10,9,8,.6);font-family:var(--f-mono);font-size:11px;color:var(--amber);display:flex;gap:8px;align-items:center}
-.slowbar i{display:block;width:90px;height:3px;border-radius:2px;background:#3a332b;overflow:hidden}
+.slowbar{position:absolute;top:56px;left:50%;transform:translateX(-50%);width:190px;padding:6px 12px;border-radius:999px;background:rgba(10,9,8,.6);font-family:var(--f-mono);font-size:11px;color:var(--amber);display:flex;gap:8px;align-items:center;justify-content:space-between}
+.slowbar i{display:block;width:70px;height:3px;border-radius:2px;background:#3a332b;overflow:hidden;flex:none}
 .slowbar i b{display:block;height:100%;width:0;background:var(--amber)}
 
 .lcd{margin:10px 12px 0;border-radius:18px;background:linear-gradient(180deg,var(--lcd-hi),var(--lcd));color:var(--lcd-ink);padding:10px 16px 9px;flex:none;position:relative;
@@ -132,14 +130,15 @@ a{color:var(--amber)}
 .lcd::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:.22;
   background-image:radial-gradient(rgba(60,30,0,.5) .6px,transparent .7px);background-size:3px 3px}
 .lcd .row1{display:grid;grid-template-columns:1fr 1fr 1fr;text-align:center}
-.lcd .v{font-family:var(--f-dot);font-weight:900;font-size:25px;line-height:1.05;letter-spacing:.02em;font-variant-numeric:tabular-nums}
-.lcd .k{font-size:11px;opacity:.72;margin-top:1px}
-.lcd .row2{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;margin-top:8px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.04em}
+.lcd .v{font-family:var(--f-dot);font-weight:900;font-size:25px;line-height:1.05;letter-spacing:.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.lcd .k{font-size:11px;opacity:.72;margin-top:1px;white-space:nowrap}
+.lcd .row2{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-top:8px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.04em;white-space:nowrap}
 .lcd .row2 b{font-weight:600}
+.lcd .ev{justify-self:start}
 .meter{display:flex;align-items:center;gap:5px;justify-content:center}
-.meter .ticks{position:relative;width:110px;height:11px;background:repeating-linear-gradient(90deg,rgba(42,24,4,.75) 0 1.5px,transparent 1.5px 6.1px)}
+.meter .ticks{position:relative;width:104px;height:11px;background:repeating-linear-gradient(90deg,rgba(42,24,4,.75) 0 1.5px,transparent 1.5px 5.8px)}
 .meter .ticks i{position:absolute;top:-3px;bottom:-3px;width:3px;margin-left:-1.5px;background:var(--lcd-ink);border-radius:1px;transition:left .2s}
-.lcd .mode{cursor:pointer;padding:2px 6px;margin:-2px -6px;border-radius:6px}
+.lcd .mode{justify-self:end;cursor:pointer;padding:2px 6px;margin:-2px -6px;border-radius:6px;text-align:right}
 .lcd .mode:active{background:rgba(42,24,4,.12)}
 
 .dials{flex:none;height:148px;display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:6px 18px 0;gap:8px;position:relative}
@@ -151,7 +150,6 @@ a{color:var(--amber)}
 .dial text.a{fill:var(--red);font-weight:600}
 .dial .hub{fill:#f1ece4}
 .dial-ptr{width:16px;height:3px;border-radius:2px;background:var(--amber);filter:var(--glow)}
-.dlabel{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.16em;color:var(--dim)}
 .evstrip{position:relative;width:132px;height:26px;overflow:hidden;touch-action:none;cursor:ew-resize;
   -webkit-mask:linear-gradient(90deg,transparent,#000 22%,#000 78%,transparent);mask:linear-gradient(90deg,transparent,#000 22%,#000 78%,transparent)}
 .evstrip .t{position:absolute;top:4px;height:18px;left:0;width:2000px;
@@ -170,71 +168,84 @@ a{color:var(--amber)}
 .galbtn{justify-self:end;width:56px;height:56px;border-radius:16px;overflow:hidden;background:var(--panel2);border:2px solid #3b3631}
 .galbtn img{width:100%;height:100%;object-fit:cover;display:block}
 
-/* ---------- film sheet ---------- */
-.sheet{position:absolute;left:0;right:0;bottom:0;z-index:30;background:#070606;border-radius:30px 30px 0 0;border-top:1px solid #23201c;padding:18px 0 max(18px,env(safe-area-inset-bottom,0px));transform:translateY(105%)}
-.sheet .grab{width:38px;height:4px;border-radius:2px;background:#36312c;margin:0 auto 12px}
-.fhead{text-align:center;height:66px}
+/* ---------- sheets ---------- */
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:30;background:#070606;border-radius:30px 30px 0 0;border-top:1px solid #23201c;padding:0 0 max(18px,env(safe-area-inset-bottom,0px));transform:translateY(110%);visibility:hidden}
+.sheet .grab{height:30px;display:grid;place-items:center;touch-action:none;cursor:grab}
+.sheet .grab::before{content:"";width:40px;height:4px;border-radius:2px;background:#3d3731;transition:background .2s,width .2s}
+.sheet .grab:hover::before{background:#5a534c;width:48px}
+.fhead{text-align:center;height:66px;touch-action:none}
 .fhead .code{font-family:var(--f-dot);font-weight:900;font-size:30px;letter-spacing:.06em;color:var(--fg)}
 .fhead .sub{font-family:var(--f-mono);font-size:11px;color:var(--mute);margin-top:4px;letter-spacing:.06em}
-.fhead .sub sub{font-size:8px}
-.carousel{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding:18px calc(50% - 41px) 26px;gap:0;scrollbar-width:none;perspective:700px}
-.carousel::-webkit-scrollbar{display:none}
+.carousel{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding:18px calc(50% - 41px) 26px;gap:0;perspective:700px}
 .citem{flex:none;width:82px;display:flex;flex-direction:column;align-items:center;gap:8px;scroll-snap-align:center;transform-style:preserve-3d}
-.citem svg{width:64px;height:64px;transition:filter .2s}
+.citem svg{width:64px;height:64px}
 .citem span{font-family:var(--f-mono);font-size:10px;color:var(--mute);letter-spacing:.06em}
 .citem.on span{color:var(--fg)}
-.fdesc{text-align:center;font-size:12px;color:var(--mute);padding:0 30px;min-height:34px;line-height:1.4}
+.fdesc{text-align:center;font-size:12px;color:var(--mute);padding:0 30px;height:36px;line-height:1.45;overflow:hidden}
 .closebtn{display:grid;place-items:center;margin:8px auto 0;width:40px;height:40px;border-radius:50%;background:#f3eee6;color:#111}
-
-/* ---------- menu sheet ---------- */
-.menu{padding:10px 16px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.menu{padding:4px 16px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .menu button{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:12px;color:#d6cec3}
 .menu button .px{color:#9b9288}
 .menu button:active .px{color:var(--amber);filter:var(--glow)}
 
 /* ---------- editor ---------- */
 #s-editor{background:#0b0a09}
-.ephoto{position:relative;flex:1;min-height:0;margin:0 0 8px;overflow:hidden;touch-action:none}
+.ephoto{position:relative;flex:1;min-height:0;margin:0 0 6px;overflow:hidden;touch-action:none}
 .ephoto .frame{position:absolute;inset:0;display:grid;place-items:center}
 .ecanvas{position:relative;max-width:100%;max-height:100%;border-radius:6px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.5)}
 .ecanvas canvas{display:block;width:100%;height:100%}
-.badge{position:absolute;top:12px;left:50%;transform:translateX(-50%);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.2em;padding:5px 10px;border-radius:8px;background:rgba(0,0,0,.6);color:#fff;opacity:0;transition:opacity .15s;pointer-events:none}
+.fsbtn{position:absolute;top:8px;right:14px;width:36px;height:36px;border-radius:12px;background:rgba(10,9,8,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#d0c8be;z-index:3}
+.badge{position:absolute;top:12px;left:50%;transform:translateX(-50%);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.2em;padding:5px 10px;border-radius:8px;background:rgba(0,0,0,.6);color:#fff;opacity:0;transition:opacity .15s;pointer-events:none;z-index:3}
 .badge.show{opacity:1}
-.hint{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:11px;color:var(--dim);pointer-events:none}
-.epanel{flex:none;min-height:0;overflow:hidden}
+.hint{position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:11px;color:var(--dim);pointer-events:none}
+.epanel{flex:none;min-height:0;overflow:hidden;overflow:clip;position:relative}
 .ftabs{flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid #1c1a17;padding-top:6px}
 .ftabs button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;color:var(--dim);padding:4px 0}
 .ftabs button .px{color:#5e574f}
 .ftabs button.on{color:var(--fg)}
-.advsw{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;color:var(--mute)}
+.advsw{display:flex;align-items:center;gap:7px;font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;color:var(--mute)}
 .sw{width:38px;height:22px;border-radius:12px;background:#2c2824;position:relative;transition:background .2s;flex:none}
 .sw::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#bdb4a9;transition:transform .3s cubic-bezier(.3,1.6,.5,1),background .2s}
 .sw.on{background:var(--lcd)}
 .sw.on::after{transform:translateX(16px);background:#fff}
-.strip{display:flex;gap:8px;overflow-x:auto;padding:4px 14px 6px;scrollbar-width:none}
-.strip::-webkit-scrollbar{display:none}
+.strip{display:flex;gap:8px;overflow-x:auto;padding:4px 14px 6px}
 .fthumb{flex:none;width:64px;display:flex;flex-direction:column;gap:5px;align-items:center}
-.fthumb canvas{width:64px;height:80px;border-radius:10px;display:block;outline:2px solid transparent;outline-offset:2px;transition:outline-color .2s,transform .3s}
+.fthumb canvas{width:64px;height:80px;border-radius:10px;display:block;outline:2px solid transparent;outline-offset:2px;transition:outline-color .2s}
 .fthumb.on canvas{outline-color:var(--amber)}
 .fthumb span{font-family:var(--f-mono);font-size:9.5px;color:var(--mute)}
 .fthumb.on span{color:var(--amber)}
-.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 14px 4px;scrollbar-width:none}
-.chips::-webkit-scrollbar{display:none}
-.chip{flex:none;display:flex;flex-direction:column;align-items:center;gap:4px;width:62px;padding:8px 0 6px;border-radius:14px;color:var(--mute);font-size:10.5px;position:relative}
+.ctx{height:34px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 14px}
+.ctx .gt{display:flex;gap:4px;overflow-x:auto;min-width:0}
+.gpill{flex:none;height:26px;padding:0 10px;border-radius:9px;background:var(--panel);border:1px solid transparent;font-family:var(--f-mono);font-size:10.5px;color:var(--mute);letter-spacing:.04em}
+.gpill.on{color:var(--amber);border-color:rgba(255,196,61,.4);background:rgba(255,196,61,.07)}
+.ctx small{font-size:10.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.resetbtn{flex:none;height:26px;padding:0 10px;border-radius:9px;border:1px solid var(--line);font-size:11px;color:#cfc7bc;display:flex;align-items:center;gap:5px}
+.resetbtn .px{width:14px;height:14px}
+.chips{display:flex;gap:4px;overflow-x:auto;padding:2px 14px 4px}
+.chip{flex:none;display:flex;flex-direction:column;align-items:center;gap:4px;width:64px;padding:8px 0 6px;border-radius:14px;color:var(--mute);font-size:10.5px;position:relative;transition:background .2s,color .2s}
 .chip .px{color:#6f675f}
 .chip.on{background:var(--panel);color:var(--fg)}
 .chip.on .px{color:var(--amber);filter:var(--glow)}
-.chip.mod::after{content:"";position:absolute;top:6px;right:12px;width:5px;height:5px;border-radius:50%;background:var(--amber)}
-.ruler{position:relative;height:68px;padding-top:2px}
-.ruler .rv{text-align:center;font-family:var(--f-dot);font-weight:900;font-size:22px;height:26px;color:var(--fg);font-variant-numeric:tabular-nums}
-.ruler .rl{text-align:center;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;margin-top:-2px}
-.ruler .tr{position:relative;height:30px;margin-top:4px;overflow:hidden;touch-action:none;cursor:ew-resize;
-  -webkit-mask:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent);mask:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent)}
-.ruler .tk{position:absolute;top:8px;height:14px;left:0;background:repeating-linear-gradient(90deg,#6c645b 0 1.5px,transparent 1.5px 8px)}
-.ruler .tk::after{content:"";position:absolute;inset:-4px 0 -2px;background:repeating-linear-gradient(90deg,#cfc7bc 0 2px,transparent 2px 40px)}
-.ruler .z{position:absolute;top:2px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--mute)}
-.ruler .m{position:absolute;left:50%;top:2px;bottom:2px;width:2px;margin-left:-1px;border-radius:1px;background:var(--amber);filter:var(--glow)}
-.aspects{display:flex;gap:6px;overflow-x:auto;padding:4px 14px;scrollbar-width:none}
+.chip.mod::after{content:"";position:absolute;top:6px;right:13px;width:5px;height:5px;border-radius:50%;background:var(--amber)}
+
+/* pravítko (posuvník ve stylu Prequel) */
+.ruler{position:relative;height:84px;padding-top:2px}
+.ruler .rv{text-align:center;font-family:var(--f-dot);font-weight:900;font-size:23px;height:26px;line-height:26px;color:var(--fg);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ruler .rl{text-align:center;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.16em;color:var(--dim);text-transform:uppercase;height:13px;white-space:nowrap}
+.ruler .tr{position:relative;height:40px;margin-top:4px;overflow:hidden;touch-action:none;cursor:ew-resize;
+  -webkit-mask:linear-gradient(90deg,transparent,#000 16%,#000 84%,transparent);mask:linear-gradient(90deg,transparent,#000 16%,#000 84%,transparent)}
+.ruler .rail{position:absolute;left:0;top:0;height:100%;will-change:transform}
+.ruler .tk,.ruler .tf{position:absolute;top:4px;height:16px;background-repeat:repeat-x}
+.ruler .tk{left:0;
+  background-image:linear-gradient(90deg,#4a443e 1px,transparent 1px),linear-gradient(90deg,#a0978c 1.5px,transparent 1.5px);
+  background-position:0 100%,var(--mo,0) 100%}
+.ruler .tf{background-image:linear-gradient(90deg,rgba(255,196,61,.75) 1px,transparent 1px),linear-gradient(90deg,var(--amber) 1.5px,transparent 1.5px);filter:drop-shadow(0 0 3px rgba(255,180,40,.5))}
+.ruler .nums span{position:absolute;top:24px;transform:translateX(-50%);font-family:var(--f-mono);font-size:8.5px;color:#5f584f;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ruler .nums span.z{color:#9a9187}
+.ruler .m{position:absolute;left:50%;top:0;width:2px;height:22px;margin-left:-1px;border-radius:1px;background:var(--amber);filter:var(--glow)}
+.ruler .m::before{content:"";position:absolute;left:-4px;top:-1px;border:5px solid transparent;border-top:5px solid var(--amber);border-bottom:0}
+
+.aspects{display:flex;gap:6px;overflow-x:auto;padding:4px 14px}
 .aspects button{flex:none;padding:7px 12px;border-radius:10px;background:var(--panel);font-family:var(--f-mono);font-size:11px;color:var(--mute);border:1px solid transparent}
 .aspects button.on{color:var(--amber);border-color:rgba(255,196,61,.4)}
 .croplayer{position:absolute;inset:0;pointer-events:none}
@@ -244,31 +255,37 @@ a{color:var(--amber)}
 .cropbox::before,.cropbox::after{content:"";position:absolute;width:18px;height:18px;border:3px solid #fff}
 .cropbox::before{top:-3px;left:-3px;border-right:0;border-bottom:0}
 .cropbox::after{bottom:-3px;right:-3px;border-left:0;border-top:0}
-.fx{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:6px 14px 8px}
-.fx button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 2px 10px;border-radius:16px;background:var(--panel);font-size:10.5px;color:#cbc3b8;border:1px solid var(--line)}
+.fx{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:8px 14px}
+.fx button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 2px 10px;border-radius:16px;background:var(--panel);font-size:10.5px;color:#cbc3b8;border:1px solid var(--line);height:76px}
 .fx button .px{color:#8d847a}
 .fx button.on{border-color:rgba(255,196,61,.4)}
 .fx button.on .px{color:var(--amber);filter:var(--glow)}
 .fx button em{font-style:normal;font-family:var(--f-mono);font-size:8.5px;color:var(--dim);letter-spacing:.08em}
+.fsview{position:absolute;inset:0;z-index:85;background:#000;display:grid;place-items:center;touch-action:none}
+.fsview canvas{display:block;max-width:100%;max-height:100%}
+.fsview span{position:absolute;bottom:max(22px,env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;font-size:11px;color:#6d655c;font-family:var(--f-mono);letter-spacing:.1em}
 
 /* advanced */
-.adv{overflow-y:auto;padding:4px 14px 10px;display:flex;flex-direction:column;gap:14px;height:100%;scrollbar-width:thin}
+.adv{overflow-y:auto;padding:4px 14px 10px;display:flex;flex-direction:column;gap:14px;height:100%}
 .asec{background:var(--panel);border:1px solid #23201c;border-radius:18px;padding:12px}
-.ah{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.ah b{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;color:#bfb7ac;font-weight:500;text-transform:uppercase}
+.ah{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
+.ah b{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;color:#bfb7ac;font-weight:500;text-transform:uppercase;white-space:nowrap}
 .ah .seg button{padding:4px 8px;font-size:10px}
 .hist{width:100%;height:70px;display:block}
 .curve{width:100%;aspect-ratio:1.6;display:block;touch-action:none;border-radius:10px;background:#0f0e0d}
 .hsldots{display:flex;justify-content:space-between;margin-bottom:10px}
 .hsldots button{width:24px;height:24px;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(0,0,0,.25)}
-.hsldots button.on{box-shadow:0 0 0 2px var(--body),0 0 0 4px var(--fg)}
-.srow{display:grid;grid-template-columns:72px 1fr 40px;align-items:center;gap:8px;font-size:12px;color:#bdb5aa;height:30px}
-.srow output{font-family:var(--f-mono);font-size:11px;text-align:right;color:var(--fg)}
-input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;margin:0}
-input[type=range]::-webkit-slider-runnable-track{height:3px;border-radius:2px;background:var(--trk,#34302b)}
-input[type=range]::-moz-range-track{height:3px;border-radius:2px;background:var(--trk,#34302b)}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#f3eee6;margin-top:-6.5px;box-shadow:0 1px 4px rgba(0,0,0,.5)}
-input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radius:50%;background:#f3eee6}
+.hsldots button.on{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--fg)}
+.srow{display:grid;grid-template-columns:84px 1fr 40px;align-items:center;gap:10px;font-size:12px;color:#bdb5aa;height:32px}
+.srow output{font-family:var(--f-mono);font-size:11px;text-align:right;color:var(--fg);font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:24px;background:transparent;margin:0;cursor:pointer;--lo:0%;--hi:0%;
+  --trk:linear-gradient(90deg,#2f2b27 var(--lo),var(--amber) var(--lo),var(--amber) var(--hi),#2f2b27 var(--hi))}
+input[type=range]::-webkit-slider-runnable-track{height:2px;border-radius:2px;background:var(--trk)}
+input[type=range]::-moz-range-track{height:2px;border-radius:2px;background:var(--trk)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:8px;height:20px;border-radius:4px;background:#f3eee6;margin-top:-9px;box-shadow:0 0 0 3px rgba(18,17,16,.9),0 2px 8px rgba(0,0,0,.6);transition:transform .15s}
+input[type=range]::-moz-range-thumb{width:8px;height:20px;border:0;border-radius:4px;background:#f3eee6;box-shadow:0 0 0 3px rgba(18,17,16,.9)}
+input[type=range]:active::-webkit-slider-thumb{transform:scaleY(1.15);background:var(--amber)}
+input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 .wheels{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
 .wheel{position:relative;width:100%;aspect-ratio:1;border-radius:50%;touch-action:none;cursor:crosshair;
   background:radial-gradient(circle,#2a2622 0 8%,transparent 70%),conic-gradient(from 90deg,#e04848,#e0c048,#58d058,#48c8e0,#5058e0,#d048d0,#e04848);}
@@ -279,7 +296,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
 /* reference sheet */
 .refrow{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;padding:6px 18px 12px}
 .refrow figure{margin:0;text-align:center}
-.refrow img,.refrow canvas{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:14px;display:block}
+.refrow canvas{width:100%;aspect-ratio:4/5;border-radius:14px;display:block}
 .refrow figcaption{font-size:10.5px;color:var(--mute);margin-top:6px;font-family:var(--f-mono);letter-spacing:.08em}
 .refrow .arrow{color:var(--amber);font-family:var(--f-dot);font-size:22px;font-weight:900}
 .exports{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 18px 0}
@@ -290,10 +307,8 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
 
 /* ---------- galerie ---------- */
 #s-gallery{background:#050505}
-.gscroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 0 110px;scrollbar-width:none}
-.gscroll::-webkit-scrollbar{display:none}
-.rolls{display:flex;gap:10px;overflow-x:auto;padding:6px 14px 14px;scrollbar-width:none}
-.rolls::-webkit-scrollbar{display:none}
+.gscroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 0 110px}
+.rolls{display:flex;gap:10px;overflow-x:auto;padding:6px 14px 14px}
 .roll{flex:none;width:136px;height:116px;border-radius:22px;position:relative;overflow:hidden;text-align:center;
   background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08)}
 .roll .glow{position:absolute;inset:-20%;filter:blur(18px);opacity:.75}
@@ -320,14 +335,17 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
   background-image:linear-gradient(var(--paper-line) 1px,transparent 1px),linear-gradient(90deg,var(--paper-line) 1px,transparent 1px);background-size:28px 28px;background-position:-1px -1px}
 #s-blob .ib{color:#3a3732}
 #s-blob .title{color:#3a3732}
-.bcard{margin:6px auto 0;width:300px;max-width:calc(100% - 40px);aspect-ratio:4/5;border-radius:26px;position:relative;overflow:hidden;box-shadow:0 18px 40px rgba(60,50,30,.25);transition:background-color .5s;touch-action:none}
+.bcard{margin:6px auto 0;width:300px;max-width:calc(100% - 40px);aspect-ratio:4/5;border-radius:26px;position:relative;overflow:hidden;box-shadow:0 18px 40px rgba(60,50,30,.25);transition:background-color .5s;touch-action:none;flex:none}
 .bcard svg{position:absolute;inset:0;width:100%;height:100%}
-.bcard .lbl{position:absolute;left:16px;bottom:14px;right:16px;display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;color:rgba(20,18,16,.72)}
-.palette{display:flex;justify-content:center;gap:8px;margin:16px 0 4px}
+.bcard .lbl{position:absolute;left:14px;bottom:12px;right:14px;display:flex;justify-content:space-between;gap:10px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;color:var(--lc,rgba(20,18,16,.72));z-index:2}
+.bcard .lbl span{min-width:2ch;padding:2px 4px;margin:-2px -4px;border-radius:5px;outline:none;-webkit-user-select:text;user-select:text;cursor:text;white-space:nowrap}
+.bcard .lbl span:focus{background:rgba(255,255,255,.35)}
+.palette{display:flex;justify-content:center;gap:8px;margin:16px 0 4px;flex-wrap:wrap;padding:0 16px}
 .palette button{width:38px;height:38px;border-radius:12px;box-shadow:0 0 0 1px rgba(0,0,0,.08);transition:transform .3s cubic-bezier(.3,1.6,.5,1)}
 .palette button.on{transform:translateY(-4px);box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--paper-ink)}
-.shapes{display:flex;gap:6px;overflow-x:auto;padding:10px 16px;scrollbar-width:none}
-.shapes::-webkit-scrollbar{display:none}
+.palette .add{width:38px;height:38px;border-radius:12px;cursor:pointer;background:transparent;box-shadow:inset 0 0 0 1.5px var(--paper-ink);color:var(--paper-ink);font-size:20px;display:grid;place-items:center;position:relative;overflow:hidden}
+.palette .add input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.shapes{display:flex;gap:6px;overflow-x:auto;padding:10px 16px}
 .shapes button{flex:none;width:52px;height:52px;border-radius:14px;display:grid;place-items:center}
 .shapes button.on{background:rgba(27,26,24,.08)}
 .shapes svg{width:40px;height:40px}
@@ -341,7 +359,11 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
 /* ---------- o appce ---------- */
 .about{flex:1;overflow-y:auto;padding:4px 20px 30px;display:flex;flex-direction:column;gap:16px}
 .about .hero{display:flex;flex-direction:column;align-items:center;gap:12px;padding:6px 0 4px}
-.about .hero .lens{width:130px;height:130px}
+.lens{position:relative;width:130px;height:130px;border-radius:50%;
+  background:radial-gradient(circle at 50% 50%,#050505 0 46%,#121212 47% 49%,#070707 50% 60%,#1a1816 61% 62%,#0b0a09 63% 74%,#23201c 75% 76%,#0d0c0b 77% 100%);
+  box-shadow:0 0 0 1px #2a2622,0 30px 80px rgba(0,0,0,.8)}
+.lens::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.14),transparent 22%),radial-gradient(circle at 68% 74%,rgba(120,150,255,.07),transparent 26%)}
+.lens svg{position:absolute;inset:0;width:100%;height:100%}
 .about h2{font-family:var(--f-dot);font-weight:900;font-size:36px;margin:0;letter-spacing:.05em}
 .about .ver{font-family:var(--f-mono);font-size:11px;color:var(--mute);letter-spacing:.1em}
 .card{background:var(--panel);border:1px solid #23201c;border-radius:18px;padding:14px 16px;font-size:13px;line-height:1.55;color:#cfc7bc}
@@ -349,6 +371,9 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
 .card p{margin:0 0 8px}
 .card p:last-child{margin:0}
 .card a{color:var(--amber);text-decoration:none;border-bottom:1px solid rgba(255,196,61,.35)}
+.card dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:12px}
+.card dt{color:var(--mute)}
+.card dd{margin:0;color:var(--fg);font-family:var(--f-mono);font-size:11.5px;overflow-wrap:anywhere}
 .setrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:6px 0}
 .setrow small{display:block;color:var(--dim);font-size:11.5px}
 
@@ -360,9 +385,9 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
 .kbd{display:flex;gap:14px;margin-left:auto;font-size:12px;color:var(--mute)}
 .kbd kbd{font-family:var(--f-mono);font-size:11px;padding:2px 6px;border-radius:5px;background:#1f1c19;border:1px solid #2e2a26;color:#d8d0c5;margin-right:5px}
 .pbtn2{padding:8px 14px;border-radius:10px;background:var(--lcd);color:var(--lcd-ink);font-weight:600;font-size:13px}
-.pcleft,.pcright{overflow-y:auto;border-right:1px solid #1f1c19;padding:14px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin}
+.pcleft,.pcright{overflow-y:auto;border-right:1px solid #1f1c19;padding:14px;display:flex;flex-direction:column;gap:12px}
 .pcright{border-right:0;border-left:1px solid #1f1c19}
-.pcfilm{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center;padding:6px;border-radius:12px;text-align:left}
+.pcfilm{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center;padding:6px;border-radius:12px;text-align:left;width:100%}
 .pcfilm:hover{background:#181614}
 .pcfilm.on{background:#211e1b}
 .pcfilm canvas{width:44px;height:44px;border-radius:8px;display:block}
@@ -372,16 +397,15 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
 .pccenter{position:relative;display:grid;place-items:center;padding:24px;min-width:0;min-height:0;background:radial-gradient(circle at 50% 40%,#171513,#0d0c0b 70%)}
 .pccenter .ecanvas{box-shadow:0 30px 70px rgba(0,0,0,.6)}
 .pcstrip{grid-column:1/-1;display:flex;gap:8px;padding:12px 18px;border-top:1px solid #1f1c19;overflow-x:auto;background:#100f0e;align-items:center}
-.pcstrip img{height:90px;border-radius:6px;opacity:.7;cursor:pointer;transition:opacity .2s}
+.pcstrip img{height:90px;border-radius:6px;opacity:.7;cursor:pointer;transition:opacity .2s;flex:none}
 .pcstrip img.on,.pcstrip img:hover{opacity:1}
 .pcstrip img.on{outline:2px solid var(--amber);outline-offset:2px}
 .pcsec h4{margin:0 0 8px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.16em;color:var(--mute);font-weight:500;text-transform:uppercase;display:flex;justify-content:space-between}
-.pcright .srow{grid-template-columns:86px 1fr 44px}
+.pcright .srow{grid-template-columns:90px 1fr 44px}
+.pcright .gt{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 6px}
 </style>
-<!--ARTIFACT-END-HEAD-->
 </head>
 <body>
-<!--ARTIFACT-BODY-START-->
 <div class="shell" id="shell">
   <aside class="nav">
     <div class="brand">QAMERA<small>Fáze 1 · klikací náhled</small></div>
@@ -395,9 +419,9 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
     </div>
     <div class="navnote">
       <b>Na co sáhnout:</b> kolečka ISO a čas se točí tažením (cvaknou na hodnotách), proužek EV nad nimi se táhne do stran.
-      Čas od <b>¼ s</b> zapne slow shutter, režim přepneš ťuknutím na MODE v displeji.
-      V editoru <b>podrž fotku</b> = před/po. Ořez umí tažení, pinch a kolečko myši.
-      <br><br>Fotky jsou vygenerované scény (náhled nemá přístup ke kameře). Filmy zatím aproximuje jednoduchý shader; skutečné LUT ze spektrafilmu přijdou ve fázi 2.
+      Čas od <b>¼ s</b> zapne slow shutter, režim přepneš ťuknutím na MODE v displeji. <b>DEMO</b> v hledáčku přepne na skutečnou kameru.
+      V editoru <b>podrž fotku</b> = před/po. Vodorovné pásy jdou posouvat kolečkem myši i tažením.
+      <br><br>Filmy zatím aproximuje jednoduchý shader; skutečné LUT ze spektrafilmu přijdou ve fázi 2.
     </div>
   </aside>
   <main class="stage" id="stage">
@@ -416,14 +440,15 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
           </div>
           <div class="vf" id="vf">
             <canvas id="camCanvas"></canvas>
-            <div class="gridov" id="gridOv"></div>
+            <svg class="gridov" id="gridOv" aria-hidden="true"></svg>
             <div class="vtools">
               <div class="grp"><button class="ib" id="tGrid" data-ic="grid" aria-label="Mřížka"></button><button class="ib" id="tTimer" data-ic="timer" aria-label="Samospoušť"></button></div>
+              <button class="pill livepill" id="liveBtn"><i></i><span id="liveTxt">DEMO</span></button>
               <div class="grp"><button class="ib" id="tFlash" data-ic="flash" aria-label="Blesk"></button><button class="ib" id="tFlip" data-ic="flip" aria-label="Otočit kameru"></button></div>
             </div>
             <div class="pills">
               <span class="pill" id="pIso">ISO 400</span>
-              <span class="zoomgrp" id="zoomGrp"><button data-z=".5">,5</button><button data-z="1" class="on">1×</button><button data-z="2">2</button></span>
+              <span class="zoomgrp" id="zoomGrp"><button data-z=".5">0,5×</button><button data-z="1" class="on">1×</button><button data-z="2">2×</button></span>
               <span class="pill" id="pEv">EV ±0</span>
             </div>
             <div class="focus" id="focus"></div>
@@ -439,7 +464,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
               <div><div class="v" id="lTime">125</div><div class="k" id="lTimeK">Čas</div></div>
             </div>
             <div class="row2">
-              <span>EV <b id="lEv">±0</b></span>
+              <span class="ev">EV <b id="lEv">±0</b></span>
               <span class="meter">−3<span class="ticks"><i id="lMeter" style="left:50%"></i></span>+3</span>
               <span class="mode" id="lMode">MODE <b id="lModeV">FOTO</b></span>
             </div>
@@ -463,7 +488,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
           <div class="sheet" id="filmSheet">
             <div class="grab"></div>
             <div class="fhead"><div class="code" id="fCode">P400</div><div class="sub" id="fSub"></div></div>
-            <div class="carousel" id="carousel"></div>
+            <div class="carousel hs" id="carousel"></div>
             <div class="fdesc" id="fDesc"></div>
             <button class="closebtn" id="fClose" aria-label="Zavřít"><svg class="px" viewBox="0 0 24 24" data-raw="down"></svg></button>
           </div>
@@ -482,7 +507,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
             <button class="ib tile" id="gAdd" aria-label="Nová role" data-ic="plus"></button>
           </div>
           <div class="gscroll" id="gScroll">
-            <div class="rolls" id="rolls"></div>
+            <div class="rolls hs" id="rolls"></div>
             <div class="masonry" id="masonry"></div>
             <div class="gempty" id="gEmpty" hidden>Nic takového tu není. Zkus kód filmu (P400), barvu nebo „noc“.</div>
           </div>
@@ -493,13 +518,14 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
         <section class="scr pt" id="s-editor" hidden>
           <div class="top">
             <button class="ib" data-back aria-label="Zpět" data-ic="back"></button>
-            <div style="display:flex;gap:2px"><button class="ib" id="undoBtn" data-ic="undo" aria-label="Zpět o krok"></button><button class="ib" id="redoBtn" data-ic="redo" aria-label="Znovu"></button></div>
+            <div style="display:flex"><button class="ib" id="undoBtn" data-ic="undo" aria-label="Zpět o krok"></button><button class="ib" id="redoBtn" data-ic="redo" aria-label="Znovu"></button></div>
             <button class="advsw" id="advSw">ADVANCED <span class="sw" id="advKnob"></span></button>
-            <button class="ib" id="expBtn" data-ic="share" aria-label="Exportovat"></button>
+            <div style="display:flex"><button class="ib" id="resetBtn" data-ic="reset" aria-label="Vrátit úpravy na výchozí film"></button><button class="ib" id="expBtn" data-ic="share" aria-label="Exportovat"></button></div>
           </div>
           <div class="ephoto" id="ePhoto">
             <div class="frame" id="eFrame"><div class="ecanvas" id="eWrap"><canvas id="edCanvas"></canvas></div></div>
             <div class="croplayer" id="cropLayer" hidden><div class="cropbox" id="cropBox"></div></div>
+            <button class="ib fsbtn" id="fsBtn" data-ic="expand" aria-label="Celá obrazovka"></button>
             <div class="badge" id="beforeBadge">PŘED</div>
             <div class="hint" id="eHint">Podrž fotku = před / po</div>
           </div>
@@ -515,7 +541,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
             <div class="fhead" style="height:48px"><div class="code" style="font-size:22px">REFERENCE</div><div class="sub">tvoje fotka dostane barvy reference</div></div>
             <div class="refrow"><figure><canvas id="refA" width="160" height="200"></canvas><figcaption>REFERENCE</figcaption></figure><span class="arrow">→</span><figure><canvas id="refB" width="160" height="200"></canvas><figcaption>VÝSLEDEK</figcaption></figure></div>
             <div class="segrow"><div class="seg" id="refMethod"><button class="on" data-m="r">REINHARD</button><button data-m="i">IDT + REGRAIN</button></div></div>
-            <div class="srow"><span>Síla přenosu</span><input type="range" id="refStr" min="0" max="100" value="80"><output id="refStrO">80</output></div>
+            <div class="srow"><span>Síla přenosu</span><input type="range" id="refStr" min="0" max="100" value="80" data-def="0"><output id="refStrO">80</output></div>
             <div class="exports"><button data-x=".cube">.cube<small>DaVinci, Photoshop</small></button><button data-x="JSON">JSON<small>preset Qamery</small></button><button data-x="XMP">XMP<small>Lightroom</small></button></div>
             <button class="closebtn" id="refClose" aria-label="Zavřít"><svg class="px" viewBox="0 0 24 24" data-raw="down"></svg></button>
           </div>
@@ -528,10 +554,10 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
             <span class="title">Blob karta</span>
             <button class="ib" id="bRand" aria-label="Nový tvar" data-ic="dice"></button>
           </div>
-          <div class="bcard" id="bCard"><svg id="bSvg" viewBox="0 0 100 125" preserveAspectRatio="none"></svg><div class="lbl"><span id="bFilm">P400</span><span id="bDate">12. 10. 2026</span></div></div>
+          <div class="bcard" id="bCard"><svg id="bSvg" viewBox="0 0 100 125" preserveAspectRatio="none"></svg><div class="lbl" id="bLbl"><span id="bL" contenteditable="true" spellcheck="false"></span><span id="bR" contenteditable="true" spellcheck="false"></span></div></div>
           <div class="palette" id="bPal"></div>
           <div class="bctl"><div class="seg" id="bPalSeg"><button data-p="pre">PALETA PŘED</button><button data-p="post" class="on">PO FILMU</button></div></div>
-          <div class="shapes" id="bShapes"></div>
+          <div class="shapes hs" id="bShapes"></div>
           <div class="bctl pb"><button class="pbtn ghost" id="bPaper">Mřížka: zap</button><button class="pbtn" id="bShare">Sdílet kartu</button></div>
         </section>
 
@@ -539,11 +565,12 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
         <section class="scr pt" id="s-about" hidden>
           <div class="top"><button class="ib" data-back aria-label="Zpět" data-ic="back"></button><span class="title">O appce</span><span style="width:40px"></span></div>
           <div class="about">
-            <div class="hero"><div class="lens"><svg class="eyes" id="aboutEyes" viewBox="14 24 92 72"></svg></div><h2>QAMERA</h2><div class="ver">NÁHLED 0.1 · FÁZE 1</div></div>
+            <div class="hero"><div class="lens"><svg class="eyes" id="aboutEyes" viewBox="14 24 92 72"></svg></div><h2>QAMERA</h2><div class="ver">NÁHLED 0.2 · FÁZE 1</div></div>
             <div class="card"><h3>Poděkování</h3>
               <p><a href="https://github.com/thetechgeekko/Spektrafilm-android" target="_blank" rel="noopener">Spektrafilm for Android</a> by <b>Akshay Sharma</b></p>
               <p>Film modeling powered by <a href="https://github.com/andreavolpato/spektrafilm" target="_blank" rel="noopener">spektrafilm</a> (Andrea Volpato)</p>
             </div>
+            <div class="card"><h3>Tvoje kamera</h3><div id="camInfo"></div></div>
             <div class="card"><h3>Licence</h3>
               <p>Qamera je svobodný software pod licencí <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GPL-3.0</a>. Zdrojový kód: <a href="https://github.com/jendovyapky/qamera" target="_blank" rel="noopener">jendovyapky/qamera</a>.</p>
               <p>Filmové LUT upečené ze spektrafilmu jsou pod <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>. Exporty, které film obsahují, nesou stejnou licenci.</p>
@@ -551,20 +578,13 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
               <p>Názvy filmů jsou vlastní kódy. Kodak a Fujifilm jsou ochranné známky svých vlastníků; vzhledy jsou jen „ve stylu“.</p>
             </div>
             <div class="card"><h3>Nastavení</h3>
-              <div class="setrow"><span>Úsporné animace<small>Vypne pružiny, intro a živé zrno</small></span><button class="sw" id="lowMo" aria-label="Úsporné animace"></button></div>
-              <div class="setrow"><span>Intro při spuštění<small>Maskot se rozhlédne a mrkne</small></span><button class="pbtn2" id="replayIntro" style="padding:6px 12px;font-size:12px">Přehrát</button></div>
+              <div class="setrow"><span>Úsporné animace<small>Vypne pružiny, intro a živý grain</small></span><button class="sw" id="lowMo" aria-label="Úsporné animace"></button></div>
+              <div class="setrow"><span>Intro při spuštění<small>Objektiv, maskot a závěrka</small></span><button class="pbtn2" id="replayIntro" style="padding:6px 12px;font-size:12px">Přehrát</button></div>
             </div>
           </div>
         </section>
 
-        <!-- INTRO -->
-        <section class="scr" id="s-intro">
-          <div class="lens" id="introLens"><svg class="eyes" id="introEyes" viewBox="14 24 92 72"></svg></div>
-          <div class="wordmark" id="wordmark"></div>
-          <div class="intro-sub" id="introSub">film · zrno · halace</div>
-          <div class="intro-skip">ŤUKNI PRO PŘESKOČENÍ</div>
-        </section>
-
+        <div class="fsview" id="fsView" hidden><canvas id="fsCanvas"></canvas><span>ŤUKNI = ZAVŘÍT · PODRŽ = PŘED</span></div>
         <div class="toast" id="toast"></div>
       </div>
     </div>
@@ -581,7 +601,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radiu
           <div class="croplayer" id="pcCrop" hidden><div class="cropbox" id="pcCropBox"></div></div>
           <div class="badge" id="pcBadge">PŘED</div></section>
         <aside class="pcright" id="pcRight"></aside>
-        <footer class="pcstrip" id="pcStrip"></footer>
+        <footer class="pcstrip hs" id="pcStrip"></footer>
       </div>
     </div>
   </main>
@@ -596,6 +616,12 @@ const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const lerp = (a, b, t) => a + (b - a) * t;
+const seg = (t, a, b) => clamp((t - a) / (b - a), 0, 1);
+const sstep = t => t * t * (3 - 2 * t);
+const inOut = t => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const outC = t => 1 - Math.pow(1 - t, 3);
+const outQ = t => 1 - Math.pow(1 - t, 5);
+const outBack = t => { const c = 1.9; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
 const store = { get(k, d) { try { const v = localStorage.getItem('qamera.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
   set(k, v) { try { localStorage.setItem('qamera.' + k, JSON.stringify(v)); } catch {} } };
 let LOWMO = store.get('lowmo', false);
@@ -618,7 +644,22 @@ function spring(from, to, onUpdate, { k = 180, c = 24, v = 0, onDone } = {}) {
 }
 function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 let toastT = 0;
-function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200); }
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2400); }
+
+/** Vodorovné pásy: kolečko myši posouvá do stran, myší jde táhnout se setrvačností. */
+function hscroll(el) {
+  el.classList.add('hs');
+  el.addEventListener('wheel', e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && el.scrollWidth > el.clientWidth) { e.preventDefault(); el.scrollBy({ left: e.deltaY, behavior: 'auto' }); } }, { passive: false });
+  let down = false, moved = false, sx = 0, sl = 0, lx = 0, lt = 0, v = 0, raf = 0;
+  el.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse' || e.button !== 0) return; down = true; moved = false; sx = lx = e.clientX; sl = el.scrollLeft; lt = performance.now(); v = 0; cancelAnimationFrame(raf); });
+  addEventListener('pointermove', e => { if (!down) return; const dx = e.clientX - sx;
+    if (!moved && Math.abs(dx) > 5) { moved = true; el.style.scrollSnapType = 'none'; el.classList.add('dragging'); }
+    if (moved) { el.scrollLeft = sl - dx; const now = performance.now(); v = (e.clientX - lx) / Math.max(1, now - lt); lx = e.clientX; lt = now; } });
+  addEventListener('pointerup', () => { if (!down) return; down = false; if (!moved) return; el.classList.remove('dragging');
+    let vel = -v * 16; const step = () => { el.scrollLeft += vel; vel *= .93; if (Math.abs(vel) > .4) raf = requestAnimationFrame(step); else el.style.scrollSnapType = ''; }; raf = requestAnimationFrame(step);
+    setTimeout(() => moved = false, 0); });
+  el.addEventListener('click', e => { if (moved) { e.stopPropagation(); e.preventDefault(); } }, true);
+}
 
 /* =====================================================================
    Pixelové ikony 24 px (mřížka 12×12, pixel = 2 px). Vlastní sada.
@@ -639,24 +680,29 @@ const ICONS = {
   share:  ['.....##.....', '....####....', '...#.##.#...', '.....##.....', '.....##.....', '.....##.....', '.##..##..##.', '.#........#.', '.#........#.', '.##########.'],
   undo:   ['', '', '...#........', '..##........', '.#########..', '..##......#.', '...#.......#', '...........#', '..........#.', '.....#####..'],
   redo:   ['', '', '........#...', '........##..', '..#########.', '.#......##..', '#.......#...', '#...........', '.#..........', '..#####.....'],
+  reset:  ['', '...#####.#..', '..#.....##..', '.#.....###..', '.#..........', '.#..........', '.#........#.', '..#......#..', '...######...'],
+  expand: ['', '####....####', '##........##', '#.#......#.#', '...#....#...', '', '', '...#....#...', '#.#......#.#', '##........##', '####....####'],
   plus:   ['', '', '.....##.....', '.....##.....', '.....##.....', '.##########.', '.##########.', '.....##.....', '.....##.....', '.....##.....'],
   search: ['', '..####......', '.#....#.....', '#......#....', '#......#....', '#......#....', '.#....#.....', '..####.#....', '.......##...', '........##..'],
   info:   ['', '...######...', '..#......#..', '.#...##...#.', '.#........#.', '.#...##...#.', '.#...##...#.', '.#...##...#.', '..#......#..', '...######...'],
   gallery:['', '.##########.', '.#........#.', '.#..##....#.', '.#..##....#.', '.#......#.#.', '.#.#...####.', '.#####.####.', '.##########.'],
   depth:  ['', '.#.#.#.#.#..', '', '..#.#.#.#...', '', '...#.#.#....', '', '....#.#.....', '', '.....#......'],
   blob:   ['', '...###......', '..#####.##..', '.##########.', '.##########.', '..#########.', '..########..', '.#########..', '.########...', '..##..##....'],
-  leak:   ['#.....#.....', '.#....#.....', '..#...#.....', '...#..#..##.', '....#.#.#...', '.....###....', '######.#####', '.....###....', '....#.#.#...', '...#..#..#..'],
-  dust:   ['', '.#.......#..', '......#.....', '...#.......#', '.........#..', '.#..#.......', '......#..#..', '..#.........', '.......#....', '.#..#.....#.'],
+  bloom:  ['.....##.....', '.#...##...#.', '..#......#..', '....####....', '...######...', '##.######.##', '##.######.##', '...######...', '....####....', '..#......#..', '.#...##...#.', '.....##.....'],
+  halo:   ['', '', '....####....', '..##....##..', '.#..####..#.', '.#.######.#.', '.#.######.#.', '.#..####..#.', '..##....##..', '....####....'],
+  grain:  ['', '.#..#...#.#.', '...#..#.....', '#.....#..#..', '..#.#....#.#', '.#....#.#...', '....#.....#.', '.#.#..#.#...', '......#...#.', '#..#.#...#..', '..#....#...#'],
   date:   ['', '.##########.', '.#..#..#..#.', '.##########.', '.#........#.', '.#.##.##..#.', '.#........#.', '.#.##.....#.', '.#........#.', '.##########.'],
   border: ['############', '#..........#', '#.########.#', '#.#......#.#', '#.#......#.#', '#.#......#.#', '#.#......#.#', '#.########.#', '#..........#', '############'],
   ref:    ['', '.####..####.', '.#..#..#..#.', '.#..#..#..#.', '.####..####.', '', '...#....#...', '..##....##..', '.###....###.', '.#.##..##.#.', '...######...'],
   dice:   ['', '.##########.', '.#........#.', '.#.##..##.#.', '.#.##..##.#.', '.#........#.', '.#.##..##.#.', '.#.##..##.#.', '.#........#.', '.##########.'],
-  pc:     ['', '############', '#..........#', '#..........#', '#..........#', '#..........#', '############', '.....##.....', '...######...'],
   eye:    ['', '', '...######...', '..#......#..', '.#...##...#.', '#...####...#', '.#...##...#.', '..#......#..', '...######...'],
+  sharp:  ['', '.....#......', '....###.....', '...#####....', '..#######...', '.#########..', '...#####....', '...#####....', '...#####....'],
+  sun:    ['', '.....#......', '..#..#..#...', '...#####....', '..#######...', '###.###.###.', '..#######...', '...#####....', '..#..#..#...', '.....#......'],
+  temp:   ['', '....##......', '...#..#.....', '...#..#.....', '...#..#.....', '...####.....', '..######....', '..######....', '...####.....'],
 };
 function iconSVG(name, cls = 'px') {
   const rows = ICONS[name] || []; let d = '';
-  rows.forEach((r, y) => { for (let x = 0; x < r.length; x++) if (r[x] === '#') d += `M${x * 2} ${y * 2 + 1}h2v2h-2z`; });
+  rows.forEach((r, y) => { for (let x = 0; x < r.length; x++) if (r[x] === '#') d += `M${x * 2} ${y * 2 + (rows.length < 12 ? 1 : 0)}h2v2h-2z`; });
   return `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg>`;
 }
 function hydrateIcons(root = document) {
@@ -666,27 +712,37 @@ function hydrateIcons(root = document) {
 
 /* =====================================================================
    Filmy – vlastní kódy, vzhled jen „ve stylu“. Ve fázi 2 nahradí LUT ze spektrafilmu.
-   sh = posun stínů, hi = zesílení světel (RGB), con/sat = kontrast/sytost filmu, fade = zvednutá čerň, hal = halace
+   sh = posun stínů, hi = zesílení světel (RGB), con/sat = kontrast/sytost filmu, fade = zvednutá čerň, hal = halation, g = typ grainu
    ===================================================================== */
 const FILMS = [
-  { code: 'P160', sub: 'portrait 160', chem: 'C-41 · ISO 160', desc: 'Jemný portrétní negativ ve stylu Kodak Portra 160. Tlumené barvy, měkká pleť.', iso: 160, sh: [.0, .012, .022], hi: [1.03, 1.0, .95], con: .94, sat: .9, fade: .03, hal: .25, c: ['#e9e3d6', '#c44b2e', '#f0b43c'] },
-  { code: 'P400', sub: 'portrait 400', chem: 'C-41 · ISO 400', desc: 'Univerzální portrétní film ve stylu Kodak Portra 400. Teplá pleť, široká latitude.', iso: 400, sh: [.01, .016, .03], hi: [1.06, 1.0, .92], con: 1.0, sat: .96, fade: .035, hal: .35, c: ['#e9e3d6', '#c44b2e', '#f0b43c'] },
-  { code: 'P800', sub: 'portrait 800', chem: 'C-41 · ISO 800', desc: 'Citlivější portrétní film ve stylu Portra 800. Víc zrna, teplejší podání.', iso: 800, sh: [.015, .015, .035], hi: [1.08, 1.0, .9], con: 1.05, sat: 1.0, fade: .04, hal: .45, c: ['#e9e3d6', '#c44b2e', '#7d3b8f'] },
-  { code: 'E100', sub: 'ektar 100', chem: 'C-41 · ISO 100', desc: 'Nejsytější negativ ve stylu Kodak Ektar 100. Krajiny, nebe, jemné zrno.', iso: 100, sh: [-.005, .0, .02], hi: [1.04, .99, .95], con: 1.14, sat: 1.32, fade: .0, hal: .2, c: ['#f1e9dc', '#e2362b', '#2e2e2e'] },
-  { code: 'G200', sub: 'gold 200', chem: 'C-41 · ISO 200', desc: 'Zlaté léto ve stylu Kodak Gold 200. Teplé světlo, žluté tóny.', iso: 200, sh: [.02, .012, -.01], hi: [1.09, 1.03, .84], con: 1.06, sat: 1.12, fade: .03, hal: .35, c: ['#f2c230', '#c8331f', '#3a2a14'] },
-  { code: 'UM400', sub: 'ultramax 400', chem: 'C-41 · ISO 400', desc: 'Spotřební klasika ve stylu UltraMax 400. Sytá, lehce zelené stíny.', iso: 400, sh: [-.01, .025, .01], hi: [1.05, 1.0, .9], con: 1.08, sat: 1.15, fade: .03, hal: .38, c: ['#1d4fa8', '#f2c230', '#e33b2b'] },
-  { code: 'KC64', sub: 'chrome 64', chem: 'K-14 · ISO 64', desc: 'Legendární diapozitiv ve stylu Kodachrome 64. Hluboké červené, tmavé stíny.', iso: 64, sh: [.0, -.01, .02], hi: [1.06, .98, .88], con: 1.26, sat: 1.24, fade: .0, hal: .15, c: ['#f2c230', '#d9261c', '#141414'] },
-  { code: 'EC100', sub: 'ektachrome 100', chem: 'E-6 · ISO 100', desc: 'Chladný čistý diapozitiv ve stylu Ektachrome. Modré nebe, čisté bílé.', iso: 100, sh: [-.01, .0, .03], hi: [.97, 1.0, 1.06], con: 1.2, sat: 1.16, fade: .0, hal: .18, c: ['#f4f4f4', '#2a5fc4', '#d9261c'] },
-  { code: 'V3-50D', sub: 'cine 50D', chem: 'ECN-2 · ISO 50', desc: 'Filmový negativ pro denní světlo ve stylu Vision3 50D. Plochý, filmový, jemný.', iso: 50, sh: [-.012, .018, .04], hi: [1.03, 1.0, .96], con: .9, sat: .95, fade: .05, hal: .3, c: ['#2b2b2b', '#e8e2d4', '#c9a23a'] },
-  { code: 'V3-250D', sub: 'cine 250D', chem: 'ECN-2 · ISO 250', desc: 'Kino negativ ve stylu Vision3 250D. Tyrkysové stíny, teplá světla.', iso: 250, sh: [-.015, .02, .045], hi: [1.06, 1.0, .93], con: .95, sat: 1.0, fade: .05, hal: .45, c: ['#2b2b2b', '#e8e2d4', '#d0702e'] },
-  { code: 'V3-500T', sub: 'cine 500T', chem: 'ECN-2 · ISO 500 · umělé světlo', desc: 'Noční kino ve stylu Vision3 500T. Na umělé světlo, silná červená halace.', iso: 500, sh: [-.02, .02, .06], hi: [.92, .98, 1.14], con: 1.0, sat: 1.0, fade: .05, hal: .85, c: ['#2b2b2b', '#e8e2d4', '#3f6fd6'] },
-  { code: 'C200', sub: 'fuji 200', chem: 'C-41 · ISO 200', desc: 'Levný denní film ve stylu Fujicolor C200. Zelenkavý nádech, chladnější.', iso: 200, sh: [-.01, .03, .02], hi: [1.0, 1.03, .98], con: 1.04, sat: 1.05, fade: .03, hal: .3, c: ['#1f9a4a', '#f2f2f2', '#d9261c'] },
-  { code: '400H', sub: 'pro 400H', chem: 'C-41 · ISO 400', desc: 'Pastelový svatební film ve stylu Fuji Pro 400H. Vzdušný, světlé zelené.', iso: 400, sh: [-.005, .025, .03], hi: [.98, 1.03, 1.02], con: .92, sat: .86, fade: .07, hal: .3, c: ['#e8f0ee', '#2e8f7a', '#1c1c1c'] },
-  { code: 'SX400', sub: 'superia 400', chem: 'C-41 · ISO 400', desc: 'Pouliční klasika ve stylu Superia X-TRA 400. Zelené stíny, kontrast.', iso: 400, sh: [-.02, .035, .015], hi: [1.02, 1.02, .95], con: 1.1, sat: 1.1, fade: .03, hal: .4, c: ['#2e8f4a', '#f2f2f2', '#d0302a'] },
-  { code: 'PV100', sub: 'provia 100F', chem: 'E-6 · ISO 100', desc: 'Neutrální diapozitiv ve stylu Provia 100F. Přesné barvy, jemné zrno.', iso: 100, sh: [0, 0, .015], hi: [1.0, 1.0, 1.0], con: 1.16, sat: 1.14, fade: .0, hal: .15, c: ['#2a5fc4', '#f4f4f4', '#1c1c1c'] },
-  { code: 'VEL', sub: 'velvia 100', chem: 'E-6 · ISO 100', desc: 'Extrémně sytý diapozitiv ve stylu Velvia. Krajiny, západy, purpurové stíny.', iso: 100, sh: [.02, -.01, .03], hi: [1.04, .98, .96], con: 1.28, sat: 1.5, fade: .0, hal: .2, c: ['#7d2a8f', '#f4f4f4', '#2bb04a'] },
+  { code: 'P160', sub: 'portrait 160', chem: 'C-41 · ISO 160', desc: 'Jemný portrétní negativ ve stylu Kodak Portra 160. Tlumené barvy, měkká pleť.', iso: 160, g: 'fine', sh: [.0, .012, .022], hi: [1.03, 1.0, .95], con: .94, sat: .9, fade: .03, hal: .25, c: ['#e9e3d6', '#c44b2e', '#f0b43c'] },
+  { code: 'P400', sub: 'portrait 400', chem: 'C-41 · ISO 400', desc: 'Univerzální portrétní film ve stylu Kodak Portra 400. Teplá pleť, široká latitude.', iso: 400, g: 'classic', sh: [.01, .016, .03], hi: [1.06, 1.0, .92], con: 1.0, sat: .96, fade: .035, hal: .35, c: ['#e9e3d6', '#c44b2e', '#f0b43c'] },
+  { code: 'P800', sub: 'portrait 800', chem: 'C-41 · ISO 800', desc: 'Citlivější portrétní film ve stylu Portra 800. Víc grainu, teplejší podání.', iso: 800, g: 'classic', sh: [.015, .015, .035], hi: [1.08, 1.0, .9], con: 1.05, sat: 1.0, fade: .04, hal: .45, c: ['#e9e3d6', '#c44b2e', '#7d3b8f'] },
+  { code: 'E100', sub: 'ektar 100', chem: 'C-41 · ISO 100', desc: 'Nejsytější negativ ve stylu Kodak Ektar 100. Krajiny, nebe, jemný grain.', iso: 100, g: 'fine', sh: [-.005, .0, .02], hi: [1.04, .99, .95], con: 1.14, sat: 1.32, fade: .0, hal: .2, c: ['#f1e9dc', '#e2362b', '#2e2e2e'] },
+  { code: 'G200', sub: 'gold 200', chem: 'C-41 · ISO 200', desc: 'Zlaté léto ve stylu Kodak Gold 200. Teplé světlo, žluté tóny.', iso: 200, g: 'classic', sh: [.02, .012, -.01], hi: [1.09, 1.03, .84], con: 1.06, sat: 1.12, fade: .03, hal: .35, c: ['#f2c230', '#c8331f', '#3a2a14'] },
+  { code: 'UM400', sub: 'ultramax 400', chem: 'C-41 · ISO 400', desc: 'Spotřební klasika ve stylu UltraMax 400. Sytá, lehce zelené stíny.', iso: 400, g: 'classic', sh: [-.01, .025, .01], hi: [1.05, 1.0, .9], con: 1.08, sat: 1.15, fade: .03, hal: .38, c: ['#1d4fa8', '#f2c230', '#e33b2b'] },
+  { code: 'KC64', sub: 'chrome 64', chem: 'K-14 · ISO 64', desc: 'Legendární diapozitiv ve stylu Kodachrome 64. Hluboké červené, tmavé stíny.', iso: 64, g: 'fine', sh: [.0, -.01, .02], hi: [1.06, .98, .88], con: 1.26, sat: 1.24, fade: .0, hal: .15, c: ['#f2c230', '#d9261c', '#141414'] },
+  { code: 'EC100', sub: 'ektachrome 100', chem: 'E-6 · ISO 100', desc: 'Chladný čistý diapozitiv ve stylu Ektachrome. Modré nebe, čisté bílé.', iso: 100, g: 'fine', sh: [-.01, .0, .03], hi: [.97, 1.0, 1.06], con: 1.2, sat: 1.16, fade: .0, hal: .18, c: ['#f4f4f4', '#2a5fc4', '#d9261c'] },
+  { code: 'V3-50D', sub: 'cine 50D', chem: 'ECN-2 · ISO 50', desc: 'Filmový negativ pro denní světlo ve stylu Vision3 50D. Plochý, filmový, jemný.', iso: 50, g: 'cine', sh: [-.012, .018, .04], hi: [1.03, 1.0, .96], con: .9, sat: .95, fade: .05, hal: .3, c: ['#2b2b2b', '#e8e2d4', '#c9a23a'] },
+  { code: 'V3-250D', sub: 'cine 250D', chem: 'ECN-2 · ISO 250', desc: 'Kino negativ ve stylu Vision3 250D. Tyrkysové stíny, teplá světla.', iso: 250, g: 'cine', sh: [-.015, .02, .045], hi: [1.06, 1.0, .93], con: .95, sat: 1.0, fade: .05, hal: .45, c: ['#2b2b2b', '#e8e2d4', '#d0702e'] },
+  { code: 'V3-500T', sub: 'cine 500T', chem: 'ECN-2 · ISO 500 · umělé světlo', desc: 'Noční kino ve stylu Vision3 500T. Na umělé světlo, silná červená halation.', iso: 500, g: 'cine', sh: [-.02, .02, .06], hi: [.92, .98, 1.14], con: 1.0, sat: 1.0, fade: .05, hal: .85, c: ['#2b2b2b', '#e8e2d4', '#3f6fd6'] },
+  { code: 'C200', sub: 'fuji 200', chem: 'C-41 · ISO 200', desc: 'Levný denní film ve stylu Fujicolor C200. Zelenkavý nádech, chladnější.', iso: 200, g: 'classic', sh: [-.01, .03, .02], hi: [1.0, 1.03, .98], con: 1.04, sat: 1.05, fade: .03, hal: .3, c: ['#1f9a4a', '#f2f2f2', '#d9261c'] },
+  { code: '400H', sub: 'pro 400H', chem: 'C-41 · ISO 400', desc: 'Pastelový svatební film ve stylu Fuji Pro 400H. Vzdušný, světlé zelené.', iso: 400, g: 'classic', sh: [-.005, .025, .03], hi: [.98, 1.03, 1.02], con: .92, sat: .86, fade: .07, hal: .3, c: ['#e8f0ee', '#2e8f7a', '#1c1c1c'] },
+  { code: 'SX400', sub: 'superia 400', chem: 'C-41 · ISO 400', desc: 'Pouliční klasika ve stylu Superia X-TRA 400. Zelené stíny, kontrast.', iso: 400, g: 'classic', sh: [-.02, .035, .015], hi: [1.02, 1.02, .95], con: 1.1, sat: 1.1, fade: .03, hal: .4, c: ['#2e8f4a', '#f2f2f2', '#d0302a'] },
+  { code: 'PV100', sub: 'provia 100F', chem: 'E-6 · ISO 100', desc: 'Neutrální diapozitiv ve stylu Provia 100F. Přesné barvy, jemný grain.', iso: 100, g: 'fine', sh: [0, 0, .015], hi: [1.0, 1.0, 1.0], con: 1.16, sat: 1.14, fade: .0, hal: .15, c: ['#2a5fc4', '#f4f4f4', '#1c1c1c'] },
+  { code: 'VEL', sub: 'velvia 100', chem: 'E-6 · ISO 100', desc: 'Extrémně sytý diapozitiv ve stylu Velvia. Krajiny, západy, purpurové stíny.', iso: 100, g: 'fine', sh: [.02, -.01, .03], hi: [1.04, .98, .96], con: 1.28, sat: 1.5, fade: .0, hal: .2, c: ['#7d2a8f', '#f4f4f4', '#2bb04a'] },
 ];
 const FILM = Object.fromEntries(FILMS.map(f => [f.code, f]));
+/* Typy grainu: f = hustota zrn, sh = ostrost/„krystaličnost“, ch = barevnost (oblaka barviv), cl = shlukování, a = síla, mot = skvrnitost (prošlý film) */
+const GRAINS = {
+  fine:    { l: 'Fine', d: 'jemný, diapozitivy a ISO 100', f: 1.45, sh: .9, ch: .22, cl: .15, a: .8, mot: 0 },
+  classic: { l: 'Classic', d: 'klasický negativ ISO 400', f: 1.0, sh: 1.0, ch: .42, cl: .35, a: 1, mot: 0 },
+  cine:    { l: 'Cine', d: 'měkký kino negativ', f: 1.2, sh: .72, ch: .3, cl: .2, a: .85, mot: 0 },
+  push:    { l: 'Push', d: 'hrubý, film tlačený na 3200', f: .66, sh: 1.45, ch: .55, cl: .55, a: 1.35, mot: 0 },
+  mono:    { l: 'Mono', d: 'stříbrný černobílý grain', f: .95, sh: 1.6, ch: 0, cl: .3, a: 1.1, mot: 0 },
+  expired: { l: 'Expired', d: 'prošlý film, skvrnitý', f: .8, sh: 1.1, ch: .85, cl: .9, a: 1.15, mot: 1 },
+};
+const gtypeOf = P => P.gtype || FILM[P.film]?.g || 'classic';
 
 /** Kazeta 35 mm jako SVG (barvy podle filmu). */
 function cassette(f, extra = '') {
@@ -702,7 +758,7 @@ function cassette(f, extra = '') {
 }
 
 /* =====================================================================
-   Scény – „fotky“ kreslené do canvasu (náhled nemá kameru ani vlastní fotky)
+   Scény – „fotky“ kreslené do canvasu (režim DEMO)
    ===================================================================== */
 function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
 function glow(g, x, y, r, col, a = 1) { const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, col); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.globalAlpha = a; g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); g.globalAlpha = 1; }
@@ -771,16 +827,20 @@ const SCENES = {
 };
 function drawScene(kind, w, h, seed) { const c = mk(w, h), g = c.getContext('2d'); SCENES[kind](g, w, h, rng(seed)); return c; }
 
-/** Živý „stream“ kamery: noční ulice s jedoucími auty (kvůli halaci a slow shutteru), selfie = západ. */
+/** Živý obraz: DEMO = noční ulice s jedoucími auty (selfie = západ), ŽIVĚ = skutečná kamera přes getUserMedia. */
 const LIVE = { w: 480, h: 640, base: null, front: null, canvas: mk(480, 640), cars: [], facing: 'back' };
 function initLive() {
-  LIVE.base = drawScene('mesto', LIVE.w, LIVE.h, 7);
-  LIVE.front = drawScene('zapad', LIVE.w, LIVE.h, 3);
+  LIVE.base = drawScene('mesto', 480, 640, 7);
+  LIVE.front = drawScene('zapad', 480, 640, 3);
   const r = rng(11);
   for (let i = 0; i < 6; i++) LIVE.cars.push({ dir: i % 2 ? 1 : -1, lane: i % 2 ? .74 : .79, x: r(), sp: .06 + r() * .08 });
 }
 function drawLive(t) {
   const g = LIVE.canvas.getContext('2d'), w = LIVE.w, h = LIVE.h;
+  if (CAM.live && CAM.video && CAM.video.readyState >= 2) {
+    if (CAM.facing === 'user') { g.save(); g.translate(w, 0); g.scale(-1, 1); g.drawImage(CAM.video, 0, 0, w, h); g.restore(); } else g.drawImage(CAM.video, 0, 0, w, h);
+    return;
+  }
   if (LIVE.facing === 'front') { g.drawImage(LIVE.front, 0, 0); g.fillStyle = 'rgba(255,200,150,' + (.03 + Math.sin(t * 1.3) * .02) + ')'; g.fillRect(0, 0, w, h); return; }
   g.drawImage(LIVE.base, 0, 0);
   g.globalCompositeOperation = 'lighter';
@@ -793,8 +853,45 @@ function drawLive(t) {
 }
 
 /* =====================================================================
+   Skutečná kamera (getUserMedia). Zapíná se až ťuknutím na DEMO → prohlížeč se zeptá na povolení.
+   ===================================================================== */
+const CAM = { live: false, stream: null, video: null, track: null, caps: {}, facing: 'environment', deviceId: null, ultra: false, devices: [], err: '' };
+async function liveOn() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('Kamera potřebuje HTTPS a podporovaný prohlížeč'); return false; }
+  liveStop();
+  try {
+    const sel = CAM.deviceId ? { deviceId: { exact: CAM.deviceId } } : { facingMode: { ideal: CAM.facing } };
+    const s = await navigator.mediaDevices.getUserMedia({ audio: false, video: { ...sel, width: { ideal: 1920 }, height: { ideal: 1440 } } });
+    const v = CAM.video || (CAM.video = Object.assign(document.createElement('video'), { muted: true, playsInline: true, autoplay: true }));
+    v.setAttribute('playsinline', ''); v.srcObject = s; await v.play().catch(() => {});
+    await new Promise(r => v.videoWidth ? r() : v.addEventListener('loadedmetadata', r, { once: true }));
+    CAM.stream = s; CAM.track = s.getVideoTracks()[0]; CAM.caps = (CAM.track.getCapabilities && CAM.track.getCapabilities()) || {};
+    const st = CAM.track.getSettings ? CAM.track.getSettings() : {}; if (st.facingMode) CAM.facing = st.facingMode;
+    const k = Math.min(1, 1280 / Math.max(v.videoWidth, v.videoHeight));
+    LIVE.w = Math.round(v.videoWidth * k); LIVE.h = Math.round(v.videoHeight * k); LIVE.canvas = mk(LIVE.w, LIVE.h);
+    try { CAM.devices = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'videoinput'); } catch {}
+    CAM.live = true; CAM.err = ''; updLive(); renderCamInfo(); return true;
+  } catch (e) {
+    CAM.err = e && e.name === 'NotAllowedError' ? 'Přístup ke kameře je zamítnutý. Povol ho v nastavení prohlížeče.' : 'Kameru se nepodařilo spustit (' + (e && e.name || 'chyba') + ').';
+    toast(CAM.err); CAM.live = false; updLive(); renderCamInfo(); return false;
+  }
+}
+function liveStop() { if (CAM.stream) CAM.stream.getTracks().forEach(t => t.stop()); CAM.stream = null; CAM.track = null; }
+function liveOff() { liveStop(); CAM.live = false; CAM.deviceId = null; CAM.ultra = false; LIVE.w = 480; LIVE.h = 640; LIVE.canvas = mk(480, 640); updLive(); }
+function updLive() { $('#liveBtn').classList.toggle('live', CAM.live); $('#liveTxt').textContent = CAM.live ? 'ŽIVĚ' : 'DEMO'; }
+async function setTorch(on) { if (!CAM.track || !CAM.caps.torch) return false; try { await CAM.track.applyConstraints({ advanced: [{ torch: on }] }); return true; } catch { return false; } }
+function renderCamInfo() {
+  const el = $('#camInfo'); if (!el) return;
+  if (!CAM.track) { el.innerHTML = `<p>${CAM.err || 'Zatím běží DEMO. Ťukni v hledáčku na <b>DEMO</b>, prohlížeč se zeptá na kameru a tady se ukáže, co tvůj telefon dovolí.'}</p>`; return; }
+  const c = CAM.caps, s = CAM.track.getSettings ? CAM.track.getSettings() : {}, r = (o, u = '') => o && o.max != null ? `${+(+o.min).toFixed(2)}–${+(+o.max).toFixed(2)}${u}` : null;
+  const rows = [['Objektiv', CAM.track.label || '—'], ['Rozlišení', s.width ? `${s.width}×${s.height}` : '—'], ['Zoom', r(c.zoom, '×') || 'jen digitální'], ['Svítilna / blesk', c.torch ? 'ano' : 'ne'],
+    ['Ruční ISO', r(c.iso) || 'ne, řídí telefon'], ['Ruční čas', r(c.exposureTime) ? r(c.exposureTime) + ' (×100 µs)' : 'ne, řídí telefon'], ['Korekce EV', r(c.exposureCompensation) || 'ne (EV dělá Qamera)'],
+    ['Ostření', (c.focusMode || []).join(', ') || '—'], ['Kamery', CAM.devices.map(d => d.label || 'bez názvu').join(' · ') || '—']];
+  el.innerHTML = `<dl>${rows.map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join('')}</dl>`;
+}
+
+/* =====================================================================
    Engine – WebGL2, jeden shader pro hledáček, editor i export
-   (náhled: aproximace filmu; ve fázi 2 3D LUT ze spektrafilmu)
    ===================================================================== */
 const VS = `#version 300 es
 in vec2 p; out vec2 vUv; void main(){ vUv = p*.5+.5; gl_Position = vec4(p,0.,1.); }`;
@@ -803,11 +900,16 @@ precision highp float;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uTex, uCurve;
 uniform vec2 uCover, uOff, uRes; uniform float uZoom, uRot, uTime, uBypass, uStatic;
-uniform float uExp,uTemp,uTint,uCon,uSat,uStr,uHal,uGrain,uGSize,uVig,uFade,uLeak,uDust,uSharp;
+uniform float uExp,uTemp,uTint,uCon,uSat,uStr,uHal,uBloom,uVig,uFade,uSharp;
+uniform float uGrain,uGFreq,uGSharp,uGChroma,uGClump,uGMot;
 uniform vec3 uSh,uHi; uniform float uFCon,uFSat,uFFade;
 uniform vec3 uHsl[8]; uniform vec3 uGSh,uGMid,uGHi;
 uniform vec3 uTrMs,uTrSs,uTrMr,uTrSr; uniform float uTr;
 float hash(vec2 p){ p = fract(p*vec2(443.897,441.423)); p += dot(p, p.yx+19.19); return fract((p.x+p.y)*p.x); }
+float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f);
+  return mix(mix(hash(i),hash(i+vec2(1,0)),f.x), mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x), f.y)*2.-1.; }
+const mat2 R1 = mat2(.8,-.6,.6,.8), R2 = mat2(-.47,-.88,.88,-.47), R3 = mat2(.31,.95,-.95,.31);
+float grainN(vec2 p){ return vnoise(R1*p)*.5 + vnoise(R2*p*1.37+vec2(5.2,1.3))*.32 + vnoise(R3*p*2.71+vec2(9.7,3.1))*.18; }
 vec3 rgb2hsv(vec3 c){ vec4 K=vec4(0.,-1./3.,2./3.,-1.); vec4 p=mix(vec4(c.bg,K.wz),vec4(c.gb,K.xy),step(c.b,c.g)); vec4 q=mix(vec4(p.xyw,c.r),vec4(c.r,p.yzx),step(p.x,c.r)); float d=q.x-min(q.w,q.y); return vec3(abs(q.z+(q.w-q.y)/(6.*d+1e-10)),d/(q.x+1e-10),q.x); }
 vec3 hsv2rgb(vec3 c){ vec3 p=abs(fract(c.xxx+vec3(1.,2./3.,1./3.))*6.-3.); return c.z*mix(vec3(1.),clamp(p-1.,0.,1.),c.y); }
 float luma(vec3 c){ return dot(c, vec3(.2126,.7152,.0722)); }
@@ -820,9 +922,11 @@ void main(){
   col = mix(col, (col-uTrMs)/max(uTrSs,vec3(.03))*uTrSr+uTrMr, uTr);
   vec3 lin = pow(max(col,0.), vec3(2.2)) * exp2(uExp);
   lin *= vec3(1.+uTemp*.22, 1.+uTint*.1, 1.-uTemp*.22);
-  vec3 b1 = pow(textureLod(uTex,uv,3.).rgb, vec3(2.2)), b2 = pow(textureLod(uTex,uv,5.).rgb, vec3(2.2));
+  /* halation = červenooranžová záře kolem světel (odraz od podložky filmu), bloom = měkká bílá záře světel */
+  vec3 b1 = pow(textureLod(uTex,uv,3.).rgb, vec3(2.2)), b2 = pow(textureLod(uTex,uv,5.).rgb, vec3(2.2)), b3 = pow(textureLod(uTex,uv,6.5).rgb, vec3(2.2));
   float hl = max(luma(b1)-.42,0.)*1.4 + max(luma(b2)-.3,0.)*1.9;
-  lin += (vec3(1.,.26,.07)*hl*1.1 + b2*.12) * uHal * exp2(uExp);
+  lin += vec3(1.,.26,.07)*hl*1.1 * uHal * exp2(uExp);
+  lin += (max(b1-.35,0.)*.7 + max(b2-.22,0.)*1.1 + max(b3-.15,0.)*1.3) * uBloom * 1.6 * exp2(uExp);
   vec3 c = pow(lin/(1.+lin*.06), vec3(1./2.2));
   c = (c-.5)*(1.+uCon*.55)+.5;
   float l = luma(c); c = mix(vec3(l), c, 1.+uSat);
@@ -846,16 +950,24 @@ void main(){
   c = c*(1.-uFade*.22) + uFade*.1;
   float ar = uRes.x/uRes.y; vec2 vq = q*vec2(ar>1.?ar:1., ar>1.?1.:1./ar);
   c *= mix(1., smoothstep(.95,.2,length(vq)*1.15), uVig);
-  c += vec3(1.,.42,.12)*uLeak*(smoothstep(.75,0.,length(vUv-vec2(-.08,.78)))*.9 + smoothstep(.5,0.,length(vUv-vec2(1.05,.15)))*.35);
-  vec2 gp = floor(gl_FragCoord.xy/uGSize); float t = uStatic>.5 ? 0. : floor(uTime*24.);
-  float n = hash(gp+t*17.13) + hash(gp*1.37+t*3.71) - 1.;
-  vec3 nc = vec3(hash(gp+vec2(5.,t)), hash(gp+vec2(9.,t)), hash(gp+vec2(13.,t))) - .5;
-  float gm = uGrain*(.35+.65*(1.-abs(L-.45)*1.7))*.2;
-  c += (vec3(n)*.85 + nc*.35)*gm;
-  if (uDust > 0.) { vec2 dp = floor(vUv*vec2(uRes.x/uRes.y,1.)*180.); float d = step(.9975-uDust*.003, hash(dp+floor(uTime*.0))); c = mix(c, vec3(.95), d*.8); float sc = step(.9993, hash(vec2(floor(vUv.x*900.),3.)))*uDust; c = mix(c, vec3(.85), sc*.5); }
+  /* grain: zrna v souřadnicích fotky (stejně velká v náhledu i exportu), hladký šum ve 3 oktávách,
+     shluky, barevná oblaka barviv, odezva podle jasu (nejvíc ve středních tónech) */
+  if (uGrain > 0.) {
+    vec2 gp = vUv*vec2(ar,1.)*uGFreq;
+    float t = uStatic>.5 ? 0. : floor(uTime*24.);
+    vec2 jit = vec2(hash(vec2(t,1.7)), hash(vec2(t,7.3)))*173.;
+    float clump = mix(1., .45 + 1.1*(vnoise(gp*.21+jit*.7)*.5+.5), uGClump);
+    float nm = grainN(gp+jit);
+    vec3 nc = vec3(grainN(gp*1.09+jit+11.), grainN(gp*.93+jit+23.), grainN(gp*1.04+jit+37.));
+    vec3 n = mix(vec3(nm), nc, uGChroma) * clump;
+    n = sign(n)*pow(abs(n)*1.25, vec3(1./uGSharp));
+    float w = (1.-smoothstep(.6,1.,L)*.75)*(.5+.5*smoothstep(0.,.22,L));
+    c += n*uGrain*.13*w;
+    if (uGMot > 0.) { vec2 mp = vUv*vec2(ar,1.)*2.3; c += vec3(vnoise(mp+3.), vnoise(mp+17.), vnoise(mp+29.))*.045*uGMot*uGrain; }
+  }
   o = vec4(clamp(c,0.,1.), 1.);
 }`;
-const DEF = () => ({ film: 'P400', str: 1, exp: 0, temp: 0, tint: 0, con: 0, sat: 0, grain: .45, gsize: 1.5, hal: 1, vig: .25, leak: 0, fade: 0, dust: 0, sharp: 0,
+const DEF = () => ({ film: 'P400', str: 1, exp: 0, temp: 0, tint: 0, con: 0, sat: 0, grain: .5, gsize: 1, gtype: null, hal: 1, bloom: .15, vig: .25, fade: 0, sharp: 0,
   curve: { rgb: [[0, 0], [1, 1]], r: [[0, 0], [1, 1]], g: [[0, 0], [1, 1]], b: [[0, 0], [1, 1]] }, hsl: Array.from({ length: 8 }, () => [0, 0, 0]),
   grade: { sh: [0, 0], mid: [0, 0], hi: [0, 0] }, tr: 0, crop: { ar: 0, s: 1, x: 0, y: 0, rot: 0 } });
 
@@ -891,10 +1003,10 @@ class Engine {
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     this.curveKey = ''; this.srcAR = 1;
   }
-  setSource(src) { if (this.dead) return; const gl = this.gl; gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src); gl.generateMipmap(gl.TEXTURE_2D); this.srcAR = src.width / src.height; }
-  size(w, h) { if (this.c.width !== w || this.c.height !== h) { this.c.width = w; this.c.height = h; } }
+  setSource(src) { if (this.dead) return; const gl = this.gl; gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src); gl.generateMipmap(gl.TEXTURE_2D); this.srcAR = (src.videoWidth || src.width) / (src.videoHeight || src.height); }
+  size(w, h) { if (this.c.width !== w || this.c.height !== h) { this.c.width = w; this.c.height = h; return true; } return false; }
   render(P, o = {}) {
-    if (this.dead) return; const gl = this.gl, u = this.u, f = FILM[P.film] || FILM.P400;
+    if (this.dead) return; const gl = this.gl, u = this.u, f = FILM[P.film] || FILM.P400, G = GRAINS[gtypeOf(P)];
     gl.viewport(0, 0, this.c.width, this.c.height);
     const key = JSON.stringify(P.curve);
     if (key !== this.curveKey) { this.curveKey = key; const m = monoCurve(P.curve.rgb), cr = monoCurve(P.curve.r), cg = monoCurve(P.curve.g), cb = monoCurve(P.curve.b), d = new Uint8Array(256 * 4);
@@ -902,14 +1014,16 @@ class Engine {
       for (let i = 0; i < 256; i++) { const v = m[i]; d[i * 4] = at(cr, v) * 255; d[i * 4 + 1] = at(cg, v) * 255; d[i * 4 + 2] = at(cb, v) * 255; d[i * 4 + 3] = 255; }
       gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, this.ctex); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 256, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, d); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); }
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.tex);
-    const dstAR = this.c.width / this.c.height, sAR = this.srcAR; // „cover“
+    const dstAR = this.c.width / this.c.height, sAR = this.srcAR;
     const cov = dstAR > sAR ? [1, sAR / dstAR] : [dstAR / sAR, 1];
     gl.uniform2f(u.uCover, cov[0], cov[1]); gl.uniform2f(u.uOff, o.offX || 0, o.offY || 0); gl.uniform2f(u.uRes, this.c.width, this.c.height);
     gl.uniform1f(u.uZoom, o.zoom || 1); gl.uniform1f(u.uRot, o.rot || 0); gl.uniform1f(u.uTime, o.time || 0); gl.uniform1f(u.uBypass, o.bypass ? 1 : 0); gl.uniform1f(u.uStatic, o.time == null ? 1 : 0);
     const isoK = Math.sqrt((o.iso || f.iso) / 400);
     gl.uniform1f(u.uExp, P.exp); gl.uniform1f(u.uTemp, P.temp); gl.uniform1f(u.uTint, P.tint); gl.uniform1f(u.uCon, P.con); gl.uniform1f(u.uSat, P.sat);
-    gl.uniform1f(u.uStr, P.str); gl.uniform1f(u.uHal, P.hal * f.hal); gl.uniform1f(u.uGrain, P.grain * (.55 + .45 * isoK)); gl.uniform1f(u.uGSize, Math.max(1, P.gsize * (o.gscale || 1) * (.8 + .3 * isoK)));
-    gl.uniform1f(u.uVig, P.vig); gl.uniform1f(u.uFade, P.fade); gl.uniform1f(u.uLeak, P.leak); gl.uniform1f(u.uDust, P.dust); gl.uniform1f(u.uSharp, P.sharp);
+    gl.uniform1f(u.uStr, P.str); gl.uniform1f(u.uHal, P.hal * f.hal); gl.uniform1f(u.uBloom, P.bloom);
+    gl.uniform1f(u.uGrain, P.grain * G.a * (.6 + .4 * isoK)); gl.uniform1f(u.uGFreq, 560 / P.gsize * G.f / (.72 + .38 * isoK));
+    gl.uniform1f(u.uGSharp, G.sh); gl.uniform1f(u.uGChroma, G.ch); gl.uniform1f(u.uGClump, G.cl); gl.uniform1f(u.uGMot, G.mot);
+    gl.uniform1f(u.uVig, P.vig); gl.uniform1f(u.uFade, P.fade); gl.uniform1f(u.uSharp, P.sharp);
     gl.uniform3fv(u.uSh, f.sh); gl.uniform3fv(u.uHi, f.hi); gl.uniform1f(u.uFCon, f.con); gl.uniform1f(u.uFSat, f.sat); gl.uniform1f(u.uFFade, f.fade);
     gl.uniform3fv(u.uHsl, P.hsl.flat());
     const g = P.grade; gl.uniform3fv(u.uGSh, hue2rgb(g.sh[0], g.sh[1])); gl.uniform3fv(u.uGMid, hue2rgb(g.mid[0], g.mid[1])); gl.uniform3fv(u.uGHi, hue2rgb(g.hi[0], g.hi[1]));
@@ -919,11 +1033,9 @@ class Engine {
   }
   pixels() { const gl = this.gl, w = this.c.width, h = this.c.height, d = new Uint8Array(w * h * 4); gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, d); return d; }
 }
-/* Pomocný engine mimo obrazovku: miniatury, palety, histogram */
 const util = { e: null };
 function utilRender(src, P, w, h, o = {}) { util.e.size(w, h); util.e.setSource(src); util.e.render(P, o); return util.e.c; }
-
-function stats(src) { // průměr a odchylka RGB (pro jednoduchý Reinhardův přenos v náhledu)
+function stats(src) {
   const c = mk(64, 80), g = c.getContext('2d'); g.drawImage(src, 0, 0, 64, 80); const d = g.getImageData(0, 0, 64, 80).data;
   const m = [0, 0, 0], s = [0, 0, 0], n = d.length / 4;
   for (let i = 0; i < d.length; i += 4) for (let k = 0; k < 3; k++) m[k] += d[i + k] / 255;
@@ -933,12 +1045,12 @@ function stats(src) { // průměr a odchylka RGB (pro jednoduchý Reinhardův p�
 }
 
 /* =====================================================================
-   Maskot – tečkované robotí oči (jako Mraq / Klapqa), tady žluté v objektivu
+   Maskot (malé oči v kameře a v O appce) – tečkované robotí oči jako Mraq / Klapqa
    ===================================================================== */
 const PITCH = 5.4, DOT = 4.4, R2 = DOT / 2;
 function eyeDots(cx, cy, p) {
   const x0 = cx + p.lookX * 7, y0 = cy + p.lookY * 5, w = 13, H = 16, open = clamp(p.open, 0, 1.1), hh = Math.max(.1, H * open), dots = [];
-  if (open < .16) { for (let k = -2; k <= 2; k++) dots.push([x0 + (k) * PITCH, y0 + 2]); return dots; }
+  if (open < .16) { for (let k = -2; k <= 2; k++) dots.push([x0 + k * PITCH, y0 + 2]); return dots; }
   const r = Math.min(w, hh) * .45;
   for (let j = -4; j <= 4; j++) for (let k = -3; k <= 2; k++) {
     const x = x0 + (k + .5) * PITCH, y = y0 + j * PITCH, dx = Math.abs(x - x0), dy = Math.abs(y - y0);
@@ -956,7 +1068,6 @@ function mascot(svg, { idle = true } = {}) {
   const m = { svg, path: svg.firstChild, cur: { open: 1, lookX: 0, lookY: 0, happy: 0 }, tgt: { open: 1, lookX: 0, lookY: 0, happy: 0 }, blinkAt: performance.now() + 2000, blinkT: 0, idle, lastD: '' };
   m.look = (x, y) => { m.tgt.lookX = x; m.tgt.lookY = y; };
   m.blink = () => { m.blinkT = performance.now(); };
-  m.set = (o) => Object.assign(m.tgt, o);
   MASCOTS.push(m); return m;
 }
 function tickMascots(now) {
@@ -965,103 +1076,264 @@ function tickMascots(now) {
     for (const k of ['open', 'lookX', 'lookY', 'happy']) m.cur[k] = LOWMO ? m.tgt[k] : lerp(m.cur[k], m.tgt[k], .18);
     if (m.idle && now > m.blinkAt) { m.blink(); m.blinkAt = now + 2200 + Math.random() * 3000; if (Math.random() < .3) { m.look((Math.random() - .5) * 1.4, (Math.random() - .5) * .6); setTimeout(() => m.look(0, 0), 900); } }
     let open = m.cur.open; const bt = now - m.blinkT; if (bt < 180) open *= Math.abs(Math.cos(bt / 180 * Math.PI));
-    const p = { ...m.cur, open };
-    const d = dPath([...eyeDots(42, 60, p), ...eyeDots(78, 60, p)]);
+    const d = dPath([...eyeDots(42, 60, { ...m.cur, open }), ...eyeDots(78, 60, { ...m.cur, open })]);
     if (d !== m.lastD) { m.path.setAttribute('d', d); m.lastD = d; }
   }
+}
+
+/* =====================================================================
+   Intro – objektiv s rytinou a povlakovanými čočkami, maskot se v něm probudí,
+   rozhlédne a mrkne, rozsvítí se tečkový nápis, zavře se clona (cvak = spoušť),
+   kamera proletí čočkami a appka se vynoří otevřenou clonou. Ťuknutí = přeskočit.
+   ===================================================================== */
+const GLYPH = { Q: ['.###.', '#...#', '#...#', '#...#', '#.#.#', '#..#.', '.##.#'], A: ['.###.', '#...#', '#...#', '#####', '#...#', '#...#', '#...#'],
+  M: ['#...#', '##.##', '#.#.#', '#.#.#', '#...#', '#...#', '#...#'], E: ['#####', '#....', '#....', '####.', '#....', '#....', '#####'], R: ['####.', '#...#', '#...#', '####.', '#.#..', '#..#.', '#...#'] };
+let INTRO = null;
+function playIntro() {
+  if (INTRO) INTRO.kill();
+  const phone = $('#phone'), cam = $('#s-camera');
+  Object.values(SCREENS).forEach(s => { const el = $(s); if (el !== cam) el.hidden = true; });
+  stack.length = 0; S.screen = 'camera'; cam.hidden = false; syncNav();
+  if (LOWMO) { if (READY) startCam(); return; }
+  stopCam();
+  const cv = document.createElement('canvas'); cv.className = 'intro'; phone.appendChild(cv);
+  const g = cv.getContext('2d'), DPR = Math.min(2, devicePixelRatio || 1);
+  const W = phone.clientWidth, H = phone.clientHeight; cv.width = W * DPR; cv.height = H * DPR;
+  const LEN = 2750, CLOSE0 = 1700, CLOSE1 = 1980, REV = 2060;
+  // zrno přes intro
+  const nz = mk(128, 128); { const x = nz.getContext('2d'), id = x.createImageData(128, 128); for (let i = 0; i < id.data.length; i += 4) { const v = Math.random() * 255; id.data[i] = id.data[i + 1] = id.data[i + 2] = v; id.data[i + 3] = 255; } x.putImageData(id, 0, 0); }
+  const pat = g.createPattern(nz, 'repeat');
+  // tečky nápisu
+  const word = []; let lx = 0; const wr = rng(5);
+  for (const ch of 'QAMERA') { GLYPH[ch].forEach((row, y) => [...row].forEach((c, x) => word.push({ x: lx + x, y, on: c === '#', at: 1000 + wr() * 520 }))); lx += 6.4; }
+  const WW = lx - 1.4;
+  const ring = 'QAMERA · FILM LENS · 1:1.8 · f = 35 mm · ⌀52 · MADE FOR GRAIN · ';
+  let vt = 0, last = 0, raf = 0, revealed = false, clicked = false, dead = false; // virtuální čas: zaseknutí vlákna intro jen pozdrží, nepřeskočí
+  const kill = () => { if (dead) return; dead = true; cancelAnimationFrame(raf); cv.remove(); cam.style.transform = ''; cam.style.filter = ''; INTRO = null; };
+  INTRO = { kill };
+  cv.addEventListener('pointerdown', () => { if (vt < CLOSE0) vt = CLOSE0; });
+
+  const eyeState = t => {
+    const L = inOut(seg(t, 760, 930)), Rr = inOut(seg(t, 1010, 1200)), C = inOut(seg(t, 1250, 1360));
+    const lx = lerp(lerp(lerp(0, -1, L), 1, Rr), 0, C), ly = lerp(0, .25, L) * (1 - Rr) - .2 * Rr * (1 - C);
+    const bk = seg(t, 1300, 1430); let open = bk > 0 && bk < 1 ? Math.abs(Math.cos(bk * Math.PI)) : 1;
+    const happy = seg(t, 1460, 1500) > 0 && t < CLOSE0 + 60;
+    open *= 1 - sstep(seg(t, CLOSE0 + 40, CLOSE0 + 200));
+    return { lx, ly, open, happy };
+  };
+  function drawEyes(cx, cy, R, t) {
+    const P = R * .094, e = eyeState(t), dotR = P * .36;
+    [-1, 1].forEach(side => {
+      const ex0 = cx + side * 3.05 * P, ey0 = cy - .1 * P, ex = ex0 + e.lx * 1.1 * P, ey = ey0 + e.ly * .8 * P;
+      const w = 1.95 * P, hh = 2.35 * P * e.open, r = .95 * P;
+      // záře za okem
+      g.globalCompositeOperation = 'lighter';
+      const ga = .26 * seg(t, 320, 700) * Math.max(.15, e.open);
+      const gr = g.createRadialGradient(ex, ey, 0, ex, ey, 3.6 * P); gr.addColorStop(0, `rgba(255,190,60,${ga})`); gr.addColorStop(1, 'rgba(255,150,30,0)');
+      g.fillStyle = gr; g.fillRect(ex - 4 * P, ey - 4 * P, 8 * P, 8 * P);
+      g.globalCompositeOperation = 'source-over';
+      for (let gy = -3; gy <= 3; gy++) for (let gx = -3; gx <= 3; gx++) {
+        const x = ex0 + gx * P, y = ey0 + gy * P;
+        const boot = seg(t, 330 + (Math.abs(gx) + Math.abs(gy)) * 32 + ((gx * 7 + gy * 13 + 50) % 5) * 14, 420 + (Math.abs(gx) + Math.abs(gy)) * 32 + ((gx * 7 + gy * 13 + 50) % 5) * 14);
+        if (boot <= 0) continue;
+        let on;
+        if (e.happy) { const ay = ey + 1.6 * P, ry = 3.4 * P, ww = w + .6 * P, o1 = ((x - ex) / ww) ** 2 + ((y - ay) / ry) ** 2, i1 = ((x - ex) / (ww - 1.05 * P)) ** 2 + ((y - ay) / (ry - 1.05 * P)) ** 2; on = y <= ay - .3 * P && o1 <= 1.05 && i1 > 1; }
+        else if (hh > .5 * P) { const dx = Math.max(0, Math.abs(x - ex) - (w - r)), dy = Math.max(0, Math.abs(y - ey) - (hh - r)); on = Math.hypot(dx, dy) <= r; }
+        else on = Math.abs(y - ey) < P * .5 && Math.abs(x - ex) < w;
+        g.fillStyle = on ? `rgba(255,${196 + boot * 10 | 0},${61 + (1 - boot) * 120 | 0},${boot})` : `rgba(255,196,61,${.05 * boot})`;
+        g.beginPath(); g.arc(x, y, dotR * (on ? 1 : .8), 0, 7); g.fill();
+      }
+    });
+  }
+  function apertureVerts(cx, cy, R, a, rot, N = 7) { const v = []; for (let i = 0; i < N; i++) { const th = i / N * Math.PI * 2 + rot; v.push([cx + Math.cos(th) * a * R, cy + Math.sin(th) * a * R]); } return v; }
+  function drawBlades(cx, cy, R, a, rot) {
+    const N = 7, v = apertureVerts(cx, cy, R, a, rot, N), L = R * 3;
+    g.save(); g.beginPath(); g.arc(cx, cy, R * .885, 0, 7); g.clip();
+    for (let i = 0; i < N; i++) {
+      const p0 = v[(i - 1 + N) % N], p1 = v[i], p2 = v[(i + 1) % N];
+      const e0 = [(p1[0] - p0[0]), (p1[1] - p0[1])], l0 = Math.hypot(...e0) || 1, e1 = [(p2[0] - p1[0]), (p2[1] - p1[1])], l1 = Math.hypot(...e1) || 1;
+      const q1 = [p1[0] + e0[0] / l0 * L, p1[1] + e0[1] / l0 * L], q2 = [p2[0] + e1[0] / l1 * L, p2[1] + e1[1] / l1 * L];
+      const gr = g.createLinearGradient(p1[0], p1[1], q1[0], q1[1]); const s = 22 + (i * 5) % 14;
+      gr.addColorStop(0, `rgb(${s + 14},${s + 12},${s + 12})`); gr.addColorStop(.35, `rgb(${s},${s - 1},${s})`); gr.addColorStop(1, `rgb(${s - 10},${s - 11},${s - 9})`);
+      g.fillStyle = gr; g.beginPath(); g.moveTo(p1[0], p1[1]); g.lineTo(q1[0], q1[1]); g.lineTo(q2[0], q2[1]); g.lineTo(p2[0], p2[1]); g.closePath(); g.fill();
+      g.strokeStyle = 'rgba(0,0,0,.65)'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(p1[0], p1[1]); g.lineTo(q1[0], q1[1]); g.stroke();
+      g.strokeStyle = 'rgba(255,240,220,.07)'; g.lineWidth = 1; g.beginPath(); g.moveTo(p1[0] + 1.2, p1[1] + 1.2); g.lineTo(q1[0] + 1.2, q1[1] + 1.2); g.stroke();
+    }
+    g.restore();
+  }
+  function drawLens(cx, cy, R, t, focusRot, look) {
+    // stín a teplý odlesk okolí
+    const amb = g.createRadialGradient(cx, cy, R * .9, cx, cy, R * 2.4); amb.addColorStop(0, 'rgba(255,170,60,.06)'); amb.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = amb; g.fillRect(cx - R * 2.4, cy - R * 2.4, R * 4.8, R * 4.8);
+    // vnější tubus s vroubkováním
+    let gr = g.createRadialGradient(cx - R * .3, cy - R * .4, R * .2, cx, cy, R * 1.24); gr.addColorStop(0, '#2a2723'); gr.addColorStop(.7, '#151311'); gr.addColorStop(1, '#0a0908');
+    g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, R * 1.24, 0, 7); g.fill();
+    g.lineWidth = Math.max(1, R * .012);
+    for (let i = 0; i < 132; i++) { const a = i / 132 * Math.PI * 2 + focusRot, ca = Math.cos(a), sa = Math.sin(a); const lit = .5 + .5 * Math.cos(a + 2.3);
+      g.strokeStyle = `rgba(255,245,230,${.03 + lit * .09})`; g.beginPath(); g.moveTo(cx + ca * R * 1.14, cy + sa * R * 1.14); g.lineTo(cx + ca * R * 1.225, cy + sa * R * 1.225); g.stroke(); }
+    g.strokeStyle = 'rgba(255,255,255,.07)'; g.lineWidth = 1; g.beginPath(); g.arc(cx, cy, R * 1.135, 0, 7); g.stroke();
+    // rytina po obvodu
+    g.save(); g.translate(cx, cy); g.rotate(focusRot * .35 - .9);
+    g.font = `500 ${Math.max(6, R * .066)}px "Geist Mono", ui-monospace, monospace`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    const chars = [...ring], step = Math.PI * 2 / chars.length;
+    chars.forEach((ch, i) => { g.save(); g.rotate(i * step); g.translate(0, -R * 1.065); g.fillStyle = ch === 'Q' && i === 0 ? 'rgba(255,196,61,.85)' : 'rgba(236,226,212,.5)'; g.fillText(ch, 0, 0); g.restore(); });
+    g.restore();
+    // značka
+    g.fillStyle = '#ffc43d'; g.beginPath(); g.arc(cx, cy - R * 1.185, R * .018, 0, 7); g.fill();
+    // přední kroužek
+    gr = g.createRadialGradient(cx, cy, R * .86, cx, cy, R * 1.0); gr.addColorStop(0, '#050505'); gr.addColorStop(1, '#141210'); g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, R * 1.0, 0, 7); g.fill();
+    // sklo
+    gr = g.createRadialGradient(cx + look[0] * R * .05, cy + look[1] * R * .05, 0, cx, cy, R * .885); gr.addColorStop(0, '#0b0f16'); gr.addColorStop(.6, '#05070b'); gr.addColorStop(1, '#010102');
+    g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, R * .885, 0, 7); g.fill();
+    // vnitřní členy objektivu (paralaxa)
+    [[.66, .06, .6], [.46, .045, 1.1], [.3, .035, 1.6]].forEach(([rr, a, d]) => { g.strokeStyle = `rgba(200,210,255,${a})`; g.lineWidth = R * .012; g.beginPath(); g.arc(cx - look[0] * R * .03 * d, cy - look[1] * R * .03 * d, R * rr, 0, 7); g.stroke(); });
+    // reflexy antireflexních vrstev
+    g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
+    const sw = Math.sin(t / 900);
+    [[.74, 3.55 + sw * .25, 1.05, '170,90,255', .2], [.56, .35 - sw * .3, .75, '80,255,170', .14], [.82, 5.3 + sw * .2, .45, '255,190,90', .18], [.4, 2.2 + sw * .4, .5, '90,150,255', .12]].forEach(([rr, a0, len, col, al], i) => {
+      const ox = -look[0] * R * .03 * (i + 1), oy = -look[1] * R * .03 * (i + 1);
+      [[R * .11, al * .35], [R * .045, al]].forEach(([lw, aa]) => { g.strokeStyle = `rgba(${col},${aa})`; g.lineWidth = lw; g.beginPath(); g.arc(cx + ox, cy + oy, R * rr, a0, a0 + len); g.stroke(); });
+    });
+    g.globalCompositeOperation = 'source-over';
+  }
+  function drawSpecular(cx, cy, R) {
+    g.globalCompositeOperation = 'lighter';
+    const sp = g.createRadialGradient(cx - R * .38, cy - R * .42, 0, cx - R * .38, cy - R * .42, R * .34); sp.addColorStop(0, 'rgba(255,255,255,.16)'); sp.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = sp; g.beginPath(); g.ellipse(cx - R * .38, cy - R * .42, R * .34, R * .22, -.7, 0, 7); g.fill();
+    g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(cx - R * .47, cy - R * .5, R * .03, R * .018, -.7, 0, 7); g.fill();
+    g.globalCompositeOperation = 'source-over';
+  }
+  function drawWord(cx, y, R, t, alpha) {
+    const p = R * .066, x0 = cx - WW * p / 2;
+    for (const d of word) {
+      const x = x0 + d.x * p, yy = y + d.y * p;
+      if (!d.on) { g.fillStyle = `rgba(255,255,255,${.045 * alpha * seg(t, 700, 1100)})`; g.beginPath(); g.arc(x, yy, p * .3, 0, 7); g.fill(); continue; }
+      const k = seg(t, d.at, d.at + 260); if (k <= 0) { g.fillStyle = `rgba(255,255,255,${.045 * alpha})`; g.beginPath(); g.arc(x, yy, p * .3, 0, 7); g.fill(); continue; }
+      const s = outBack(k), warm = 1 - seg(t, d.at + 120, d.at + 520);
+      g.fillStyle = `rgba(${lerp(243, 255, warm) | 0},${lerp(238, 196, warm) | 0},${lerp(230, 61, warm) | 0},${alpha * Math.min(1, k * 1.6)})`;
+      g.beginPath(); g.arc(x, yy, p * .38 * s, 0, 7); g.fill();
+    }
+  }
+  function frame(now) {
+    if (dead) return;
+    vt += last ? Math.min(34, now - last) : 0; last = now;
+    if (vt > CLOSE1 && !READY) vt = CLOSE1;
+    const t = vt;
+    if (t >= REV && !revealed) { revealed = true; startCam(); }
+    if (t >= CLOSE1 - 20 && !clicked) { clicked = true; buzz(14); miniEyes && miniEyes.blink(); }
+    g.setTransform(DPR, 0, 0, DPR, 0, 0); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
+    // pozadí
+    g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    const dk = seg(t, REV - 40, LEN - 140), dive = Math.pow(dk, 2.15);
+    const push = 1 + outC(seg(t, 0, REV)) * .07, k = push * (1 + dive * 18);
+    const cx = lerp(W / 2, W / 2, dk), cy = lerp(H * .42, H * .5, sstep(dk)), R = Math.min(W, H * .6) * .29 * k;
+    const fin = 1 - outC(seg(t, 0, 380));
+    const focusRot = inOut(seg(t, 380, 1500)) * .55 - .2 + dive * .8;
+    const e = eyeState(t), look = [e.lx, e.ly];
+    drawLens(cx, cy, R, t, focusRot, look);
+    if (t < REV) drawEyes(cx, cy, R, t);
+    // clona
+    let a = .885;
+    if (t >= CLOSE0 && t < REV) a = lerp(.885, .0, inOut(seg(t, CLOSE0, CLOSE1)));
+    if (t >= REV) a = lerp(0, .885, outC(seg(t, REV, REV + 520)));
+    if (a < .884) drawBlades(cx, cy, R, Math.max(a, .001), (1 - a / .885) * 1.05);
+    drawSpecular(cx, cy, R);
+    // nápis
+    const wa = 1 - sstep(seg(t, CLOSE0 - 40, CLOSE0 + 260));
+    if (wa > 0) drawWord(cx, cy + R * 1.62, R / k * (1 + (push - 1) * .5), t, wa);
+    // cvak závěrky
+    const ck = seg(t, CLOSE1 - 20, CLOSE1 + 260);
+    if (ck > 0 && ck < 1) { g.strokeStyle = `rgba(255,236,200,${(1 - ck) * .5})`; g.lineWidth = 2; g.beginPath(); g.arc(cx, cy, R * (.9 + ck * .5), 0, 7); g.stroke();
+      g.fillStyle = `rgba(255,240,220,${(1 - ck) * .05})`; g.fillRect(0, 0, W, H); }
+    // zrno
+    g.globalAlpha = .07; g.fillStyle = pat; const ox = Math.random() * 128 | 0, oy = Math.random() * 128 | 0; g.translate(-ox, -oy); g.fillRect(ox, oy, W, H); g.setTransform(DPR, 0, 0, DPR, 0, 0); g.globalAlpha = 1;
+    if (fin > 0) { g.fillStyle = `rgba(0,0,0,${fin})`; g.fillRect(0, 0, W, H); }
+    // otvor clonou = appka
+    if (t >= REV) {
+      const v = apertureVerts(cx, cy, R, a, (1 - a / .885) * 1.05);
+      g.globalCompositeOperation = 'destination-out'; g.beginPath(); v.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); g.fill();
+      g.globalCompositeOperation = 'source-over';
+      const ak = outQ(seg(t, REV, LEN)); cam.style.transform = `scale(${lerp(1.09, 1, ak)})`; cam.style.filter = `brightness(${lerp(.55, 1, ak)})`;
+    }
+    cv.style.opacity = 1 - sstep(seg(t, LEN - 160, LEN));
+    if (t >= LEN) { kill(); return; }
+    raf = requestAnimationFrame(frame);
+  }
+  raf = requestAnimationFrame(frame);
 }
 
 /* =====================================================================
    Stav appky
    ===================================================================== */
 const S = {
-  screen: 'intro', film: store.get('film', 'P400'), grid: false, timer: false, flash: false, zoom: 1,
+  screen: 'camera', film: store.get('film', 'P400'), grid: 0, timer: 0, flash: false, zoom: 1,
   isoIdx: 0, timeIdx: 2, ev: 0, slowMode: 0, photos: [], cur: null, P: DEF(), tab: 'film', adv: false, adjKey: 'exp',
   hist: [], fut: [], view: 'm',
 };
 const ISO_STOPS = ['A', '100', '200', '400', '800', '1600', '3200'];
-const TIME_STOPS = ['A', '500', '125', '30', '8', '4', '2', '1"', '2"'];
-const SLOW_MS = { 5: 250, 6: 500, 7: 1000, 8: 2000 };
+const TIME_STOPS = ['A', '500', '125', '30', '8', '4', '2', '1"', '2"', '4"', '8"', '15"'];
+const SLOW_MS = { 5: 250, 6: 500, 7: 1000, 8: 2000, 9: 4000, 10: 8000, 11: 15000 };
+const fmtDur = ms => ms >= 1000 ? ms / 1000 + ' s' : ms === 500 ? '½ s' : '¼ s';
 const SLOW_MODES = ['STOPY', 'POHYB', 'HEDVÁBÍ'];
+const GRID_MODES = ['', 'Zlatý řez', 'Třetiny', 'Zlatá spirála'];
 
 /* =====================================================================
    Router + přechody
    ===================================================================== */
-const SCREENS = { camera: '#s-camera', gallery: '#s-gallery', editor: '#s-editor', blob: '#s-blob', about: '#s-about', intro: '#s-intro' };
+const SCREENS = { camera: '#s-camera', gallery: '#s-gallery', editor: '#s-editor', blob: '#s-blob', about: '#s-about' };
 const stack = [];
-let transitioning = null;
-function go(to, { back = false, instant = false, onShown } = {}) {
-  if (to === S.screen) { onShown && onShown(); return; }
+let trans = null;
+function go(to, { back = false, onShown } = {}) {
+  if (trans) { trans.sp.stop(); trans.done(); trans = null; } // rozjetý přechod se nejdřív dokončí, nic nezůstane napůl
+  if (INTRO) INTRO.kill();
+  if (to === S.screen) { $(SCREENS[to]).hidden = false; onShown && onShown(); return; }
+  closeSheets();
   const fromEl = $(SCREENS[S.screen]), toEl = $(SCREENS[to]);
   if (!back) stack.push(S.screen);
-  const from = S.screen; S.screen = to; toEl.hidden = false; toEl.style.zIndex = 5; fromEl.style.zIndex = 4;
+  const from = S.screen; S.screen = to; toEl.hidden = false;
   onEnter(to, from); syncNav();
-  transitioning && transitioning.stop();
-  const W = $('#phone').clientWidth, done = () => { fromEl.hidden = true; fromEl.style.transform = toEl.style.transform = fromEl.style.filter = ''; toEl.style.zIndex = ''; fromEl.style.zIndex = ''; onLeave(from); onShown && onShown(); };
-  if (instant) { done(); return; }
-  if (back) { toEl.style.zIndex = 4; fromEl.style.zIndex = 5; }
-  transitioning = spring(0, 1, t => {
-    const a = back ? 1 - t : t;
-    const top = back ? fromEl : toEl, under = back ? toEl : fromEl;
+  const W = $('#phone').clientWidth;
+  const done = () => { if (S.screen !== from) fromEl.hidden = true; [fromEl, toEl].forEach(el => { el.style.transform = el.style.filter = el.style.zIndex = ''; }); onLeave(from); onShown && onShown(); };
+  toEl.style.zIndex = back ? 4 : 6; fromEl.style.zIndex = back ? 6 : 4;
+  const sp = spring(0, 1, t => {
+    const top = back ? fromEl : toEl, under = back ? toEl : fromEl, a = back ? 1 - t : t;
     top.style.transform = `translate3d(${(1 - a) * W}px,0,0)`;
     under.style.transform = `translate3d(${-a * W * .22}px,0,0) scale(${1 - a * .04})`; under.style.filter = `brightness(${1 - a * .45})`;
-  }, { k: 210, c: 27, onDone: done });
+  }, { k: 210, c: 27, onDone: () => { if (trans && trans.sp === sp) trans = null; done(); } });
+  trans = { sp, done };
 }
 function goBack() { const to = stack.pop() || 'camera'; go(to, { back: true }); }
-function onEnter(s) { if (s === 'camera') startCam(); if (s === 'gallery') renderGallery(); if (s === 'blob') openBlob(); if (s === 'editor') requestAnimationFrame(() => layoutEditor()); }
-function onLeave(s) { if (s === 'camera') stopCam(); }
-function sheet(el, open) {
-  if (el._sp) el._sp.stop(); const H = el.offsetHeight + 40; const from = el._open ? 0 : 1; el._open = open;
-  el._sp = spring(from, open ? 0 : 1, v => el.style.transform = `translate3d(0,${v * H}px,0)`, { k: 260, c: 28 });
-}
+function onEnter(s) { if (s === 'camera') startCam(); if (s === 'gallery') renderGallery(); if (s === 'blob') openBlob(); if (s === 'about') renderCamInfo(); if (s === 'editor') requestAnimationFrame(() => layoutEditor()); }
+function onLeave(s) { if (s === 'camera' && S.screen !== 'camera') stopCam(); }
 
-/* =====================================================================
-   Intro
-   ===================================================================== */
-let introEyes, introTimer = [];
-function playIntro(then) {
-  const el = $('#s-intro'), lens = $('#introLens'), wm = $('#wordmark'), sub = $('#introSub');
-  introTimer.forEach(clearTimeout); introTimer = [];
-  wm.innerHTML = 'QAMERA'.split('').map(c => `<span>${c}</span>`).join('');
-  el.hidden = false; el.style.clipPath = ''; el.style.opacity = 1; el.style.zIndex = 50; S.screen = 'intro';
-  if (LOWMO) { finishIntro(then, true); return; }
-  introEyes.set({ open: 0, lookX: 0, lookY: 0, happy: 0 }); introEyes.cur.open = 0; introEyes.idle = false;
-  lens.style.transform = 'scale(.6)'; lens.style.opacity = 0; sub.style.opacity = 0;
-  spring(0, 1, v => { lens.style.transform = `scale(${.6 + .4 * v})`; lens.style.opacity = Math.min(1, v * 1.4); }, { k: 120, c: 13 });
-  const at = (ms, fn) => introTimer.push(setTimeout(fn, ms));
-  at(320, () => introEyes.set({ open: 1 }));
-  at(720, () => introEyes.look(-1, .1));
-  at(1020, () => introEyes.look(1, .1));
-  at(1300, () => { introEyes.look(0, 0); introEyes.blink(); });
-  at(1480, () => { introEyes.set({ happy: 1 }); $$('span', wm).forEach((s, i) => setTimeout(() => spring(0, 1, v => { s.style.opacity = Math.min(1, v); s.style.transform = `translateY(${(1 - v) * 14}px)`; }, { k: 260, c: 18 }), i * 55)); });
-  at(1800, () => spring(0, 1, v => sub.style.opacity = v * .9, { k: 120, c: 20 }));
-  at(2350, () => finishIntro(then));
+/* spodní panely: tah za úchyt dolů = zavřít */
+function sheetH(el) { return el.offsetHeight + 40; }
+function sheet(el, open, v = 0) {
+  if (el._sp) el._sp.stop(); const H = sheetH(el); const from = el._y == null ? H : el._y; el._open = open;
+  if (open) el.style.visibility = 'visible';
+  el._sp = spring(from, open ? 0 : H, y => { el._y = y; el.style.transform = `translate3d(0,${y}px,0)`; }, { k: 260, c: 28, v, onDone: () => { if (!el._open) el.style.visibility = 'hidden'; } });
 }
-let READY = false, pendingFinish = null;
-function finishIntro(then, instant) {
-  if (!READY) { pendingFinish = () => finishIntro(then, instant); return; }
-  introTimer.forEach(clearTimeout); introTimer = [];
-  const el = $('#s-intro'), cam = $('#s-camera');
-  cam.hidden = false; S.screen = 'camera'; startCam(); syncNav();
-  const fin = () => { el.hidden = true; el.style.clipPath = ''; cam.style.transform = ''; introEyes.idle = true; then && then(); };
-  if (instant || LOWMO) { fin(); return; }
-  const r = $('#introLens').getBoundingClientRect(), pr = $('#phone').getBoundingClientRect(), sc = pr.width / $('#phone').offsetWidth;
-  const cx = (r.left + r.width / 2 - pr.left) / sc, cy = (r.top + r.height / 2 - pr.top) / sc;
-  // iris: kamera se otevře z objektivu
-  cam.style.zIndex = 51; cam.style.clipPath = `circle(0px at ${cx}px ${cy}px)`;
-  spring(0, 1, v => { cam.style.clipPath = `circle(${v * 1000}px at ${cx}px ${cy}px)`; cam.style.transform = `scale(${1.08 - .08 * v})`; }, { k: 90, c: 17, onDone: () => { cam.style.clipPath = ''; cam.style.zIndex = ''; fin(); } });
+function sheetDrag(el) {
+  const hs = [el.querySelector('.grab'), el.querySelector('.fhead')].filter(Boolean);
+  hs.forEach(h => {
+    let sy = 0, y0 = 0, ly = 0, lt = 0, v = 0, on = false;
+    h.addEventListener('pointerdown', e => { on = true; h.setPointerCapture(e.pointerId); el._sp && el._sp.stop(); sy = ly = e.clientY; y0 = el._y || 0; lt = performance.now(); v = 0; });
+    h.addEventListener('pointermove', e => { if (!on) return; const sc = el.getBoundingClientRect().height / el.offsetHeight || 1; let dy = (e.clientY - sy) / sc; dy = dy < 0 ? dy * .25 : dy;
+      const now = performance.now(); v = (e.clientY - ly) / sc / Math.max(1, now - lt); ly = e.clientY; lt = now; el._y = y0 + dy; el.style.transform = `translate3d(0,${el._y}px,0)`; });
+    const up = () => { if (!on) return; on = false; const close = el._y > 90 || v > .5; sheet(el, !close, v * 1000); if (close) onSheetClosed(el); };
+    h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+  });
 }
+function onSheetClosed(el) { if (el.id === 'refSheet') setTab(S.tab, true); }
+function closeSheets() { ['#filmSheet', '#menuSheet', '#refSheet'].forEach(s => { const el = $(s); if (el._open) sheet(el, false); }); }
 
 /* =====================================================================
    Kamera
    ===================================================================== */
 let camE, camRaf = 0, camT0 = performance.now(), capturing = null, miniEyes;
-function camParams() {
-  const P = DEF(); P.film = S.film; P.exp = S.ev; P.grain = .5; return P;
-}
+function camParams() { const P = DEF(); P.film = S.film; P.exp = S.ev; return P; }
 function camIso() { const v = ISO_STOPS[S.isoIdx]; return v === 'A' ? FILM[S.film].iso : +v; }
 function startCam() {
-  if (camRaf) return;
+  if (camRaf || !READY) return;
   const loop = (now) => {
     camRaf = requestAnimationFrame(loop);
     const t = (now - camT0) / 1000; drawLive(t);
@@ -1069,7 +1341,7 @@ function startCam() {
     const vf = $('#vf'), dpr = Math.min(2, devicePixelRatio || 1);
     camE.size(Math.round(vf.clientWidth * dpr), Math.round(vf.clientHeight * dpr));
     camE.setSource(LIVE.canvas);
-    camE.render(camParams(), { time: LOWMO ? null : t, zoom: S.zoom, iso: camIso(), gscale: dpr * .75 });
+    camE.render(camParams(), { time: LOWMO ? null : t, zoom: S.zoom, iso: camIso() });
     tickMascots(now);
   };
   camRaf = requestAnimationFrame(loop);
@@ -1077,9 +1349,9 @@ function startCam() {
 function stopCam() { cancelAnimationFrame(camRaf); camRaf = 0; }
 
 function dial(el, stops, idx, size, onChange, slowFrom) {
-  const step = stops.length > 8 ? 33 : 42, R = size / 2 - 14;
-  const lbl = stops.map((s, i) => { const a = i * step; const cls = s === 'A' ? 'a' : (slowFrom != null && i >= slowFrom ? 'slow' : '');
-    return `<g transform="rotate(${a})"><text class="${cls}" x="0" y="${-R + 6}" transform="rotate(0 0 ${-R + 6})">${s}</text></g>`; }).join('');
+  const step = stops.length > 10 ? 27 : stops.length > 8 ? 33 : 42, R = size / 2 - 14;
+  const lbl = stops.map((s, i) => { const cls = s === 'A' ? 'a' : (slowFrom != null && i >= slowFrom ? 'slow' : '');
+    return `<g transform="rotate(${i * step})"><text class="${cls}" x="0" y="${-R + 6}">${s}</text></g>`; }).join('');
   let dots = ''; for (let a = 0; a < 360; a += 6) { const rr = R + 9; dots += `<circle cx="${Math.sin(a * Math.PI / 180) * rr}" cy="${-Math.cos(a * Math.PI / 180) * rr}" r="${a % 18 ? .8 : 1.3}" fill="#6d655c"/>`; }
   el.innerHTML = `<svg width="${size}" height="${size}" viewBox="${-size / 2} ${-size / 2} ${size} ${size}"><circle r="${R + 14}" fill="#0f0e0d" stroke="#24211e"/><g class="rot">${dots}${lbl}</g><circle class="hub" r="${size * .07}"/></svg>`;
   const g = $('.rot', el); let rot = -idx * step, cur = idx, sp = null;
@@ -1091,12 +1363,13 @@ function dial(el, stops, idx, size, onChange, slowFrom) {
   el.addEventListener('pointermove', e => { if (!el.hasPointerCapture(e.pointerId)) return; let a = ang(e), d = a - a0; if (d > 180) d -= 360; if (d < -180) d += 360;
     const now = performance.now(); let da = a - lastA; if (da > 180) da -= 360; if (da < -180) da += 360; vel = da / Math.max(1, now - lastT) * 16; lastA = a; lastT = now;
     rot = clamp(r0 + d, -(stops.length - 1) * step - 12, 12); a0 = a; r0 = rot; apply(); upd(); });
-  el.addEventListener('pointerup', e => { el.style.cursor = ''; const proj = clamp(rot + vel * 6, -(stops.length - 1) * step, 0); const i = Math.round(-proj / step);
+  el.addEventListener('pointerup', () => { el.style.cursor = ''; const proj = clamp(rot + vel * 6, -(stops.length - 1) * step, 0); const i = Math.round(-proj / step);
     sp = spring(rot, -i * step, v => { rot = v; apply(); upd(); }, { k: 220, c: 22, v: vel * 30 }); });
+  el.addEventListener('wheel', e => { e.preventDefault(); const i = clamp(cur + Math.sign(e.deltaY), 0, stops.length - 1); sp && sp.stop(); sp = spring(rot, -i * step, v => { rot = v; apply(); upd(); }, { k: 260, c: 24 }); }, { passive: false });
   return { set(i) { cur = i; rot = -i * step; apply(); } };
 }
 function evStrip() {
-  const el = $('#evStrip'), t = $('#evT'), PX = 27; // 1 EV = 27 px, 1/3 EV = 9 px
+  const el = $('#evStrip'), t = $('#evT'), PX = 27;
   let x = 0, sp = null; const W = () => el.clientWidth;
   const apply = () => { t.style.transform = `translateX(${W() / 2 - 1000 + x}px)`; };
   const set = v => { S.ev = Math.round(clamp(v, -3, 3) * 3) / 3; updLcd(); };
@@ -1107,9 +1380,10 @@ function evStrip() {
     x = clamp(x0 + e.clientX - sx, -3 * PX, 3 * PX); apply(); const before = S.ev; set(-x / PX); if (before !== S.ev) buzz(3); });
   el.addEventListener('pointerup', () => { const tgt = clamp(Math.round((x + vx * 5) / 9) * 9, -3 * PX, 3 * PX); sp = spring(x, tgt, v => { x = v; apply(); set(-x / PX); }, { k: 240, c: 24 }); });
   el.addEventListener('dblclick', () => { sp = spring(x, 0, v => { x = v; apply(); set(-x / PX); }); });
+  el.addEventListener('wheel', e => { e.preventDefault(); sp && sp.stop(); x = clamp(Math.round((x - Math.sign(e.deltaY) * 9) / 9) * 9, -3 * PX, 3 * PX); apply(); set(-x / PX); buzz(3); }, { passive: false });
   return { reset() { x = 0; apply(); set(0); } };
 }
-function fmtEv(v) { if (Math.abs(v) < .01) return '±0'; const s = v > 0 ? '+' : '−', a = Math.abs(v), w = Math.floor(a + 1e-6), fr = Math.round((a - w) * 3); return s + (w || '') + (fr ? (w ? ' ' : '') + ['', '⅓', '⅔'][fr] : '') ; }
+function fmtEv(v) { if (Math.abs(v) < .01) return '±0'; const s = v > 0 ? '+' : '−', a = Math.abs(v), w = Math.floor(a + 1e-6), fr = Math.round((a - w) * 3); return s + (w || '') + (fr ? ['', '⅓', '⅔'][fr] : ''); }
 function updLcd() {
   const iso = ISO_STOPS[S.isoIdx], tm = TIME_STOPS[S.timeIdx], slow = S.timeIdx >= 5;
   $('#lIso').textContent = iso === 'A' ? FILM[S.film].iso : iso;
@@ -1121,7 +1395,7 @@ function updLcd() {
   $('#lModeV').textContent = slow ? SLOW_MODES[S.slowMode] : 'FOTO';
   $('#shutter').classList.toggle('slow', slow);
 }
-function setFilm(code, { from } = {}) {
+function setFilm(code) {
   S.film = code; store.set('film', code); const f = FILM[code];
   $('#chipCode').textContent = code; $('#chipCass').innerHTML = cassette(f); $('#cassBtn').innerHTML = cassette(f);
   $('#fCode').textContent = code; $('#fSub').innerHTML = `${f.sub} · ${f.chem}`; $('#fDesc').textContent = f.desc;
@@ -1141,39 +1415,79 @@ function buildCarousel() {
   c.addEventListener('scroll', () => requestAnimationFrame(upd), { passive: true });
   items.forEach(it => it.addEventListener('click', () => c.scrollTo({ left: it.offsetLeft + it.offsetWidth / 2 - c.clientWidth / 2, behavior: LOWMO ? 'auto' : 'smooth' })));
   c._sync = () => { const it = items.find(i => i.dataset.c === S.film); if (it) c.scrollLeft = it.offsetLeft + it.offsetWidth / 2 - c.clientWidth / 2; upd(); };
+  hscroll(c);
 }
 function openFilmSheet() { sheet($('#filmSheet'), true); requestAnimationFrame(() => $('#carousel')._sync()); }
 
+/* mřížka: zlatý řez, třetiny, zlatá spirála */
+function drawGrid() {
+  const svg = $('#gridOv'), vf = $('#vf'), W = vf.clientWidth, H = vf.clientHeight, m = S.grid;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.classList.toggle('on', m > 0);
+  if (!m) return;
+  const lines = f => [f, 1 - f].map(k => `<line x1="${W * k}" y1="0" x2="${W * k}" y2="${H}"/><line x1="0" y1="${H * k}" x2="${W}" y2="${H * k}"/>`).join('');
+  if (m === 1) { svg.innerHTML = lines(.382); return; }
+  if (m === 2) { svg.innerHTML = lines(1 / 3); return; }
+  let x = 0, y = 0, w = W, h = H, d = '', first = true;
+  for (let i = 0; i < 12; i++) {
+    const s = Math.min(w, h); if (s < 2) break; let c, e, start, sq;
+    switch (i % 4) {
+      case 0: sq = [x, y, s]; start = [x + s, y]; c = [x + s, y + s]; e = [x, y + s]; y += s; h -= s; break;
+      case 1: sq = [x, y, s]; start = [x, y]; c = [x + s, y]; e = [x + s, y + s]; x += s; w -= s; break;
+      case 2: sq = [x, y + h - s, s]; start = [x, y + h]; c = [x, y + h - s]; e = [x + s, y + h - s]; h -= s; break;
+      default: sq = [x + w - s, y, s]; start = [x + w, y + s]; c = [x + w - s, y + s]; e = [x + w - s, y]; w -= s;
+    }
+    if (first) { d += `M${start[0]} ${start[1]}`; first = false; }
+    d += `A${s} ${s} 0 0 0 ${e[0]} ${e[1]}`;
+  }
+  svg.innerHTML = `<path class="gold" d="${d}"/>`;
+}
+
 function shoot() {
   if (capturing) return;
-  if (S.timer) { let n = 3; const el = $('#count'); el.hidden = false; el.textContent = n; buzz(10);
+  if (S.timer) { let n = S.timer; const el = $('#count'); el.hidden = false; el.textContent = n; buzz(10);
     const iv = setInterval(() => { n--; if (n <= 0) { clearInterval(iv); el.hidden = true; capture(); } else { el.textContent = n; buzz(10); } }, 1000);
     spring(1.4, 1, v => el.style.transform = `scale(${v})`); return; }
   capture();
 }
-function capture() {
+async function capture() {
   const slow = S.timeIdx >= 5, dur = SLOW_MS[S.timeIdx] || 0;
   miniEyes.blink(); buzz(12);
-  if (!slow) { finishCapture(copyCanvas(LIVE.canvas)); return; }
-  const acc = mk(LIVE.w, LIVE.h), g = acc.getContext('2d'), first = copyCanvas(LIVE.canvas); let n = 0; const t0 = performance.now();
-  $('#slowBar').hidden = false; $('#slowTxt').textContent = SLOW_MODES[S.slowMode] + ' · ' + (dur >= 1000 ? dur / 1000 + ' s' : (dur === 500 ? '½ s' : '¼ s'));
+  let torch = false;
+  if (S.flash) { if (CAM.live && CAM.caps.torch) { torch = await setTorch(true); await new Promise(r => setTimeout(r, 350)); }
+    else if (CAM.live && CAM.facing === 'user') { const fl = $('#flash'); fl.style.opacity = 1; await new Promise(r => setTimeout(r, 300)); } }
+  if (!slow) { const src = CAM.live && CAM.video ? videoFrame() : copyCanvas(LIVE.canvas); if (torch) setTorch(false); finishCapture(src); return; }
+  /* slow shutter / long exposure: snímky se sčítají ve float přesnosti (průměr = pohyb a hedvábí, maximum = světelné stopy).
+     Hedvábí navíc vrací ostrost tam, kde se nic nehýbe (malý rozptyl mezi snímky). Až 15 s → stovky snímků bez pruhování. */
+  const w = LIVE.w, h = LIVE.h, N = w * h * 4, sum = new Float32Array(N), mx = new Float32Array(N), sq = S.slowMode === 2 ? new Float32Array(N) : null;
+  const tmp = mk(w, h), tg = tmp.getContext('2d', { willReadFrequently: true }), first = copyCanvas(LIVE.canvas); let n = 0, lastS = 0; const t0 = performance.now(), mode = S.slowMode;
+  $('#slowBar').hidden = false;
+  if (dur >= 4000) toast('Dlouhá expozice: drž telefon v klidu nebo ho o něco opři');
   capturing = { step(now) {
-    const k = clamp((now - t0) / dur, 0, 1); n++;
-    if (S.slowMode === 0) { g.globalCompositeOperation = n === 1 ? 'source-over' : 'lighten'; g.drawImage(LIVE.canvas, 0, 0); }
-    else { g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1 / n; g.drawImage(LIVE.canvas, 0, 0); g.globalAlpha = 1; }
+    const k = clamp((now - t0) / dur, 0, 1);
+    if (now - lastS >= 30 || k >= 1) { lastS = now; n++; tg.drawImage(LIVE.canvas, 0, 0); const d = tg.getImageData(0, 0, w, h).data;
+      for (let i = 0; i < N; i++) { const v = d[i]; sum[i] += v; if (v > mx[i]) mx[i] = v; if (sq) sq[i] += v * v; } }
+    $('#slowTxt').textContent = `${SLOW_MODES[mode]} · ${dur >= 2000 ? Math.ceil((dur - (now - t0)) / 1000) + ' s' : fmtDur(dur)}`;
     $('#slowProg').style.width = k * 100 + '%'; $('#shutRing').style.strokeDashoffset = 270.2 * (1 - k);
-    if (k >= 1) { capturing = null; if (S.slowMode === 2) { g.globalAlpha = .35; g.drawImage(first, 0, 0); g.globalAlpha = 1; }
-      $('#slowBar').hidden = true; $('#shutRing').style.strokeDashoffset = 270.2; finishCapture(acc); }
+    if (k >= 1) { capturing = null;
+      const out = mk(w, h), og = out.getContext('2d'), id = og.createImageData(w, h), o = id.data, fd = first.getContext('2d').getImageData(0, 0, w, h).data;
+      for (let i = 0; i < N; i += 4) {
+        for (let c = 0; c < 3; c++) { const j = i + c, avg = sum[j] / n;
+          if (mode === 0) o[j] = Math.max(avg, mx[j] * .96);
+          else if (mode === 1) o[j] = avg;
+          else { const vr = Math.max(0, sq[j] / n - avg * avg), still = Math.exp(-vr / 90); o[j] = avg + (fd[j] - avg) * still * .85; } }
+        o[i + 3] = 255; }
+      og.putImageData(id, 0, 0);
+      $('#slowBar').hidden = true; $('#shutRing').style.strokeDashoffset = 270.2; if (torch) setTorch(false); finishCapture(out); }
   } };
 }
+function videoFrame() { const v = CAM.video, c = mk(v.videoWidth, v.videoHeight), g = c.getContext('2d'); if (CAM.facing === 'user') { g.translate(c.width, 0); g.scale(-1, 1); } g.drawImage(v, 0, 0); return c; }
 function copyCanvas(src) { const c = mk(src.width, src.height); c.getContext('2d').drawImage(src, 0, 0); return c; }
 function finishCapture(src) {
   const fl = $('#flash'), ir = $('#iris');
-  if (S.flash) spring(1, 0, v => fl.style.opacity = v * .9, { k: 60, c: 14 });
+  if (S.flash || +fl.style.opacity > 0) spring(+fl.style.opacity || 1, 0, v => fl.style.opacity = v * .9, { k: 60, c: 14 });
   spring(1, 0, v => ir.style.opacity = v * .85, { k: 160, c: 22 });
   const P = DEF(); P.film = S.film; P.exp = S.ev;
-  const ph = addPhoto(src, P, LIVE.facing === 'front' ? 'zapad' : 'mesto', ['noc', 'ulice'], true);
-  // miniatura letí do galerie
+  const ph = addPhoto(src, P, CAM.live ? 'live' : LIVE.facing === 'front' ? 'zapad' : 'mesto', CAM.live ? ['kamera'] : ['noc', 'ulice'], true);
   const vf = $('#vf'), gb = $('#galBtn'), phone = $('#phone'), sc = phone.getBoundingClientRect().width / phone.offsetWidth;
   const a = vf.getBoundingClientRect(), b = gb.getBoundingClientRect(), pr = phone.getBoundingClientRect();
   const fly = document.createElement('img'); fly.src = ph.thumb;
@@ -1182,6 +1496,21 @@ function finishCapture(src) {
   const R = (r) => ({ x: (r.left - pr.left) / sc, y: (r.top - pr.top) / sc, w: r.width / sc, h: r.height / sc }), A = R(a), B = R(b);
   spring(0, 1, t => { const x = lerp(A.x, B.x, t), y = lerp(A.y, B.y, t) - Math.sin(t * Math.PI) * 40, w = lerp(A.w, B.w, t), h = lerp(A.h, B.h, t);
     Object.assign(fly.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px', borderRadius: lerp(26, 16, t) + 'px' }); }, { k: 120, c: 18, onDone: () => { fly.remove(); $('#galThumb').src = ph.thumb; spring(.85, 1, v => gb.style.transform = `scale(${v})`, { k: 300, c: 12 }); } });
+}
+async function setZoom(z) {
+  $$('#zoomGrp button').forEach(x => x.classList.toggle('on', +x.dataset.z === z)); buzz(4);
+  if (CAM.live) {
+    const c = CAM.caps.zoom;
+    if (z < 1) {
+      if (c && c.min <= .55) { try { await CAM.track.applyConstraints({ advanced: [{ zoom: Math.max(c.min, .5) }] }); } catch {} S.zoom = 1; return; }
+      const ultra = CAM.devices.find(d => /ultra|0[.,]5|širok/i.test(d.label) && !/front|přední|user/i.test(d.label));
+      if (ultra) { CAM.deviceId = ultra.deviceId; CAM.ultra = true; await liveOn(); S.zoom = 1; return; }
+      toast('Ultraširokáč tenhle prohlížeč nezpřístupnil'); $$('#zoomGrp button').forEach(x => x.classList.toggle('on', x.dataset.z === '1')); return;
+    }
+    if (CAM.ultra) { CAM.deviceId = null; CAM.ultra = false; await liveOn(); }
+    if (CAM.caps.zoom && CAM.caps.zoom.max >= z) { try { await CAM.track.applyConstraints({ advanced: [{ zoom: Math.max(CAM.caps.zoom.min, z) }] }); S.zoom = 1; return; } catch {} }
+  } else if (z < 1) toast('V DEMO režimu jen ukázka; na telefonu přepne objektiv');
+  spring(S.zoom, Math.max(1, z), v => S.zoom = v, { k: 160, c: 22 });
 }
 
 /* =====================================================================
@@ -1195,10 +1524,10 @@ function addPhoto(src, P, kind, tags, fresh) {
 }
 function rethumb(ph) { const o = utilRender(ph.src, ph.P, 300, Math.round(300 / (ph.src.width / ph.src.height)), {}); ph.thumb = o.toDataURL('image/jpeg', .85); ph.film = ph.P.film; }
 function seedPhotos() {
-  const list = [['plaz', 720, 900, 'G200', ['léto', 'moře', 'modrá', 'červená']], ['les', 720, 960, '400H', ['les', 'zelená', 'ráno']], ['zapad', 900, 720, 'P400', ['západ', 'moře', 'oranžová']],
-    ['hory', 720, 960, 'VEL', ['hory', 'růžová', 'fialová']], ['kvet', 720, 720, 'E100', ['květina', 'růžová', 'zelená']], ['mesto', 720, 960, 'V3-500T', ['noc', 'ulice', 'praha']],
-    ['plaz', 720, 960, 'P160', ['léto', 'moře']], ['hory', 900, 600, 'EC100', ['hory', 'modrá']], ['les', 720, 900, 'SX400', ['les', 'zelená']], ['zapad', 720, 960, 'KC64', ['západ', 'červená']]];
-  list.reverse().forEach(([k, w, h, f, tags], i) => { const P = DEF(); P.film = f; P.grain = .4; const ph = addPhoto(drawScene(k, w, h, 100 + i * 7), P, k, tags); ph.date = new Date(2026, 9, 12 - i); });
+  const list = [['plaz', 720, 900, 'G200', ['léto', 'moře', 'modrá', 'červená'], 14, 32], ['les', 720, 960, '400H', ['les', 'zelená', 'ráno'], 7, 12], ['zapad', 900, 720, 'P400', ['západ', 'moře', 'oranžová'], 19, 48],
+    ['hory', 720, 960, 'VEL', ['hory', 'růžová', 'fialová'], 6, 21], ['kvet', 720, 720, 'E100', ['květina', 'růžová', 'zelená'], 11, 5], ['mesto', 720, 960, 'V3-500T', ['noc', 'ulice', 'praha'], 22, 17],
+    ['plaz', 720, 960, 'P160', ['léto', 'moře'], 16, 40], ['hory', 900, 600, 'EC100', ['hory', 'modrá'], 9, 3], ['les', 720, 900, 'SX400', ['les', 'zelená'], 13, 27], ['zapad', 720, 960, 'KC64', ['západ', 'červená'], 20, 2]];
+  list.reverse().forEach(([k, w, h, f, tags, hh, mm], i) => { const P = DEF(); P.film = f; const ph = addPhoto(drawScene(k, w, h, 100 + i * 7), P, k, tags); ph.date = new Date(2026, 9, 12 - i, hh, mm); });
   $('#galThumb').src = S.photos[0].thumb;
 }
 const ROLLS = [
@@ -1224,11 +1553,12 @@ function filterGallery() {
 /* =====================================================================
    Editor
    ===================================================================== */
-let edE, edRaf = 0, before = false, ruler = null;
+let edE, edRaf = 0, before = false;
+const PANEL_H = 186;
 function openEditor(ph, fromImg) {
-  S.cur = ph; S.P = JSON.parse(JSON.stringify(ph.P)); S.hist = []; S.fut = [];
+  S.cur = ph; S.P = JSON.parse(JSON.stringify(ph.P)); S.cur._last = JSON.parse(JSON.stringify(ph.P)); S.hist = []; S.fut = [];
   edE.setSource(ph.src);
-  go('editor', { onShown: () => {} });
+  go('editor');
   setTab(S.tab, true);
   requestAnimationFrame(() => { layoutEditor(); if (fromImg) sharedFly(fromImg, $('#eWrap')); });
 }
@@ -1240,140 +1570,182 @@ function sharedFly(img, target) {
   spring(0, 1, t => { const B = R(target.getBoundingClientRect()); Object.assign(fly.style, { left: lerp(A.x, B.x, t) + 'px', top: lerp(A.y, B.y, t) + 'px', width: lerp(A.w, B.w, t) + 'px', height: lerp(A.h, B.h, t) + 'px', borderRadius: lerp(16, 6, t) + 'px' }); },
     { k: 170, c: 22, onDone: () => { target.style.opacity = 1; fly.remove(); } });
 }
+/* rozměr plátna se mění jen když je to opravdu potřeba a hned se překreslí – žádné problikávání */
 function layoutEditor() {
   if (!S.cur) return;
-  const box = $('#ePhoto'), W = box.clientWidth - 24, H = box.clientHeight - 16; const cr = S.P.crop, ar = cr.ar || S.cur.src.width / S.cur.src.height;
+  const box = $('#ePhoto'), W = box.clientWidth - 24, H = box.clientHeight - 12; const cr = S.P.crop, ar = cr.ar || S.cur.src.width / S.cur.src.height;
+  if (W <= 0 || H <= 0) return;
   let w = W, h = W / ar; if (h > H) { h = H; w = H * ar; }
   const wrap = $('#eWrap'); wrap.style.width = w + 'px'; wrap.style.height = h + 'px';
-  const dpr = Math.min(2, devicePixelRatio || 1); edE.size(Math.round(w * dpr), Math.round(h * dpr));
-  renderEd();
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  if (edE.size(Math.round(w * dpr), Math.round(h * dpr))) renderEd(true); else renderEd();
   if (S.tab === 'crop') placeCropBox();
 }
-function renderEd() {
-  if (edRaf) return;
-  edRaf = requestAnimationFrame(() => { edRaf = 0; if (!S.cur) return; const cr = S.P.crop;
-    edE.render(S.P, { bypass: before, zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180, transfer: S.P.tr ? transferFor() : null, gscale: Math.min(2, devicePixelRatio || 1) * .8 });
-    if (S.adv) drawHist(); if (S.view === 'pc') renderPc(); });
+function edOpts(extra = {}) { const cr = S.P.crop; return { bypass: before, zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180, transfer: S.P.tr ? transferFor() : null, ...extra }; }
+function renderEd(now) {
+  const run = () => { edRaf = 0; if (!S.cur) return; edE.render(S.P, edOpts()); if (S.adv) drawHist(); if (S.view === 'pc') renderPc(); };
+  if (now) { cancelAnimationFrame(edRaf); run(); return; }
+  if (edRaf) return; edRaf = requestAnimationFrame(run);
 }
 let refStats = null, refSrc = null;
 function transferFor() { if (!refStats) { refSrc = drawScene('plaz', 320, 400, 5); refStats = stats(utilRender(refSrc, Object.assign(DEF(), { film: 'VEL', grain: 0 }), 160, 200)); }
   const s = S.cur._stats || (S.cur._stats = stats(S.cur.src)); return { k: S.P.tr, ms: s.m, ss: s.s, mr: refStats.m, sr: refStats.s }; }
 function commit() { S.hist.push(JSON.stringify(S.cur._last || S.cur.P)); if (S.hist.length > 60) S.hist.shift(); S.fut = []; S.cur._last = JSON.parse(JSON.stringify(S.P)); S.cur.P = JSON.parse(JSON.stringify(S.P)); rethumb(S.cur); }
-function undo() { if (!S.hist.length) return toast('Není co vracet'); S.fut.push(JSON.stringify(S.P)); S.P = JSON.parse(S.hist.pop()); S.cur.P = JSON.parse(JSON.stringify(S.P)); S.cur._last = JSON.parse(JSON.stringify(S.P)); afterHistory(); }
-function redo() { if (!S.fut.length) return; S.hist.push(JSON.stringify(S.P)); S.P = JSON.parse(S.fut.pop()); S.cur.P = JSON.parse(JSON.stringify(S.P)); S.cur._last = JSON.parse(JSON.stringify(S.P)); afterHistory(); }
-function afterHistory() { rethumb(S.cur); setTab(S.tab, true); layoutEditor(); if (S.view === 'pc') buildPcRight(); }
+function undo() { if (!S.hist.length) return toast('Není co vracet'); S.fut.push(JSON.stringify(S.P)); S.P = JSON.parse(S.hist.pop()); syncCur(); }
+function redo() { if (!S.fut.length) return; S.hist.push(JSON.stringify(S.P)); S.P = JSON.parse(S.fut.pop()); syncCur(); }
+function syncCur() { S.cur.P = JSON.parse(JSON.stringify(S.P)); S.cur._last = JSON.parse(JSON.stringify(S.P)); rethumb(S.cur); setTab(S.tab, true); layoutEditor(); renderEd(true); if (S.view === 'pc') buildPcRight(); }
+function resetAll() { const film = S.P.film, crop = S.P.crop; S.P = DEF(); S.P.film = film; S.P.crop = crop; commit(); S.cur._last = JSON.parse(JSON.stringify(S.P)); setTab(S.tab, true); renderEd(true); if (S.view === 'pc') buildPcRight(); toast(`Úpravy vrácené na výchozí ${film}`); buzz(8); }
 
-/* posuvník „pravítko“ (Prequel) */
+/* pravítko (Prequel): tiky s čísly, žlutě vyplněný rozsah od výchozí hodnoty, setrvačnost a cvaknutí */
 function makeRuler(el, { min, max, step, value, label, fmt, onInput, onEnd, def = 0 }) {
-  const PX = 8; el.innerHTML = `<div class="rv"></div><div class="rl">${label}</div><div class="tr"><div class="tk"></div><div class="z"></div><i class="m"></i></div>`;
-  const tr = $('.tr', el), tk = $('.tk', el), z = $('.z', el), rv = $('.rv', el), n = Math.round((max - min) / step);
-  tk.style.width = n * PX + 2 + 'px';
+  const PX = 7, n = Math.round((max - min) / step), major = n <= 130 ? 5 : 10, nums = n <= 130 ? 20 : 50, di = Math.round((def - min) / step);
+  el.innerHTML = `<div class="rv"></div><div class="rl">${label}</div><div class="tr"><div class="rail"><div class="tk"></div><div class="tf"></div><div class="nums"></div></div><i class="m"></i></div>`;
+  const tr = $('.tr', el), rail = $('.rail', el), tk = $('.tk', el), tf = $('.tf', el), rv = $('.rv', el);
+  const mo = (di % major) * PX;
+  tk.style.width = n * PX + 2 + 'px'; tk.style.backgroundSize = `${PX}px 8px, ${PX * major}px 16px`; tk.style.setProperty('--mo', mo + 'px');
+  let nh = ''; for (let i = 0; i <= n; i++) if ((i - di) % nums === 0) nh += `<span class="${i === di ? 'z' : ''}" style="left:${i * PX + .5}px">${fmt(min + i * step)}</span>`;
+  $('.nums', el).innerHTML = nh;
+  tf.style.backgroundSize = `${PX}px 8px, ${PX * major}px 16px`;
   let v = value, sp = null;
-  const draw = () => { const W = tr.clientWidth, x = W / 2 - (v - min) / step * PX; tk.style.transform = `translateX(${x}px)`; z.style.left = (x + (def - min) / step * PX) + 'px'; rv.textContent = fmt(v); };
-  const setV = (nv, user) => { const old = Math.round(v / step); v = clamp(nv, min, max); if (user && Math.round(v / step) !== old && Math.round(v / step) % 5 === 0) buzz(3); draw(); onInput(Math.round(v / step) * step); };
+  const draw = () => { const W = tr.clientWidth, vi = (v - min) / step, x = W / 2 - vi * PX; rail.style.transform = `translate3d(${x}px,0,0)`;
+    const a = Math.min(vi, di), b = Math.max(vi, di), l = Math.round(a) * PX; tf.style.left = l + 'px'; tf.style.width = Math.max(0, (Math.round(b) - Math.round(a)) * PX + 2) + 'px';
+    tf.style.backgroundPosition = `${-l}px 100%, ${mo - l}px 100%`; rv.textContent = fmt(v); };
+  const setV = (nv, user) => { const old = Math.round((v - min) / step); v = clamp(nv, min, max); const ni = Math.round((v - min) / step); if (user && ni !== old && (ni - di) % major === 0) buzz(3); draw(); onInput(min + ni * step); };
   let sx = 0, v0 = 0, lx = 0, lt = 0, vel = 0;
   tr.addEventListener('pointerdown', e => { tr.setPointerCapture(e.pointerId); sp && sp.stop(); sx = lx = e.clientX; v0 = v; lt = performance.now(); vel = 0; });
   tr.addEventListener('pointermove', e => { if (!tr.hasPointerCapture(e.pointerId)) return; const now = performance.now(); vel = (e.clientX - lx) / Math.max(1, now - lt) * 16; lx = e.clientX; lt = now; setV(v0 - (e.clientX - sx) / PX * step, true); });
-  tr.addEventListener('pointerup', () => { const tgt = clamp(Math.round((v - vel * 4 / PX * step) / step) * step, min, max); sp = spring(v, tgt, x => setV(x), { k: 200, c: 24, onDone: onEnd }); });
-  tr.addEventListener('dblclick', () => { sp = spring(v, def, x => setV(x), { onDone: onEnd }); });
-  tr.addEventListener('wheel', e => { e.preventDefault(); setV(v + Math.sign(e.deltaY + e.deltaX) * step, true); clearTimeout(tr._w); tr._w = setTimeout(onEnd, 300); }, { passive: false });
+  tr.addEventListener('pointerup', () => { const tgt = clamp(Math.round((v - vel * 4 / PX * step - min) / step) * step + min, min, max); sp = spring(v, tgt, x => setV(x), { k: 200, c: 24, onDone: onEnd }); });
+  tr.addEventListener('dblclick', () => { sp && sp.stop(); sp = spring(v, def, x => setV(x), { onDone: onEnd }); });
+  tr.addEventListener('wheel', e => { e.preventDefault(); sp && sp.stop(); setV(v + Math.sign(e.deltaY + e.deltaX) * step * (e.shiftKey ? 5 : 1), true); clearTimeout(tr._w); tr._w = setTimeout(onEnd, 300); }, { passive: false });
   requestAnimationFrame(draw);
   return { set(nv) { v = nv; draw(); } };
 }
-const pct = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(Math.round(v * 100));
+const sgn = v => (v > 0 ? '+' : v < 0 ? '−' : '');
+const pct = v => sgn(Math.round(v * 100)) + Math.abs(Math.round(v * 100));
 const ADJ = [
-  { k: 'exp', l: 'Expozice', ic: 'eye', min: -3, max: 3, step: .05, f: v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(2).replace('.', ',') },
-  { k: 'temp', l: 'Teplota', ic: 'flash', min: -1, max: 1, step: .01, f: pct },
+  { k: 'exp', l: 'Expozice', ic: 'sun', min: -3, max: 3, step: .05, f: v => sgn(Math.round(v * 100)) + Math.abs(v).toFixed(2).replace('.', ',') },
+  { k: 'temp', l: 'Teplota', ic: 'temp', min: -1, max: 1, step: .01, f: pct },
   { k: 'tint', l: 'Odstín', ic: 'magic', min: -1, max: 1, step: .01, f: pct },
   { k: 'con', l: 'Kontrast', ic: 'info', min: -1, max: 1, step: .01, f: pct },
   { k: 'sat', l: 'Saturace', ic: 'blob', min: -1, max: 1, step: .01, f: pct },
-  { k: 'grain', l: 'Zrno', ic: 'dust', min: 0, max: 1.5, step: .01, f: v => Math.round(v * 100), def: .45 },
-  { k: 'hal', l: 'Halace', ic: 'leak', min: 0, max: 3, step: .02, f: v => Math.round(v * 100), def: 1 },
-  { k: 'vig', l: 'Vinětace', ic: 'border', min: 0, max: 1, step: .01, f: v => Math.round(v * 100), def: .25 },
-  { k: 'fade', l: 'Vybledlost', ic: 'depth', min: 0, max: 1, step: .01, f: v => Math.round(v * 100) },
+  { k: 'grain', l: 'Grain', ic: 'grain', min: 0, max: 1.5, step: .01, f: v => Math.round(v * 100), def: .5 },
+  { k: 'hal', l: 'Halation', ic: 'halo', min: 0, max: 3, step: .02, f: v => Math.round(v * 100), def: 1 },
+  { k: 'bloom', l: 'Bloom', ic: 'bloom', min: 0, max: 1.5, step: .01, f: v => Math.round(v * 100), def: .15 },
+  { k: 'vig', l: 'Vignette', ic: 'border', min: 0, max: 1, step: .01, f: v => Math.round(v * 100), def: .25 },
+  { k: 'fade', l: 'Fade', ic: 'depth', min: 0, max: 1, step: .01, f: v => Math.round(v * 100) },
+  { k: 'sharp', l: 'Ostrost', ic: 'sharp', min: 0, max: 1.5, step: .01, f: v => Math.round(v * 100) },
 ];
+const grainPills = () => Object.entries(GRAINS).map(([k, g]) => `<button class="gpill ${gtypeOf(S.P) === k ? 'on' : ''}" data-g="${k}" title="${g.d}">${g.l}</button>`).join('');
+function bindGrainPills(root, after) { $$('.gpill', root).forEach(b => b.onclick = () => { S.P.gtype = b.dataset.g; $$('.gpill', root).forEach(x => x.classList.toggle('on', x === b)); renderEd(); commit(); buzz(4); toast(`Grain ${GRAINS[b.dataset.g].l}: ${GRAINS[b.dataset.g].d}`); after && after(); }); }
 function setTab(t, quiet) {
   S.tab = t; $$('#eTabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
-  const p = $('#ePanel'); $('#cropLayer').hidden = t !== 'crop'; $('#eHint').hidden = t === 'crop';
-  if (S.adv) { renderAdv(); sizePanel(); return; }
+  const p = $('#ePanel'); $('#cropLayer').hidden = t !== 'crop' || S.adv; $('#eHint').hidden = t === 'crop';
+  if (S.adv) { renderAdv(); sizePanel(quiet); return; }
   if (t === 'film') {
     p.innerHTML = `<div class="ruler" id="strR"></div><div class="strip" id="fStrip">${FILMS.map(f => `<button class="fthumb ${f.code === S.P.film ? 'on' : ''}" data-c="${f.code}"><canvas width="128" height="160"></canvas><span>${f.code}</span></button>`).join('')}</div>`;
     makeRuler($('#strR'), { min: 0, max: 1, step: .01, value: S.P.str, label: 'Síla filmu · ' + S.P.film, fmt: v => Math.round(v * 100), def: 1, onInput: v => { S.P.str = v; renderEd(); }, onEnd: commit });
-    drawFilmThumbs();
+    drawFilmThumbs(); hscroll($('#fStrip'));
     $$('.fthumb').forEach(b => b.onclick = () => { S.P.film = b.dataset.c; $$('.fthumb').forEach(x => x.classList.toggle('on', x === b)); $('#strR .rl').textContent = 'Síla filmu · ' + S.P.film; renderEd(); commit(); buzz(4);
       spring(.9, 1, v => b.querySelector('canvas').style.transform = `scale(${v})`, { k: 300, c: 14 }); });
-    requestAnimationFrame(() => { const on = $('.fthumb.on'); on && on.scrollIntoView({ inline: 'center', block: 'nearest' }); });
+    requestAnimationFrame(() => { const on = $('.fthumb.on'), s = $('#fStrip'); if (on && s) s.scrollLeft = on.offsetLeft - s.clientWidth / 2 + on.offsetWidth / 2; });
   } else if (t === 'adj') {
     const a = ADJ.find(x => x.k === S.adjKey);
-    p.innerHTML = `<div class="ruler" id="adjR"></div><div class="chips">${ADJ.map(x => `<button class="chip ${x.k === S.adjKey ? 'on' : ''} ${Math.abs(S.P[x.k] - (x.def || 0)) > .001 ? 'mod' : ''}" data-k="${x.k}">${iconSVG(x.ic)}${x.l}</button>`).join('')}</div>`;
+    const ctx = a.k === 'grain' ? `<div class="gt hs" id="gtRow">${grainPills()}</div>` : `<small>Dvojklik na stupnici vrátí výchozí hodnotu</small>`;
+    p.innerHTML = `<div class="ctx">${ctx}<button class="resetbtn" id="resetAll">${iconSVG('reset')}Vše</button></div><div class="ruler" id="adjR"></div><div class="chips" id="chipRow">${ADJ.map(x => `<button class="chip ${x.k === S.adjKey ? 'on' : ''} ${Math.abs(S.P[x.k] - (x.def || 0)) > .001 ? 'mod' : ''}" data-k="${x.k}">${iconSVG(x.ic)}${x.l}</button>`).join('')}</div>`;
     makeRuler($('#adjR'), { min: a.min, max: a.max, step: a.step, value: S.P[a.k], label: a.l, fmt: a.f, def: a.def || 0, onInput: v => { S.P[a.k] = v; renderEd(); $(`.chip[data-k="${a.k}"]`).classList.toggle('mod', Math.abs(v - (a.def || 0)) > .001); }, onEnd: commit });
-    $$('.chip', p).forEach(b => b.onclick = () => { S.adjKey = b.dataset.k; setTab('adj'); });
+    $$('.chip', p).forEach(b => b.onclick = () => { const sl = $('#chipRow').scrollLeft; S.adjKey = b.dataset.k; setTab('adj', true); $('#chipRow').scrollLeft = sl; });
+    $('#resetAll').onclick = resetAll; hscroll($('#chipRow')); if ($('#gtRow')) { hscroll($('#gtRow')); bindGrainPills($('#gtRow')); }
   } else if (t === 'crop') {
     const ars = [['ORIG', 0], ['1:1', 1], ['4:5', .8], ['3:2', 1.5], ['16:9', 16 / 9], ['9:16', 9 / 16]];
-    p.innerHTML = `<div class="ruler" id="rotR"></div><div class="aspects">${ars.map(([l, v]) => `<button data-a="${v}" class="${S.P.crop.ar === v ? 'on' : ''}">${l}</button>`).join('')}<button id="cropReset">RESET</button></div>`;
-    makeRuler($('#rotR'), { min: -45, max: 45, step: .5, value: S.P.crop.rot, label: 'Narovnání', fmt: v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1).replace('.', ',') + '°', onInput: v => { S.P.crop.rot = v; fitCrop(); renderEd(); }, onEnd: commit });
+    p.innerHTML = `<div style="height:16px"></div><div class="ruler" id="rotR"></div><div class="aspects" id="aspRow">${ars.map(([l, v]) => `<button data-a="${v}" class="${S.P.crop.ar === v ? 'on' : ''}">${l}</button>`).join('')}<button id="cropReset">RESET</button></div>`;
+    makeRuler($('#rotR'), { min: -45, max: 45, step: .5, value: S.P.crop.rot, label: 'Narovnání', fmt: v => sgn(v) + Math.abs(v).toFixed(1).replace('.', ',') + '°', onInput: v => { S.P.crop.rot = v; fitCrop(); renderEd(); }, onEnd: commit });
     $$('.aspects [data-a]').forEach(b => b.onclick = () => { $$('.aspects [data-a]').forEach(x => x.classList.toggle('on', x === b)); const from = S.P.crop.ar || S.cur.src.width / S.cur.src.height, to = +b.dataset.a || S.cur.src.width / S.cur.src.height;
       spring(0, 1, t => { S.P.crop.ar = lerp(from, to, t); layoutEditor(); }, { k: 200, c: 24, onDone: () => { S.P.crop.ar = +b.dataset.a; fitCrop(); layoutEditor(); commit(); } }); });
-    $('#cropReset').onclick = () => { S.P.crop = { ar: 0, s: 1, x: 0, y: 0, rot: 0 }; setTab('crop'); layoutEditor(); commit(); };
-    requestAnimationFrame(placeCropBox);
+    $('#cropReset').onclick = () => { S.P.crop = { ar: 0, s: 1, x: 0, y: 0, rot: 0 }; setTab('crop', true); layoutEditor(); commit(); };
+    hscroll($('#aspRow')); requestAnimationFrame(placeCropBox);
   } else if (t === 'fx') {
-    const fx = [['ref', 'Reference', 'NOVÉ'], ['blob', 'Blob karta', ''], ['leak', 'Light leak', ''], ['dust', 'Prach', ''], ['depth', 'Hloubka', 'FÁZE 7'], ['date', 'Datumovka', 'FÁZE 7'], ['border', 'Okraje', 'FÁZE 7'], ['sliders', 'Ostrost', '']];
-    p.innerHTML = `<div class="fx">${fx.map(([k, l, e]) => `<button data-fx="${k}" class="${(k === 'leak' && S.P.leak) || (k === 'dust' && S.P.dust) || (k === 'sliders' && S.P.sharp) || (k === 'ref' && S.P.tr) ? 'on' : ''}">${iconSVG(k)}${l}${e ? `<em>${e}</em>` : ''}</button>`).join('')}</div>`;
+    const fx = [['ref', 'Reference', 'NOVÉ'], ['blob', 'Blob karta', ''], ['bloom', 'Bloom', ''], ['grain', 'Grain', ''], ['sharp', 'Ostrost', ''], ['depth', 'Hloubka', 'FÁZE 7'], ['date', 'Datumovka', 'FÁZE 7'], ['border', 'Okraje', 'FÁZE 7']];
+    const on = k => (k === 'bloom' && S.P.bloom > .3) || (k === 'sharp' && S.P.sharp) || (k === 'ref' && S.P.tr);
+    p.innerHTML = `<div class="fx">${fx.map(([k, l, e]) => `<button data-fx="${k}" class="${on(k) ? 'on' : ''}">${iconSVG(k)}${l}${e ? `<em>${e}</em>` : ''}</button>`).join('')}</div>`;
     $$('[data-fx]', p).forEach(b => b.onclick = () => fxClick(b));
   }
-  if (!quiet) sizePanel(); else sizePanel(true);
+  sizePanel(quiet);
 }
 function fxClick(b) {
   const k = b.dataset.fx;
   if (k === 'ref') { openRef(); return; }
   if (k === 'blob') { S.blobFrom = S.cur; go('blob'); return; }
-  if (k === 'leak') { S.P.leak = S.P.leak ? 0 : .6; }
-  else if (k === 'dust') { S.P.dust = S.P.dust ? 0 : 1; }
-  else if (k === 'sliders') { S.P.sharp = S.P.sharp ? 0 : .6; }
+  if (k === 'grain') { S.adjKey = 'grain'; setTab('adj'); return; }
+  if (k === 'bloom') S.P.bloom = S.P.bloom > .3 ? .15 : .7;
+  else if (k === 'sharp') S.P.sharp = S.P.sharp ? 0 : .6;
   else { toast('Hloubka, datumovka a okraje přijdou ve fázi 7'); return; }
   b.classList.toggle('on'); renderEd(); commit(); buzz(5);
 }
 function drawFilmThumbs() {
-  const src = S.cur.src, P = JSON.parse(JSON.stringify(S.P)); P.str = 1; P.crop = DEF().crop;
-  $$('.fthumb').forEach((b, i) => { const c = b.querySelector('canvas'); P.film = b.dataset.c; const o = utilRender(src, P, 128, 160, {}); c.getContext('2d').drawImage(o, 0, 0); });
+  const src = S.cur.src, P = JSON.parse(JSON.stringify(S.P)); P.str = 1; P.crop = DEF().crop; P.gtype = null;
+  $$('.fthumb').forEach(b => { const c = b.querySelector('canvas'); P.film = b.dataset.c; c.getContext('2d').drawImage(utilRender(src, P, 128, 160, {}), 0, 0); });
 }
 let panelSp = null;
 function sizePanel(instant) {
-  const p = $('#ePanel'), phoneH = $('#phone').clientHeight; const target = S.adv ? Math.round(phoneH * .47) : { film: 168, adj: 162, crop: 118, fx: 178 }[S.tab];
+  const p = $('#ePanel'), phoneH = $('#phone').clientHeight, target = S.adv ? Math.round(phoneH * .47) : PANEL_H;
   const from = p.offsetHeight; panelSp && panelSp.stop();
+  if (from === target) return;
   if (instant || !from) { p.style.height = target + 'px'; layoutEditor(); return; }
   panelSp = spring(from, target, v => { p.style.height = v + 'px'; layoutEditor(); }, { k: 230, c: 26 });
 }
 
-/* ořez – tažení, pinch, kolečko */
+/* ořez – tažení, pinch, kolečko; mimo ořez podržení = před/po */
 function placeCropBox() {
-  const wrap = $('#eWrap'), box = $('#ePhoto'), cb = $('#cropBox'); const wr = wrap.getBoundingClientRect(), br = box.getBoundingClientRect(), sc = br.width / box.offsetWidth;
+  const wrap = $('#eWrap'), box = $('#ePhoto'), cb = $('#cropBox'); const wr = wrap.getBoundingClientRect(), br = box.getBoundingClientRect(), sc = br.width / box.offsetWidth || 1;
   Object.assign(cb.style, { left: (wr.left - br.left) / sc + 'px', top: (wr.top - br.top) / sc + 'px', width: wr.width / sc + 'px', height: wr.height / sc + 'px' });
 }
 function fitCrop() { const c = S.P.crop, rot = Math.abs(c.rot) * Math.PI / 180; const need = Math.cos(rot) + Math.sin(rot) * 1.4; c.s = Math.max(c.s, need); const lim = .5 - .5 / c.s; c.x = clamp(c.x, -lim, lim); c.y = clamp(c.y, -lim, lim); }
+function setBefore(on) { if (before === on) return; before = on; $('#beforeBadge').classList.toggle('show', on); renderEd(true); if (on) buzz(8); }
 function cropGestures() {
   const el = $('#ePhoto'), pts = new Map(); let base = null, holdT = 0;
   const startBase = () => { const arr = [...pts.values()]; const c = S.P.crop; base = { s: c.s, x: c.x, y: c.y, cx: (arr[0].x + (arr[1] || arr[0]).x) / 2, cy: (arr[0].y + (arr[1] || arr[0]).y) / 2, d: arr[1] ? Math.hypot(arr[0].x - arr[1].x, arr[0].y - arr[1].y) : 0 }; };
   el.addEventListener('pointerdown', e => {
-    if (S.tab !== 'crop') { // podržení = před/po
-      holdT = setTimeout(() => { before = true; $('#beforeBadge').classList.add('show'); renderEd(); buzz(8); }, 160); el.setPointerCapture(e.pointerId); return; }
-    el.setPointerCapture(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); startBase(); });
+    if (e.target.closest('button')) return;
+    el.setPointerCapture(e.pointerId);
+    if (S.tab !== 'crop' || S.adv) { holdT = setTimeout(() => setBefore(true), 160); return; }
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); startBase(); });
   el.addEventListener('pointermove', e => {
-    if (S.tab !== 'crop' || !pts.has(e.pointerId)) return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (S.tab !== 'crop' || S.adv || !pts.has(e.pointerId)) return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
     const arr = [...pts.values()], c = S.P.crop, w = $('#eWrap').clientWidth, h = $('#eWrap').clientHeight;
     const cx = (arr[0].x + (arr[1] || arr[0]).x) / 2, cy = (arr[0].y + (arr[1] || arr[0]).y) / 2;
-    if (arr[1] && base.d) { c.s = clamp(base.s * Math.hypot(arr[0].x - arr[1].x, arr[0].y - arr[1].y) / base.d, 1, 5); }
+    if (arr[1] && base.d) c.s = clamp(base.s * Math.hypot(arr[0].x - arr[1].x, arr[0].y - arr[1].y) / base.d, 1, 5);
     c.x = base.x - (cx - base.cx) / w / c.s; c.y = base.y + (cy - base.cy) / h / c.s; fitCrop(); renderEd(); });
-  const end = e => { clearTimeout(holdT); if (before) { before = false; $('#beforeBadge').classList.remove('show'); renderEd(); }
+  const end = e => { clearTimeout(holdT); setBefore(false);
     if (pts.has(e.pointerId)) { pts.delete(e.pointerId); if (pts.size) startBase(); else commit(); } };
   el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
-  el.addEventListener('wheel', e => { if (S.tab !== 'crop') return; e.preventDefault(); const c = S.P.crop; c.s = clamp(c.s * (1 - e.deltaY * .0015), 1, 5); fitCrop(); renderEd(); clearTimeout(el._w); el._w = setTimeout(commit, 300); }, { passive: false });
+  el.addEventListener('wheel', e => { if (S.tab !== 'crop' || S.adv) return; e.preventDefault(); const c = S.P.crop; c.s = clamp(c.s * (1 - e.deltaY * .0015), 1, 5); fitCrop(); renderEd(); clearTimeout(el._w); el._w = setTimeout(commit, 300); }, { passive: false });
+}
+/* fotka přes celou obrazovku */
+function openFs() {
+  const v = $('#fsView'), cv = $('#fsCanvas'), phone = $('#phone'), dpr = Math.min(2, devicePixelRatio || 1);
+  const ar = S.P.crop.ar || S.cur.src.width / S.cur.src.height, W = phone.clientWidth, H = phone.clientHeight;
+  let w = W, h = W / ar; if (h > H) { h = H; w = H * ar; }
+  const paint = byp => { const o = utilRender(S.cur.src, S.P, Math.round(w * dpr), Math.round(h * dpr), edOpts({ bypass: byp })); cv.width = o.width; cv.height = o.height; cv.getContext('2d').drawImage(o, 0, 0); };
+  cv.style.width = w + 'px'; cv.style.height = h + 'px'; paint(false);
+  v.hidden = false; spring(0, 1, t => { v.style.opacity = Math.min(1, t * 1.3); cv.style.transform = `scale(${.92 + .08 * t})`; }, { k: 220, c: 24 });
+  let hold = 0, held = false;
+  v.onpointerdown = () => { held = false; hold = setTimeout(() => { held = true; paint(true); buzz(8); }, 160); };
+  v.onpointerup = () => { clearTimeout(hold); if (held) { paint(false); return; } spring(1, 0, t => { v.style.opacity = t; cv.style.transform = `scale(${.94 + .06 * t})`; }, { k: 260, c: 28, onDone: () => v.hidden = true }); };
 }
 
 /* Advanced */
 let curveCh = 'rgb', hslSel = 0;
 const HSL_COLS = ['#e8453c', '#f08a2c', '#efd23a', '#4fc25a', '#3cc6c9', '#3a6fe0', '#8a52e0', '#d64bb5'];
 const HSL_NAMES = ['červená', 'oranžová', 'žlutá', 'zelená', 'azurová', 'modrá', 'fialová', 'purpurová'];
+function paintRange(inp) { const a = +inp.min, b = +inp.max, v = +inp.value, d = inp.dataset.def != null ? +inp.dataset.def : (a < 0 ? 0 : a), p = x => (x - a) / (b - a) * 100;
+  inp.style.setProperty('--lo', Math.min(p(v), p(d)) + '%'); inp.style.setProperty('--hi', Math.max(p(v), p(d)) + '%'); }
+function rangeRow(k, l, a, b, P, def) { return `<label class="srow"><span>${l}</span><input type="range" data-k="${k}" min="${a * 100}" max="${b * 100}" value="${Math.round(P[k] * 100)}" data-def="${Math.round((def ?? DEF()[k]) * 100)}"><output>${Math.round(P[k] * 100)}</output></label>`; }
+function bindRanges(root, after) {
+  $$('input[data-k]', root).forEach(inp => { paintRange(inp);
+    inp.oninput = () => { S.P[inp.dataset.k] = inp.value / 100; inp.nextElementSibling.textContent = inp.value; paintRange(inp); after(); };
+    inp.onchange = commit;
+    inp.ondblclick = () => { const d = DEF()[inp.dataset.k]; S.P[inp.dataset.k] = d; inp.value = d * 100; inp.nextElementSibling.textContent = Math.round(d * 100); paintRange(inp); after(); commit(); }; });
+}
 function renderAdv() {
   const p = $('#ePanel'), P = S.P;
   p.innerHTML = `<div class="adv">
@@ -1382,27 +1754,29 @@ function renderAdv() {
     <div class="asec"><div class="ah"><b>HSL · ${HSL_NAMES[hslSel]}</b></div><div class="hsldots">${HSL_COLS.map((c, i) => `<button data-i="${i}" class="${i === hslSel ? 'on' : ''}" style="background:${c}" aria-label="${HSL_NAMES[i]}"></button>`).join('')}</div>
       ${['Odstín', 'Sytost', 'Jas'].map((l, j) => `<label class="srow"><span>${l}</span><input type="range" min="-100" max="100" value="${Math.round(P.hsl[hslSel][j] * 100)}" data-j="${j}" style="--trk:linear-gradient(90deg,#34302b,${HSL_COLS[hslSel]})"><output>${Math.round(P.hsl[hslSel][j] * 100)}</output></label>`).join('')}</div>
     <div class="asec"><div class="ah"><b>Color grading</b></div><div class="wheels">${['sh', 'mid', 'hi'].map((k, i) => `<div><div class="wheel" data-k="${k}"><i></i></div><span>${['Stíny', 'Střed', 'Světla'][i]}</span></div>`).join('')}</div></div>
-    <div class="asec"><div class="ah"><b>Detaily a film</b></div>
-      ${[['sharp', 'Ostrost', 0, 1.5], ['grain', 'Zrno', 0, 1.5], ['gsize', 'Velikost zrna', 1, 4], ['hal', 'Halace', 0, 3], ['vig', 'Vinětace', 0, 1], ['leak', 'Light leak', 0, 1], ['dust', 'Prach', 0, 1], ['fade', 'Vybledlost', 0, 1]].map(([k, l, a, b]) =>
-        `<label class="srow"><span>${l}</span><input type="range" data-k="${k}" min="${a * 100}" max="${b * 100}" value="${Math.round(P[k] * 100)}"><output>${Math.round(P[k] * 100)}</output></label>`).join('')}
+    <div class="asec"><div class="ah"><b>Grain</b></div><div class="gt" id="advGt" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">${grainPills()}</div>
+      ${rangeRow('grain', 'Síla', 0, 1.5, P)}${rangeRow('gsize', 'Velikost', .5, 3, P)}</div>
+    <div class="asec"><div class="ah"><b>Světlo a detail</b></div>
+      ${rangeRow('hal', 'Halation', 0, 3, P)}${rangeRow('bloom', 'Bloom', 0, 1.5, P)}${rangeRow('vig', 'Vignette', 0, 1, P)}${rangeRow('fade', 'Fade', 0, 1, P)}${rangeRow('sharp', 'Ostrost', 0, 1.5, P)}
       <p style="font-size:11px;color:var(--dim);margin:8px 0 0;line-height:1.5">Parametry filmu ze spektrafilmu (expozice negativu, push/pull, tisková expozice, filtrace tisku) přibudou s LUT ve fázi 2.</p></div>
   </div>`;
   $$('#cvSeg button').forEach(b => b.onclick = () => { curveCh = b.dataset.c; renderAdv(); });
   $$('.hsldots button').forEach(b => b.onclick = () => { hslSel = +b.dataset.i; renderAdv(); });
   $$('.asec input[data-j]').forEach(inp => { inp.oninput = () => { S.P.hsl[hslSel][+inp.dataset.j] = inp.value / 100; inp.nextElementSibling.textContent = inp.value; renderEd(); }; inp.onchange = commit; });
-  $$('.asec input[data-k]').forEach(inp => { inp.oninput = () => { S.P[inp.dataset.k] = inp.value / 100; inp.nextElementSibling.textContent = inp.value; renderEd(); }; inp.onchange = commit; });
+  bindRanges(p, () => renderEd()); bindGrainPills($('#advGt'));
   curveEditor($('#curve'), () => S.P.curve[curveCh], pts => { S.P.curve[curveCh] = pts; renderEd(); }, commit, { rgb: '#f3eee6', r: '#ff6b5e', g: '#5fe08a', b: '#5fa8ff' }[curveCh]);
   $$('.wheel').forEach(w => wheel(w, S.P.grade[w.dataset.k], v => { S.P.grade[w.dataset.k] = v; renderEd(); }, commit));
   drawHist();
 }
-function drawHist() {
-  const c = $('#hist'); if (!c) return; const d = utilRender(S.cur.src, S.P, 96, 120, { transfer: S.P.tr ? transferFor() : null }) && util.e.pixels();
+function histInto(c) {
+  const d = utilRender(S.cur.src, S.P, 96, 120, { transfer: S.P.tr ? transferFor() : null }) && util.e.pixels();
   const hs = [new Float32Array(64), new Float32Array(64), new Float32Array(64)];
   for (let i = 0; i < d.length; i += 4) for (let k = 0; k < 3; k++) hs[k][d[i + k] >> 2]++;
   const g = c.getContext('2d'), W = c.width, H = c.height; g.clearRect(0, 0, W, H); const mx = Math.max(...hs.map(h => Math.max(...h)));
   g.globalCompositeOperation = 'lighter'; ['rgba(255,80,70,.55)', 'rgba(80,220,120,.5)', 'rgba(80,140,255,.55)'].forEach((col, k) => { g.fillStyle = col; g.beginPath(); g.moveTo(0, H); hs[k].forEach((v, i) => g.lineTo(i / 63 * W, H - Math.sqrt(v / mx) * H * .95)); g.lineTo(W, H); g.fill(); });
   g.globalCompositeOperation = 'source-over';
 }
+function drawHist() { const c = $('#hist'); if (c) histInto(c); }
 function curveEditor(cv, get, set, end, col) {
   const g = cv.getContext('2d'), W = cv.width, H = cv.height; let drag = -1;
   const draw = () => { const pts = get(); g.clearRect(0, 0, W, H); g.strokeStyle = '#26231f'; g.lineWidth = 1;
@@ -1427,16 +1801,16 @@ function wheel(el, v, set, end) {
   el.onpointermove = e => { if (!el.hasPointerCapture(e.pointerId)) return; const p = pos(e); place(p); set(p); };
   el.onpointerup = end; el.ondblclick = () => { place([0, 0]); set([0, 0]); end(); };
 }
-function toggleAdv() { S.adv = !S.adv; $('#advKnob').classList.toggle('on', S.adv); setTab(S.tab); sizePanel(); buzz(6); }
+function toggleAdv() { S.adv = !S.adv; $('#advKnob').classList.toggle('on', S.adv); setTab(S.tab); buzz(6); }
 
 /* Reference */
 function openRef() {
-  transferFor(); const a = $('#refA').getContext('2d'); a.drawImage(utilRender(refSrc, Object.assign(DEF(), { film: 'VEL', grain: .3 }), 160, 200), 0, 0);
+  transferFor(); $('#refA').getContext('2d').drawImage(utilRender(refSrc, Object.assign(DEF(), { film: 'VEL', grain: .3 }), 160, 200), 0, 0);
   if (!S.P.tr) { S.P.tr = .8; renderEd(); }
-  const upd = () => { const b = $('#refB').getContext('2d'); b.drawImage(utilRender(S.cur.src, S.P, 160, 200, { transfer: transferFor() }), 0, 0); };
-  upd(); $('#refStr').value = Math.round(S.P.tr * 100); $('#refStrO').textContent = $('#refStr').value;
-  $('#refStr').oninput = () => { S.P.tr = $('#refStr').value / 100; $('#refStrO').textContent = $('#refStr').value; renderEd(); upd(); };
-  $('#refStr').onchange = commit;
+  const upd = () => { $('#refB').getContext('2d').drawImage(utilRender(S.cur.src, S.P, 160, 200, { transfer: transferFor() }), 0, 0); };
+  upd(); const r = $('#refStr'); r.value = Math.round(S.P.tr * 100); $('#refStrO').textContent = r.value; paintRange(r);
+  r.oninput = () => { S.P.tr = r.value / 100; $('#refStrO').textContent = r.value; paintRange(r); renderEd(); upd(); };
+  r.onchange = commit;
   sheet($('#refSheet'), true);
 }
 
@@ -1460,7 +1834,8 @@ function kmeans(d, k = 5) {
     c = c.map((q, j) => s[j][3] ? [s[j][0] / s[j][3], s[j][1] / s[j][3], s[j][2] / s[j][3]] : q); }
   return c.map(q => `rgb(${q.map(v => Math.round(v)).join(',')})`);
 }
-const B = { shape: 0, palMode: 'post', bg: 1, ox: 0, oy: 0, sc: 1, paper: true };
+const B = { shape: 0, palMode: 'post', bg: 1, ox: 0, oy: 0, sc: 1, paper: true, custom: [], photo: null };
+function rgbOf(c) { if (c[0] === '#') return [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)); return c.match(/\d+/g).slice(0, 3).map(Number); }
 function openBlob() {
   const ph = S.blobFrom || S.photos[0]; S.blobFrom = ph;
   const P = ph === S.cur ? S.P : ph.P;
@@ -1468,152 +1843,160 @@ function openBlob() {
   B.pre = kmeans(utilRender(ph.src, P, 60, 75, { bypass: true }) && util.e.pixels());
   B.img = utilRender(ph.src, Object.assign(JSON.parse(JSON.stringify(P)), { crop: DEF().crop }), 600, Math.round(600 / (ph.src.width / ph.src.height)), {}).toDataURL('image/jpeg', .9);
   B.ar = ph.src.width / ph.src.height;
-  $('#bFilm').textContent = P.film + ' · ' + FILM[P.film].sub; $('#bDate').textContent = ph.date.toLocaleDateString('cs-CZ');
+  if (B.photo !== ph) { B.photo = ph; $('#bL').textContent = ph.date.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }); $('#bR').textContent = ph.date.toLocaleDateString('cs-CZ'); }
   $('#bShapes').innerHTML = BLOBS.map((b, i) => `<button data-i="${i}" class="${i === B.shape ? 'on' : ''}"><svg viewBox="0 0 100 100"><path d="${blobPath(b)}" fill="#1b1a18"/></svg></button>`).join('');
   $$('#bShapes button').forEach(b => b.onclick = () => { B.shape = +b.dataset.i; $$('#bShapes button').forEach(x => x.classList.toggle('on', x === b)); morphBlob(); buzz(4); });
   drawBlob(); drawPal();
 }
-function drawPal() { const pal = B[B.palMode]; $('#bPal').innerHTML = pal.map((c, i) => `<button data-i="${i}" class="${i === B.bg ? 'on' : ''}" style="background:${c}" aria-label="Barva ${i + 1}"></button>`).join('');
-  $$('#bPal button').forEach(b => b.onclick = () => { B.bg = +b.dataset.i; drawPal(); drawBlob(); }); $('#bCard').style.backgroundColor = pal[B.bg]; }
+function drawPal() {
+  const pal = [...B[B.palMode], ...B.custom]; B.bg = Math.min(B.bg, pal.length - 1);
+  $('#bPal').innerHTML = pal.map((c, i) => `<button data-i="${i}" class="${i === B.bg ? 'on' : ''}" style="background:${c}" aria-label="Barva ${i + 1}"></button>`).join('') + `<label class="add" aria-label="Vlastní barva">+<input type="color" id="bColor" value="#e8c39e"></label>`;
+  $$('#bPal button').forEach(b => b.onclick = () => { B.bg = +b.dataset.i; drawPal(); });
+  const ci = $('#bColor'); ci.oninput = () => { $('#bCard').style.backgroundColor = ci.value; }; ci.onchange = () => { B.custom.push(ci.value); B.bg = B[B.palMode].length + B.custom.length - 1; drawPal(); };
+  const bg = pal[B.bg], [r, g, b] = rgbOf(bg), L = (r * .299 + g * .587 + b * .114) / 255;
+  $('#bCard').style.backgroundColor = bg; $('#bLbl').style.setProperty('--lc', L > .55 ? 'rgba(20,18,16,.75)' : 'rgba(255,250,240,.88)');
+}
 function drawBlob(d) {
-  const path = d || blobPath(BLOBS[B.shape], 50, 62.5, 38), iw = 100 * B.sc * Math.max(1, 1.25 / B.ar * (B.ar < 1 ? 1 : 1)), ih = iw / B.ar;
-  const w = Math.max(iw, 125 * B.ar * B.sc) , h = w / B.ar;
+  const path = d || blobPath(BLOBS[B.shape], 50, 62.5, 38), w = Math.max(100 * B.sc, 125 * B.ar * B.sc), h = w / B.ar;
   $('#bSvg').innerHTML = `<defs><clipPath id="bc"><path d="${path}"/></clipPath></defs><g clip-path="url(#bc)"><image href="${B.img}" x="${50 - w / 2 + B.ox}" y="${62.5 - h / 2 + B.oy}" width="${w}" height="${h}" preserveAspectRatio="none"/></g>`;
 }
 let morphSp = null;
-function morphBlob() { // plynulé přelití tvaru: interpolace bodů přes stejný počet segmentů
+function morphBlob() {
   const to = blobPath(BLOBS[B.shape], 50, 62.5, 38); morphSp && morphSp.stop();
-  const cur = $('#bSvg path')?.getAttribute('d') || to; const na = cur.match(/-?\d+(\.\d+)?/g).map(Number), nb = to.match(/-?\d+(\.\d+)?/g).map(Number);
+  const curP = $('#bSvg path'), cur = curP ? curP.getAttribute('d') : to; const na = cur.match(/-?\d+(\.\d+)?/g).map(Number), nb = to.match(/-?\d+(\.\d+)?/g).map(Number);
   if (na.length !== nb.length) { drawBlob(to); spring(.92, 1, v => $('#bSvg g').style.transform = `scale(${v})`, { k: 260, c: 14 }); return; }
   let i = 0; const tpl = to.replace(/-?\d+(\.\d+)?/g, () => `{${i++}}`);
   morphSp = spring(0, 1, t => drawBlob(tpl.replace(/\{(\d+)\}/g, (_, j) => lerp(na[j], nb[j], t).toFixed(2))), { k: 170, c: 16 });
 }
 function blobGestures() {
-  const el = $('#bCard'); let sx, sy, ox, oy;
-  el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); sx = e.clientX; sy = e.clientY; ox = B.ox; oy = B.oy; });
-  el.addEventListener('pointermove', e => { if (!el.hasPointerCapture(e.pointerId)) return; const k = 100 / el.clientWidth; B.ox = ox + (e.clientX - sx) * k; B.oy = oy + (e.clientY - sy) * k; drawBlob(); });
+  const el = $('#bCard'); let sx, sy, ox, oy, on = false;
+  el.addEventListener('pointerdown', e => { if (e.target.closest('[contenteditable]')) return; on = true; el.setPointerCapture(e.pointerId); sx = e.clientX; sy = e.clientY; ox = B.ox; oy = B.oy; });
+  el.addEventListener('pointermove', e => { if (!on) return; const k = 100 / el.clientWidth; B.ox = ox + (e.clientX - sx) * k; B.oy = oy + (e.clientY - sy) * k; drawBlob(); });
+  el.addEventListener('pointerup', () => on = false);
   el.addEventListener('wheel', e => { e.preventDefault(); B.sc = clamp(B.sc * (1 - e.deltaY * .0015), .6, 3); drawBlob(); }, { passive: false });
+  $$('.lbl span').forEach(s => { s.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); s.blur(); } }); s.addEventListener('focus', () => toast('Přepiš text a potvrď Enterem')); });
 }
 
 /* =====================================================================
    PC rozložení (Lightroom)
    ===================================================================== */
-let pcE;
+let pcE, pcBefore = false;
 function openPc() {
-  if (!S.cur) { S.cur = S.photos.find(p => p.kind === 'mesto') || S.photos[0]; S.P = JSON.parse(JSON.stringify(S.cur.P)); edE.setSource(S.cur.src); }
+  if (!S.cur) { S.cur = S.photos.find(p => p.kind === 'mesto') || S.photos[0]; S.P = JSON.parse(JSON.stringify(S.cur.P)); S.cur._last = JSON.parse(JSON.stringify(S.P)); edE.setSource(S.cur.src); }
   pcE.setSource(S.cur.src);
   $('#pcFilms').innerHTML = FILMS.map(f => `<button class="pcfilm ${f.code === S.P.film ? 'on' : ''}" data-c="${f.code}"><canvas width="88" height="88"></canvas><span><b>${f.code}</b><small>${f.sub}</small></span></button>`).join('');
-  const P = JSON.parse(JSON.stringify(S.P)); P.crop = DEF().crop;
-  $$('.pcfilm').forEach(b => { P.film = b.dataset.c; b.querySelector('canvas').getContext('2d').drawImage(utilRender(S.cur.src, P, 88, 88, {}), 0, 0);
-    b.onclick = () => { S.P.film = b.dataset.c; $$('.pcfilm').forEach(x => x.classList.toggle('on', x === b)); commit(); renderPc(); buildPcRight(); }; });
+  const P = JSON.parse(JSON.stringify(S.P)); P.crop = DEF().crop; P.gtype = null;
+  $$('.pcfilm[data-c]').forEach(b => { P.film = b.dataset.c; b.querySelector('canvas').getContext('2d').drawImage(utilRender(S.cur.src, P, 88, 88, {}), 0, 0);
+    b.onclick = () => { S.P.film = b.dataset.c; $$('.pcfilm[data-c]').forEach(x => x.classList.toggle('on', x === b)); commit(); renderPc(); buildPcRight(); }; });
   $('#pcPresets').innerHTML = `<button class="pcfilm" id="pcRefP"><canvas width="88" height="88"></canvas><span><b>REF · moře</b><small>reference → LUT</small></span></button>`;
   $('#pcRefP canvas').getContext('2d').drawImage(utilRender(drawScene('plaz', 160, 160, 5), Object.assign(DEF(), { film: 'VEL' }), 88, 88), 0, 0);
-  $('#pcRefP').onclick = () => { S.P.tr = S.P.tr ? 0 : .8; commit(); renderPc(); toast(S.P.tr ? 'Vlastní film z reference zapnut' : 'Vlastní film vypnut'); };
+  $('#pcRefP').onclick = () => { S.P.tr = S.P.tr ? 0 : .8; commit(); renderPc(); toast(S.P.tr ? 'Vlastní film z reference zapnutý' : 'Vlastní film vypnutý'); };
   $('#pcStrip').innerHTML = S.photos.map(p => `<img src="${p.thumb}" data-id="${p.id}" class="${p === S.cur ? 'on' : ''}" alt="">`).join('');
   $$('#pcStrip img').forEach(im => im.onclick = () => pcSelect(S.photos.find(p => p.id === +im.dataset.id)));
-  $('#pcFile').textContent = `${{ mesto: 'noční-ulice', zapad: 'západ', les: 'les', plaz: 'pláž', hory: 'hory', kvet: 'květ' }[S.cur.kind]}.jpg · ${S.cur.src.width}×${S.cur.src.height}`;
+  $('#pcFile').textContent = `${{ mesto: 'noční-ulice', zapad: 'západ', les: 'les', plaz: 'pláž', hory: 'hory', kvet: 'květ', live: 'snímek' }[S.cur.kind]}.jpg · ${S.cur.src.width}×${S.cur.src.height}`;
   buildPcRight(); requestAnimationFrame(layoutPc);
 }
-function pcSelect(ph) { if (!ph) return; S.cur = ph; S.P = JSON.parse(JSON.stringify(ph.P)); S.hist = []; S.fut = []; edE.setSource(ph.src); openPc(); }
+function pcSelect(ph) { if (!ph) return; S.cur = ph; S.P = JSON.parse(JSON.stringify(ph.P)); S.cur._last = JSON.parse(JSON.stringify(S.P)); S.hist = []; S.fut = []; edE.setSource(ph.src); openPc(); }
 function layoutPc() {
   const box = $('#pcCenter'), W = box.clientWidth - 48, H = box.clientHeight - 48, ar = S.P.crop.ar || S.cur.src.width / S.cur.src.height;
   let w = W, h = W / ar; if (h > H) { h = H; w = H * ar; } const wr = $('#pcWrap'); wr.style.width = w + 'px'; wr.style.height = h + 'px';
   pcE.size(Math.round(w), Math.round(h)); renderPc();
-  const cb = $('#pcCropBox'); Object.assign(cb.style, { left: (box.clientWidth - w) / 2 + 'px', top: (box.clientHeight - h) / 2 + 'px', width: w + 'px', height: h + 'px' });
+  Object.assign($('#pcCropBox').style, { left: (box.clientWidth - w) / 2 + 'px', top: (box.clientHeight - h) / 2 + 'px', width: w + 'px', height: h + 'px' });
 }
-let pcBefore = false;
-function renderPc() { if (S.view !== 'pc' || !S.cur) return; const cr = S.P.crop; pcE.render(S.P, { bypass: pcBefore, zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180, transfer: S.P.tr ? transferFor() : null, gscale: 1 }); drawPcHist(); }
-function drawPcHist() { const c = $('#pcHist'); if (!c) return; const d = utilRender(S.cur.src, S.P, 96, 120, {}) && util.e.pixels(); const hs = [new Float32Array(64), new Float32Array(64), new Float32Array(64)];
-  for (let i = 0; i < d.length; i += 4) for (let k = 0; k < 3; k++) hs[k][d[i + k] >> 2]++; const g = c.getContext('2d'), W = c.width, H = c.height; g.clearRect(0, 0, W, H); const mx = Math.max(...hs.map(h => Math.max(...h)));
-  g.globalCompositeOperation = 'lighter'; ['rgba(255,80,70,.55)', 'rgba(80,220,120,.5)', 'rgba(80,140,255,.55)'].forEach((col, k) => { g.fillStyle = col; g.beginPath(); g.moveTo(0, H); hs[k].forEach((v, i) => g.lineTo(i / 63 * W, H - Math.sqrt(v / mx) * H * .95)); g.lineTo(W, H); g.fill(); }); g.globalCompositeOperation = 'source-over'; }
+function renderPc() { if (S.view !== 'pc' || !S.cur) return; const cr = S.P.crop; pcE.render(S.P, { bypass: pcBefore, zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180, transfer: S.P.tr ? transferFor() : null }); const c = $('#pcHist'); if (c) histInto(c); }
 function buildPcRight() {
-  const P = S.P, f = FILM[P.film], row = (k, l, a, b, s = 100) => `<label class="srow"><span>${l}</span><input type="range" data-k="${k}" min="${a * s}" max="${b * s}" value="${Math.round(P[k] * s)}"><output>${Math.round(P[k] * s)}</output></label>`;
+  const P = S.P, f = FILM[P.film];
   $('#pcRight').innerHTML = `<div class="pcsec"><h4>Histogram <span>${P.film}</span></h4><canvas class="hist" id="pcHist" width="580" height="150"></canvas></div>
-    <div class="pcsec"><h4>Film <span style="color:var(--amber)">${f.sub}</span></h4>${row('str', 'Síla filmu', 0, 1)}${row('hal', 'Halace', 0, 3)}${row('grain', 'Zrno', 0, 1.5)}${row('gsize', 'Velikost zrna', 1, 4)}</div>
-    <div class="pcsec"><h4>Základ</h4>${row('exp', 'Expozice', -3, 3)}${row('temp', 'Teplota', -1, 1)}${row('tint', 'Odstín', -1, 1)}${row('con', 'Kontrast', -1, 1)}${row('sat', 'Saturace', -1, 1)}${row('fade', 'Vybledlost', 0, 1)}</div>
+    <div class="pcsec"><h4>Film <span style="color:var(--amber)">${f.sub}</span><button class="resetbtn" id="pcReset" style="height:22px">${iconSVG('reset')}Vše</button></h4>${rangeRow('str', 'Síla filmu', 0, 1, P)}${rangeRow('hal', 'Halation', 0, 3, P)}${rangeRow('bloom', 'Bloom', 0, 1.5, P)}</div>
+    <div class="pcsec"><h4>Grain <span>${GRAINS[gtypeOf(P)].l}</span></h4><div class="gt" id="pcGt">${grainPills()}</div>${rangeRow('grain', 'Síla', 0, 1.5, P)}${rangeRow('gsize', 'Velikost', .5, 3, P)}</div>
+    <div class="pcsec"><h4>Základ</h4>${rangeRow('exp', 'Expozice', -3, 3, P)}${rangeRow('temp', 'Teplota', -1, 1, P)}${rangeRow('tint', 'Odstín', -1, 1, P)}${rangeRow('con', 'Kontrast', -1, 1, P)}${rangeRow('sat', 'Saturace', -1, 1, P)}</div>
     <div class="pcsec"><h4>Tónová křivka <span>RGB</span></h4><canvas class="curve" id="pcCurve" width="580" height="360"></canvas></div>
-    <div class="pcsec"><h4>Efekty</h4>${row('vig', 'Vinětace', 0, 1)}${row('leak', 'Light leak', 0, 1)}${row('dust', 'Prach', 0, 1)}${row('sharp', 'Ostrost', 0, 1.5)}</div>`;
-  $$('#pcRight input[data-k]').forEach(inp => { inp.oninput = () => { S.P[inp.dataset.k] = inp.value / 100; inp.nextElementSibling.textContent = inp.value; renderPc(); }; inp.onchange = commit; inp.ondblclick = () => { const d = DEF()[inp.dataset.k]; S.P[inp.dataset.k] = d; inp.value = d * 100; inp.nextElementSibling.textContent = Math.round(d * 100); renderPc(); commit(); }; });
+    <div class="pcsec"><h4>Efekty</h4>${rangeRow('vig', 'Vignette', 0, 1, P)}${rangeRow('fade', 'Fade', 0, 1, P)}${rangeRow('sharp', 'Ostrost', 0, 1.5, P)}</div>`;
+  bindRanges($('#pcRight'), renderPc); bindGrainPills($('#pcGt'), buildPcRight);
+  $('#pcReset').onclick = resetAll;
   curveEditor($('#pcCurve'), () => S.P.curve.rgb, pts => { S.P.curve.rgb = pts; renderPc(); }, commit, '#f3eee6');
-  drawPcHist();
+  const c = $('#pcHist'); if (c && S.cur) histInto(c);
 }
 
 /* =====================================================================
    Shell, navigace, škálování
    ===================================================================== */
-const NAV = [['intro', 'Intro s maskotem', 'eye'], ['camera', 'Kamera s koly', 'camera'], ['films', 'Výběr filmu', 'film'], ['editor', 'Editor', 'sliders'], ['advanced', 'Advanced', 'info'], ['crop', 'Ořez', 'crop'],
+const NAV = [['intro', 'Intro', 'eye'], ['camera', 'Kamera s koly', 'camera'], ['films', 'Výběr filmu', 'film'], ['editor', 'Editor', 'sliders'], ['advanced', 'Advanced', 'info'], ['crop', 'Ořez', 'crop'],
   ['ref', 'Reference → LUT', 'ref'], ['gallery', 'Galerie a role', 'gallery'], ['blob', 'Blob karta', 'blob'], ['about', 'O appce / Poděkování', 'info']];
 function syncNav() { const s = S.view === 'pc' ? 'pc' : S.screen; $$('#navlist button').forEach(b => { const k = b.dataset.k; b.classList.toggle('on', k === s || (k === 'editor' && s === 'editor' && !S.adv && S.tab !== 'crop') || (k === 'advanced' && s === 'editor' && S.adv) || (k === 'crop' && s === 'editor' && S.tab === 'crop' && !S.adv)); }); }
-function closeSheets() { ['#filmSheet', '#menuSheet', '#refSheet'].forEach(s => { if ($(s)._open) sheet($(s), false); }); }
 function navTo(k) {
   if (S.view === 'pc') setView('m');
-  closeSheets(); stack.length = 0;
-  const editorWith = (fn) => { if (S.screen !== 'editor' || !S.cur) { const ph = S.cur || S.photos.find(p => p.kind === 'mesto') || S.photos[0]; S.cur = null; openEditor(ph); stack.length = 0; stack.push('gallery'); } fn && fn(); syncNav(); };
-  if (k === 'intro') { $(SCREENS[S.screen]).hidden = true; stopCam(); playIntro(); return; }
+  if (INTRO && k !== 'intro') INTRO.kill();
+  closeSheets();
+  const editorWith = fn => { if (S.screen !== 'editor' || !S.cur) { const ph = S.cur || S.photos.find(p => p.kind === 'mesto') || S.photos[0]; S.cur = null; stack.length = 0; openEditor(ph); stack.length = 0; stack.push('gallery'); } fn && fn(); syncNav(); };
+  if (k === 'intro') { playIntro(); return; }
+  stack.length = 0;
   if (k === 'camera') go('camera', { back: true });
-  if (k === 'films') { go('camera', { back: true, onShown: () => setTimeout(openFilmSheet, 50) }); if (S.screen === 'camera') setTimeout(openFilmSheet, 50); }
+  if (k === 'films') { if (S.screen === 'camera') setTimeout(openFilmSheet, 50); else go('camera', { back: true, onShown: () => setTimeout(openFilmSheet, 50) }); }
   if (k === 'editor') editorWith(() => { if (S.adv) toggleAdv(); setTab('film'); });
   if (k === 'advanced') editorWith(() => { if (!S.adv) toggleAdv(); });
   if (k === 'crop') editorWith(() => { if (S.adv) toggleAdv(); setTab('crop'); });
-  if (k === 'ref') editorWith(() => { if (S.adv) toggleAdv(); setTab('fx'); setTimeout(openRef, 350); });
-  if (k === 'gallery') { stack.push('camera'); go('gallery'); }
-  if (k === 'blob') { stack.push('gallery'); S.blobFrom = S.blobFrom || S.photos[0]; go('blob'); }
-  if (k === 'about') { stack.push('camera'); go('about'); }
+  if (k === 'ref') editorWith(() => { if (S.adv) toggleAdv(); setTab('fx'); setTimeout(openRef, 380); });
+  if (k === 'gallery') { go('gallery'); stack.length = 0; stack.push('camera'); }
+  if (k === 'blob') { S.blobFrom = S.blobFrom || S.photos[0]; go('blob'); stack.length = 0; stack.push('gallery'); }
+  if (k === 'about') { go('about'); stack.length = 0; stack.push('camera'); }
   syncNav();
 }
 function setView(v) {
   S.view = v; $$('#viewSeg button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   $('#device').hidden = v === 'pc'; $('#pcwrap').hidden = v !== 'pc';
-  if (v === 'pc') { stopCam(); openPc(); } else if (S.screen === 'camera') startCam();
+  if (v === 'pc') { if (INTRO) INTRO.kill(); stopCam(); openPc(); } else if (S.screen === 'camera') startCam();
   fit(); syncNav();
 }
 function fit() {
-  if (innerWidth <= 700) { $('#device').style.transform = ''; return; }
-  const st = $('#stage'), W = st.clientWidth, H = st.clientHeight;
-  $('#device').style.transform = `translate(-50%,-50%) scale(${Math.min(1, (H - 48) / 868, (W - 48) / 414)})`;
-  $('#pcwrap').style.transform = `translate(-50%,-50%) scale(${Math.min(1, (W - 48) / 1440, (H - 48) / 900)})`;
-  if (S.view === 'pc') requestAnimationFrame(layoutPc);
+  if (innerWidth > 700) {
+    const st = $('#stage'), W = st.clientWidth, H = st.clientHeight;
+    $('#device').style.transform = `translate(-50%,-50%) scale(${Math.min(1, (H - 48) / 868, (W - 48) / 414)})`;
+    $('#pcwrap').style.transform = `translate(-50%,-50%) scale(${Math.min(1, (W - 48) / 1440, (H - 48) / 900)})`;
+  } else $('#device').style.transform = '';
+  if (S.view === 'pc' && S.cur) requestAnimationFrame(layoutPc);
+  if (READY) drawGrid();
 }
 
 /* =====================================================================
-   Start
+   Start: intro běží hned, těžká příprava (scény, miniatury, WebGL) až za ním
    ===================================================================== */
+let READY = false;
 function boot() {
   hydrateIcons();
-  util.e = new Engine(mk(300, 300)); camE = new Engine($('#camCanvas')); edE = new Engine($('#edCanvas')); pcE = new Engine($('#pcCanvas'));
-  if (camE.dead) { document.body.insertAdjacentHTML('beforeend', '<p style="position:fixed;inset:auto 0 20px;text-align:center;color:#efa73b">Tenhle prohlížeč neumí WebGL2 – náhled filmu nepoběží.</p>'); }
-  introEyes = mascot($('#introEyes'), { idle: false }); miniEyes = mascot($('#miniEyes')); mascot($('#aboutEyes'));
+  miniEyes = mascot($('#miniEyes')); mascot($('#aboutEyes'));
   const h = location.hash.slice(1);
-  const mloop = (now) => { if (!camRaf) tickMascots(now); requestAnimationFrame(mloop); }; requestAnimationFrame(mloop);
-  $('#s-camera').hidden = true;
   fit();
-  if (!h) playIntro(); // intro hned, těžká příprava (scény, miniatury) až za ním
+  const mloop = (now) => { if (!camRaf) tickMascots(now); requestAnimationFrame(mloop); }; requestAnimationFrame(mloop);
+  if (!h) playIntro();
   setTimeout(() => boot2(h), 40);
 }
 function boot2(h) {
+  util.e = new Engine(mk(300, 300)); camE = new Engine($('#camCanvas')); edE = new Engine($('#edCanvas')); pcE = new Engine($('#pcCanvas'));
+  if (camE.dead) document.body.insertAdjacentHTML('beforeend', '<p style="position:fixed;inset:auto 0 20px;text-align:center;color:#efa73b">Tenhle prohlížeč neumí WebGL2, náhled filmu nepoběží.</p>');
   initLive(); seedPhotos(); buildCarousel(); setFilm(S.film);
   const iso = dial($('#isoDial'), ISO_STOPS, S.isoIdx, 120, i => { S.isoIdx = i; updLcd(); });
-  const tim = dial($('#timeDial'), TIME_STOPS, S.timeIdx, 128, i => { S.timeIdx = i; updLcd(); }, 5);
+  const tim = dial($('#timeDial'), TIME_STOPS, S.timeIdx, 138, i => { S.timeIdx = i; updLcd(); }, 5);
   const ev = evStrip(); updLcd();
-
   $('#navlist').innerHTML = NAV.map(([k, l, ic]) => `<button data-k="${k}">${iconSVG(ic)}${l}</button>`).join('');
   $$('#navlist button').forEach(b => b.onclick = () => navTo(b.dataset.k));
   $$('#viewSeg button').forEach(b => b.onclick = () => setView(b.dataset.v));
-
+  ['#filmSheet', '#menuSheet', '#refSheet'].forEach(s => sheetDrag($(s)));
   // kamera
   $('#filmChip').onclick = $('#cassBtn').onclick = openFilmSheet;
   $('#fClose').onclick = () => sheet($('#filmSheet'), false);
   $('#shutter').onclick = shoot;
   $('#galBtn').onclick = () => go('gallery');
-  $('#tGrid').onclick = () => { S.grid = !S.grid; $('#tGrid').classList.toggle('on', S.grid); $('#gridOv').classList.toggle('on', S.grid); buzz(4); };
-  $('#tTimer').onclick = () => { S.timer = !S.timer; $('#tTimer').classList.toggle('on', S.timer); toast(S.timer ? 'Samospoušť 3 s' : 'Samospoušť vypnutá'); };
-  $('#tFlash').onclick = () => { S.flash = !S.flash; $('#tFlash').classList.toggle('on', S.flash); toast(S.flash ? 'Blesk zapnutý' : 'Blesk vypnutý'); };
-  $('#tFlip').onclick = () => { LIVE.facing = LIVE.facing === 'back' ? 'front' : 'back'; const vf = $('#vf'); spring(0, 1, v => vf.style.transform = `perspective(900px) rotateY(${Math.sin(v * Math.PI) * 12}deg) scale(${1 - Math.sin(v * Math.PI) * .05})`, { k: 120, c: 16 }); buzz(5); };
-  $$('#zoomGrp button').forEach(b => b.onclick = () => { $$('#zoomGrp button').forEach(x => { x.classList.toggle('on', x === b); x.textContent = x === b ? x.dataset.z.replace('.', ',').replace(/^,/, '0,') + '×' : x.dataset.z.replace('.5', ',5').replace(/^0/, ''); });
-    const from = S.zoom, to = Math.max(1, +b.dataset.z) * (+b.dataset.z < 1 ? .5 : 1); spring(from, +b.dataset.z < 1 ? 1 : +b.dataset.z, v => S.zoom = v, { k: 160, c: 22 }); if (+b.dataset.z < 1) toast('Ultraširokáč: na zařízení přepne objektiv'); buzz(4); });
-  $('#lMode').onclick = () => { if (S.timeIdx < 5) { toast('Slow shutter: otoč čas na ¼ s a delší'); return; } S.slowMode = (S.slowMode + 1) % 3; updLcd(); buzz(5);
+  $('#tGrid').onclick = () => { S.grid = (S.grid + 1) % 4; $('#tGrid').classList.toggle('on', S.grid > 0); drawGrid(); buzz(4); toast(S.grid ? 'Mřížka: ' + GRID_MODES[S.grid].toLowerCase() : 'Mřížka vypnutá'); };
+  $('#tTimer').onclick = () => { S.timer = S.timer === 0 ? 3 : S.timer === 3 ? 10 : 0; $('#tTimer').classList.toggle('on', S.timer > 0); buzz(4); toast(S.timer ? `Samospoušť ${S.timer} s` : 'Samospoušť vypnutá'); };
+  $('#tFlash').onclick = () => { S.flash = !S.flash; $('#tFlash').classList.toggle('on', S.flash);
+    toast(!S.flash ? 'Blesk vypnutý' : CAM.live ? (CAM.caps.torch ? 'Blesk: svítilna telefonu' : CAM.facing === 'user' ? 'Blesk: rozsvícený displej' : 'Tenhle prohlížeč svítilnu nepustí') : 'Blesk zapnutý'); };
+  $('#tFlip').onclick = async () => { const vf = $('#vf'); spring(0, 1, v => vf.style.transform = `perspective(900px) rotateY(${Math.sin(v * Math.PI) * 12}deg) scale(${1 - Math.sin(v * Math.PI) * .05})`, { k: 120, c: 16 }); buzz(5);
+    if (CAM.live) { CAM.facing = CAM.facing === 'user' ? 'environment' : 'user'; CAM.deviceId = null; CAM.ultra = false; await liveOn(); } else LIVE.facing = LIVE.facing === 'back' ? 'front' : 'back'; };
+  $('#liveBtn').onclick = async () => { if (CAM.live) { liveOff(); toast('DEMO: generovaná scéna'); } else if (await liveOn()) toast('Živá kamera s filmem ' + S.film); };
+  $$('#zoomGrp button').forEach(b => b.onclick = () => setZoom(+b.dataset.z));
+  $('#lMode').onclick = () => { if (S.timeIdx < 5) { toast('Slow shutter: otoč čas na ¼ s a delší (až 15 s)'); return; } S.slowMode = (S.slowMode + 1) % 3; updLcd(); buzz(5);
     toast(['Světelné stopy: světla se sčítají', 'Rozmazání pohybu: průměr snímků', 'Voda / hedvábí: průměr + ostřejší statické části'][S.slowMode]); };
-  // pinch zoom + ťuknutí = ostření v hledáčku
   (() => { const vf = $('#vf'), pts = new Map(); let d0 = 0, z0 = 1, moved = false;
     vf.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; vf.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); moved = false; if (pts.size === 2) { const [a, b] = [...pts.values()]; d0 = Math.hypot(a[0] - b[0], a[1] - b[1]); z0 = S.zoom; } });
     vf.addEventListener('pointermove', e => { if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, [e.clientX, e.clientY]); if (pts.size === 2) { moved = true; const [a, b] = [...pts.values()]; S.zoom = clamp(z0 * Math.hypot(a[0] - b[0], a[1] - b[1]) / d0, 1, 6); } });
@@ -1622,22 +2005,22 @@ function boot2(h) {
       miniEyes.look(((e.clientX - r.left) / r.width - .5) * 2, ((e.clientY - r.top) / r.height - .5)); setTimeout(() => miniEyes.look(0, 0), 1200); buzz(4); });
     vf.addEventListener('wheel', e => { e.preventDefault(); S.zoom = clamp(S.zoom * (1 - e.deltaY * .0015), 1, 6); }, { passive: false }); })();
   // menu
-  $('#menuGrid').innerHTML = [['gallery', 'Galerie', 'gallery'], ['about', 'O appce', 'info'], ['intro', 'Intro znovu', 'eye'], ['blob', 'Blob karta', 'blob'], ['advanced', 'Editor', 'sliders'], ['reset', 'Reset koleček', 'undo']].map(([k, l, ic]) => `<button data-k="${k}">${iconSVG(ic)}${l}</button>`).join('');
+  $('#menuGrid').innerHTML = [['gallery', 'Galerie', 'gallery'], ['about', 'O appce', 'info'], ['intro', 'Intro znovu', 'eye'], ['blob', 'Blob karta', 'blob'], ['editor', 'Editor', 'sliders'], ['reset', 'Reset koleček', 'undo']].map(([k, l, ic]) => `<button data-k="${k}">${iconSVG(ic)}${l}</button>`).join('');
   $$('#menuGrid button').forEach(b => b.onclick = () => { sheet($('#menuSheet'), false); const k = b.dataset.k;
     if (k === 'reset') { S.isoIdx = 0; S.timeIdx = 2; iso.set(0); tim.set(2); ev.reset(); updLcd(); toast('Kolečka na výchozích hodnotách'); return; }
-    setTimeout(() => navTo(k === 'advanced' ? 'editor' : k), 120); });
+    setTimeout(() => navTo(k), 120); });
   $('#menuBtn').onclick = () => sheet($('#menuSheet'), true);
   $('#mClose').onclick = () => sheet($('#menuSheet'), false);
-  // zpět
-  $$('[data-back]').forEach(b => b.onclick = () => { closeSheets(); if (S.screen === 'editor' && S.cur) { rethumb(S.cur); } goBack(); });
+  $$('[data-back]').forEach(b => b.onclick = () => { if (S.screen === 'editor' && S.cur) rethumb(S.cur); goBack(); });
   // galerie
   $('#gSearch').oninput = filterGallery;
   $('#gAdd').onclick = () => toast('Nová role: vybereš film a počet snímků');
   // editor
-  $$('#eTabs button').forEach(b => b.onclick = () => { if (S.adv) toggleAdv(); setTab(b.dataset.t); syncNav(); });
+  $$('#eTabs button').forEach(b => b.onclick = () => { if (S.adv) { S.adv = false; $('#advKnob').classList.remove('on'); } setTab(b.dataset.t); syncNav(); });
   $('#advSw').onclick = () => { toggleAdv(); syncNav(); };
-  $('#undoBtn').onclick = undo; $('#redoBtn').onclick = redo;
+  $('#undoBtn').onclick = undo; $('#redoBtn').onclick = redo; $('#resetBtn').onclick = resetAll;
   $('#expBtn').onclick = () => toast('Export v plném rozlišení přijde ve fázi 3');
+  $('#fsBtn').onclick = openFs;
   $('#refClose').onclick = () => { sheet($('#refSheet'), false); setTab(S.tab, true); };
   $$('#refMethod button').forEach(b => b.onclick = () => { $$('#refMethod button').forEach(x => x.classList.toggle('on', x === b)); toast(b.dataset.m === 'r' ? 'Reinhard: průměr a odchylka barev v Lab' : 'Pitié IDT + regrain: přesnější, pomalejší'); });
   $$('.exports button').forEach(b => b.onclick = () => toast(`Export ${b.dataset.x} přijde ve fázi 5`));
@@ -1647,35 +2030,33 @@ function boot2(h) {
   $$('#bPalSeg button').forEach(b => b.onclick = () => { B.palMode = b.dataset.p; $$('#bPalSeg button').forEach(x => x.classList.toggle('on', x === b)); drawPal(); });
   $('#bPaper').onclick = () => { B.paper = !B.paper; $('#s-blob').style.backgroundImage = B.paper ? '' : 'none'; $('#bPaper').textContent = 'Mřížka: ' + (B.paper ? 'zap' : 'vyp'); };
   $('#bShare').onclick = () => toast('Sdílení karty přes Web Share přijde ve fázi 7');
-  blobGestures();
+  blobGestures(); hscroll($('#bShapes')); hscroll($('#rolls')); hscroll($('#pcStrip'));
   // o appce
   $('#lowMo').classList.toggle('on', LOWMO);
   $('#lowMo').onclick = () => { LOWMO = !LOWMO; store.set('lowmo', LOWMO); $('#lowMo').classList.toggle('on', LOWMO); toast(LOWMO ? 'Úsporné animace zapnuté' : 'Plné animace'); };
   $('#replayIntro').onclick = () => navTo('intro');
-  $('#s-intro').onclick = () => finishIntro();
+  renderCamInfo();
   // PC klávesy
   addEventListener('keydown', e => {
-    if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (!S.cur) return; e.shiftKey ? redo() : undo(); if (S.view === 'pc') { buildPcRight(); renderPc(); } return; }
+    if (e.target.isContentEditable || (e.target.tagName === 'INPUT' && e.target.type !== 'range')) return;
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (!S.cur) return; e.shiftKey ? redo() : undo(); return; }
     if (S.view !== 'pc') return;
     if (e.key === '\\') { pcBefore = true; $('#pcBadge').classList.add('show'); renderPc(); }
     if (e.key.toLowerCase() === 'c') $('#pcCrop').hidden = !$('#pcCrop').hidden;
     if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { const i = S.photos.indexOf(S.cur) + (e.key === 'ArrowRight' ? 1 : -1); pcSelect(S.photos[clamp(i, 0, S.photos.length - 1)]); }
   });
   addEventListener('keyup', e => { if (e.key === '\\' && pcBefore) { pcBefore = false; $('#pcBadge').classList.remove('show'); renderPc(); } });
-  // zákaz zoomu stránky (iOS) – kromě ořezu a hledáčku, které mají vlastní pinch
+  // zákaz zoomu stránky (iOS) – kromě hledáčku, ořezu a blob karty, které mají vlastní pinch
   document.addEventListener('gesturestart', e => e.preventDefault()); document.addEventListener('gesturechange', e => e.preventDefault());
   document.addEventListener('touchmove', e => { if (e.touches.length > 1 && !e.target.closest('.vf,.ephoto,.bcard')) e.preventDefault(); }, { passive: false });
   addEventListener('resize', () => { fit(); if (S.screen === 'editor') layoutEditor(); });
-  fit();
-  READY = true;
-  if (h && NAV.some(n => n[0] === h) && h !== 'intro') { $('#s-intro').hidden = true; S.screen = 'camera'; $('#s-camera').hidden = false; startCam(); navTo(h); }
-  else if (h === 'pc') { $('#s-intro').hidden = true; S.screen = 'camera'; $('#s-camera').hidden = false; setView('pc'); }
-  else if (h) playIntro();
-  if (pendingFinish) { const f = pendingFinish; pendingFinish = null; f(); }
+  READY = true; fit(); drawGrid();
+  if (h === 'pc') { if (INTRO) INTRO.kill(); setView('pc'); }
+  else if (h && NAV.some(n => n[0] === h) && h !== 'intro') { startCam(); navTo(h); }
+  else if (h === 'intro') playIntro();
+  else if (!INTRO) startCam();
 }
-(document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1200))]) : Promise.resolve()).then(boot);
+(document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 900))]) : Promise.resolve()).then(boot);
 </script>
-<!--ARTIFACT-BODY-END-->
 </body>
 </html>
