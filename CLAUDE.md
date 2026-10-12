@@ -27,6 +27,17 @@ ve stylu **Prequel**, na PC se používá spíš jako **Lightroom**. Celá v **�
 - Po větší změně zvýšit `VERSION` v `sw.js`, ať se telefonům stáhne nová verze.
 - Pokud Claude usoudí, že nějaký nástroj / postup dá lepší výsledek, **řekne to předem**.
 
+## Rozhodnutí z připomínek (náhled 0.4)
+- **Kamera:** žádná clona (nejde ovládat). ISO = **push/pull** filmu (nad citlivostí víc kontrastu a grainu, pod ní měkčí). Čas = **AUTO → long exposure** 1/4 s … 15 s.
+  Gesta v hledáčku: nahoru/dolů = EV (zaklapne na nule, dvojklik na pilulku EV = reset), doprava = delší čas, HUD s pixelovou ikonou. Spoušť během odpočtu / expozice ruší.
+- **Hledáček = přesně výsledná fotka** (poměr podle formátu: 3:4 výchozí, 9:16, 35 mm, half, 6×6, 6×7; formát přepíná štítek v hledáčku i FORMÁT v displeji). Žádné šedé masky.
+- Typografie ovládání kamery **Silkscreen** (pixelový font k pixelovým ikonám), spoušť a úchyt v pixel/dither stylu. Expozimetr = zebra (ikona v hledáčku).
+- **Oblíbené filmy** (srdíčko) jsou ve výběru první. **Film scan** (místo Reference) uloží vlastní film použitelný jako filtr i ve foťáku.
+- **Recepty** = uložený vzhled, sdílení odkazem a QR (#recept=…), použití i ve foťáku.
+- Efekty: **Soft glow** (difúze, výchozí podle filmu), **Dither**, **Pixel art**, **Glow rám** (ambilight okraj), **IR** film (Aerochrome). **Double** je efekt v editoru (prolnutí / silueta jedné fotky vyplněná druhou, tmavé pozadí jako Klapqa) a „double ve foťáku“ (duch prvního snímku).
+- **Blob karta:** tmavé tečkované pozadí jako Klapqa; tvary podle `docs/inspo/blob inspo*` (rozlitý rám, hvězdy, jiskry, kytky, puntíky, vlnovky, známka, měkký rám, vzory), **Obrátit**, **Krytí**, **+** nakreslit vlastní, **kostka** = náhodný tvar.
+- **Arch** (ne „kontaktní arch“): z role, z dneška (od půlnoci) nebo výběrem fotek. **Jednorázovka** = filtr na den s oknem od–do, ráno vyvolání → arch.
+
 ## Licence a poděkování (povinné)
 Qamera je **GPL-3.0** (veřejné repo) – kvůli Spektrafilmu. V appce musí být obrazovka **„O appce / Poděkování“**, kde jsou klikací:
 > **Spektrafilm for Android** by **Akshay Sharma** — https://github.com/thetechgeekko/Spektrafilm-android
