@@ -53,6 +53,7 @@ ve stylu **Prequel**, na PC se používá spíš jako **Lightroom**. Celá v **�
 - Kostka u blobu = jeden náhodný slot (tvar i parametry), ne nový tvar pokaždé. Dvojťuk na fotku v blobu = vycentrovat.
 - **Moje filmy** (ikona filmu v čipech galerie / menu): náhled každého filmu, podržení = před/po, oko = skrýt z výběru, srdíčko = oblíbený.
 - Jednorázovka: před vyvoláním se ptá na název, arch bez kroužků, uloží se do galerie.
+- **0.7.1:** pryč 3D paralaxa, rám Negativ a Datumovka (Honzovi se nelíbí, blob stačí). Blob: paleta jen po filmu, dole Text zap/vyp · Uložit blob · Export. Všude „Export“ místo „Sdílet“ (u obrázků). Hloubka: když telefon nestíhá živě (>45 ms), přepočet až po puštění posuvníku s načítáním; ukazatel načítání jen skutečné fáze (MB stahování / z telefonu / příprava / výpočet). Fotky v paměti max 2048 px (iPhone 13 padal), export dekóduje originál z IndexedDB. Velké tlačítko „Zapnout kameru“ v hledáčku, dokud se uživatel nezeptal.
 - Telefon na šířku zůstává v mobilním rozložení (`pointer:coarse`). Kamera: ikona zmizí po povolení, appka si pamatuje zapnutí, DEMO scéna v menu.
 - **Arch** (ne „kontaktní arch“): z role, z dneška (od půlnoci) nebo výběrem fotek. **Jednorázovka** = filtr na den s oknem od–do, ráno vyvolání → arch.
 

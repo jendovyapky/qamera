@@ -82,7 +82,8 @@ a{color:var(--amber)}
   html,body{background:#000}
   .shell{display:block;position:fixed;inset:0}
   .nav{display:none}
-  .stage{position:fixed;inset:0;height:auto;background:#000}
+  .stage{position:fixed;left:0;right:0;top:0;height:100vh;height:100lvh;background:#000}
+  .shell{height:100vh;height:100lvh}
   .device{left:0;top:0;width:100%!important;height:100%!important;transform:none!important}
   .bezel,.island,.status{display:none}
   .phone{border-radius:0}
@@ -144,6 +145,9 @@ a{color:var(--amber)}
 .sw2{width:28px;height:28px;border-radius:8px;flex:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);position:relative;overflow:hidden}
 .sw2.on{box-shadow:0 0 0 2px var(--body),0 0 0 4px var(--fg)}
 .sw2 input{position:absolute;inset:0;opacity:0}
+.campill{position:absolute;left:50%;top:96px;transform:translateX(-50%);z-index:5;display:flex;align-items:center;gap:10px;height:44px;padding:0 18px 0 14px;border-radius:999px;background:var(--lcd);color:var(--lcd-ink);font-weight:600;font-size:14px;white-space:nowrap;box-shadow:0 0 0 0 rgba(255,196,61,.55);animation:campulse 2.2s ease-out infinite}
+.campill .px{width:20px;height:20px}
+@keyframes campulse{0%{box-shadow:0 0 0 0 rgba(255,196,61,.5)}70%{box-shadow:0 0 0 16px rgba(255,196,61,0)}100%{box-shadow:0 0 0 0 rgba(255,196,61,0)}}
 .cambanner{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:5;display:flex;align-items:center;gap:10px;padding:5px 5px 5px 14px;border-radius:999px;background:rgba(10,9,8,.75);border:1px solid rgba(255,196,61,.4);font-size:12px;white-space:nowrap}
 .cambanner button{height:28px;padding:0 12px;border-radius:999px;background:var(--lcd);color:var(--lcd-ink);font-weight:600;font-size:12px}
 /* správce filmů */
@@ -352,8 +356,14 @@ a{color:var(--amber)}
 .ecanvas canvas{display:block;width:100%;height:100%}
 #eGlow,#pcGlow{position:absolute;inset:0;width:100%;height:100%;display:none}
 #eDate{position:absolute;left:0;top:0;pointer-events:none}
+.eload{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);z-index:4;display:flex;align-items:center;gap:10px;height:40px;padding:0 16px;border-radius:999px;background:rgba(10,9,8,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font:11px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:#d0c8be;opacity:0;pointer-events:none;transition:opacity .15s,transform .2s}
+.eload.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.eload i{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,196,61,.25);border-top-color:var(--amber);animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 .dprog{height:6px;border-radius:3px;background:var(--line);overflow:hidden;flex:1}
 .dprog i{display:block;height:100%;background:var(--amber);width:0;transition:width .2s}
+.dprog.ind i{width:35%!important;animation:dind 1.1s ease-in-out infinite alternate}
+@keyframes dind{from{transform:translateX(-20%)}to{transform:translateX(205%)}}
 .fxp .note{font-size:11.5px;color:var(--mute);line-height:1.45;margin:0}
 .fxp .go{height:40px;padding:0 16px;border-radius:12px;background:var(--lcd);color:var(--lcd-ink);font-weight:600;font-size:13px}
 .ecanvas.framed{background:#0a0a0d;border-radius:0;box-shadow:none}
@@ -540,7 +550,7 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 .bpresets button{flex:none;height:52px;border-radius:14px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;gap:8px;padding:0 12px 0 6px;font-family:var(--f-mono);font-size:10.5px;color:#cfc7bc}
 .bpresets svg{width:32px;height:40px;border-radius:7px;flex:none}
 .bpresets .save{padding:0 14px;color:var(--amber);border-color:rgba(255,196,61,.4)}
-.bbar{flex:none;display:flex;justify-content:center;gap:10px;padding-top:12px;border-top:1px solid #1a1b1f;background:#0B0C0E}
+.bbar{flex:none;display:flex;justify-content:center;align-items:center;gap:8px;padding-top:12px;border-top:1px solid #1a1b1f;background:#0B0C0E}
 .pbtn.sm{padding:8px 14px}
 .pbtn{padding:11px 18px;border-radius:14px;background:var(--lcd);color:var(--lcd-ink);font-weight:600;font-size:13px}
 .pbtn.ghost{background:transparent;color:var(--fg);box-shadow:inset 0 0 0 1.5px #3d3731;font-weight:500}
@@ -597,7 +607,7 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 <body>
 <div class="shell" id="shell">
   <aside class="nav">
-    <div class="brand">QAMERA<small>Náhled 0.7</small></div>
+    <div class="brand">QAMERA<small>Náhled 0.7.1</small></div>
     <div>
       <div class="navlabel">Zobrazení</div>
       <div class="seg" id="viewSeg"><button class="on" data-v="m">MOBIL 390×844</button><button data-v="pc">PC 1440×900</button></div>
@@ -638,6 +648,7 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
             <button class="fmtbadge" id="fmtBadge" aria-label="Přepnout formát">3:4</button>
             <div class="fmtbadge dbl" id="dblBadge" hidden>DOUBLE 1/2</div>
             <div class="hud" id="hud" hidden></div>
+            <button class="campill" id="camPill" hidden><span class="px-wrap" data-ic="camera"></span>Zapnout kameru</button>
             <div class="cambanner" id="camBanner" hidden><span>Druhá expozice pro Double</span><button id="camBannerBack">Zpět</button></div>
             <div class="pills">
               <span class="pill" id="pIso">ISO 400</span>
@@ -772,14 +783,13 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
           <div class="bscroll">
             <div class="bcard" id="bCard"><svg id="bSvg" viewBox="0 0 100 125" preserveAspectRatio="none"></svg><div class="lbl" id="bLbl"><span id="bL" contenteditable="true" spellcheck="false"></span><span id="bR" contenteditable="true" spellcheck="false"></span></div></div>
             <div class="palette" id="bPal"></div>
-            <div class="brow"><div class="seg" id="bPalSeg"><button data-p="pre">PALETA PŘED</button><button data-p="post" class="on">PO FILMU</button></div></div>
             <div class="brow"><button class="pbtn ghost sm" id="bInv">Obrátit</button><div class="seg" id="bBlend"><button data-b="normal" class="on">NORMÁL</button><button data-b="screen">SCREEN</button><button data-b="glow">GLOW</button></div></div>
             <div class="bsl"><label class="srow"><span>Dissolve</span><input type="range" id="bDis" min="0" max="100" value="0" data-def="0"><output>0</output></label>
               <label class="srow"><span>Velikost</span><input type="range" id="bSize" min="40" max="160" value="100" data-def="100"><output id="bSizeO">100</output></label></div>
             <div><div class="bh">TVARY</div><div class="shapes hs" id="bShapes"></div></div>
             <div><div class="bh">PRESETY</div><div class="bpresets hs" id="bPresets"></div></div>
           </div>
-          <div class="bbar pb"><button class="pbtn ghost" id="bPaper">Tečky: zap</button><button class="pbtn" id="bShare">Sdílet kartu</button></div>
+          <div class="bbar pb"><button class="pbtn ghost" id="bText">Text: zap</button><button class="pbtn ghost" id="bSave">Uložit blob</button><button class="pbtn" id="bShare">Export</button></div>
         </section>
 
         <!-- SPRÁVCE FILMŮ -->
@@ -792,7 +802,7 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
         <section class="scr pt" id="s-about" hidden>
           <div class="top"><button class="ib" data-back aria-label="Zpět" data-ic="back"></button><span class="title">O appce</span><span style="width:40px"></span></div>
           <div class="about">
-            <div class="hero"><div class="lens"><svg class="eyes" id="aboutEyes" viewBox="14 24 92 72"></svg></div><h2>QAMERA</h2><div class="ver">NÁHLED 0.7</div></div>
+            <div class="hero"><div class="lens"><svg class="eyes" id="aboutEyes" viewBox="14 24 92 72"></svg></div><h2>QAMERA</h2><div class="ver">NÁHLED 0.7.1</div></div>
             <div class="card"><h3>Poděkování</h3>
               <p><a href="https://github.com/thetechgeekko/Spektrafilm-android" target="_blank" rel="noopener">Spektrafilm for Android</a> by <b>Akshay Sharma</b></p>
               <p>Film modeling powered by <a href="https://github.com/andreavolpato/spektrafilm" target="_blank" rel="noopener">spektrafilm</a> (Andrea Volpato)</p>
@@ -1150,7 +1160,7 @@ async function liveOn() {
 }
 function liveStop() { if (CAM.stream) CAM.stream.getTracks().forEach(t => t.stop()); CAM.stream = null; CAM.track = null; }
 function liveOff() { liveStop(); CAM.live = false; CAM.deviceId = null; CAM.ultra = false; LIVE.w = 480; LIVE.h = 640; LIVE.canvas = mk(480, 640); updLive(); }
-function updLive() { $('#liveBtn').hidden = CAM.live; }
+function updLive() { $('#liveBtn').hidden = CAM.live || !store.get('cam', false) && !store.get('camAsked', false); $('#camPill').hidden = CAM.live || store.get('camAsked', false); }
 async function setTorch(on) { if (!CAM.track || !CAM.caps.torch) return false; try { await CAM.track.applyConstraints({ advanced: [{ torch: on }] }); return true; } catch { return false; } }
 function renderCamInfo() {
   const el = $('#camInfo'); if (!el) return;
@@ -1208,7 +1218,7 @@ void main(){
     float coc = clamp((abs(dep - uFocus) - .035) * 2.6, 0., 1.) * uDAmt;
     if (coc > .004) { vec2 ts = vec2(textureSize(uTex,0)); vec2 rad = vec2(ts.y/ts.x, 1.) * coc * .05; float lod = max(0., log2(coc * .05 * ts.y / 7.));
       vec3 acc = vec3(0.); float ws = 0.;
-      for (int i = 0; i < 40; i++) { float fi = float(i), rr = sqrt((fi + .5) / 40.), a = fi * 2.39996; vec2 sp = uv + vec2(cos(a), sin(a)) * rr * rad;
+      for (int i = 0; i < 28; i++) { float fi = float(i), rr = sqrt((fi + .5) / 28.), a = fi * 2.39996; vec2 sp = uv + vec2(cos(a), sin(a)) * rr * rad;
         vec3 sc = textureLod(uTex, sp, lod).rgb; float sd = textureLod(uDepth, sp, 0.).r; float w = (1. + pow(luma(sc), 5.) * 10.) * (sd > dep + .12 ? .25 : 1.); acc += sc * w; ws += w; }
       col = mix(col, acc / ws, smoothstep(0., .18, coc)); } }
   if (uSharp > 0.) { vec2 px = 1./vec2(textureSize(uTex,0)); vec3 bl = (texture(uTex,uv+vec2(px.x,0)).rgb+texture(uTex,uv-vec2(px.x,0)).rgb+texture(uTex,uv+vec2(0,px.y)).rgb+texture(uTex,uv-vec2(0,px.y)).rgb)*.25; col += (col-bl)*uSharp*1.5; }
@@ -1979,13 +1989,15 @@ let uidN = 0; const uid = () => Date.now() * 10 + (uidN++ % 10);
 const DBP = { p: null };
 function idb() { return DBP.p || (DBP.p = new Promise((res, rej) => { const r = indexedDB.open('qamera', 1); r.onupgradeneeded = () => r.result.createObjectStore('photos', { keyPath: 'id' }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); })); }
 function keep(ph) { ph.saved = true; dbPut(ph); return ph; }
-async function dbPut(ph) { if (!ph || !ph.saved) return; try { if (!ph.blob) ph.blob = await new Promise(r => ph.src.toBlob(r, 'image/jpeg', .93)); const db = await idb();
+const WORK = 2048; // pracovní rozlišení v paměti – plné 12 Mpx fotky by iPhone neudržel
+function shrink(c, m = WORK) { const k = m / Math.max(c.width, c.height); if (k >= 1) return c; const o = mk(Math.round(c.width * k), Math.round(c.height * k)); o.getContext('2d').drawImage(c, 0, 0, o.width, o.height); return o; }
+async function dbPut(ph) { if (!ph || !ph.saved) return; try { if (!ph.blob) ph.blob = await new Promise(r => ph.src.toBlob(r, 'image/jpeg', .93)); if (Math.max(ph.src.width, ph.src.height) > WORK) { ph.src = shrink(ph.src); ph._dxKey = null; } const db = await idb();
   db.transaction('photos', 'readwrite').objectStore('photos').put({ id: ph.id, kind: ph.kind, tags: ph.tags, date: +ph.date, P: ph.P, blob: ph.blob, depth: ph.depthBlob || null }); } catch {} }
 async function dbDel(id) { try { const db = await idb(); db.transaction('photos', 'readwrite').objectStore('photos').delete(id); } catch {} }
 async function dbLoad() {
   try { const db = await idb(), all = await new Promise((res, rej) => { const r = db.transaction('photos').objectStore('photos').getAll(); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
     all.sort((a, b) => a.date - b.date);
-    for (const it of all) { const bmp = await createImageBitmap(it.blob), c = mk(bmp.width, bmp.height); c.getContext('2d').drawImage(bmp, 0, 0);
+    for (const it of all) { const bmp = await createImageBitmap(it.blob), k = Math.min(1, WORK / Math.max(bmp.width, bmp.height)), c = mk(Math.round(bmp.width * k), Math.round(bmp.height * k)); c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height); bmp.close && bmp.close();
       if (it.roll) { const sh = { id: it.id, src: c, P: Object.assign(DEF(), it.P), date: new Date(it.date), roll: it.roll, blob: it.blob }; // snímek z jednorázovky / zamčené role
         if (it.roll === 'active' && S.dispo) S.dispo.shots.push(sh); else { const ro = ROLLS.find(r => r.id === it.roll); if (ro) ro.shots.push(sh); } continue; }
       const ph = addPhoto(c, Object.assign(DEF(), it.P), it.kind, it.tags, false, it.id); ph.date = new Date(it.date); ph.saved = true; ph.blob = it.blob; if (it.kind === 'arch') ph.film = 'ARCH';
@@ -2083,7 +2095,7 @@ async function importFiles(files) {
   for (const f of files) {
     try { const url = URL.createObjectURL(f), img = new Image(); img.src = url; await img.decode();
       const k = Math.min(1, 2048 / Math.max(img.naturalWidth, img.naturalHeight)), c = mk(Math.round(img.naturalWidth * k), Math.round(img.naturalHeight * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
-      const P = DEF(); P.film = S.film; const ph = addPhoto(c, P, 'import', ['import', 'moje'], true, uid()); ph.date = new Date(f.lastModified || Date.now()); keep(ph); n++; } catch {}
+      const P = DEF(); P.film = S.film; const ph = addPhoto(c, P, 'import', ['import', 'moje'], true, uid()); ph.date = new Date(f.lastModified || Date.now()); if (/^image\/(jpeg|png|webp)$/.test(f.type)) ph.blob = f; keep(ph); n++; } catch {}
   }
   if (n) { filterGallery(); $('#galThumb').src = S.photos[0].thumb; toast(n === 1 ? 'Fotka přidaná s filmem ' + S.film : `${n} fotek přidáno s filmem ${S.film}`); }
   else toast('Fotku se nepodařilo načíst');
@@ -2161,7 +2173,7 @@ function showArch(photos, title, film, opt = {}) {
 }
 /* prohlížeč obrázku: pinch / kolečko = zoom, tažení = posun, dvojťuk = 1× / 2,5× */
 function viewImage(src, ph) {
-  const el = document.createElement('div'); el.className = 'zoomv'; el.innerHTML = `<canvas></canvas><button class="zx" aria-label="Zavřít">${iconSVG('x')}</button>${ph ? '<button class="zsh">Uložit / sdílet</button>' : ''}`;
+  const el = document.createElement('div'); el.className = 'zoomv'; el.innerHTML = `<canvas></canvas><button class="zx" aria-label="Zavřít">${iconSVG('x')}</button>${ph ? '<button class="zsh">Export</button>' : ''}`;
   $('#phone').appendChild(el); const cv = $('canvas', el); cv.width = src.width; cv.height = src.height; cv.getContext('2d').drawImage(src, 0, 0);
   const W = el.clientWidth, H = el.clientHeight, k0 = Math.min(W / src.width, H / src.height); let z = { s: k0, x: (W - src.width * k0) / 2, y: (H - src.height * k0) / 2 };
   const apply = () => cv.style.transform = `translate(${z.x}px,${z.y}px) scale(${z.s})`; apply();
@@ -2187,8 +2199,9 @@ function viewImage(src, ph) {
    ===================================================================== */
 let edE, edRaf = 0, before = false;
 const PANEL_H = 186;
+function cleanP(P) { if (P.frame && !FRAMES[P.frame]) P.frame = null; P.date = null; if (P.depth && P.depth.mode === 'par') P.depth.mode = 'bokeh'; return P; } // zrušené efekty
 function openEditor(ph, fromImg) {
-  stopPar(); S.cur = ph; S.fxOpen = null; S.P = JSON.parse(JSON.stringify(ph.P)); S.cur._last = JSON.parse(JSON.stringify(ph.P)); S.hist = []; S.fut = [];
+  stopPar(); S.cur = ph; S.fxOpen = null; cleanP(ph.P); S.P = JSON.parse(JSON.stringify(ph.P)); S.cur._last = JSON.parse(JSON.stringify(ph.P)); S.hist = []; S.fut = [];
   edE.setSource(srcOf(ph, S.P));
   go('editor');
   setTab(S.tab, true);
@@ -2219,7 +2232,8 @@ function layoutEditor() {
 }
 function edOpts(extra = {}) { const cr = S.P.crop; return { bypass: before, zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180, transfer: S.P.tr ? transferFor() : null, depth: S.cur && S.cur.depth, par: S.par, ...extra }; }
 function renderEd(now) {
-  const run = () => { edRaf = 0; if (!S.cur) return; edE.render(S.P, edOpts()); if (S.P.frame && S._fr && !S._parAnim) { const wr = $('#eWrap'); frameBg($('#eGlow'), edE.c, wr.clientWidth, wr.clientHeight, S._fr, 0, S.P, S.cur); } dateOverlay(); if (S.adv) drawHist(); if (S.view === 'pc') renderPc(); };
+  const run = () => { edRaf = 0; if (!S.cur) return; const t0 = performance.now(); edE.render(S.P, edOpts());
+    if (S.P.depth && S.cur.depth && S.P.depth.mode !== 'map') { const g = edE.gl; g.readPixels(0, 0, 1, 1, g.RGBA, g.UNSIGNED_BYTE, new Uint8Array(4)); const ms = performance.now() - t0; S.depthMs = S.depthMs ? S.depthMs * .6 + ms * .4 : ms; } if (S.P.frame && S._fr && !S._parAnim) { const wr = $('#eWrap'); frameBg($('#eGlow'), edE.c, wr.clientWidth, wr.clientHeight, S._fr, 0, S.P, S.cur); } dateOverlay(); if (S.adv) drawHist(); if (S.view === 'pc') renderPc(); };
   if (now) { cancelAnimationFrame(edRaf); run(); return; }
   if (edRaf) return; edRaf = requestAnimationFrame(run);
 }
@@ -2245,7 +2259,7 @@ function glowFrame(cv, src, cw, ch, rect, scale) {
   const rg = g.createRadialGradient(ix + iw / 2, iy + ih * .55, M * .5, ix + iw / 2, iy + ih * .55, Math.hypot(W, H) * .6); rg.addColorStop(0, 'rgba(8,8,10,0)'); rg.addColorStop(1, 'rgba(8,8,10,.75)'); g.fillStyle = rg; g.fillRect(0, 0, W, H);
 }
 /* geometrie rámu: rozměr plátna (vejde se do MW × MH) a místo fotky v něm */
-const FRAMES = { glow: { l: 'Glow', pad: .72 }, neg: { l: 'Negativ', pad: .8 }, inst: { l: 'Instant', pad: .88 } };
+const FRAMES = { glow: { l: 'Glow', pad: .72 }, inst: { l: 'Instant', pad: .88 } };
 function frameGeom(P, par, MW, MH) {
   const fo = P.fo || { pad: FRAMES[P.frame].pad, ar: 0 }; let A, rel;
   if (P.frame === 'inst') { const m = (1 - fo.pad) / 2 / fo.pad, cw = 1 + 2 * m, chh = 1 / par + m * 4.2; A = cw / chh; rel = { x: m / cw, y: m / chh, w: 1 / cw, h: 1 / par / chh }; } // instantní fotka: dole široký okraj
@@ -2309,8 +2323,10 @@ async function exportCanvas(c, name) {
   try { if (isMobile() && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Qamera' }); return toast('Hotovo'); } } catch (e) { if (e && e.name === 'AbortError') return; }
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); toast('Fotka stažená');
 }
-function renderFull(ph, P) {
-  const src = srcOf(ph, P), ar = P.crop.ar || src.width / src.height, max = Math.min(util.e.gl.getParameter(util.e.gl.MAX_TEXTURE_SIZE), 4096);
+async function renderFull(ph, P) {
+  let src = srcOf(ph, P);
+  if (src === ph.src && ph.blob) { try { const bm = await createImageBitmap(ph.blob), k = Math.min(1, 4096 / Math.max(bm.width, bm.height)), c = mk(Math.round(bm.width * k), Math.round(bm.height * k)); c.getContext('2d').drawImage(bm, 0, 0, c.width, c.height); bm.close && bm.close(); src = c; } catch {} } // export z originálu
+  const ar = P.crop.ar || src.width / src.height, max = Math.min(util.e.gl.getParameter(util.e.gl.MAX_TEXTURE_SIZE), 4096);
   let w = Math.round(Math.min(src.width, max)), h = Math.round(w / ar); if (h > max) { h = max; w = Math.round(h * ar); }
   const cr = P.crop, o = utilRender(src, P, w, h, { zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180, transfer: P.tr ? transferFor() : null, seed: 7, depth: ph.depth });
   const c = copyCanvas(o); if (P.date) drawDate(c.getContext('2d'), c.width, c.height, ph.date, P.date); return framed(c, P, ph);
@@ -2354,7 +2370,7 @@ function exportLook(kind) {
 <!-- Základní posuvníky. Přesný vzhled filmu je v .cube (Lightroom: vlastní profil, Photoshop: Color Lookup). -->`;
   saveFile(base + '.xmp', xmp, 'application/rdf+xml');
 }
-async function exportPhoto() { if (!S.cur) return; toast('Připravuju fotku v plném rozlišení…'); await new Promise(r => setTimeout(r, 50)); const c = renderFull(S.cur, S.P); exportCanvas(c, `qamera-${S.P.film}-${Date.now()}.jpg`); }
+async function exportPhoto() { if (!S.cur) return; toast('Připravuju fotku v plném rozlišení…'); await new Promise(r => setTimeout(r, 50)); const c = await renderFull(S.cur, S.P); exportCanvas(c, `qamera-${S.P.film}-${Date.now()}.jpg`); }
 function commit() { S.hist.push(JSON.stringify(S.cur._last || S.cur.P)); if (S.hist.length > 60) S.hist.shift(); S.fut = []; S.cur._last = JSON.parse(JSON.stringify(S.P)); S.cur.P = JSON.parse(JSON.stringify(S.P)); rethumb(S.cur); dbPut(S.cur); }
 function undo() { if (!S.hist.length) return toast('Není co vracet'); S.fut.push(JSON.stringify(S.P)); S.P = JSON.parse(S.hist.pop()); syncCur(); }
 function redo() { if (!S.fut.length) return; S.hist.push(JSON.stringify(S.P)); S.P = JSON.parse(S.fut.pop()); syncCur(); }
@@ -2416,7 +2432,7 @@ function setTab(t, quiet) {
     requestAnimationFrame(() => { const on = $('.fthumb.on'), s = $('#fStrip'); if (on && s) s.scrollLeft = on.offsetLeft - s.clientWidth / 2 + on.offsetWidth / 2; });
   } else if (t === 'adj') {
     const a = ADJ.find(x => x.k === S.adjKey), dv = x => x.film ? FILM[S.P.film].gl : (x.def || 0), vv = x => S.P[x.k] ?? dv(x);
-    const ctx = a.k === 'grain' ? `<div class="gt hs" id="gtRow">${grainPills()}</div>` : `<small>Dvojklik na stupnici vrátí výchozí hodnotu</small>`;
+    const ctx = a.k === 'grain' ? `<div class="gt hs" id="gtRow">${grainPills()}</div>` : `<span></span>`;
     p.innerHTML = `<div class="ctx">${ctx}<button class="resetbtn" id="resetAll">${iconSVG('reset')}Vše</button></div><div class="ruler" id="adjR"></div><div class="chips" id="chipRow">${ADJ.map(x => `<button class="chip ${x.k === S.adjKey ? 'on' : ''} ${Math.abs(vv(x) - dv(x)) > .001 ? 'mod' : ''}" data-k="${x.k}">${iconSVG(x.ic)}${x.l}</button>`).join('')}</div>`;
     makeRuler($('#adjR'), { min: a.min, max: a.max, step: a.step, value: vv(a), label: a.l, fmt: a.f, def: dv(a), onInput: v => { S.P[a.k] = v; renderEd(); $(`.chip[data-k="${a.k}"]`).classList.toggle('mod', Math.abs(v - dv(a)) > .001); }, onEnd: commit });
     $$('.chip', p).forEach(b => b.onclick = () => { const sl = $('#chipRow').scrollLeft; S.adjKey = b.dataset.k; setTab('adj', true); $('#chipRow').scrollLeft = sl; });
@@ -2432,7 +2448,7 @@ function setTab(t, quiet) {
   } else if (t === 'fx' && S.fxOpen) { renderFxPanel(p);
   } else if (t === 'fx') {
     const fx = [['scan', 'Film scan', 'ref'], ['double', 'Double', 'double'], ['dither', 'Dither', 'dither'], ['pixel', 'Pixel art', 'pixel'], ['frame', 'Rám', 'frame'],
-      ['depth', 'Hloubka', 'depth'], ['date', 'Datumovka', 'date'], ['recipe', 'Recepty', 'recipe'], ['blob', 'Blob karta', 'blob']]; // co jde nastavit v Úpravách, tady není
+      ['depth', 'Hloubka', 'depth'], ['recipe', 'Recepty', 'recipe'], ['blob', 'Blob karta', 'blob']]; // co jde nastavit v Úpravách, tady není
     const st = S.P.style && S.P.style.type, on = k => (k === 'glowfx' && (S.P.glow ?? 0) > .45) || (k === 'sharp' && S.P.sharp) || (k === 'scan' && S.P.tr) || (k === 'double' && S.P.dx && S.P.dx.other) || (k === 'dither' && st === 'dither') || (k === 'pixel' && st === 'pixel') || (k === 'frame' && S.P.frame) || (k === 'depth' && S.P.depth) || (k === 'date' && S.P.date);
     p.innerHTML = `<div class="fx hs" id="fxRow">${fx.map(([k, l, ic, e]) => `<button data-fx="${k}" class="${on(k) ? 'on' : ''}">${iconSVG(ic)}${l}${e ? `<em>${e}</em>` : ''}</button>`).join('')}</div>`;
     hscroll($('#fxRow'));
@@ -2477,10 +2493,10 @@ function renderFxPanel(p) {
       <label class="srow"><span>${dith ? 'Hustota' : 'Pixely'}</span><input type="range" id="fxCells" min="${dith ? 80 : 40}" max="${dith ? 420 : 220}" value="${st.cells}" data-def="${dith ? 240 : 110}"><output>${st.cells}</output></label>
       ${dith ? `<label class="srow"><span>Úrovně</span><input type="range" id="fxLev" min="2" max="4" value="${st.levels}" data-def="2"><output>${st.levels}</output></label>` : ''}`; }
   else if (k === 'depth') { const d = S.P.depth, ready = !!S.cur.depth;
-    body = !ready ? `<div class="fxrow"><div class="dprog"><i id="dpBar" style="width:${Math.round((DEPTH.prog || 0) * 100)}%"></i></div><span id="dpPct" style="font:11px var(--f-mono);color:var(--mute);width:42px;text-align:right">${Math.round((DEPTH.prog || 0) * 100)} %</span></div>
-      <p class="note" id="dpNote">${DEPTH.err ? 'Hloubku se nepodařilo spočítat: ' + DEPTH.err : DEPTH.pipe ? 'Počítám hloubku fotky…' : 'Poprvé se stáhne model Depth Anything V2 Small (asi 25 MB), pak funguje i offline. Fotka zůstává v telefonu.'}</p>${DEPTH.err ? '<button class="go" id="dpRetry">Zkusit znovu</button>' : ''}`
-    : `<div class="fxrow"><div class="seg" id="fxDm">${[['bokeh', 'BOKEH'], ['fog', 'MLHA'], ['par', '3D'], ['map', 'MAPA']].map(([m, l]) => `<button data-m="${m}" class="${d.mode === m ? 'on' : ''}">${l}</button>`).join('')}</div></div>
-      ${d.mode === 'map' ? '' : `<label class="srow"><span>${d.mode === 'par' ? 'Hloubka' : 'Síla'}</span><input type="range" id="fxDa" min="0" max="100" value="${Math.round(d.amt * 100)}" data-def="70"><output>${Math.round(d.amt * 100)}</output></label>
+    body = !ready ? `<div class="fxrow"><div class="dprog ${DEPTH.phase === 'dl' ? '' : DEPTH.err ? '' : 'ind'}"><i id="dpBar" style="width:${DEPTH.phase === 'dl' ? Math.round(DEPTH.prog * 100) : 0}%"></i></div></div>
+      <p class="note" id="dpNote">${depthText()}</p>${DEPTH.err ? '<button class="go" id="dpRetry">Zkusit znovu</button>' : ''}`
+    : `<div class="fxrow"><div class="seg" id="fxDm">${[['bokeh', 'BOKEH'], ['fog', 'MLHA'], ['map', 'MAPA']].map(([m, l]) => `<button data-m="${m}" class="${d.mode === m ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+      ${d.mode === 'map' ? '' : `<label class="srow"><span>Síla</span><input type="range" id="fxDa" min="0" max="100" value="${Math.round(d.amt * 100)}" data-def="70"><output>${Math.round(d.amt * 100)}</output></label>
       <label class="srow"><span>${d.mode === 'fog' ? 'Začátek' : 'Ostření'}</span><input type="range" id="fxDf" min="0" max="100" value="${Math.round(d.focus * 100)}" data-def="80"><output>${Math.round(d.focus * 100)}</output></label>`}`; }
   else if (k === 'date') { const d = S.P.date;
     body = `<div class="fxrow"><div class="seg" id="fxDf2">${DATEF.map(([l], i) => `<button data-f="${i}" class="${(d.f || 0) === i ? 'on' : ''}">${l}</button>`).join('')}</div></div>
@@ -2503,8 +2519,10 @@ function renderFxPanel(p) {
     $$('#fxPal [data-p]').forEach(b => b.onclick = () => { const q = b.dataset.p; st.pn = q; st.pal = dith ? (q === 'photo' ? photoPal(2) : DPALS[q]) : photoPal(+q.replace('photo', '') || 6); $$('#fxPal [data-p]').forEach(x => x.classList.toggle('on', x === b)); renderEd(true); commit(); buzz(4); });
     rng('#fxCells', v => { st.cells = v; renderEd(); }); rng('#fxLev', v => { st.levels = v; renderEd(); }); }
   if (k === 'depth') { const d = S.P.depth; const rt = $('#dpRetry'); if (rt) rt.onclick = () => { DEPTH.err = null; runDepth(); setTab('fx', true); };
-    $$('#fxDm button').forEach(b => b.onclick = () => { d.mode = b.dataset.m; if (d.mode === 'par') startPar(); else stopPar(); renderEd(true); commit(); setTab('fx', true); buzz(4); });
-    rng('#fxDa', v => { d.amt = v / 100; renderEd(); }); rng('#fxDf', v => { d.focus = v / 100; d.fset = 1; renderEd(); }); if (S.cur.depth && d.mode === 'par') startPar(); }
+    $$('#fxDm button').forEach(b => b.onclick = () => { d.mode = b.dataset.m; heavyRender(); commit(); setTab('fx', true); buzz(4); });
+    const live = () => S.depthMs < 45; // stihne telefon přepočet během tažení?
+    const dr = (id, f) => { const i = $(id); if (!i) return; paintRange(i); i.oninput = () => { i.nextElementSibling.textContent = i.value; paintRange(i); f(+i.value); if (live()) renderEd(); }; i.onchange = () => { if (!live()) heavyRender(); commit(); }; };
+    dr('#fxDa', v => d.amt = v / 100); dr('#fxDf', v => { d.focus = v / 100; d.fset = 1; }); }
   if (k === 'date') { const d = S.P.date;
     $$('#fxDf2 button').forEach(b => b.onclick = () => { d.f = +b.dataset.f; $$('#fxDf2 button').forEach(x => x.classList.toggle('on', x === b)); renderEd(true); commit(); buzz(4); });
     $$('.fxp [data-c]').forEach(b => b.onclick = () => { d.c = +b.dataset.c; $$('.fxp [data-c]').forEach(x => x.classList.toggle('on', x === b)); renderEd(true); commit(); buzz(4); }); }
@@ -2514,16 +2532,20 @@ function renderFxPanel(p) {
     rng('#fxPad', v => { fo.pad = 1 - v / 100; layoutEditor(); renderEd(true); }); }
 }
 /* hloubka: Depth Anything V2 Small (Apache-2.0) přes transformers.js, model se stáhne při prvním použití a zůstane v cache */
-const DEPTH = { pipe: null, loading: null, prog: 0, err: null };
+const DEPTH = { pipe: null, loading: null, prog: 0, err: null, phase: 'init', got: 0, tot: 0 };
 async function depthModel() {
   if (DEPTH.pipe) return DEPTH.pipe;
   if (!DEPTH.loading) DEPTH.loading = (async () => {
+    try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch {} // ať iOS model z cache nemaže
+    try { const c = await caches.open('transformers-cache'), ks = await c.keys(); DEPTH.cached = ks.some(k => k.url.includes('depth-anything') && k.url.includes('.onnx')); } catch {}
+    DEPTH.phase = DEPTH.cached ? 'cache' : 'dl'; depthUi();
     const T = DEPTH.T = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.1/dist/transformers.min.js'); T.env.allowLocalModels = false;
-    const files = {}, progress_callback = e => { if (e.status === 'progress' && e.total) { files[e.file] = [e.loaded, e.total]; const v = Object.values(files); DEPTH.prog = v.reduce((a, x) => a + x[0], 0) / v.reduce((a, x) => a + x[1], 0) * .97; depthUi(); } };
+    const files = {}, progress_callback = e => { if (e.status === 'progress' && e.total && e.file.endsWith('.onnx') && !DEPTH.cached) { files[e.file] = [e.loaded, e.total]; const v = Object.values(files); DEPTH.got = v.reduce((a, x) => a + x[0], 0); DEPTH.tot = v.reduce((a, x) => a + x[1], 0); DEPTH.prog = DEPTH.got / DEPTH.tot; if (DEPTH.prog >= 1 && DEPTH.phase === 'dl') DEPTH.phase = 'init'; depthUi(); }
+      if (e.status === 'done' && e.file && e.file.endsWith('.onnx')) { DEPTH.phase = 'init'; depthUi(); } };
     const mk2 = (device, dtype) => T.pipeline('depth-estimation', 'onnx-community/depth-anything-v2-small', { device, dtype, progress_callback });
     let gpu = false; try { gpu = !!(navigator.gpu && await navigator.gpu.requestAdapter()); } catch {}
     try { DEPTH.pipe = gpu ? await mk2('webgpu', 'fp16') : await mk2('wasm', 'q8'); } catch (e) { if (!gpu) throw e; DEPTH.pipe = await mk2('wasm', 'q8'); }
-    return DEPTH.pipe; })();
+    DEPTH.phase = 'run'; depthUi(); return DEPTH.pipe; })();
   try { return await DEPTH.loading; } catch (e) { DEPTH.loading = null; throw e; }
 }
 async function computeDepth(ph) {
@@ -2532,8 +2554,11 @@ async function computeDepth(ph) {
   d.getContext('2d').drawImage(dc, 0, 0, d.width, d.height); ph.depth = d;
   const px = d.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, d.width, d.height).data, hs = []; for (let i = 0; i < px.length; i += 16) hs.push(px[i]); hs.sort((a, b) => a - b); ph.dFocus = hs[Math.floor(hs.length * .9)] / 255; // výchozí ostření = nejbližší objekt ph.depthBlob = await new Promise(r => d.toBlob(r, 'image/png')); dbPut(ph); return d;
 }
-function depthUi() { const b = $('#dpBar'), t = $('#dpPct'); if (b) b.style.width = Math.round(DEPTH.prog * 100) + '%'; if (t) t.textContent = Math.round(DEPTH.prog * 100) + ' %'; const n = $('#dpNote'); if (n && DEPTH.pipe) n.textContent = 'Počítám hloubku fotky…'; }
-async function runDepth() { const ph = S.cur; if (!ph || ph._dRun) return; ph._dRun = true;
+const MB = b => (b / 1048576).toFixed(1).replace('.', ',');
+function depthText() { if (DEPTH.err) return 'Hloubku se nepodařilo spočítat: ' + DEPTH.err;
+  return { dl: DEPTH.tot ? `Stahuju model hloubky · ${MB(DEPTH.got)} / ${MB(DEPTH.tot)} MB (jen poprvé)` : 'Stahuju model hloubky (jen poprvé, asi 25 MB)…', cache: 'Načítám model z telefonu…', init: 'Připravuju model…', run: 'Počítám hloubku fotky…' }[DEPTH.phase] || 'Připravuju…'; }
+function depthUi() { const b = $('#dpBar'), n = $('#dpNote'); if (!b) return; const dl = DEPTH.phase === 'dl' && DEPTH.tot; b.parentNode.classList.toggle('ind', !dl); b.style.width = dl ? Math.round(DEPTH.prog * 100) + '%' : ''; if (n) n.textContent = depthText(); }
+async function runDepth() { const ph = S.cur; if (!ph || ph._dRun) return; ph._dRun = true; if (DEPTH.pipe) { DEPTH.phase = 'run'; depthUi(); }
   try { await computeDepth(ph); DEPTH.prog = 1; if (S.cur === ph) { if (S.P.depth && !S.P.depth.fset) { S.P.depth.focus = ph.dFocus; commit(); } renderEd(true); if (S.fxOpen === 'depth') setTab('fx', true); } rethumb(ph); toast('Hloubka je hotová'); buzz(10); }
   catch (e) { DEPTH.err = (e && e.message || 'chyba').slice(0, 80); if (S.cur === ph && S.fxOpen === 'depth') setTab('fx', true); }
   ph._dRun = false; }
@@ -2548,6 +2573,11 @@ async function startPar() { if (parRaf) return; S.par = [0, 0]; parBase = null;
     cur[0] += (tx - cur[0]) * .12; cur[1] += (ty - cur[1]) * .12; S.par = [cur[0], -cur[1]]; renderEd(true); parRaf = requestAnimationFrame(loop); };
   parRaf = requestAnimationFrame(loop); }
 function stopPar() { if (!parRaf) return; cancelAnimationFrame(parRaf); parRaf = 0; S.par = null; removeEventListener('deviceorientation', onTilt); $('#eWrap').removeEventListener('pointermove', onParMove); if (S.cur) renderEd(true); }
+/* náročný přepočet (hloubka): když ho telefon nestíhá živě, ukáže se načítání a počítá se jednou */
+S.depthMs = 0;
+function heavyRender() { if (S.depthMs < 45) { renderEd(true); return; } const w = $('#eWrap'); let l = $('.eload', w);
+  if (!l) { l = document.createElement('div'); l.className = 'eload'; l.innerHTML = '<i></i><span>Počítám</span>'; w.appendChild(l); }
+  l.classList.add('on'); requestAnimationFrame(() => requestAnimationFrame(() => { renderEd(true); setTimeout(() => l.classList.remove('on'), 120); })); }
 function photoPal(n) { const P = JSON.parse(JSON.stringify(S.P)); P.style = null; P.grain = 0; utilRender(srcOf(S.cur, S.P), P, 60, 75, {}); return kmeans(util.e.pixels(), n).map(c => '#' + rgbOf(c).map(v => v.toString(16).padStart(2, '0')).join('')); }
 const DPALS = { amber: ['#0B0C0E', '#F5C542'], lime: ['#050505', '#D4FF3A'], paper: ['#1b1a18', '#F2EFE8'], ir: ['#1a0d2e', '#ff4f8b'] };
 function styleActs() {
@@ -2879,7 +2909,7 @@ function renderShapes() {
 function renderPresets() {
   $('#bPresets').innerHTML = BPRE.map((p, i) => { const fg = p.inv ? p.color : '#cfc7bc', bg = p.inv ? '#cfc7bc' : p.color;
     return `<button data-i="${i}"><svg viewBox="0 0 100 125" style="background:${bg}"><defs><filter id="tp${i}"><feGaussianBlur stdDeviation="2.4"/></filter></defs><g transform="translate(50 62.5) scale(${p.size || 1}) translate(-50 -62.5)">${shapeSvg(p.sh, fg, bg, 'tp' + i)}</g></svg>${p.name}</button>`; }).join('')
-    + `<button class="save" id="bSave">+ Uložit preset</button>`;
+;
   $$('#bPresets [data-i]').forEach(b => { const pr = BPRE[+b.dataset.i];
     b.onclick = () => { SHAPES.push(JSON.parse(JSON.stringify(pr.sh))); Object.assign(B, { inv: pr.inv, op: pr.op, blend: pr.blend, size: pr.size || 1, dis: pr.dis || 0 });
       if (!B.custom.includes(pr.color)) B.custom.push(pr.color); B.bg = B[B.palMode].length + B.custom.indexOf(pr.color); B.shape = SHAPES.length - 1; renderShapes(); syncBlobCtl(); drawPal(); buzz(6); toast(`Preset ${pr.name}`); };
@@ -2900,7 +2930,7 @@ function diceShape() { // kostka: jeden „náhodný“ slot, náhodný tvar i n
   Object.assign(B, { inv: Math.random() < .3, dis: Math.random() < .35 ? +(.15 + Math.random() * .45).toFixed(2) : 0, blend: rnd(['normal', 'normal', 'screen', 'glow']), size: +(.75 + Math.random() * .3).toFixed(2), bg: Math.floor(Math.random() * 5) });
   renderShapes(); syncBlobCtl(); B.shape = i; $$('#bShapes [data-i]').forEach(x => x.classList.toggle('on', +x.dataset.i === i)); drawPal(); buzz(8);
   spring(.94, 1, v => $('#bCard').style.transform = `scale(${v})`, { k: 300, c: 16 });
-  const btn = $(`#bShapes [data-i="${i}"]`); if (btn) btn.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+  const btn = $(`#bShapes [data-i="${i}"]`), row = $('#bShapes'); if (btn && row) { const l = btn.offsetLeft - row.offsetLeft, r2 = l + btn.offsetWidth; if (l < row.scrollLeft || r2 > row.scrollLeft + row.clientWidth) row.scrollTo({ left: l - row.clientWidth / 2 + btn.offsetWidth / 2, behavior: 'smooth' }); } // jen vodorovně, obrazovka neposkočí
 }
 function drawPal() {
   const pal = [...B[B.palMode], ...B.custom]; B.bg = clamp(B.bg, 0, pal.length - 1);
@@ -2917,7 +2947,7 @@ function drawBlob(path) {
   const inner = path ? `<path class="ms" d="${path}" fill="${fg}"/>` : shapeSvg(sh, fg, bgc), grp = `<g transform="translate(50 62.5) scale(${B.size}) translate(-50 -62.5)">${inner}</g>`;
   const scr = B.blend === 'normal' ? '' : 'style="mix-blend-mode:screen"';
   $('#bSvg').innerHTML = `<defs><filter id="bsoft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4"/></filter><filter id="bblur" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="6"/></filter>
-    ${B.dis > 0 ? `<filter id="bdis" filterUnits="userSpaceOnUse" x="0" y="0" width="100" height="125"><feGaussianBlur in="SourceGraphic" stdDeviation="${(B.dis * 5).toFixed(2)}" result="b"/><feTurbulence type="fractalNoise" baseFrequency="1.9" numOctaves="2" seed="7" result="n"/><feColorMatrix in="n" type="saturate" values="0" result="g"/><feComposite in="b" in2="g" operator="arithmetic" k1="0" k2="1" k3="${(.5 + B.dis * .9).toFixed(2)}" k4="${(-(.5 + B.dis * .9) / 2).toFixed(2)}" result="m"/><feComponentTransfer in="m"><feFuncR type="linear" slope="14" intercept="-6.5"/><feFuncG type="linear" slope="14" intercept="-6.5"/><feFuncB type="linear" slope="14" intercept="-6.5"/><feFuncA type="linear" slope="0" intercept="1"/></feComponentTransfer></filter>` : ''}
+    ${B.dis > 0 ? `<filter id="bdis" filterUnits="userSpaceOnUse" x="0" y="0" width="100" height="125"><feGaussianBlur in="SourceGraphic" stdDeviation="${(B.dis * 5).toFixed(2)}" result="b"/><feImage href="${noiseUrl()}" x="0" y="0" width="100" height="125" preserveAspectRatio="none" result="g"/><feComposite in="b" in2="g" operator="arithmetic" k1="0" k2="1" k3="${(.5 + B.dis * .9).toFixed(2)}" k4="${(-(.5 + B.dis * .9) / 2).toFixed(2)}" result="m"/><feComponentTransfer in="m"><feFuncR type="linear" slope="14" intercept="-6.5"/><feFuncG type="linear" slope="14" intercept="-6.5"/><feFuncB type="linear" slope="14" intercept="-6.5"/><feFuncA type="linear" slope="0" intercept="1"/></feComponentTransfer></filter>` : ''}
     <mask id="bm" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="125"><g ${B.dis > 0 ? 'filter="url(#bdis)"' : ''}><rect width="100" height="125" fill="${inv ? '#000' : '#fff'}"/>${grp}</g></mask>
     ${B.blend === 'glow' ? `<mask id="bmg" maskUnits="userSpaceOnUse" x="-30" y="-30" width="160" height="185"><rect x="-30" y="-30" width="160" height="185" fill="${inv ? '#000' : '#fff'}"/><g filter="url(#bblur)">${grp}</g></mask>` : ''}</defs>
     <image href="${B.img}" preserveAspectRatio="none"/>
@@ -2934,12 +2964,18 @@ async function exportBlob() {
   const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect'); bg.setAttribute('width', 100); bg.setAttribute('height', 125); bg.setAttribute('fill', B.color); svg.insertBefore(bg, svg.querySelector('image'));
   const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml' })), img = new Image(); img.src = url; await img.decode(); URL.revokeObjectURL(url);
   const W = 1200, H = 1500, c = mk(W, H), g = c.getContext('2d'); g.fillStyle = '#0B0C0E'; g.fillRect(0, 0, W, H);
-  if (B.paper !== false) { g.fillStyle = '#26282D'; for (let y = 30; y < H; y += 30) for (let x = 30; x < W; x += 30) { g.beginPath(); g.arc(x, y, 2.4, 0, 7); g.fill(); } }
+  { g.fillStyle = '#26282D'; for (let y = 30; y < H; y += 30) for (let x = 30; x < W; x += 30) { g.beginPath(); g.arc(x, y, 2.4, 0, 7); g.fill(); } }
   g.save(); g.beginPath(); g.roundRect(60, 75, 1080, 1350, 44); g.clip(); g.drawImage(img, 60, 75, 1080, 1350);
   await document.fonts.ready; g.fillStyle = getComputedStyle($('#bLbl')).getPropertyValue('--lc') || 'rgba(255,250,240,.88)'; g.font = '500 30px "Geist Mono", monospace'; g.textBaseline = 'alphabetic';
-  g.fillText($('#bL').textContent, 60 + 44, 75 + 1350 - 40); g.textAlign = 'right'; g.fillText($('#bR').textContent, 60 + 1080 - 44, 75 + 1350 - 40); g.restore();
+  if (B.text !== false) { g.fillText($('#bL').textContent, 60 + 44, 75 + 1350 - 40); g.textAlign = 'right'; g.fillText($('#bR').textContent, 60 + 1080 - 44, 75 + 1350 - 40); } g.restore();
   exportCanvas(c, `qamera-karta-${Date.now()}.jpg`);
 }
+/* šum pro dissolve jako obrázek – feTurbulence v Safari občas vykreslil jen část (pruh vpravo) */
+let NOISE = null;
+function noiseUrl() { if (NOISE) return NOISE; const W = 400, H = 500, c = mk(W, H), g = c.getContext('2d'), id = g.createImageData(W, H), a = new Float32Array(W * H);
+  for (let i = 0; i < a.length; i++) a[i] = Math.random();
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x, v = (a[i] * 2 + a[y * W + (x + 1) % W] + a[((y + 1) % H) * W + x]) / 4; id.data[i * 4] = id.data[i * 4 + 1] = id.data[i * 4 + 2] = v * 255; id.data[i * 4 + 3] = 255; }
+  g.putImageData(id, 0, 0); return NOISE = c.toDataURL('image/png'); }
 function placeImg() { const im = $('#bSvg image'); if (!im) return; const w = Math.max(100, 125 * B.ar) * B.sc, h = w / B.ar;
   im.setAttribute('x', 50 - w / 2 + B.ox); im.setAttribute('y', 62.5 - h / 2 + B.oy); im.setAttribute('width', w); im.setAttribute('height', h); }
 let morphSp = null;
@@ -3142,6 +3178,8 @@ function boot2(h) {
     toast(!S.flash ? 'Blesk vypnutý' : CAM.live ? (CAM.caps.torch ? 'Blesk: svítilna telefonu' : CAM.facing === 'user' ? 'Blesk: rozsvícený displej' : 'Tenhle prohlížeč svítilnu nepustí') : 'Blesk zapnutý'); };
   $('#tFlip').onclick = async () => { const vf = $('#vf'); spring(0, 1, v => vf.style.transform = `perspective(900px) rotateY(${Math.sin(v * Math.PI) * 12}deg) scale(${1 - Math.sin(v * Math.PI) * .05})`, { k: 120, c: 16 }); buzz(5);
     if (CAM.live) { CAM.facing = CAM.facing === 'user' ? 'environment' : 'user'; CAM.deviceId = null; CAM.ultra = false; await liveOn(); } else LIVE.facing = LIVE.facing === 'back' ? 'front' : 'back'; };
+  $('#camPill').innerHTML = iconSVG('camera') + 'Zapnout kameru'; $('#camPill').onclick = async () => { store.set('camAsked', true); updLive(); if (await liveOn()) toast('Živá kamera s filmem ' + S.film); };
+  updLive();
   $('#liveBtn').onclick = async () => { if (CAM.live) { liveOff(); toast('DEMO: generovaná scéna'); } else if (await liveOn()) toast('Živá kamera s filmem ' + S.film); };
   $$('#zoomGrp button').forEach(b => b.onclick = () => setZoom(+b.dataset.z));
   $('#lMode').onclick = () => { if (!S.timeIdx) { toast('Dlouhá expozice: táhni prstem v hledáčku doprava nebo otoč kolečko času'); return; } S.slowMode = (S.slowMode + 1) % 3; updLcd(); buzz(5);
@@ -3188,8 +3226,8 @@ function boot2(h) {
   cropGestures();
   // blob
   $('#bRand').onclick = diceShape;
-  $$('#bPalSeg button').forEach(b => b.onclick = () => { B.palMode = b.dataset.p; $$('#bPalSeg button').forEach(x => x.classList.toggle('on', x === b)); drawPal(); });
-  $('#bPaper').onclick = () => { B.paper = !B.paper; $('#s-blob').style.backgroundImage = B.paper ? '' : 'none'; $('#bPaper').textContent = 'Tečky: ' + (B.paper ? 'zap' : 'vyp'); };
+
+  $('#bText').onclick = () => { B.text = B.text === false; $('#bLbl').style.visibility = B.text ? '' : 'hidden'; $('#bText').textContent = 'Text: ' + (B.text ? 'zap' : 'vyp'); buzz(4); };
   $('#bShare').onclick = exportBlob;
   blobGestures(); hscroll($('#bShapes')); hscroll($('#rolls')); hscroll($('#pcStrip'));
   // o appce
