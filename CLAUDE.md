@@ -40,7 +40,8 @@ ve stylu **Prequel**, na PC se používá spíš jako **Lightroom**. Celá v **�
 - **Glow rám** = fotka jako obrazovka v tmavé místnosti, světlo z krajů se rozlévá do okolí (inspo `glow background efekt.mp4`), fotku nerozmazávat.
 - Kamera: ikona foťáku v hledáčku zapíná skutečnou kameru (žádná pilulka DEMO/ŽIVĚ); nad oběma kolečky proužek (EV / ZOOM); ISO a EV pilulky v hledáčku jen při schovaném ovládání.
 - Efekty v editoru neopakují to, co je v Úpravách. Vlastní filmy: podržení = přejmenovat / smazat. Galerie: filtr podle filmu (čipy).
-- Ikona appky: návrhy v `docs/ikona/` (A objektiv, B clona, C tečkové Q, D LCD, E mrknutí) – čeká na výběr.
+- **Ikona appky = tečkové Q** (návrh C, `icons/`: icon.svg, maskable, PNG 180/192/512, favicon), `manifest.webmanifest` v kořeni. Ostatní návrhy v `docs/ikona/`.
+- Náhled už ukládá tvoje fotky do IndexedDB (originál JPEG + úpravy JSON). Recepty, vlastní filmy, oblíbené a presety bloba jsou v localStorage. Jednorázovka a role se zatím neukládají.
 - **Arch** (ne „kontaktní arch“): z role, z dneška (od půlnoci) nebo výběrem fotek. **Jednorázovka** = filtr na den s oknem od–do, ráno vyvolání → arch.
 
 ## Licence a poděkování (povinné)
