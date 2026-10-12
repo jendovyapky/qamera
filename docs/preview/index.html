@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0c0b0a">
+<link rel="icon" href="../../icons/favicon-32.png" sizes="32x32">
+<link rel="icon" href="../../icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../icons/apple-touch-icon.png">
+<link rel="manifest" href="../../manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Qamera">
 <title>Qamera náhled</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -126,7 +133,9 @@ a{color:var(--amber)}
 .rrow .rapply{justify-content:flex-start;padding:0 14px}
 .rrow b{display:block;font-weight:500;font-size:14px}
 .rrow small{display:block;font-family:var(--f-mono);font-size:10.5px;color:var(--mute)}
-.rsave{display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:4px}
+.rsave{display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:4px;align-items:stretch}
+.acts .rsave .go,.rsave input{height:44px;border-radius:13px}
+.acts .rsave .go{padding:0 18px;font-size:13.5px}
 .rsave .go{padding:0 18px}
 #rShare{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
 #rShare small{font-size:11.5px;color:var(--mute);line-height:1.45}
@@ -301,7 +310,7 @@ a{color:var(--amber)}
 .ecanvas.framed{background:#0a0a0d;border-radius:0;box-shadow:none}
 .ecanvas.framed #eGlow,.ecanvas.framed #pcGlow{display:block}
 .ecanvas.framed #edCanvas,.ecanvas.framed #pcCanvas{position:absolute;border-radius:3px;box-shadow:0 0 0 1px rgba(255,255,255,.05)}
-.fsbtn{position:absolute;top:8px;right:14px;width:36px;height:36px;border-radius:12px;background:rgba(10,9,8,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#d0c8be;z-index:3}
+.fsbtn{position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:12px;background:rgba(10,9,8,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#d0c8be;z-index:3}
 .badge{position:absolute;top:12px;left:50%;transform:translateX(-50%);font-family:var(--f-mono);font-size:10.5px;letter-spacing:.2em;padding:5px 10px;border-radius:8px;background:rgba(0,0,0,.6);color:#fff;opacity:0;transition:opacity .15s;pointer-events:none;z-index:3}
 .badge.show{opacity:1}
 .epanel{flex:none;min-height:0;overflow:hidden;overflow:clip;position:relative}
@@ -429,11 +438,12 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 .roll small{display:block;font-family:var(--f-mono);font-size:9.5px;color:#aaa197;margin-top:2px;padding:0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .roll b{padding:0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fchips{display:flex;gap:6px;overflow-x:auto;padding:0 14px 12px}
-.fchips button{flex:none;height:32px;padding:0 12px;border-radius:10px;background:var(--panel);border:1px solid var(--line);font-family:var(--f-px);font-size:10px;color:var(--mute)}
+.fchips button{flex:none;height:32px;padding:0 12px;border-radius:10px;background:var(--panel);border:1px solid var(--line);font-family:var(--f-mono);font-size:11px;color:var(--mute)}
 .fchips button.on{color:var(--amber);border-color:rgba(255,196,61,.45);background:rgba(255,196,61,.07)}
 .roll.lock small{color:var(--amber)}
-.masonry{columns:2;column-gap:8px;padding:0 14px}
-.gitem{break-inside:avoid;margin:0 0 8px;border-radius:16px;overflow:hidden;position:relative;display:block;width:100%}
+.masonry{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 14px;align-items:start}
+.mcol{display:flex;flex-direction:column;gap:8px;min-width:0}
+.gitem{margin:0;border-radius:16px;overflow:hidden;position:relative;display:block;width:100%}
 .gitem img{display:block;width:100%}
 .gitem span{position:absolute;left:10px;bottom:10px;line-height:1.2;font-family:var(--f-mono);font-size:9.5px;padding:3px 7px;border-radius:7px;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .gitem{transition:transform .25s cubic-bezier(.3,1.5,.5,1),opacity .25s}
@@ -666,9 +676,8 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
             <div style="display:flex"><button class="ib" id="resetBtn" data-ic="reset" aria-label="Vrátit úpravy na výchozí film"></button><button class="ib" id="expBtn" data-ic="share" aria-label="Exportovat"></button></div>
           </div>
           <div class="ephoto" id="ePhoto">
-            <div class="frame" id="eFrame"><div class="ecanvas" id="eWrap"><canvas id="eGlow"></canvas><canvas id="edCanvas"></canvas></div></div>
+            <div class="frame" id="eFrame"><div class="ecanvas" id="eWrap"><canvas id="eGlow"></canvas><canvas id="edCanvas"></canvas><button class="ib fsbtn" id="fsBtn" data-ic="expand" aria-label="Celá obrazovka"></button></div></div>
             <div class="croplayer" id="cropLayer" hidden><div class="cropbox" id="cropBox"></div></div>
-            <button class="ib fsbtn" id="fsBtn" data-ic="expand" aria-label="Celá obrazovka"></button>
             <div class="badge" id="beforeBadge">PŘED</div>
           </div>
           <div class="epanel" id="ePanel"></div>
@@ -1822,7 +1831,7 @@ function finishCapture(src0) {
   const fl = $('#flash');
   if (S.flash || +fl.style.opacity > 0) spring(+fl.style.opacity || 1, 0, v => fl.style.opacity = v * .9, { k: 60, c: 14 });
   blink();
-  const ph = addPhoto(src, P, CAM.live ? 'live' : LIVE.facing === 'front' ? 'zapad' : 'mesto', CAM.live ? ['kamera'] : ['noc', 'ulice'], true);
+  const ph = keep(addPhoto(src, P, CAM.live ? 'live' : LIVE.facing === 'front' ? 'zapad' : 'mesto', CAM.live ? ['kamera'] : ['noc', 'ulice'], true, uid()));
   if (S.dxReturn) { useDxOther(ph); return; }
   const vf = $('#vf'), gb = $('#galBtn'), phone = $('#phone'), sc = phone.getBoundingClientRect().width / phone.offsetWidth;
   const a = vf.getBoundingClientRect(), b = gb.getBoundingClientRect(), pr = phone.getBoundingClientRect();
@@ -1853,10 +1862,26 @@ async function setZoom(z) {
    Fotky / galerie
    ===================================================================== */
 let pid = 0;
-function addPhoto(src, P, kind, tags, fresh) {
+function addPhoto(src, P, kind, tags, fresh, id) {
   const out = utilRender(src, P, 300, Math.round(300 / (src.width / src.height)), {});
-  const ph = { id: ++pid, src, P, kind, tags, film: P.film, date: new Date(), thumb: out.toDataURL('image/jpeg', .85), fresh };
+  const ph = { id: id ?? ++pid, src, P, kind, tags, film: P.film, date: new Date(), thumb: out.toDataURL('image/jpeg', .85), fresh };
   S.photos.unshift(ph); return ph;
+}
+/* tvoje fotky (vyfocené, importované, vyvolané) se ukládají v zařízení do IndexedDB: originál + úpravy jako JSON (nedestruktivně) */
+let uidN = 0; const uid = () => Date.now() * 10 + (uidN++ % 10);
+const DBP = { p: null };
+function idb() { return DBP.p || (DBP.p = new Promise((res, rej) => { const r = indexedDB.open('qamera', 1); r.onupgradeneeded = () => r.result.createObjectStore('photos', { keyPath: 'id' }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); })); }
+function keep(ph) { ph.saved = true; dbPut(ph); return ph; }
+async function dbPut(ph) { if (!ph || !ph.saved) return; try { if (!ph.blob) ph.blob = await new Promise(r => ph.src.toBlob(r, 'image/jpeg', .93)); const db = await idb();
+  db.transaction('photos', 'readwrite').objectStore('photos').put({ id: ph.id, kind: ph.kind, tags: ph.tags, date: +ph.date, P: ph.P, blob: ph.blob }); } catch {} }
+async function dbDel(id) { try { const db = await idb(); db.transaction('photos', 'readwrite').objectStore('photos').delete(id); } catch {} }
+async function dbLoad() {
+  try { const db = await idb(), all = await new Promise((res, rej) => { const r = db.transaction('photos').objectStore('photos').getAll(); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+    all.sort((a, b) => a.date - b.date);
+    for (const it of all) { const bmp = await createImageBitmap(it.blob), c = mk(bmp.width, bmp.height); c.getContext('2d').drawImage(bmp, 0, 0);
+      const ph = addPhoto(c, Object.assign(DEF(), it.P), it.kind, it.tags, false, it.id); ph.date = new Date(it.date); ph.saved = true; ph.blob = it.blob; }
+    if (all.length) { $('#galThumb').src = S.photos[0].thumb; if (S.screen === 'gallery') renderGallery(); }
+  } catch {}
 }
 function rethumb(ph) { const o = utilRender(srcOf(ph, ph.P), ph.P, 300, Math.round(300 / (ph.src.width / ph.src.height)), {}); ph.thumb = o.toDataURL('image/jpeg', .85); ph.film = ph.P.film; }
 function seedPhotos() {
@@ -1889,7 +1914,9 @@ function renderGallery() {
 function filterGallery() {
   const q = $('#gSearch').value.trim().toLowerCase();
   const list = S.photos.filter(p => !S.gFilm || p.film === S.gFilm).filter(p => !q || p.film.toLowerCase().includes(q) || p.tags.some(t => t.includes(q)) || p.date.toLocaleDateString('cs-CZ').includes(q));
-  $('#masonry').innerHTML = list.map(p => `<button class="gitem ${p.fresh ? 'new' : ''} ${S.sel && S.sel.has(p.id) ? 'sel' : ''}" data-id="${p.id}"><img src="${p.thumb}" alt=""><span>${p.film}</span></button>`).join('');
+  const cols = [[], []], hg = [0, 0], item = p => `<button class="gitem ${p.fresh ? 'new' : ''} ${S.sel && S.sel.has(p.id) ? 'sel' : ''}" data-id="${p.id}"><img src="${p.thumb}" alt="" style="aspect-ratio:${p.src.width}/${p.src.height}"><span>${p.film}</span></button>`;
+  list.forEach(p => { const i = hg[0] <= hg[1] ? 0 : 1; cols[i].push(p); hg[i] += p.src.height / p.src.width + .04; }); // vždy do kratšího sloupce, horní hrany sedí
+  $('#masonry').innerHTML = cols.map(c => `<div class="mcol">${c.map(item).join('')}</div>`).join('');
   list.forEach(p => p.fresh = false);
   $('#gEmpty').hidden = list.length > 0;
   $$('.gitem').forEach(b => { const ph = S.photos.find(p => p.id === +b.dataset.id);
@@ -1920,8 +1947,8 @@ function photoActs(ph, el) {
 }
 function deletePhoto(ph, el) {
   const i = S.photos.indexOf(ph); if (i < 0) return; el && el.classList.add('gone'); buzz(10);
-  setTimeout(() => { S.photos.splice(i, 1); filterGallery(); if (S.photos[0]) $('#galThumb').src = S.photos[0].thumb; }, 230);
-  toast('Fotka smazaná', { label: 'Vrátit', fn: () => { S.photos.splice(i, 0, ph); ph.fresh = true; filterGallery(); $('#galThumb').src = S.photos[0].thumb; } });
+  setTimeout(() => { S.photos.splice(i, 1); filterGallery(); if (S.photos[0]) $('#galThumb').src = S.photos[0].thumb; if (ph.saved) dbDel(ph.id); }, 230);
+  toast('Fotka smazaná', { label: 'Vrátit', fn: () => { S.photos.splice(i, 0, ph); ph.fresh = true; filterGallery(); $('#galThumb').src = S.photos[0].thumb; dbPut(ph); } });
 }
 function galleryAdd() {
   openActs(`<h4>Přidat</h4>${actBtn('imp', 'gallery', 'Importovat fotky z telefonu')}${actBtn('dispo', 'film', 'Jednorázovka')}${actBtn('arch', 'sheet', 'Arch')}`, root => {
@@ -1945,7 +1972,7 @@ async function importFiles(files) {
   for (const f of files) {
     try { const url = URL.createObjectURL(f), img = new Image(); img.src = url; await img.decode();
       const k = Math.min(1, 2048 / Math.max(img.naturalWidth, img.naturalHeight)), c = mk(Math.round(img.naturalWidth * k), Math.round(img.naturalHeight * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
-      const P = DEF(); P.film = S.film; const ph = addPhoto(c, P, 'import', ['import', 'moje'], true); ph.date = new Date(f.lastModified || Date.now()); n++; } catch {}
+      const P = DEF(); P.film = S.film; const ph = addPhoto(c, P, 'import', ['import', 'moje'], true, uid()); ph.date = new Date(f.lastModified || Date.now()); keep(ph); n++; } catch {}
   }
   if (n) { filterGallery(); $('#galThumb').src = S.photos[0].thumb; toast(n === 1 ? 'Fotka přidaná s filmem ' + S.film : `${n} fotek přidáno s filmem ${S.film}`); }
   else toast('Fotku se nepodařilo načíst');
@@ -1980,7 +2007,7 @@ function develop(roll) {
   el.innerHTML = `<h3>VYVOLÁVÁM</h3><p>${roll.name.toUpperCase()} · ${shots.length} SNÍMKŮ</p><div class="dg">${shots.map(s => `<img src="${utilRender(s.src, s.P, 300, Math.round(300 / (s.src.width / s.src.height)), {}).toDataURL('image/jpeg', .85)}" alt="">`).join('')}</div>`;
   $('#phone').appendChild(el); buzz(10);
   const imgs = $$('img', el); imgs.forEach((im, i) => setTimeout(() => im.classList.add('done'), 500 + i * 420));
-  setTimeout(() => { const added = shots.map(s => { const ph = addPhoto(s.src, s.P, 'dispo', ['jednorázovka', s.P.film], true); ph.date = s.date; return ph; }); ROLLS.splice(ROLLS.indexOf(roll), 1);
+  setTimeout(() => { const added = shots.map(s => { const ph = addPhoto(s.src, s.P, 'dispo', ['jednorázovka', s.P.film], true, uid()); ph.date = s.date; return keep(ph); }); ROLLS.splice(ROLLS.indexOf(roll), 1);
     el.style.transition = 'opacity .4s'; el.style.opacity = 0; setTimeout(() => { el.remove(); renderGallery(); showArch(added, roll.name.toUpperCase(), roll.film); }, 420); }, 1300 + imgs.length * 420 + 1600);
 }
 
@@ -2077,7 +2104,7 @@ function glowFrame(cv, src, cw, ch, rect, scale) {
 }
 function framed(src, P) { if (P.frame !== 'glow') return src; const c = mk(Math.round(src.width / .72), Math.round(src.height / .72)), r = { x: (c.width - src.width) / 2, y: (c.height - src.height) / 2, w: src.width, h: src.height };
   glowFrame(c, src, c.width, c.height, r, 1); const g = c.getContext('2d'); g.drawImage(src, r.x, r.y); return c; }
-function commit() { S.hist.push(JSON.stringify(S.cur._last || S.cur.P)); if (S.hist.length > 60) S.hist.shift(); S.fut = []; S.cur._last = JSON.parse(JSON.stringify(S.P)); S.cur.P = JSON.parse(JSON.stringify(S.P)); rethumb(S.cur); }
+function commit() { S.hist.push(JSON.stringify(S.cur._last || S.cur.P)); if (S.hist.length > 60) S.hist.shift(); S.fut = []; S.cur._last = JSON.parse(JSON.stringify(S.P)); S.cur.P = JSON.parse(JSON.stringify(S.P)); rethumb(S.cur); dbPut(S.cur); }
 function undo() { if (!S.hist.length) return toast('Není co vracet'); S.fut.push(JSON.stringify(S.P)); S.P = JSON.parse(S.hist.pop()); syncCur(); }
 function redo() { if (!S.fut.length) return; S.hist.push(JSON.stringify(S.P)); S.P = JSON.parse(S.fut.pop()); syncCur(); }
 function syncCur() { S.cur.P = JSON.parse(JSON.stringify(S.P)); S.cur._last = JSON.parse(JSON.stringify(S.P)); rethumb(S.cur); setTab(S.tab, true); layoutEditor(); renderEd(true); if (S.view === 'pc') buildPcRight(); }
@@ -2691,7 +2718,7 @@ function boot2(h) {
   if (camE.dead) document.body.insertAdjacentHTML('beforeend', '<p style="position:fixed;inset:auto 0 20px;text-align:center;color:#efa73b">Tenhle prohlížeč neumí WebGL2, náhled filmu nepoběží.</p>');
   store.get('scans', []).forEach(addFilm);
   if (!FILM[S.film]) S.film = 'P400';
-  initLive(); seedPhotos(); buildCarousel(); buildShutter(); setFilm(S.film);
+  initLive(); seedPhotos(); dbLoad(); buildCarousel(); buildShutter(); setFilm(S.film);
   const iso = isoApi = dial($('#isoDial'), ISO_STOPS, S.isoIdx, 124, i => { S.isoIdx = i; updLcd(); });
   const tim = timApi = dial($('#timeDial'), TIME_STOPS, S.timeIdx, 124, i => { S.timeIdx = i; updLcd(); }, 1);
   const ev = evStrip(); evApi = ev; zoomApi = zoomStrip(); updLcd();
