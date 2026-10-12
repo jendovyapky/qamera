@@ -11,8 +11,9 @@ ve stylu **Prequel**, na PC se používá spíš jako **Lightroom**. Celá v **�
 
 ## Stav
 - [x] Zadání a rozhodnutí (tento soubor), inspirace v `docs/inspo/`
-- [ ] Repo + Cloudflare Pages projekt `qamera` (subdoména, **zatím bez odkazu z rozcestníku jendovyapky.eu**)
-- [ ] Fáze 1: klikací HTML náhled hlavních obrazovek (zlatý standard pro vzhled a motion, schvaluje Honza)
+- [x] Repo `jendovyapky/qamera` + Cloudflare Pages projekt `qamera` (qamera.pages.dev, produkce = `main`, náhledy větví, **zatím bez odkazu z rozcestníku jendovyapky.eu**)
+- [ ] Fáze 1: klikací HTML náhled hlavních obrazovek (zlatý standard pro vzhled a motion, schvaluje Honza) – hotový v `docs/preview/index.html`, screenshoty v `docs/screens/`, **čeká na schválení**. Kořenový `index.html` zatím jen přesměrovává na náhled.
+  - Git na Honzově PC: GitHub účet **jendovyapky** je v Git Credential Manageru vedle `lichicks`; repo má v remote URL `jendovyapky@` → push jde pod správným účtem.
 - [ ] Fáze 2+: viz Plán níže
 
 ## Přísná pravidla
