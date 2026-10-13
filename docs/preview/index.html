@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="../../icons/apple-touch-icon.png">
 <link rel="manifest" href="../../manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Qamera">
 <title>Qamera náhled</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -252,6 +252,7 @@ a{color:var(--amber)}
 .focus{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;border:1.5px solid var(--amber);border-radius:12px;pointer-events:none;opacity:0;filter:var(--glow)}
 .count{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--f-dot);font-weight:900;font-size:120px;color:var(--amber);filter:var(--glow);pointer-events:none}
 .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+#tFlash.vint{color:#ffb46a;filter:drop-shadow(0 0 6px rgba(255,160,80,.7))}
 .iris{position:absolute;inset:0;pointer-events:none;background:#000;opacity:0}
 .slowbar{position:absolute;top:56px;left:50%;transform:translateX(-50%);width:200px;padding:6px 12px;border-radius:999px;background:rgba(10,9,8,.6);font-family:var(--f-px);font-size:10px;color:var(--amber);display:flex;gap:8px;align-items:center;justify-content:space-between}
 .slowbar i{display:block;width:70px;height:3px;border-radius:2px;background:#3a332b;overflow:hidden;flex:none}
@@ -486,6 +487,8 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 .refpick{display:flex;gap:8px;overflow-x:auto;padding:0 18px 12px}
 .refpick button,.refpick label{flex:none;width:52px;height:52px;border-radius:12px;overflow:hidden;border:2px solid transparent;background:var(--panel);display:grid;place-items:center;cursor:pointer;color:var(--mute);font-size:20px;position:relative}
 .refpick img{width:100%;height:100%;object-fit:cover;display:block}
+.refpick .px{width:22px;height:22px;color:var(--fg)}
+.refrow canvas{cursor:zoom-in}
 .refpick .on{border-color:var(--amber)}
 .refpick input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .exports{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 18px}
@@ -562,6 +565,8 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 .bpresets .save{padding:0 14px;color:var(--amber);border-color:rgba(255,196,61,.4)}
 .bbar{flex:none;display:flex;justify-content:center;align-items:center;gap:8px;padding-top:12px;border-top:1px solid #1a1b1f;background:#0B0C0E}
 .pbtn.sm{padding:8px 14px}
+#s-films .bbar .pbtn{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+#s-films .bbar .px{width:18px;height:18px}
 .pbtn{padding:11px 18px;border-radius:14px;background:var(--lcd);color:var(--lcd-ink);font-weight:600;font-size:13px}
 .pbtn.ghost{background:transparent;color:var(--fg);box-shadow:inset 0 0 0 1.5px #3d3731;font-weight:500}
 
@@ -593,6 +598,41 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 .pctop .file{font-family:var(--f-mono);font-size:12px;color:var(--mute)}
 .kbd{display:flex;gap:14px;margin-left:auto;font-size:12px;color:var(--mute)}
 .kbd kbd{font-family:var(--f-mono);font-size:11px;padding:2px 6px;border-radius:5px;background:#1f1c19;border:1px solid #2e2a26;color:#d8d0c5;margin-right:5px}
+body.pcapp .nav{display:none}
+body.pcapp .shell{display:block}
+body.pcapp .stage{position:fixed;inset:0}
+body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!important;border-radius:0;box-shadow:none}
+.pctools{display:flex;gap:4px}
+.pcib{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#cfc7bc}
+.pcib:hover,.pcghost:hover{background:#1c1a17}
+.pcib.on{color:var(--amber)}
+.pcghost{height:34px;padding:0 12px;border-radius:10px;border:1px solid var(--line);font-size:12.5px;color:#d6cec3}
+.pctop .kbd{margin-left:auto}
+.pcadd{font:500 10.5px var(--f-mono);letter-spacing:.06em;color:var(--amber);padding:2px 6px;border-radius:6px}
+.pcadd:hover{background:#1c1a17}
+.pcsec .seg{display:flex;width:100%;margin:2px 0 8px}
+.pcsec .seg button{flex:1;padding:6px 0;font-size:10.5px;text-align:center}
+.pcsec .row2{display:flex;gap:6px;margin:4px 0 8px}
+.pcsec .row2 .pcghost{flex:1;height:30px}
+.pcsec .note{font-size:11.5px;color:var(--mute);line-height:1.45;margin:4px 0 8px}
+.pcsec .dprog{margin:6px 0}
+.pccenter.cropping{cursor:grab}
+.pcmodal{position:absolute;inset:0;z-index:8;display:grid;place-items:center;background:rgba(8,7,6,.72);backdrop-filter:blur(8px)}
+.pcm{width:min(560px,92%);background:#141210;border:1px solid var(--line);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.pcm h3{margin:0;font:600 15px var(--f-ui)}
+.pcm h3 small{display:block;font-weight:400;font-size:12px;color:var(--mute);margin-top:4px}
+.pcmr{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pcmr figure{margin:0;text-align:center}
+.pcmr canvas{width:100%;aspect-ratio:4/5;border-radius:12px;display:block}
+.pcmr figcaption{font:10.5px var(--f-mono);letter-spacing:.14em;color:var(--mute);margin-top:6px}
+.pcmpick{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.pcmpick button,.pcmpick label{flex:none;width:52px;height:52px;border-radius:10px;overflow:hidden;border:2px solid transparent;background:var(--panel);display:grid;place-items:center;color:var(--mute);font-size:20px;position:relative;cursor:pointer}
+.pcmpick img{width:100%;height:100%;object-fit:cover}
+.pcmpick .on{border-color:var(--amber)}
+.pcmpick input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.pcmb{display:flex;justify-content:flex-end;gap:8px}
+.pcdrop{position:absolute;inset:16px;z-index:9;border:2px dashed var(--amber);border-radius:20px;display:grid;place-items:center;font:600 18px var(--f-ui);color:var(--amber);background:rgba(10,9,8,.7);pointer-events:none}
+.pcstrip .padd{height:90px;width:70px;flex:none;border-radius:6px;border:1.5px dashed #4a443e;color:var(--fg);font-size:24px;display:grid;place-items:center}
 .pbtn2{padding:8px 14px;border-radius:10px;background:var(--lcd);color:var(--lcd-ink);font-weight:600;font-size:13px}
 .pcleft,.pcright{overflow-y:auto;border-right:1px solid #1f1c19;padding:14px;display:flex;flex-direction:column;gap:12px}
 .pcright{border-right:0;border-left:1px solid #1f1c19}
@@ -612,12 +652,15 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 .pcsec h4{margin:0 0 8px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.16em;color:var(--mute);font-weight:500;text-transform:uppercase;display:flex;justify-content:space-between}
 .pcright .srow{grid-template-columns:90px 1fr 44px}
 .pcright .gt{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 6px}
+@media (pointer:coarse) and (min-width:701px){ /* iPad: mobilní rozhraní ve sloupci uprostřed */
+  .shell .stage .device{left:50%!important;width:min(100%,600px)!important;transform:translateX(-50%)!important}
+}
 </style>
 </head>
 <body>
 <div class="shell" id="shell">
   <aside class="nav">
-    <div class="brand">QAMERA<small>Náhled 0.7.3</small></div>
+    <div class="brand">QAMERA<small>Náhled 0.8</small></div>
     <div>
       <div class="navlabel">Zobrazení</div>
       <div class="seg" id="viewSeg"><button class="on" data-v="m">MOBIL 390×844</button><button data-v="pc">PC 1440×900</button></div>
@@ -797,7 +840,8 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
           <div class="scanbody">
             <p class="snote">Vyber fotku, jejíž barvy se ti líbí. Qamera z ní přenese barvy a tóny a uloží je jako tvůj vlastní film.</p>
             <div class="refrow"><figure><canvas id="refA" width="160" height="200"></canvas><figcaption>REFERENCE</figcaption></figure><span class="arrow">→</span><figure><canvas id="refB" width="160" height="200"></canvas><figcaption>TVŮJ ZÁBĚR</figcaption></figure></div>
-            <div><div class="bh">VYBER FOTKU</div><div class="refpick hs" id="refPick"></div></div>
+            <div><div class="bh">REFERENCE</div><div class="refpick hs" id="refPick"></div></div>
+            <div><div class="bh">TVŮJ ZÁBĚR</div><div class="refpick hs" id="samPick"></div></div>
             <div class="segrow"><div class="seg" id="refMethod"><button class="on" data-m="r">REINHARD</button><button data-m="i">IDT + REGRAIN</button></div></div>
             <div class="srow"><span>Síla přenosu</span><input type="range" id="refStr" min="0" max="100" value="80" data-def="0"><output id="refStrO">80</output></div>
           </div>
@@ -808,13 +852,14 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
         <section class="scr pt" id="s-films" hidden>
           <div class="top"><button class="ib" data-back aria-label="Zpět" data-ic="back"></button><span class="title">Moje filmy</span><span style="width:40px"></span></div>
           <div class="fmg" id="fmg"></div>
+          <div class="bbar pb"><label class="pbtn ghost">Vyfotit<input type="file" accept="image/*" capture="environment" id="fmShoot" hidden></label><button class="pbtn ghost" id="fmGal">Z galerie</button><input type="file" accept="image/*" id="fmFile" hidden></div>
         </section>
 
         <!-- O APPCE -->
         <section class="scr pt" id="s-about" hidden>
           <div class="top"><button class="ib" data-back aria-label="Zpět" data-ic="back"></button><span class="title">O appce</span><span style="width:40px"></span></div>
           <div class="about">
-            <div class="hero"><div class="lens"><svg class="eyes" id="aboutEyes" viewBox="14 24 92 72"></svg></div><h2>QAMERA</h2><div class="ver">NÁHLED 0.7.3</div></div>
+            <div class="hero"><div class="lens"><svg class="eyes" id="aboutEyes" viewBox="14 24 92 72"></svg></div><h2>QAMERA</h2><div class="ver">NÁHLED 0.8</div></div>
             <div class="card"><h3>Poděkování</h3>
               <p><a href="https://github.com/thetechgeekko/Spektrafilm-android" target="_blank" rel="noopener">Spektrafilm for Android</a> by <b>Akshay Sharma</b></p>
               <p>Film modeling powered by <a href="https://github.com/andreavolpato/spektrafilm" target="_blank" rel="noopener">spektrafilm</a> (Andrea Volpato)</p>
@@ -844,14 +889,21 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
     <!-- PC -->
     <div class="pcwrap" id="pcwrap" hidden>
       <div class="pc">
-        <header class="pctop"><div class="brand">QAMERA</div><span class="file" id="pcFile">noční-ulice.jpg · 3024×4032</span>
-          <div class="kbd"><span><kbd>\</kbd>před/po</span><span><kbd>C</kbd>ořez</span><span><kbd>Ctrl Z</kbd>zpět</span><span><kbd>←→</kbd>fotky</span></div>
-          <button class="pbtn2" id="pcExport">Exportovat</button></header>
-        <aside class="pcleft"><div class="pcsec"><h4>Filmy</h4><div id="pcFilms"></div></div>
-          <div class="pcsec"><h4>Moje filmy</h4><div id="pcPresets"></div></div></aside>
+        <header class="pctop"><div class="brand">QAMERA</div><span class="file" id="pcFile"></span>
+          <div class="pctools"><button class="pcib" id="pcUndo" title="Zpět (Ctrl+Z)"></button><button class="pcib" id="pcRedo" title="Znovu (Ctrl+Shift+Z)"></button><button class="pcib" id="pcBefore" title="Před / po"></button></div>
+          <div class="kbd"><span><kbd>\</kbd>před/po</span><span><kbd>C</kbd>ořez</span><span><kbd>←→</kbd>fotky</span><span><kbd>Del</kbd>smazat</span></div>
+          <button class="pcghost" id="pcMobile" title="Mobilní náhled">Mobil</button><button class="pcghost" id="pcImport">Importovat</button><button class="pcghost" id="pcCube">Export .cube</button><button class="pbtn2" id="pcExport">Exportovat</button></header>
+        <aside class="pcleft"><div class="pcsec"><h4>Filmy <button class="pcadd" id="pcScanBtn" title="Nový film z fotky (Film scan)">+ Nový</button></h4><div id="pcFilms"></div></div>
+          <div class="pcsec"><h4>Recepty</h4><div id="pcPresets"></div></div></aside>
         <section class="pccenter" id="pcCenter"><div class="ecanvas" id="pcWrap"><canvas id="pcGlow"></canvas><canvas id="pcCanvas"></canvas></div>
           <div class="croplayer" id="pcCrop" hidden><div class="cropbox" id="pcCropBox"></div></div>
-          <div class="badge" id="pcBadge">PŘED</div></section>
+          <div class="badge" id="pcBadge">PŘED</div>
+          <div class="pcmodal" id="pcScan" hidden><div class="pcm"><h3>Film scan<small>barvy a tóny z fotky, která se ti líbí → tvůj vlastní film</small></h3>
+            <div class="pcmr"><figure><canvas id="pcsA" width="240" height="300"></canvas><figcaption>REFERENCE</figcaption></figure><figure><canvas id="pcsB" width="240" height="300"></canvas><figcaption>TVOJE FOTKA</figcaption></figure></div>
+            <div class="pcmpick" id="pcsPick"></div>
+            <label class="srow"><span>Síla přenosu</span><input type="range" id="pcsStr" min="0" max="100" value="80" data-def="80"><output>80</output></label>
+            <div class="pcmb"><button class="pcghost" id="pcsCancel">Zrušit</button><button class="pbtn2" id="pcsSave">Uložit jako nový film</button></div></div></div>
+          <div class="pcdrop" id="pcDrop" hidden>Pusť fotky sem</div></section>
         <aside class="pcright" id="pcRight"></aside>
         <footer class="pcstrip hs" id="pcStrip"></footer>
       </div>
@@ -1202,7 +1254,7 @@ uniform vec3 uTrMs,uTrSs,uTrMr,uTrSr; uniform float uTr;
 uniform float uSeed, uGlow, uIR, uStyle, uCells, uLevels, uPalN, uZebra;
 uniform vec3 uPal[6];
 uniform highp sampler3D uLut3; uniform float uLut;
-uniform sampler2D uDepth; uniform float uDOn, uDMode, uDAmt, uFocus; uniform vec2 uPar;
+uniform sampler2D uDepth; uniform float uDOn, uDMode, uDAmt, uFocus, uVFlash; uniform vec2 uPar; uniform int uSampN;
 float bayer2(vec2 a){ a = floor(a); return fract(dot(a, vec2(.5, a.y*.75))); }
 float bayer4(vec2 a){ return bayer2(.5*a)*.25 + bayer2(a); }
 float bayer8(vec2 a){ return bayer4(.5*a)*.25 + bayer2(a); }
@@ -1230,17 +1282,20 @@ void main(){
     float coc = clamp((abs(dep - uFocus) - .035) * 2.6, 0., 1.) * uDAmt;
     if (coc > .004) { vec2 ts = vec2(textureSize(uTex,0)); vec2 rad = vec2(ts.y/ts.x, 1.) * coc * .05; float lod = max(0., log2(coc * .05 * ts.y / 7.));
       vec3 acc = vec3(0.); float ws = 0.;
-      for (int i = 0; i < 28; i++) { float fi = float(i), rr = sqrt((fi + .5) / 28.), a = fi * 2.39996; vec2 sp = uv + vec2(cos(a), sin(a)) * rr * rad;
+      for (int i = 0; i < 28; i++) { if (i >= uSampN) break; float fi = float(i), rr = sqrt((fi + .5) / float(uSampN)), a = fi * 2.39996; vec2 sp = uv + vec2(cos(a), sin(a)) * rr * rad;
         vec3 sc = textureLod(uTex, sp, lod).rgb; float sd = textureLod(uDepth, sp, 0.).r; float w = (1. + pow(luma(sc), 5.) * 10.) * (sd > dep + .12 ? .25 : 1.); acc += sc * w; ws += w; }
       col = mix(col, acc / ws, smoothstep(0., .18, coc)); } }
   if (uSharp > 0.) { vec2 px = 1./vec2(textureSize(uTex,0)); vec3 bl = (texture(uTex,uv+vec2(px.x,0)).rgb+texture(uTex,uv-vec2(px.x,0)).rgb+texture(uTex,uv+vec2(0,px.y)).rgb+texture(uTex,uv-vec2(0,px.y)).rgb)*.25; col += (col-bl)*uSharp*1.5; }
   col = mix(col, (col-uTrMs)/max(uTrSs,vec3(.03))*uTrSr+uTrMr, uTr);
   vec3 lin = pow(max(col,0.), vec3(2.2)) * exp2(uExp);
   lin *= vec3(1.+uTemp*.22, 1.+uTint*.1, 1.-uTemp*.22);
+  if (uVFlash > 0.) { float far0 = uRes.x/uRes.y; vec2 fq = q*vec2(far0>1.?far0:1., far0>1.?1.:1./far0); float fall = exp(-dot(fq,fq)*3.4); // vintage blesk: tvrdé světlo zepředu, teplý střed, tmavé kraje
+    lin *= mix(1., .5 + 1.35*fall, uVFlash); lin *= mix(vec3(1.), vec3(1.12,1.,.8), uVFlash*(.4+.6*fall)); }
   if (uDOn > .5 && uDMode > 1.5 && uDMode < 2.5) { float fg = pow(clamp((uFocus - dep) / max(uFocus, .05), 0., 1.), 1.15) * uDAmt; lin = mix(lin, vec3(.74,.76,.8) * exp2(uExp) * .85, fg); } // mlha do hloubky
   /* halation = červenooranžová záře kolem světel (odraz od podložky filmu), bloom = měkká bílá záře světel */
   vec3 b1 = pow(textureLod(uTex,uv,3.).rgb, vec3(2.2)), b2 = pow(textureLod(uTex,uv,5.).rgb, vec3(2.2)), b3 = pow(textureLod(uTex,uv,6.5).rgb, vec3(2.2));
   float hl = max(luma(b1)-.42,0.)*1.4 + max(luma(b2)-.3,0.)*1.9;
+  if (uDOn > .5 && uDMode > 2.5 && uDMode < 3.5) { float dl = textureLod(uDepth, uv, 3.5).r; hl *= smoothstep(uFocus, uFocus - .3, dl) * (1. + uDAmt * 2.5); } // halation jen u vzdálených světel
   lin += vec3(1.,.26,.07)*hl*1.1 * uHal * exp2(uExp);
   lin += (max(b1-.35,0.)*.7 + max(b2-.22,0.)*1.1 + max(b3-.15,0.)*1.3) * uBloom * 1.6 * exp2(uExp);
   vec3 c = pow(lin/(1.+lin*.06), vec3(1./2.2));
@@ -1348,9 +1403,9 @@ class Engine {
     gl.uniform1f(u.uLut, L ? 1 : 0);
     const D = P.depth && o.depth ? o.depth : null; // hloubková mapa fotky
     if (D) { gl.activeTexture(gl.TEXTURE2); if (!this.dtex) { this.dtex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, this.dtex); [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER].forEach(k => gl.texParameteri(gl.TEXTURE_2D, k, gl.LINEAR)); [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(k => gl.texParameteri(gl.TEXTURE_2D, k, gl.CLAMP_TO_EDGE)); }
-      gl.bindTexture(gl.TEXTURE_2D, this.dtex); if (this.dSrc !== D) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, D); this.dSrc = D; } }
-    gl.uniform1f(u.uDOn, D ? 1 : 0); gl.uniform1f(u.uDMode, D ? { bokeh: 1, fog: 2, par: 3, map: 4 }[P.depth.mode] || 1 : 0); gl.uniform1f(u.uDAmt, D ? P.depth.amt : 0); gl.uniform1f(u.uFocus, D ? P.depth.focus : .8);
-    const par = D && P.depth.mode === 'par' && o.par ? o.par : [0, 0]; gl.uniform2f(u.uPar, par[0], par[1]);
+      gl.bindTexture(gl.TEXTURE_2D, this.dtex); if (this.dSrc !== D) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, D); gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); this.dSrc = D; } }
+    gl.uniform1f(u.uDOn, D ? 1 : 0); gl.uniform1f(u.uDMode, D ? { bokeh: 1, fog: 2, hal: 3, map: 4 }[P.depth.mode] || 1 : 0); gl.uniform1f(u.uDAmt, D ? P.depth.amt : 0); gl.uniform1f(u.uFocus, D ? P.depth.focus : .8);
+    const par = D && P.depth.mode === 'par' && o.par ? o.par : [0, 0]; gl.uniform2f(u.uPar, par[0], par[1]); gl.uniform1i(u.uSampN, S.lowGpu ? 12 : IOS ? 18 : 28); gl.uniform1f(u.uVFlash, P.vflash || 0);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.tex);
     const dstAR = this.c.width / this.c.height, sAR = this.srcAR;
     const cov = dstAR > sAR ? [1, sAR / dstAR] : [dstAR / sAR, 1];
@@ -1673,12 +1728,17 @@ function go(to, { back = false, onShown } = {}) {
   trans = { sp, done };
 }
 function goBack() { const to = stack.pop() || 'camera'; go(to, { back: true }); }
+/* ukázková fotka pro Moje filmy: vyfotit, vložit nebo vybrat z galerie – pamatuje si ji */
+let FMS = null;
+function fmSample() { if (FMS) return FMS; const d = store.get('fmSample', null); if (!d) return null; const im = new Image(); im.src = d; im.onload = () => { FMS = cropAr(im, .8); if (S.screen === 'films') renderFilmsMgr(); }; return null; }
+function setFmSample(src) { FMS = cropAr(src, .8); const c = mk(400, 500); c.getContext('2d').drawImage(FMS, 0, 0, 400, 500); try { store.set('fmSample', c.toDataURL('image/jpeg', .85)); } catch {} renderFilmsMgr(); buzz(8); toast('Ukázková fotka nastavená'); }
+async function fmFromFile(f) { if (!f) return; try { const url = URL.createObjectURL(f), img = new Image(); img.src = url; await img.decode(); const k = Math.min(1, 900 / Math.max(img.naturalWidth, img.naturalHeight)), c = mk(Math.round(img.naturalWidth * k), Math.round(img.naturalHeight * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); setFmSample(c); } catch { toast('Fotku se nepodařilo načíst'); } }
 function renderFilmsMgr() { // všechny filmy na tvojí fotce: podrž = před/po, srdíčko = oblíbený, oko = skrýt z výběru
-  const ph = S.photos.find(p => p.kind !== 'arch') || S.photos[0], src = srcOf(ph, ph.P);
-  $('#fmg').innerHTML = `<p class="note">Ukázka na fotce z galerie. Podrž náhled = původní fotka. Skryté filmy nebudou ve výběru ve foťáku ani v editoru.</p>` + FILMS.map(f => `<div class="fcard ${HIDDEN.includes(f.code) ? 'off' : ''}" data-c="${f.code}"><canvas width="240" height="300"></canvas>
+  const ph = S.photos.find(p => p.kind !== 'arch') || S.photos[0], src = fmSample() || srcOf(ph, ph.P);
+  $('#fmg').innerHTML = `<p class="note">Ukázka na tvojí fotce (změníš ji dole). Podrž náhled = původní fotka. Skryté filmy nebudou ve výběru ve foťáku ani v editoru.</p>` + FILMS.map(f => `<div class="fcard ${HIDDEN.includes(f.code) ? 'off' : ''}" data-c="${f.code}"><canvas width="240" height="300"></canvas>
     <div class="ft"><div><b>${f.code}</b><small>${f.sub}</small></div><div class="fa"><button class="heart ${FAV.includes(f.code) ? 'on' : ''}" aria-label="Oblíbený">${iconSVG(FAV.includes(f.code) ? 'heart' : 'heartO')}</button><button class="vis ${HIDDEN.includes(f.code) ? '' : 'on'}" aria-label="Zobrazit ve výběru">${iconSVG('eye')}</button></div></div></div>`).join('')
     + `<button class="fcard addcard" id="fmAdd"><span class="ab">+</span><div class="ft"><div><b>NOVÝ FILM</b><small>film scan z fotky</small></div></div></button>`;
-  const P = JSON.parse(JSON.stringify(ph.P)); P.crop = DEF().crop; P.gtype = null;
+  const P = fmSample() ? DEF() : JSON.parse(JSON.stringify(ph.P)); P.crop = DEF().crop; P.gtype = null;
   $('#fmAdd').onclick = () => go('scan');
   $$('#fmg .fcard[data-c]').forEach(card => { const code = card.dataset.c, cv = $('canvas', card), paint = byp => { P.film = code; cv.getContext('2d').drawImage(utilRender(src, P, 240, 300, { bypass: byp }), 0, 0); }; paint(false);
     let t = 0; cv.onpointerdown = () => { t = setTimeout(() => { paint(true); buzz(6); }, 140); }; cv.onpointerup = cv.onpointercancel = cv.onpointerleave = () => { clearTimeout(t); paint(false); };
@@ -1897,7 +1957,7 @@ async function capture() {
   miniEyes.blink(); buzz(12);
   let torch = false;
   if (S.flash) { if (CAM.live && CAM.caps.torch) { torch = await setTorch(true); await new Promise(r => setTimeout(r, 350)); }
-    else if (CAM.live && CAM.facing === 'user') { const fl = $('#flash'); fl.style.opacity = 1; await new Promise(r => setTimeout(r, 300)); } }
+    else if (CAM.live && CAM.facing === 'user') { const fl = $('#flash'); fl.style.background = S.flash === 2 ? '#ffb46a' : '#fff'; fl.style.opacity = 1; await new Promise(r => setTimeout(r, 300)); } }
   if (!slow) { const src = CAM.live && CAM.video ? videoFrame() : copyCanvas(LIVE.canvas); if (torch) setTorch(false); finishCapture(src); return; }
   /* slow shutter / long exposure: snímky se sčítají ve float přesnosti (průměr = pohyb a hedvábí, maximum = světelné stopy).
      Hedvábí navíc vrací ostrost tam, kde se nic nehýbe (malý rozptyl mezi snímky). Až 15 s → stovky snímků bez pruhování. */
@@ -1957,7 +2017,7 @@ function finishCapture(src0) {
     if (!S.dblFirst) { S.dblFirst = src; showGhost(src); updFmt(); blink(); toast('První expozice hotová, vyfoť druhou přes ni'); return; }
     const a = S.dblFirst, c = mk(a.width, a.height), g = c.getContext('2d'); g.drawImage(a, 0, 0); g.globalCompositeOperation = 'screen'; g.drawImage(src, 0, 0, a.width, a.height); src = c; S.dblFirst = null; showGhost(null); updFmt();
   }
-  const P = camParams();
+  const P = camParams(); if (S.flash === 2) P.vflash = .85;
   if (S.dispo) { const sh = { id: uid(), src, P, date: new Date(), roll: 'active' }; S.dispo.shots.push(sh); dbPutShot(sh); blink(); updDispo(); return; }
   const fl = $('#flash');
   if (S.flash || +fl.style.opacity > 0) spring(+fl.style.opacity || 1, 0, v => fl.style.opacity = v * .9, { k: 60, c: 14 });
@@ -2193,17 +2253,19 @@ function viewImage(src, ph) {
   const apply = () => cv.style.transform = `translate(${z.x}px,${z.y}px) scale(${z.s})`; apply();
   const clampZ = () => { z.s = clamp(z.s, k0, k0 * 6); const w = src.width * z.s, h = src.height * z.s; z.x = w <= W ? (W - w) / 2 : clamp(z.x, W - w, 0); z.y = h <= H ? (H - h) / 2 : clamp(z.y, H - h, 0); };
   const zoomAt = (f, cx, cy) => { const ns = clamp(z.s * f, k0, k0 * 6), r = ns / z.s; z.x = cx - (cx - z.x) * r; z.y = cy - (cy - z.y) * r; z.s = ns; clampZ(); apply(); };
-  const pts = new Map(); let base = null, lastTap = 0;
+  const pts = new Map(); let base = null, lastTap = 0, sw = 0;
+  const close = () => { el.style.transition = 'opacity .25s'; el.style.opacity = 0; setTimeout(() => el.remove(), 260); };
   const rel = e => { const b = el.getBoundingClientRect(), sc = b.width / el.offsetWidth; return [(e.clientX - b.left) / sc, (e.clientY - b.top) / sc]; };
   el.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; el.setPointerCapture(e.pointerId); pts.set(e.pointerId, rel(e)); const a = [...pts.values()];
     base = { ...z, d: a[1] ? Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]) : 0, c: a[1] ? [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2] : a[0] }; });
   el.addEventListener('pointermove', e => { if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, rel(e)); const a = [...pts.values()];
     if (a[1] && base.d) { const c = [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2], ns = base.s * Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]) / base.d, r = ns / base.s; z.s = ns; z.x = c[0] - (base.c[0] - base.x) * r; z.y = c[1] - (base.c[1] - base.y) * r; }
-    else { z.x = base.x + a[0][0] - base.c[0]; z.y = base.y + a[0][1] - base.c[1]; } clampZ(); apply(); });
+    else { z.x = base.x + a[0][0] - base.c[0]; z.y = base.y + a[0][1] - base.c[1]; if (z.s <= k0 * 1.01) { sw = a[0][0] - base.c[0]; clampZ(); z.x += sw; cv.style.opacity = 1 - Math.min(Math.abs(sw) / 300, .6); apply(); return; } } clampZ(); apply(); });
   el.addEventListener('pointerup', e => { const p = pts.get(e.pointerId); pts.delete(e.pointerId); if (!p) return; if (pts.size) { const a = [...pts.values()]; base = { ...z, d: 0, c: a[0] }; return; }
+    if (Math.abs(sw) > 80) { close(); return; } if (sw) { const s0 = sw; sw = 0; spring(1, 0, t => { clampZ(); z.x += s0 * t; cv.style.opacity = 1 - Math.min(Math.abs(s0 * t) / 300, .6); apply(); }, { k: 260, c: 26 }); return; }
     const n = performance.now(); if (n - lastTap < 300) { const f = z.s > k0 * 1.2 ? k0 / z.s : 2.5; spring(0, 1, t => {}, {}); zoomAt(f, p[0], p[1]); lastTap = 0; } else lastTap = n; });
   el.addEventListener('wheel', e => { e.preventDefault(); const p = rel(e); zoomAt(1 - e.deltaY * .002, p[0], p[1]); }, { passive: false });
-  $('.zx', el).onclick = () => { el.style.transition = 'opacity .25s'; el.style.opacity = 0; setTimeout(() => el.remove(), 260); };
+  $('.zx', el).onclick = close;
   const sb = $('.zsh', el); if (sb) sb.onclick = () => exportCanvas(src, `qamera-arch-${Date.now()}.jpg`);
   el.style.opacity = 0; requestAnimationFrame(() => { el.style.transition = 'opacity .25s'; el.style.opacity = 1; });
 }
@@ -2213,7 +2275,7 @@ function viewImage(src, ph) {
    ===================================================================== */
 let edE, edRaf = 0, before = false;
 const PANEL_H = 186;
-function cleanP(P) { if (P.frame && !FRAMES[P.frame]) P.frame = null; P.date = null; P.tr = 0; if (P.depth && P.depth.mode === 'par') P.depth.mode = 'bokeh'; return P; } // zrušené efekty
+function cleanP(P) { if (P.frame && !FRAMES[P.frame]) P.frame = 'glow'; P.date = null; P.tr = 0; if (P.depth && !['bokeh', 'fog', 'hal', 'map'].includes(P.depth.mode)) P.depth.mode = 'bokeh'; return P; } // zrušené efekty
 function openEditor(ph, fromImg) {
   stopPar(); S.cur = ph; S.fxOpen = null; cleanP(ph.P); S.P = JSON.parse(JSON.stringify(ph.P)); S.cur._last = JSON.parse(JSON.stringify(ph.P)); S.hist = []; S.fut = [];
   edE.setSource(srcOf(ph, S.P));
@@ -2240,14 +2302,14 @@ function layoutEditor() {
   if (fr) { pw = G.r.w; ph = G.r.h; Object.assign(cv.style, { left: G.r.x + 'px', top: G.r.y + 'px', width: pw + 'px', height: ph + 'px' }); S._fr = G.r; }
   else Object.assign(cv.style, { left: '', top: '', width: '', height: '' });
   S._pr = fr ? G.r : { x: 0, y: 0, w, h };
-  const dpr = Math.min(2, devicePixelRatio || 1);
+  const dpr = S.P.depth && S.cur.depth && S.P.depth.mode !== 'map' ? 1 : Math.min(2, devicePixelRatio || 1);
   if (edE.size(Math.round(pw * dpr), Math.round(ph * dpr))) renderEd(true); else renderEd();
   if (S.tab === 'crop') placeCropBox();
 }
 function edOpts(extra = {}) { const cr = S.P.crop; return { bypass: before, zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180, transfer: S.P.tr ? transferFor() : null, depth: S.cur && S.cur.depth, par: S.par, ...extra }; }
 function renderEd(now) {
   const run = () => { edRaf = 0; if (!S.cur) return; const t0 = performance.now(); edE.render(S.P, edOpts());
-    if (S.P.depth && S.cur.depth && S.P.depth.mode !== 'map') { const g = edE.gl; g.readPixels(0, 0, 1, 1, g.RGBA, g.UNSIGNED_BYTE, new Uint8Array(4)); const ms = performance.now() - t0; S.depthMs = S.depthMs ? S.depthMs * .6 + ms * .4 : ms; } if (S.P.frame && S._fr && !S._parAnim) { const wr = $('#eWrap'); frameBg($('#eGlow'), edE.c, wr.clientWidth, wr.clientHeight, S._fr, 0, S.P, S.cur); } dateOverlay(); if (S.adv) drawHist(); if (S.view === 'pc') renderPc(); };
+    if (S.P.depth && S.cur.depth && S.P.depth.mode !== 'map') { const g = edE.gl; g.readPixels(0, 0, 1, 1, g.RGBA, g.UNSIGNED_BYTE, new Uint8Array(4)); const ms = performance.now() - t0; S.depthMs = S.depthMs != null ? S.depthMs * .6 + ms * .4 : ms; } if (S.P.frame && S._fr && !S._parAnim) { const wr = $('#eWrap'); frameBg($('#eGlow'), edE.c, wr.clientWidth, wr.clientHeight, S._fr, 0, S.P, S.cur); } dateOverlay(); if (S.adv) drawHist(); if (S.view === 'pc') renderPc(); };
   if (now) { cancelAnimationFrame(edRaf); run(); return; }
   if (edRaf) return; edRaf = requestAnimationFrame(run);
 }
@@ -2255,7 +2317,7 @@ let refStats = null, refSrc = null;
 function transferFor() { if (!refStats) { refSrc = copyCanvas(utilRender(drawScene('plaz', 320, 400, 5), Object.assign(DEF(), { film: 'VEL', grain: 0 }), 320, 400)); refStats = stats(refSrc); }
   const s = S.cur._stats || (S.cur._stats = stats(S.cur.src)); return { k: S.P.tr, ms: s.m, ss: s.s, mr: refStats.m, sr: refStats.s }; }
 /* glow rám: fotka jako obrazovka v tmavé místnosti – barvy z jejích krajů se rozlévají do okolí, fotka sama se nerozmazává */
-function glowFrame(cv, src, cw, ch, rect, scale) {
+function glowFrame(cv, src, cw, ch, rect, scale, str = 1) {
   const k = scale || Math.min(2, devicePixelRatio || 1), W = Math.round(cw * k), H = Math.round(ch * k); if (!W || !H) return;
   if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
   const g = cv.getContext('2d'), t = mk(16, 20), tg = t.getContext('2d', { willReadFrequently: true }); tg.drawImage(src, 0, 0, 16, 20); const d = tg.getImageData(0, 0, 16, 20).data;
@@ -2263,7 +2325,7 @@ function glowFrame(cv, src, cw, ch, rect, scale) {
   const ix = rect.x * k, iy = rect.y * k, iw = rect.w * k, ih = rect.h * k, M = Math.max(iw, ih);
   g.globalCompositeOperation = 'source-over'; g.fillStyle = '#0a0a0d'; g.fillRect(0, 0, W, H);
   g.globalCompositeOperation = 'lighter';
-  const light = (x, y, c, r, a) => { const L = (c[0] * .3 + c[1] * .59 + c[2] * .11) / 255, aa = a * (.2 + L * 1.2), gr = g.createRadialGradient(x, y, 0, x, y, r), s = c.join(',');
+  const light = (x, y, c, r0, a) => { const r = r0 * (.75 + .25 * Math.min(str, 2.5)), L = (c[0] * .3 + c[1] * .59 + c[2] * .11) / 255, aa = Math.min(1, a * (.2 + L * 1.2) * str), gr = g.createRadialGradient(x, y, 0, x, y, r), s = c.join(',');
     gr.addColorStop(0, `rgba(${s},${aa})`); gr.addColorStop(.25, `rgba(${s},${aa * .5})`); gr.addColorStop(.6, `rgba(${s},${aa * .14})`); gr.addColorStop(1, `rgba(${s},0)`); g.fillStyle = gr; g.fillRect(x - r, y - r, 2 * r, 2 * r); };
   for (let i = 0; i < 16; i++) { const x = ix + (i + .5) / 16 * iw; light(x, iy, px(i, 0), M * .55, .2); light(x, iy + ih, px(i, 19), M * .7, .3); }
   for (let j = 0; j < 20; j++) { const y = iy + (j + .5) / 20 * ih; light(ix, y, px(0, j), M * .55, .18); light(ix + iw, y, px(15, j), M * .55, .18); }
@@ -2273,7 +2335,7 @@ function glowFrame(cv, src, cw, ch, rect, scale) {
   const rg = g.createRadialGradient(ix + iw / 2, iy + ih * .55, M * .5, ix + iw / 2, iy + ih * .55, Math.hypot(W, H) * .6); rg.addColorStop(0, 'rgba(8,8,10,0)'); rg.addColorStop(1, 'rgba(8,8,10,.75)'); g.fillStyle = rg; g.fillRect(0, 0, W, H);
 }
 /* geometrie rámu: rozměr plátna (vejde se do MW × MH) a místo fotky v něm */
-const FRAMES = { glow: { l: 'Glow', pad: .72 }, inst: { l: 'Instant', pad: .88 } };
+const FRAMES = { glow: { l: 'Glow', pad: .72 } };
 function frameGeom(P, par, MW, MH) {
   const fo = P.fo || { pad: FRAMES[P.frame].pad, ar: 0 }; let A, rel;
   if (P.frame === 'inst') { const m = (1 - fo.pad) / 2 / fo.pad, cw = 1 + 2 * m, chh = 1 / par + m * 4.2; A = cw / chh; rel = { x: m / cw, y: m / chh, w: 1 / cw, h: 1 / par / chh }; } // instantní fotka: dole široký okraj
@@ -2282,7 +2344,7 @@ function frameGeom(P, par, MW, MH) {
   return { cw, ch, r: { x: rel.x * cw, y: rel.y * ch, w: rel.w * cw, h: rel.h * ch } };
 }
 function frameBg(cv, src, cw, ch, rect, scale, P, ph) {
-  if (P.frame === 'glow') return glowFrame(cv, src, cw, ch, rect, scale);
+  if (P.frame === 'glow') return glowFrame(cv, src, cw, ch, rect, scale, P.fo && P.fo.glow != null ? P.fo.glow : 1);
   const k = scale || Math.min(2, devicePixelRatio || 1), W = Math.round(cw * k), H = Math.round(ch * k); if (!W || !H) return;
   if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
   const g = cv.getContext('2d'), x = rect.x * k, y = rect.y * k, w = rect.w * k, h = rect.h * k, rr = (a, b, c, d, r) => { g.beginPath(); g.roundRect(a, b, c, d, r); g.fill(); };
@@ -2430,6 +2492,7 @@ const ADJ = [
   { k: 'vig', l: 'Vignette', ic: 'border', min: 0, max: 1, step: .01, f: v => Math.round(v * 100), def: .25 },
   { k: 'fade', l: 'Fade', ic: 'depth', min: 0, max: 1, step: .01, f: v => Math.round(v * 100) },
   { k: 'sharp', l: 'Ostrost', ic: 'sharp', min: 0, max: 1.5, step: .01, f: v => Math.round(v * 100) },
+  { k: 'vflash', l: 'Flash', ic: 'flash', min: 0, max: 1, step: .01, f: v => Math.round(v * 100) },
 ];
 const grainPills = () => Object.entries(GRAINS).map(([k, g]) => `<button class="gpill ${gtypeOf(S.P) === k ? 'on' : ''}" data-g="${k}" title="${g.d}">${g.l}</button>`).join('');
 function bindGrainPills(root, after) { $$('.gpill', root).forEach(b => b.onclick = () => { S.P.gtype = b.dataset.g; $$('.gpill', root).forEach(x => x.classList.toggle('on', x === b)); renderEd(); commit(); buzz(4); toast(`Grain ${GRAINS[b.dataset.g].l}: ${GRAINS[b.dataset.g].d}`); after && after(); }); }
@@ -2445,7 +2508,7 @@ function setTab(t, quiet) {
       spring(.9, 1, v => b.querySelector('canvas').style.transform = `scale(${v})`, { k: 300, c: 14 }); });
     requestAnimationFrame(() => { const on = $('.fthumb.on'), s = $('#fStrip'); if (on && s) s.scrollLeft = on.offsetLeft - s.clientWidth / 2 + on.offsetWidth / 2; });
   } else if (t === 'adj') {
-    const a = ADJ.find(x => x.k === S.adjKey), dv = x => x.film ? FILM[S.P.film].gl : (x.def || 0), vv = x => S.P[x.k] ?? dv(x);
+    const a = ADJ.find(x => x.k === S.adjKey) || ADJ[0], dv = x => x.film ? (FILM[S.P.film] || FILM.P400).gl : (x.def || 0), vv = x => S.P[x.k] ?? dv(x);
     const ctx = a.k === 'grain' ? `<div class="gt hs" id="gtRow">${grainPills()}</div>` : `<span></span>`;
     p.innerHTML = `<div class="ctx">${ctx}<button class="resetbtn" id="resetAll">${iconSVG('reset')}Vše</button></div><div class="ruler" id="adjR"></div><div class="chips" id="chipRow">${ADJ.map(x => `<button class="chip ${x.k === S.adjKey ? 'on' : ''} ${Math.abs(vv(x) - dv(x)) > .001 ? 'mod' : ''}" data-k="${x.k}">${iconSVG(x.ic)}${x.l}</button>`).join('')}</div>`;
     makeRuler($('#adjR'), { min: a.min, max: a.max, step: a.step, value: vv(a), label: a.l, fmt: a.f, def: dv(a), onInput: v => { S.P[a.k] = v; renderEd(); $(`.chip[data-k="${a.k}"]`).classList.toggle('mod', Math.abs(v - dv(a)) > .001); }, onEnd: commit });
@@ -2508,14 +2571,15 @@ function renderFxPanel(p) {
   else if (k === 'depth') { const d = S.P.depth, ready = !!S.cur.depth;
     body = !ready ? `<div class="fxrow"><div class="dprog ${DEPTH.phase === 'dl' ? '' : DEPTH.err ? '' : 'ind'}"><i id="dpBar" style="width:${DEPTH.phase === 'dl' ? Math.round(DEPTH.prog * 100) : 0}%"></i></div></div>
       <p class="note" id="dpNote">${depthText()}</p>${DEPTH.err ? '<button class="go" id="dpRetry">Zkusit znovu</button>' : ''}`
-    : `<div class="fxrow"><div class="seg" id="fxDm">${[['bokeh', 'BOKEH'], ['fog', 'MLHA'], ['map', 'MAPA']].map(([m, l]) => `<button data-m="${m}" class="${d.mode === m ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+    : `<div class="fxrow"><div class="seg" id="fxDm">${[['bokeh', 'BOKEH'], ['fog', 'MLHA'], ['hal', 'HALATION'], ['map', 'MAPA']].map(([m, l]) => `<button data-m="${m}" class="${d.mode === m ? 'on' : ''}">${l}</button>`).join('')}</div></div>
       ${d.mode === 'map' ? '' : `<label class="srow"><span>Síla</span><input type="range" id="fxDa" min="0" max="100" value="${Math.round(d.amt * 100)}" data-def="70"><output>${Math.round(d.amt * 100)}</output></label>
-      <label class="srow"><span>${d.mode === 'fog' ? 'Začátek' : 'Ostření'}</span><input type="range" id="fxDf" min="0" max="100" value="${Math.round(d.focus * 100)}" data-def="80"><output>${Math.round(d.focus * 100)}</output></label>`}`; }
+      <label class="srow"><span>${d.mode === 'fog' ? 'Začátek' : d.mode === 'hal' ? 'Odkud' : 'Ostření'}</span><input type="range" id="fxDf" min="0" max="100" value="${Math.round(d.focus * 100)}" data-def="80"><output>${Math.round(d.focus * 100)}</output></label>`}`; }
   else if (k === 'date') { const d = S.P.date;
     body = `<div class="fxrow"><div class="seg" id="fxDf2">${DATEF.map(([l], i) => `<button data-f="${i}" class="${(d.f || 0) === i ? 'on' : ''}">${l}</button>`).join('')}</div></div>
       <div class="srow"><span>Barva</span><div class="hs">${DATEC.map((c, i) => `<button class="sw2 ${(d.c || 0) === i ? 'on' : ''}" data-c="${i}" style="background:${c}"></button>`).join('')}</div></div>`; }
   else if (k === 'frame') { const fo = S.P.fo = S.P.fo || { pad: .72, ar: 0 };
-    body = `<div class="fxrow"><div class="seg" id="fxFt">${Object.entries(FRAMES).map(([t, f]) => `<button data-t="${t}" class="${S.P.frame === t ? 'on' : ''}">${f.l.toUpperCase()}</button>`).join('')}</div></div>${S.P.frame === 'inst' ? '' : `<div class="fxrow"><div class="seg" id="fxAr">${[['AUTO', 0], ['1:1', 1], ['4:5', .8], ['9:16', 9 / 16], ['16:9', 16 / 9]].map(([l, v]) => `<button data-a="${v}" class="${fo.ar === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>`}
+    body = `<div class="fxrow"><div class="seg" id="fxAr">${[['AUTO', 0], ['1:1', 1], ['4:5', .8], ['9:16', 9 / 16], ['16:9', 16 / 9]].map(([l, v]) => `<button data-a="${v}" class="${fo.ar === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+      <label class="srow"><span>Glow</span><input type="range" id="fxGlow" min="0" max="300" value="${Math.round((fo.glow ?? 1) * 100)}" data-def="100"><output>${Math.round((fo.glow ?? 1) * 100)}</output></label>
       <label class="srow"><span>Prostor</span><input type="range" id="fxPad" min="0" max="60" value="${Math.round((1 - fo.pad) * 100)}" data-def="28"><output>${Math.round((1 - fo.pad) * 100)}</output></label>`; }
   p.innerHTML = `<div class="fxp"><div class="fxh"><button class="ib" id="fxBack" aria-label="Zpět na efekty">${iconSVG('back')}</button><b>${name}</b><button class="off" id="fxOff">Vypnout</button></div>${body}</div>`;
   $('#fxBack').onclick = closeFx;
@@ -2533,14 +2597,14 @@ function renderFxPanel(p) {
     rng('#fxCells', v => { st.cells = v; renderEd(); }); rng('#fxLev', v => { st.levels = v; renderEd(); }); }
   if (k === 'depth') { const d = S.P.depth; const rt = $('#dpRetry'); if (rt) rt.onclick = () => { DEPTH.err = null; runDepth(); setTab('fx', true); };
     $$('#fxDm button').forEach(b => b.onclick = () => { d.mode = b.dataset.m; heavyRender(); commit(); setTab('fx', true); buzz(4); });
-    const live = () => S.depthMs < 45; // stihne telefon přepočet během tažení?
+    const live = () => S.depthMs != null && S.depthMs < 45; // stihne telefon přepočet během tažení?
     const dr = (id, f) => { const i = $(id); if (!i) return; paintRange(i); i.oninput = () => { i.nextElementSibling.textContent = i.value; paintRange(i); f(+i.value); if (live()) renderEd(); }; i.onchange = () => { if (!live()) heavyRender(); commit(); }; };
     dr('#fxDa', v => d.amt = v / 100); dr('#fxDf', v => { d.focus = v / 100; d.fset = 1; }); }
   if (k === 'date') { const d = S.P.date;
     $$('#fxDf2 button').forEach(b => b.onclick = () => { d.f = +b.dataset.f; $$('#fxDf2 button').forEach(x => x.classList.toggle('on', x === b)); renderEd(true); commit(); buzz(4); });
     $$('.fxp [data-c]').forEach(b => b.onclick = () => { d.c = +b.dataset.c; $$('.fxp [data-c]').forEach(x => x.classList.toggle('on', x === b)); renderEd(true); commit(); buzz(4); }); }
   if (k === 'frame') { const fo = S.P.fo;
-    $$('#fxFt button').forEach(b => b.onclick = () => { S.P.frame = b.dataset.t; fo.pad = FRAMES[S.P.frame].pad; layoutEditor(); renderEd(true); commit(); setTab('fx', true); buzz(4); });
+    rng('#fxGlow', v => { fo.glow = v / 100; renderEd(); });
     $$('#fxAr button').forEach(b => b.onclick = () => { fo.ar = +b.dataset.a; $$('#fxAr button').forEach(x => x.classList.toggle('on', x === b)); layoutEditor(); renderEd(true); commit(); buzz(4); });
     rng('#fxPad', v => { fo.pad = 1 - v / 100; layoutEditor(); renderEd(true); }); }
 }
@@ -2556,7 +2620,7 @@ async function depthModel() {
     const files = {}, progress_callback = e => { if (e.status === 'progress' && e.total && e.file.endsWith('.onnx') && !DEPTH.cached) { files[e.file] = [e.loaded, e.total]; const v = Object.values(files); DEPTH.got = v.reduce((a, x) => a + x[0], 0); DEPTH.tot = v.reduce((a, x) => a + x[1], 0); DEPTH.prog = DEPTH.got / DEPTH.tot; if (DEPTH.prog >= 1 && DEPTH.phase === 'dl') DEPTH.phase = 'init'; depthUi(); }
       if (e.status === 'done' && e.file && e.file.endsWith('.onnx')) { DEPTH.phase = 'init'; depthUi(); } };
     const mk2 = (device, dtype) => T.pipeline('depth-estimation', 'onnx-community/depth-anything-v2-small', { device, dtype, progress_callback });
-    let gpu = false; try { gpu = !!(navigator.gpu && await navigator.gpu.requestAdapter()); } catch {}
+    let gpu = false; try { gpu = !IOS && !!(navigator.gpu && await navigator.gpu.requestAdapter()); } catch {}
     try { DEPTH.pipe = gpu ? await mk2('webgpu', 'fp16') : await mk2('wasm', 'q8'); } catch (e) { if (!gpu) throw e; DEPTH.pipe = await mk2('wasm', 'q8'); }
     DEPTH.phase = 'run'; depthUi(); return DEPTH.pipe; })();
   try { return await DEPTH.loading; } catch (e) { DEPTH.loading = null; throw e; }
@@ -2572,8 +2636,8 @@ function depthText() { if (DEPTH.err) return 'Hloubku se nepodařilo spočítat:
   return { dl: DEPTH.tot ? `Stahuju model hloubky · ${MB(DEPTH.got)} / ${MB(DEPTH.tot)} MB (jen poprvé)` : 'Stahuju model hloubky (jen poprvé, asi 25 MB)…', cache: 'Načítám model z telefonu…', init: 'Připravuju model…', run: 'Počítám hloubku fotky…' }[DEPTH.phase] || 'Připravuju…'; }
 function depthUi() { const b = $('#dpBar'), n = $('#dpNote'); if (!b) return; const dl = DEPTH.phase === 'dl' && DEPTH.tot; b.parentNode.classList.toggle('ind', !dl); b.style.width = dl ? Math.round(DEPTH.prog * 100) + '%' : ''; if (n) n.textContent = depthText(); }
 async function runDepth() { const ph = S.cur; if (!ph || ph._dRun) return; ph._dRun = true; if (DEPTH.pipe) { DEPTH.phase = 'run'; depthUi(); }
-  try { await computeDepth(ph); DEPTH.prog = 1; const pp = DEPTH.pipe; DEPTH.pipe = null; DEPTH.loading = null; DEPTH.cached = true; DEPTH.phase = 'cache'; try { await pp.dispose(); } catch {} /* model hned uvolnit z paměti (iPhone 13 jinak spadl), příště se načte z telefonu */ if (S.cur === ph) { if (S.P.depth && !S.P.depth.fset) { S.P.depth.focus = ph.dFocus; commit(); } renderEd(true); if (S.fxOpen === 'depth') setTab('fx', true); } rethumb(ph); toast('Hloubka je hotová'); buzz(10); }
-  catch (e) { DEPTH.err = (e && e.message || 'chyba').slice(0, 80); if (S.cur === ph && S.fxOpen === 'depth') setTab('fx', true); }
+  try { await computeDepth(ph); DEPTH.prog = 1; S.depthMs = null; const pp = DEPTH.pipe; DEPTH.pipe = null; DEPTH.loading = null; DEPTH.cached = true; DEPTH.phase = 'cache'; try { await pp.dispose(); } catch {} /* model hned uvolnit z paměti (iPhone 13 jinak spadl), příště se načte z telefonu */ if (S.cur === ph) { if (S.P.depth && !S.P.depth.fset) { S.P.depth.focus = ph.dFocus; commit(); } layoutEditor(); heavyRender(); if (S.fxOpen === 'depth') setTab('fx', true); } rethumb(ph); if (S.view === 'pc') { renderPc(); buildPcRight(); } toast('Hloubka je hotová'); buzz(10); }
+  catch (e) { DEPTH.err = (e && e.message || 'chyba').slice(0, 80); if (S.cur === ph && S.fxOpen === 'depth') setTab('fx', true); if (S.view === 'pc') buildPcRight(); }
   ph._dRun = false; }
 /* 3D paralaxa: naklánění telefonu (iOS se zeptá na povolení), na PC myš, jinak se fotka sama jemně houpe */
 let parRaf = 0, parT = { x: 0, y: 0, at: 0 }, parBase = null;
@@ -2587,8 +2651,9 @@ async function startPar() { if (parRaf) return; S.par = [0, 0]; parBase = null;
   parRaf = requestAnimationFrame(loop); }
 function stopPar() { if (!parRaf) return; cancelAnimationFrame(parRaf); parRaf = 0; S.par = null; removeEventListener('deviceorientation', onTilt); $('#eWrap').removeEventListener('pointermove', onParMove); if (S.cur) renderEd(true); }
 /* náročný přepočet (hloubka): když ho telefon nestíhá živě, ukáže se načítání a počítá se jednou */
-S.depthMs = 0;
-function heavyRender() { if (S.depthMs < 45) { renderEd(true); return; } const w = $('#eWrap'); let l = $('.eload', w);
+S.depthMs = null; // dokud se nezměří, počítá se s pomalým telefonem
+const IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function heavyRender() { if (S.depthMs != null && S.depthMs < 45) { renderEd(true); return; } const w = $('#eWrap'); let l = $('.eload', w);
   if (!l) { l = document.createElement('div'); l.className = 'eload'; l.innerHTML = '<i></i><span>Počítám</span>'; w.appendChild(l); }
   l.classList.add('on'); requestAnimationFrame(() => requestAnimationFrame(() => { renderEd(true); setTimeout(() => l.classList.remove('on'), 120); })); }
 function photoPal(n) { const P = JSON.parse(JSON.stringify(S.P)); P.style = null; P.grain = 0; utilRender(srcOf(S.cur, S.P), P, 60, 75, {}); return kmeans(util.e.pixels(), n).map(c => '#' + rgbOf(c).map(v => v.toString(16).padStart(2, '0')).join('')); }
@@ -2665,7 +2730,7 @@ const HSL_COLS = ['#e8453c', '#f08a2c', '#efd23a', '#4fc25a', '#3cc6c9', '#3a6fe
 const HSL_NAMES = ['červená', 'oranžová', 'žlutá', 'zelená', 'azurová', 'modrá', 'fialová', 'purpurová'];
 function paintRange(inp) { const a = +inp.min, b = +inp.max, v = +inp.value, d = inp.dataset.def != null ? +inp.dataset.def : (a < 0 ? 0 : a), p = x => (x - a) / (b - a) * 100;
   inp.style.setProperty('--lo', Math.min(p(v), p(d)) + '%'); inp.style.setProperty('--hi', Math.max(p(v), p(d)) + '%'); }
-function rangeRow(k, l, a, b, P, def) { const fv = k === 'glow' ? FILM[P.film].gl : 0, v = P[k] ?? fv, d = def ?? DEF()[k] ?? fv;
+function rangeRow(k, l, a, b, P, def) { const fv = k === 'glow' ? (FILM[P.film] || FILM.P400).gl : 0, v = P[k] ?? fv, d = def ?? DEF()[k] ?? fv;
   return `<label class="srow"><span>${l}</span><input type="range" data-k="${k}" min="${a * 100}" max="${b * 100}" value="${Math.round(v * 100)}" data-def="${Math.round(d * 100)}"><output>${Math.round(v * 100)}</output></label>`; }
 function bindRanges(root, after) {
   $$('input[data-k]', root).forEach(inp => { paintRange(inp);
@@ -2764,13 +2829,25 @@ function deleteFilm(code) {
 /* nový film z reference (ve foťáku): přenos barev Reinhard v Lab, náhled na aktuálním záběru */
 const SCAN = { k: .8, sample: null, st: null };
 function ensureRef() { if (!refStats) { refSrc = copyCanvas(utilRender(drawScene('plaz', 320, 400, 5), Object.assign(DEF(), { film: 'VEL', grain: 0 }), 320, 400)); refStats = stats(refSrc); } }
-function scanSample() { const el = camE && camE.srcEl, c = mk(240, 300), g = c.getContext('2d'); const w = el ? (el.videoWidth || el.width) : 0, h = el ? (el.videoHeight || el.height) : 0;
-  if (w && h) { const k = Math.max(240 / w, 300 / h); g.drawImage(el, (240 - w * k) / 2, (300 - h * k) / 2, w * k, h * k); return c; }
-  const ph = S.photos.find(p => p.kind !== 'arch'); return ph ? cropAr(ph.src, .8) : c; }
+function scanSample() { const el = camE && camE.srcEl, c = mk(864, 1080), g = c.getContext('2d'); const w = el ? (el.videoWidth || el.width) : 0, h = el ? (el.videoHeight || el.height) : 0; // aktuální záběr kamery
+  if (w && h) { const k = Math.max(864 / w, 1080 / h); g.drawImage(el, (864 - w * k) / 2, (1080 - h * k) / 2, w * k, h * k); return c; }
+  const ph = S.photos.find(p => p.kind !== 'arch'); return ph ? ph.src : c; }
+function setSample(src) { SCAN.src = src; SCAN.sample = cropAr(src, .8); SCAN.st = stats(SCAN.sample); scanPreview(); }
+function buildSamPick() { const el = $('#samPick');
+  el.innerHTML = `<label aria-label="Nahrát fotku">+<input type="file" accept="image/*" id="samFile"></label><button data-cam="1" class="on" aria-label="Záběr kamery">${iconSVG('camera')}</button>` + S.photos.filter(p => p.kind !== 'arch').slice(0, 14).map(p => `<button data-id="${p.id}"><img src="${p.thumb}" alt=""></button>`).join('');
+  $$('button', el).forEach(b => b.onclick = () => { $$('button', el).forEach(x => x.classList.toggle('on', x === b)); if (b.dataset.cam) setSample(scanSample()); else { const ph = S.photos.find(p => p.id === +b.dataset.id); setSample(copyCanvas(utilRender(ph.src, DEF(), 864, Math.round(864 / (ph.src.width / ph.src.height)), { bypass: true }))); } buzz(4); });
+  $('#samFile').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; try { const url = URL.createObjectURL(f), img = new Image(); img.src = url; await img.decode(); const k = Math.min(1, 1080 / Math.max(img.naturalWidth, img.naturalHeight)), c = mk(Math.round(img.naturalWidth * k), Math.round(img.naturalHeight * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); $$('button', el).forEach(x => x.classList.remove('on')); setSample(c); } catch { toast('Fotku se nepodařilo načíst'); } };
+}
+const scanP = () => Object.assign(DEF(), { film: 'P400', str: 0, grain: .3, hal: 0, bloom: 0, vig: .2 });
+function scanFull(which) { // ťuknutí na náhled = celá obrazovka (zavřít křížkem, ťuknutím nebo přejetím do strany)
+  const src = which === 'ref' ? refSrc : SCAN.src, w = Math.min(1440, src.width), h = Math.round(w / (src.width / src.height));
+  const c = which === 'ref' ? copyCanvas(utilRender(src, DEF(), w, h, { bypass: true })) : copyCanvas(utilRender(src, scanP(), w, h, { transfer: { k: SCAN.k, ms: SCAN.st.m, ss: SCAN.st.s, mr: refStats.m, sr: refStats.s } }));
+  viewImage(c); }
 function scanPreview() { const P = Object.assign(DEF(), { film: 'P400', str: 0, grain: .3, hal: 0, bloom: 0, vig: .2 });
   $('#refB').getContext('2d').drawImage(utilRender(SCAN.sample, P, 160, 200, { transfer: { k: SCAN.k, ms: SCAN.st.m, ss: SCAN.st.s, mr: refStats.m, sr: refStats.s } }), 0, 0); }
 function openScan() {
-  ensureRef(); SCAN.sample = scanSample(); SCAN.st = stats(SCAN.sample); buildRefPick(); $('#refA').getContext('2d').drawImage(cropAr(refSrc, .8), 0, 0, 160, 200);
+  ensureRef(); SCAN.src = scanSample(); SCAN.sample = cropAr(SCAN.src, .8); SCAN.st = stats(SCAN.sample); buildRefPick(); buildSamPick();
+  $('#refA').onclick = () => scanFull('ref'); $('#refB').onclick = () => scanFull('sam'); $('#refA').getContext('2d').drawImage(cropAr(refSrc, .8), 0, 0, 160, 200);
   openRef._upd = scanPreview; scanPreview(); const rg = $('#refStr'); rg.value = Math.round(SCAN.k * 100); $('#refStrO').textContent = rg.value; paintRange(rg);
   rg.oninput = () => { SCAN.k = rg.value / 100; $('#refStrO').textContent = rg.value; paintRange(rg); scanPreview(); };
 }
@@ -3042,8 +3119,10 @@ function blobGestures() {
    PC rozložení (Lightroom)
    ===================================================================== */
 let pcE, pcBefore = false;
+const PHNAME = { mesto: 'noční ulice', zapad: 'západ', les: 'les', plaz: 'pláž', hory: 'hory', kvet: 'květ', live: 'snímek', import: 'import', dispo: 'jednorázovka', arch: 'arch', postava: 'postava' };
 function openPc() {
-  if (!S.cur) { S.cur = S.photos.find(p => p.kind === 'mesto') || S.photos[0]; S.P = JSON.parse(JSON.stringify(S.cur.P)); S.cur._last = JSON.parse(JSON.stringify(S.P)); edE.setSource(S.cur.src); }
+  if (!S.photos.length) return;
+  if (!S.cur || !S.photos.includes(S.cur)) { S.cur = S.photos.find(p => p.kind === 'mesto') || S.photos[0]; S.P = JSON.parse(JSON.stringify(S.cur.P)); S.cur._last = JSON.parse(JSON.stringify(S.P)); edE.setSource(S.cur.src); }
   pcE.setSource(srcOf(S.cur, S.P));
   $('#pcFilms').innerHTML = filmsOrdered().map(f => `<button class="pcfilm ${f.code === S.P.film ? 'on' : ''}" data-c="${f.code}"><canvas width="88" height="88"></canvas><span><b>${f.code}</b><small>${f.sub}</small></span></button>`).join('');
   const P = JSON.parse(JSON.stringify(S.P)); P.crop = DEF().crop; P.gtype = null;
@@ -3052,18 +3131,20 @@ function openPc() {
   $('#pcPresets').innerHTML = RECIPES.length ? RECIPES.map((r, i) => `<button class="pcfilm" data-r="${i}"><canvas width="88" height="88"></canvas><span><b>${r.name}</b><small>recept · ${r.P.film}</small></span></button>`).join('') : '<p style="font-size:12px;color:var(--mute);margin:4px 6px">Recepty uložíš v Efektech → Recepty.</p>';
   $$('#pcPresets [data-r]').forEach(b => { const r = RECIPES[+b.dataset.r]; b.querySelector('canvas').getContext('2d').drawImage(utilRender(srcOf(S.cur, S.P), Object.assign(DEF(), r.P), 88, 88, {}), 0, 0);
     b.onclick = () => { S.P = Object.assign(DEF(), JSON.parse(JSON.stringify(r.P)), { crop: S.P.crop, dx: S.P.dx }); commit(); renderPc(); buildPcRight(); toast(`Recept ${r.name} použitý`); }; });
-  $('#pcStrip').innerHTML = S.photos.map(p => `<img src="${p.thumb}" data-id="${p.id}" class="${p === S.cur ? 'on' : ''}" alt="">`).join('');
+  $('#pcStrip').innerHTML = `<button class="padd" id="pcAddTile" title="Importovat fotky">+</button>` + S.photos.map(p => `<img src="${p.thumb}" data-id="${p.id}" class="${p === S.cur ? 'on' : ''}" alt="">`).join('');
+  $('#pcAddTile').onclick = () => $('#fileImport').click();
+  const on = $('#pcStrip img.on'); if (on) requestAnimationFrame(() => on.scrollIntoView({ inline: 'nearest', block: 'nearest' }));
   $$('#pcStrip img').forEach(im => im.onclick = () => pcSelect(S.photos.find(p => p.id === +im.dataset.id)));
-  $('#pcFile').textContent = `${{ mesto: 'noční-ulice', zapad: 'západ', les: 'les', plaz: 'pláž', hory: 'hory', kvet: 'květ', live: 'snímek' }[S.cur.kind]}.jpg · ${S.cur.src.width}×${S.cur.src.height}`;
+  $('#pcFile').textContent = `${PHNAME[S.cur.kind] || 'fotka'} · ${S.cur.date.toLocaleDateString('cs-CZ')} · ${S.P.film}`;
   buildPcRight(); requestAnimationFrame(layoutPc);
 }
-function pcSelect(ph) { if (!ph) return; S.cur = ph; S.P = JSON.parse(JSON.stringify(ph.P)); S.cur._last = JSON.parse(JSON.stringify(S.P)); S.hist = []; S.fut = []; edE.setSource(srcOf(ph, S.P)); openPc(); }
+function pcSelect(ph) { if (!ph) return; if (S.cur) cleanP(ph.P); S.cur = ph; S.P = JSON.parse(JSON.stringify(ph.P)); S.cur._last = JSON.parse(JSON.stringify(S.P)); S.hist = []; S.fut = []; edE.setSource(srcOf(ph, S.P)); openPc(); }
 function layoutPc() {
   const box = $('#pcCenter'), W = box.clientWidth - 48, H = box.clientHeight - 48, ar = S.P.crop.ar || S.cur.src.width / S.cur.src.height;
-  let w = W, h = W / ar; if (h > H) { h = H; w = H * ar; } const wr = $('#pcWrap'), fr = !!S.P.frame, cv = $('#pcCanvas'); wr.classList.toggle('framed', fr);
+  let w = W, h = W / ar; if (h > H) { h = H; w = H * ar; } const wr = $('#pcWrap'), fr = !!S.P.frame, cv = $('#pcCanvas'), dpr = Math.min(2, devicePixelRatio || 1); wr.classList.toggle('framed', fr);
   if (fr) { const G = frameGeom(S.P, ar, W + 48, H + 48), pw = G.r.w, ph = G.r.h; wr.style.width = G.cw + 'px'; wr.style.height = G.ch + 'px';
-    S._pfr = G.r; Object.assign(cv.style, { left: S._pfr.x + 'px', top: S._pfr.y + 'px', width: pw + 'px', height: ph + 'px' }); pcE.size(Math.round(pw), Math.round(ph)); }
-  else { wr.style.width = w + 'px'; wr.style.height = h + 'px'; Object.assign(cv.style, { left: '', top: '', width: '', height: '' }); pcE.size(Math.round(w), Math.round(h)); }
+    S._pfr = G.r; Object.assign(cv.style, { left: S._pfr.x + 'px', top: S._pfr.y + 'px', width: pw + 'px', height: ph + 'px' }); pcE.size(Math.round(pw * dpr), Math.round(ph * dpr)); }
+  else { wr.style.width = w + 'px'; wr.style.height = h + 'px'; Object.assign(cv.style, { left: '', top: '', width: '', height: '' }); pcE.size(Math.round(w * dpr), Math.round(h * dpr)); }
   renderPc();
   Object.assign($('#pcCropBox').style, { left: (box.clientWidth - w) / 2 + 'px', top: (box.clientHeight - h) / 2 + 'px', width: w + 'px', height: h + 'px' });
 }
@@ -3075,11 +3156,80 @@ function buildPcRight() {
     <div class="pcsec"><h4>Grain <span>${GRAINS[gtypeOf(P)].l}</span></h4><div class="gt" id="pcGt">${grainPills()}</div>${rangeRow('grain', 'Síla', 0, 1.5, P)}${rangeRow('gsize', 'Velikost', .5, 3, P)}</div>
     <div class="pcsec"><h4>Základ</h4>${rangeRow('exp', 'Expozice', -3, 3, P)}${rangeRow('temp', 'Teplota', -1, 1, P)}${rangeRow('tint', 'Odstín', -1, 1, P)}${rangeRow('con', 'Kontrast', -1, 1, P)}${rangeRow('sat', 'Saturace', -1, 1, P)}</div>
     <div class="pcsec"><h4>Tónová křivka <span>RGB</span></h4><canvas class="curve" id="pcCurve" width="580" height="360"></canvas></div>
-    <div class="pcsec"><h4>Efekty</h4>${rangeRow('vig', 'Vignette', 0, 1, P)}${rangeRow('fade', 'Fade', 0, 1, P)}${rangeRow('sharp', 'Ostrost', 0, 1.5, P)}</div>`;
-  bindRanges($('#pcRight'), renderPc); bindGrainPills($('#pcGt'), buildPcRight);
+    <div class="pcsec"><h4>Efekty</h4>${rangeRow('vig', 'Vignette', 0, 1, P)}${rangeRow('fade', 'Fade', 0, 1, P)}${rangeRow('sharp', 'Ostrost', 0, 1.5, P)}${rangeRow('vflash', 'Flash', 0, 1, P)}</div>
+    <div class="pcsec"><h4>Ořez <span>C = upravit tažením</span></h4><div class="seg" id="pcAr">${[['ORIG', 0], ['1:1', 1], ['4:5', .8], ['3:2', 1.5], ['16:9', 16 / 9], ['9:16', 9 / 16]].map(([l, v]) => `<button data-a="${v}" class="${P.crop.ar === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+      <label class="srow"><span>Narovnání</span><input type="range" id="pcRot" min="-450" max="450" value="${Math.round(P.crop.rot * 10)}" data-def="0"><output>${P.crop.rot.toFixed(1)}°</output></label>
+      <label class="srow"><span>Přiblížení</span><input type="range" id="pcZoom" min="100" max="400" value="${Math.round(P.crop.s * 100)}" data-def="100"><output>${Math.round(P.crop.s * 100)}</output></label></div>
+    <div class="pcsec"><h4>Rám <span>Glow</span></h4><div class="row2"><button class="pcghost" id="pcFrame">${P.frame ? 'Vypnout rám' : 'Zapnout glow rám'}</button></div>${P.frame ? `
+      <label class="srow"><span>Glow</span><input type="range" id="pcFGlow" min="0" max="300" value="${Math.round((P.fo && P.fo.glow != null ? P.fo.glow : 1) * 100)}" data-def="100"><output>${Math.round((P.fo && P.fo.glow != null ? P.fo.glow : 1) * 100)}</output></label>
+      <label class="srow"><span>Prostor</span><input type="range" id="pcFPad" min="0" max="60" value="${Math.round((1 - (P.fo ? P.fo.pad : .72)) * 100)}" data-def="28"><output>${Math.round((1 - (P.fo ? P.fo.pad : .72)) * 100)}</output></label>` : ''}</div>
+    <div class="pcsec"><h4>Hloubka <span>Depth Anything V2</span></h4>${!S.cur.depth ? (S.cur._dRun || DEPTH.loading ? `<div class="dprog ind"><i id="dpBar"></i></div><p class="note" id="dpNote">${depthText()}</p>` : `<div class="row2"><button class="pcghost" id="pcDepthGo">Spočítat hloubku</button></div><p class="note">Poprvé se stáhne model (asi 25 MB), pak funguje offline. Fotka zůstává v počítači.</p>`)
+      : `<div class="seg" id="pcDm"><button data-m="">VYP</button>${[['bokeh', 'BOKEH'], ['fog', 'MLHA'], ['hal', 'HALATION'], ['map', 'MAPA']].map(([m, l]) => `<button data-m="${m}" class="${P.depth && P.depth.mode === m ? 'on' : ''}">${l}</button>`).join('')}</div>${P.depth && P.depth.mode !== 'map' ? `
+      <label class="srow"><span>Síla</span><input type="range" id="pcDa" min="0" max="100" value="${Math.round(P.depth.amt * 100)}" data-def="70"><output>${Math.round(P.depth.amt * 100)}</output></label>
+      <label class="srow"><span>${P.depth.mode === 'fog' ? 'Začátek' : P.depth.mode === 'hal' ? 'Odkud' : 'Ostření'}</span><input type="range" id="pcDf" min="0" max="100" value="${Math.round(P.depth.focus * 100)}" data-def="80"><output>${Math.round(P.depth.focus * 100)}</output></label>` : ''}`}</div>
+    <div class="pcsec"><h4>Styl</h4><div class="seg" id="pcSty">${[['', 'ŽÁDNÝ'], ['dither', 'DITHER'], ['pixel', 'PIXEL ART']].map(([t, l]) => `<button data-t="${t}" class="${(P.style ? P.style.type : '') === t ? 'on' : ''}">${l}</button>`).join('')}</div>${P.style ? `
+      <label class="srow"><span>${P.style.type === 'dither' ? 'Hustota' : 'Pixely'}</span><input type="range" id="pcCells" min="${P.style.type === 'dither' ? 80 : 40}" max="${P.style.type === 'dither' ? 420 : 220}" value="${P.style.cells}" data-def="${P.style.type === 'dither' ? 240 : 110}"><output>${P.style.cells}</output></label>` : ''}</div>`;
+  bindRanges($('#pcRight'), renderPc); bindGrainPills($('#pcGt'), buildPcRight); bindPcExtra();
   $('#pcReset').onclick = resetAll;
   curveEditor($('#pcCurve'), () => S.P.curve.rgb, pts => { S.P.curve.rgb = pts; renderPc(); }, commit, '#f3eee6');
   const c = $('#pcHist'); if (c && S.cur) histInto(c);
+}
+
+/* PC: ořez, rám, hloubka, styl, film scan, import a mazání */
+function pcRange(id, f, fmt) { const i = $(id); if (!i) return; paintRange(i); i.oninput = () => { f(+i.value); i.nextElementSibling.textContent = fmt ? fmt(+i.value) : i.value; paintRange(i); renderPc(); }; i.onchange = commit; }
+function bindPcExtra() {
+  const P = S.P;
+  $$('#pcAr button').forEach(b => b.onclick = () => { P.crop.ar = +b.dataset.a; fitCrop(); commit(); layoutPc(); buildPcRight(); });
+  pcRange('#pcRot', v => { P.crop.rot = v / 10; fitCrop(); }, v => (v / 10).toFixed(1) + '°');
+  pcRange('#pcZoom', v => { P.crop.s = v / 100; fitCrop(); });
+  $('#pcFrame').onclick = () => { P.frame = P.frame ? null : 'glow'; P.fo = P.fo || { pad: .72, ar: 0, glow: 1 }; commit(); layoutPc(); buildPcRight(); };
+  pcRange('#pcFGlow', v => P.fo.glow = v / 100); pcRange('#pcFPad', v => { P.fo.pad = 1 - v / 100; layoutPc(); });
+  const dg = $('#pcDepthGo'); if (dg) dg.onclick = () => { P.depth = P.depth || { mode: 'bokeh', amt: .7, focus: .8 }; runDepth(); buildPcRight(); };
+  $$('#pcDm button').forEach(b => b.onclick = () => { if (!b.dataset.m) P.depth = null; else { P.depth = P.depth || { mode: 'bokeh', amt: .7, focus: S.cur.dFocus || .8 }; P.depth.mode = b.dataset.m; } commit(); renderPc(); buildPcRight(); });
+  pcRange('#pcDa', v => P.depth.amt = v / 100); pcRange('#pcDf', v => { P.depth.focus = v / 100; P.depth.fset = 1; });
+  $$('#pcSty button').forEach(b => b.onclick = () => { const t = b.dataset.t; P.style = !t ? null : t === 'dither' ? { type: 'dither', pal: ['#0B0C0E', '#F5C542'], pn: 'amber', cells: 240, levels: 2 } : { type: 'pixel', pal: photoPal(6), pn: 'photo', cells: 110 }; commit(); renderPc(); buildPcRight(); });
+  pcRange('#pcCells', v => P.style.cells = v);
+}
+function pcDelete() { const ph = S.cur; if (!ph) return; const i = S.photos.indexOf(ph); S.photos.splice(i, 1); if (ph.saved) dbDel(ph.id); S.cur = S.photos[Math.min(i, S.photos.length - 1)] || null;
+  if (S.cur) pcSelect(S.cur); toast('Fotka smazaná', { label: 'Vrátit', fn: () => { S.photos.splice(i, 0, ph); dbPut(ph); pcSelect(ph); } }); }
+/* film scan na PC: reference z galerie nebo z disku, náhled na otevřené fotce */
+const PCS = { ref: null, st: null };
+function pcScanOpen() { ensureRef(); PCS.ref = refSrc; PCS.st = stats(PCS.ref); const m = $('#pcScan'); m.hidden = false;
+  const pick = $('#pcsPick'); pick.innerHTML = `<label title="Nahrát z počítače">+<input type="file" accept="image/*" id="pcsFile"></label>` + S.photos.filter(p => p !== S.cur && p.kind !== 'arch').slice(0, 20).map(p => `<button data-id="${p.id}"><img src="${p.thumb}" alt=""></button>`).join('');
+  const set = src => { PCS.ref = src; PCS.st = stats(src); upd(); };
+  $$('#pcsPick button').forEach(b => b.onclick = () => { $$('#pcsPick button').forEach(x => x.classList.toggle('on', x === b)); const ph = S.photos.find(p => p.id === +b.dataset.id); set(copyCanvas(utilRender(ph.src, ph.P, 320, Math.round(320 / (ph.src.width / ph.src.height)), {}))); });
+  $('#pcsFile').onchange = async e => { const f = e.target.files[0]; if (!f) return; const url = URL.createObjectURL(f), img = new Image(); img.src = url; await img.decode(); const k = Math.min(1, 640 / Math.max(img.naturalWidth, img.naturalHeight)), c = mk(Math.round(img.naturalWidth * k), Math.round(img.naturalHeight * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); set(c); };
+  const rg = $('#pcsStr'); paintRange(rg); rg.oninput = () => { rg.nextElementSibling.textContent = rg.value; paintRange(rg); upd(); };
+  const src = cropAr(S.cur.src, .8), sst = stats(src);
+  const upd = () => { $('#pcsA').getContext('2d').drawImage(cropAr(PCS.ref, .8), 0, 0, 240, 300); const P = Object.assign(DEF(), { film: 'P400', str: 0, grain: .3, hal: 0, bloom: 0, vig: .2 });
+    $('#pcsB').getContext('2d').drawImage(utilRender(src, P, 240, 300, { transfer: { k: rg.value / 100, ms: sst.m, ss: sst.s, mr: PCS.st.m, sr: PCS.st.s } }), 0, 0); };
+  upd();
+  $('#pcsCancel').onclick = () => m.hidden = true;
+  $('#pcsSave').onclick = () => { refSrc = PCS.ref; refStats = PCS.st; SCAN.k = rg.value / 100; const n = FILMS.filter(f => f.scan).length + 1; utilRender(refSrc, DEF(), 60, 75, { bypass: true }); const pal = kmeans(util.e.pixels(), 3);
+    const f = { code: 'SCAN' + n, sub: 'film scan ' + n, chem: 'vlastní', desc: 'Tvůj vlastní film naskenovaný z reference.', iso: 400, g: 'classic', sh: [0, 0, 0], hi: [1, 1, 1], con: 1, sat: 1, fade: .02, hal: .3, gl: .15, c: [pal[4] || pal[2], pal[2], pal[0]], scan: { m: refStats.m, s: refStats.s, k: SCAN.k } };
+    addFilm(f); store.set('scans', FILMS.filter(x => x.scan)); buildCarousel(); S.P.film = f.code; commit(); m.hidden = true; openPc(); toast(`Film ${f.code} uložený`); };
+}
+function initPcApp() {
+  $('#pcExport').onclick = exportPhoto; $('#pcCube').onclick = () => exportLook('.cube');
+  $('#pcImport').onclick = () => $('#fileImport').click();
+  $('#pcUndo').innerHTML = iconSVG('undo'); $('#pcRedo').innerHTML = iconSVG('redo'); $('#pcBefore').innerHTML = iconSVG('eye');
+  $('#pcUndo').onclick = () => { undo(); if (S.view === 'pc') openPc(); }; $('#pcRedo').onclick = () => { redo(); if (S.view === 'pc') openPc(); };
+  const bf = $('#pcBefore'); bf.onpointerdown = () => { pcBefore = true; bf.classList.add('on'); $('#pcBadge').classList.add('show'); renderPc(); };
+  bf.onpointerup = bf.onpointerleave = () => { if (!pcBefore) return; pcBefore = false; bf.classList.remove('on'); $('#pcBadge').classList.remove('show'); renderPc(); };
+  $('#pcMobile').onclick = () => { document.body.classList.remove('pcapp'); setView('m'); };
+  $('#pcScanBtn').onclick = pcScanOpen;
+  // ořez tažením a kolečkem (C)
+  const cen = $('#pcCenter'); let drag = null;
+  cen.addEventListener('pointerdown', e => { if ($('#pcCrop').hidden || e.target.closest('.pcmodal')) return; cen.setPointerCapture(e.pointerId); drag = { x: e.clientX, y: e.clientY, cx: S.P.crop.x, cy: S.P.crop.y }; });
+  cen.addEventListener('pointermove', e => { if (!drag) return; const w = $('#pcWrap').clientWidth, h = $('#pcWrap').clientHeight; S.P.crop.x = drag.cx - (e.clientX - drag.x) / w / S.P.crop.s; S.P.crop.y = drag.cy + (e.clientY - drag.y) / h / S.P.crop.s; fitCrop(); renderPc(); });
+  cen.addEventListener('pointerup', () => { if (drag) { drag = null; commit(); } });
+  cen.addEventListener('wheel', e => { if ($('#pcCrop').hidden) return; e.preventDefault(); S.P.crop.s = clamp(S.P.crop.s * (1 - e.deltaY * .001), 1, 4); fitCrop(); renderPc(); clearTimeout(cen._w); cen._w = setTimeout(() => { commit(); buildPcRight(); }, 300); }, { passive: false });
+  // přetažení fotek do okna
+  let dc = 0; const show = v => $('#pcDrop').hidden = !v;
+  addEventListener('dragenter', e => { if (S.view !== 'pc') return; e.preventDefault(); dc++; show(true); });
+  addEventListener('dragleave', () => { if (--dc <= 0) { dc = 0; show(false); } });
+  addEventListener('dragover', e => { if (S.view === 'pc') e.preventDefault(); });
+  addEventListener('drop', async e => { if (S.view !== 'pc') return; e.preventDefault(); dc = 0; show(false); const fs = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/')); if (fs.length) { await importFiles(fs); S.cur = S.photos[0]; pcSelect(S.cur); } });
 }
 
 /* =====================================================================
@@ -3111,18 +3261,16 @@ function navTo(k) {
 function setView(v) {
   S.view = v; $$('#viewSeg button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   $('#device').hidden = v === 'pc'; $('#pcwrap').hidden = v !== 'pc';
-  if (v === 'pc') { if (INTRO) INTRO.kill(); stopCam(); openPc(); } else if (S.screen === 'camera') startCam();
+  if (v === 'pc') { if (INTRO) INTRO.kill(); stopCam(); openPc(); } else { if (S.screen === 'editor' && S.cur) { edE.setSource(srcOf(S.cur, S.P)); layoutEditor(); } if (S.screen === 'camera') startCam(); }
   fit(); syncNav();
 }
-/* iOS 26 v nainstalované appce nedotáhne stránku až ke spodnímu okraji – pás pod ní kreslí pozadí <html>,
-   tak ho barvíme podle toho, co je zrovna úplně dole (lišta, panel, karta) → splyne a není vidět „brada“ */
-function chinColor() { if (!isMobile()) return; let el = document.elementFromPoint(innerWidth / 2, innerHeight - 2), c = '';
-  while (el && el !== document.documentElement) { const b = getComputedStyle(el).backgroundColor; if (b && b !== 'transparent' && !/rgba\(.*,\s*0\)$/.test(b)) { c = b; break; } el = el.parentElement; }
-  if (c && document.documentElement.style.backgroundColor !== c) { document.documentElement.style.backgroundColor = c; document.body.style.backgroundColor = c; const m = $('meta[name=theme-color]'); if (m) m.content = c; } }
-setInterval(chinColor, 350);
+addEventListener('error', e => { try { toast('Chyba: ' + String(e.message || e).slice(0, 90)); } catch {} });
+addEventListener('unhandledrejection', e => { try { const m = e.reason && e.reason.message; if (m) toast('Chyba: ' + m.slice(0, 90)); } catch {} });
+const PCAPP = () => !matchMedia('(max-width:700px),(pointer:coarse)').matches && /^(|pc)$/.test(location.hash.slice(1));
 const isMobile = () => matchMedia('(max-width:700px),(pointer:coarse)').matches; // telefon i na šířku zůstane v mobilním rozložení
 function fit() {
-  if (!isMobile()) {
+  if (document.body.classList.contains('pcapp')) { $('#pcwrap').style.transform = ''; }
+  else if (!isMobile()) {
     const st = $('#stage'), W = st.clientWidth, H = st.clientHeight;
     $('#device').style.transform = `translate(-50%,-50%) scale(${Math.min(1, (H - 48) / 868, (W - 48) / 414)})`;
     $('#pcwrap').style.transform = `translate(-50%,-50%) scale(${Math.min(1, (W - 48) / 1440, (H - 48) / 900)})`;
@@ -3143,11 +3291,18 @@ function boot() {
   const h = location.hash.slice(1);
   fit();
   const mloop = (now) => { if (!camRaf) tickMascots(now); requestAnimationFrame(mloop); }; requestAnimationFrame(mloop);
-  if (!h) playIntro();
+  if (PCAPP()) document.body.classList.add('pcapp');
+  if (!h && !PCAPP()) playIntro();
   setTimeout(() => boot2(h), 40);
 }
 function boot2(h) {
   util.e = new Engine(mk(300, 300)); camE = new Engine($('#camCanvas')); edE = new Engine($('#edCanvas')); pcE = new Engine($('#pcCanvas'));
+  /* když telefonu dojde paměť grafiky (iPhone + hloubka), WebGL se ztratí – místo černé plochy se obnoví v úspornějším režimu */
+  const guard = (sel, re) => { const c = $(sel); c.addEventListener('webglcontextlost', e => { e.preventDefault(); S.lowGpu = true; toast('Telefon nestíhal, přepínám na úspornější výpočet'); });
+    c.addEventListener('webglcontextrestored', () => { re(); }); };
+  guard('#edCanvas', () => { edE = new Engine($('#edCanvas')); if (S.cur) { edE.setSource(srcOf(S.cur, S.P)); layoutEditor(); renderEd(true); } });
+  guard('#camCanvas', () => { camE = new Engine($('#camCanvas')); });
+  guard('#pcCanvas', () => { pcE = new Engine($('#pcCanvas')); if (S.view === 'pc' && S.cur) { pcE.setSource(srcOf(S.cur, S.P)); layoutPc(); } });
   if (camE.dead) document.body.insertAdjacentHTML('beforeend', '<p style="position:fixed;inset:auto 0 20px;text-align:center;color:#efa73b">Tenhle prohlížeč neumí WebGL2, náhled filmu nepoběží.</p>');
   store.get('scans', []).forEach(addFilm);
   if (!FILM[S.film]) S.film = 'P400';
@@ -3178,7 +3333,12 @@ function boot2(h) {
   $('#dxOff').onclick = () => { S.P.dx = null; sheet($('#dxSheet'), false); dxChanged(); commit(); setTab(S.tab, true); toast('Double vypnutý'); };
   $('#selCancel').onclick = endSelect; $('#selGo').onclick = () => { const list = S.photos.filter(p => S.sel.has(p.id)); endSelect(); showArch(list, 'VÝBĚR', list[0].film); };
   $('#gAdd').onclick = galleryAdd; $('#scrim').onclick = closeActs; sheetDrag($('#actSheet'));
-  $('#fileImport').onchange = e => { importFiles([...e.target.files]); e.target.value = ''; };
+  $('#fileImport').onchange = async e => { const fs = [...e.target.files]; e.target.value = ''; await importFiles(fs); if (S.view === 'pc' && S.photos[0]) pcSelect(S.photos[0]); };
+  $('#fmShoot').onchange = e => { fmFromFile(e.target.files[0]); e.target.value = ''; }; $('#fmFile').onchange = e => { fmFromFile(e.target.files[0]); e.target.value = ''; };
+  $('#fmShoot').parentNode.insertAdjacentHTML('afterbegin', iconSVG('camera'));
+  $('#fmGal').onclick = () => openActs(`<h4>Ukázková fotka</h4>${actBtn('phone', 'gallery', 'Fotky v telefonu')}<div class="grid2">${S.photos.filter(p => p.kind !== 'arch').slice(0, 24).map(p => `<button data-id="${p.id}" style="padding:4px"><img src="${p.thumb}" alt="" style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:10px"></button>`).join('')}</div>`, root => {
+    $('[data-a=phone]', root).onclick = () => { closeActs(); $('#fmFile').click(); };
+    $$('[data-id]', root).forEach(b => b.onclick = () => { closeActs(); const ph = S.photos.find(p => p.id === +b.dataset.id); setFmSample(copyCanvas(utilRender(ph.src, DEF(), 640, Math.round(640 / (ph.src.width / ph.src.height)), { bypass: true }))); }); });
   $('#camBannerBack').onclick = () => { S.dxReturn = null; $('#camBanner').hidden = true; goBack(); };
   document.addEventListener('pointerdown', () => { lastAct = performance.now(); }, true);
   document.addEventListener('contextmenu', e => { if (!e.target.closest('input,[contenteditable]')) e.preventDefault(); });
@@ -3199,8 +3359,9 @@ function boot2(h) {
   $('#galBtn').onclick = () => go('gallery');
   $('#tGrid').onclick = () => { S.grid = S.grid ? 0 : 1; $('#tGrid').classList.toggle('on', !!S.grid); drawGrid(); buzz(4); };
   $('#tTimer').onclick = () => { S.timer = S.timer === 0 ? 3 : S.timer === 3 ? 10 : 0; $('#tTimer').classList.toggle('on', S.timer > 0); buzz(4); toast(S.timer ? `Samospoušť ${S.timer} s` : 'Samospoušť vypnutá'); };
-  $('#tFlash').onclick = () => { S.flash = !S.flash; $('#tFlash').classList.toggle('on', S.flash);
-    toast(!S.flash ? 'Blesk vypnutý' : CAM.live ? (CAM.caps.torch ? 'Blesk: svítilna telefonu' : CAM.facing === 'user' ? 'Blesk: rozsvícený displej' : 'Tenhle prohlížeč svítilnu nepustí') : 'Blesk zapnutý'); };
+  $('#tFlash').onclick = () => { S.flash = ((S.flash || 0) + 1) % 3; $('#tFlash').classList.toggle('on', S.flash > 0); $('#tFlash').classList.toggle('vint', S.flash === 2); buzz(4);
+    const how = CAM.live ? (CAM.caps.torch ? ' (svítilna)' : CAM.facing === 'user' ? ' (displej)' : '') : '';
+    toast(!S.flash ? 'Blesk vypnutý' : S.flash === 1 ? 'Blesk: bílý' + how : 'Blesk: vintage – teplé tvrdé světlo jako starý kompakt' + how); };
   $('#tFlip').onclick = async () => { const vf = $('#vf'); spring(0, 1, v => vf.style.transform = `perspective(900px) rotateY(${Math.sin(v * Math.PI) * 12}deg) scale(${1 - Math.sin(v * Math.PI) * .05})`, { k: 120, c: 16 }); buzz(5);
     if (CAM.live) { CAM.facing = CAM.facing === 'user' ? 'environment' : 'user'; CAM.deviceId = null; CAM.ultra = false; await liveOn(); } else LIVE.facing = LIVE.facing === 'back' ? 'front' : 'back'; };
   $('#camPill').innerHTML = iconSVG('camera') + 'Zapnout kameru'; $('#camPill').onclick = async () => { store.set('camAsked', true); updLive(); if (await liveOn()) toast('Živá kamera s filmem ' + S.film); };
@@ -3241,7 +3402,7 @@ function boot2(h) {
   $('#advSw').onclick = () => { toggleAdv(); syncNav(); };
   $('#undoBtn').onclick = undo; $('#redoBtn').onclick = redo; $('#resetBtn').onclick = resetAll;
   $('#expBtn').onclick = exportPhoto;
-  $('#edCanvas').addEventListener('click', e => { const d = S.P.depth, D = S.cur && S.cur.depth; if (S.fxOpen !== 'depth' || !d || !D || d.mode === 'map' || d.mode === 'par') return;
+  $('#edCanvas').addEventListener('click', e => { const d = S.P.depth, D = S.cur && S.cur.depth; if (S.fxOpen !== 'depth' || !d || !D || d.mode === 'map' || d.mode === 'hal') return;
     const r = e.currentTarget.getBoundingClientRect(), cr = S.P.crop, u = clamp(.5 + ((e.clientX - r.left) / r.width - .5) / cr.s + cr.x, 0, 1), v = clamp(.5 + ((e.clientY - r.top) / r.height - .5) / cr.s - cr.y, 0, 1);
     const px = D.getContext('2d', { willReadFrequently: true }).getImageData(Math.floor(u * (D.width - 1)), Math.floor(v * (D.height - 1)), 1, 1).data[0] / 255;
     const from = d.focus; d.fset = 1; spring(0, 1, t => { d.focus = lerp(from, px, t); renderEd(); const i = $('#fxDf'); if (i) { i.value = Math.round(d.focus * 100); i.nextElementSibling.textContent = i.value; paintRange(i); } }, { k: 200, c: 26, onDone: commit }); buzz(6); });
@@ -3266,7 +3427,9 @@ function boot2(h) {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (!S.cur) return; e.shiftKey ? redo() : undo(); return; }
     if (S.view !== 'pc') return;
     if (e.key === '\\') { pcBefore = true; $('#pcBadge').classList.add('show'); renderPc(); }
-    if (e.key.toLowerCase() === 'c') $('#pcCrop').hidden = !$('#pcCrop').hidden;
+    if (e.key.toLowerCase() === 'c') { $('#pcCrop').hidden = !$('#pcCrop').hidden; $('#pcCenter').classList.toggle('cropping', !$('#pcCrop').hidden); }
+    if ((e.key === 'Delete' || e.key === 'Backspace') && $('#pcScan').hidden) { e.preventDefault(); pcDelete(); return; }
+    if (e.key === 'Escape') { $('#pcScan').hidden = true; $('#pcCrop').hidden = true; $('#pcCenter').classList.remove('cropping'); }
     if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { const i = S.photos.indexOf(S.cur) + (e.key === 'ArrowRight' ? 1 : -1); pcSelect(S.photos[clamp(i, 0, S.photos.length - 1)]); }
   });
   addEventListener('keyup', e => { if (e.key === '\\' && pcBefore) { pcBefore = false; $('#pcBadge').classList.remove('show'); renderPc(); } });
@@ -3275,7 +3438,8 @@ function boot2(h) {
   document.addEventListener('touchmove', e => { if (e.touches.length > 1 && !e.target.closest('.vf,.ephoto,.bcard')) e.preventDefault(); }, { passive: false });
   addEventListener('resize', () => { fit(); if (S.screen === 'editor') layoutEditor(); });
   READY = true; fit(); drawGrid();
-  if (h === 'pc') { if (INTRO) INTRO.kill(); setView('pc'); }
+  initPcApp();
+  if (h === 'pc' || PCAPP()) { if (INTRO) INTRO.kill(); setView('pc'); }
   else if (h && NAV.some(n => n[0] === h) && h !== 'intro') { startCam(); navTo(h); }
   else if (h === 'intro') playIntro();
   else if (!INTRO) startCam();
