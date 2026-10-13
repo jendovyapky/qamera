@@ -2553,7 +2553,7 @@ function setTab(t, quiet) {
     requestAnimationFrame(() => { const on = $('.fthumb.on'), s = $('#fStrip'); if (on && s) s.scrollLeft = on.offsetLeft - s.clientWidth / 2 + on.offsetWidth / 2; });
   } else if (t === 'adj') {
     const a = ADJ.find(x => x.k === S.adjKey) || ADJ[0], dv = x => x.film ? (FILM[S.P.film] || FILM.P400).gl : (x.def || 0), vv = x => S.P[x.k] ?? dv(x);
-    const ctx = a.k === 'grain' ? `<div class="gt hs" id="gtRow">${grainPills()}</div>` : `<span class="cpy"><button id="lookCopy">Kopírovat</button><button id="lookPaste">Vložit</button></span>`;
+    const ctx = a.k === 'grain' ? `<div class="gt hs" id="gtRow">${grainPills()}</div>` : `<span></span>`;
     p.innerHTML = `<div class="ctx">${ctx}<button class="resetbtn" id="resetAll">${iconSVG('reset')}Vše</button></div><div class="ruler" id="adjR"></div><div class="chips" id="chipRow">${ADJ.map(x => `<button class="chip ${x.k === S.adjKey ? 'on' : ''} ${Math.abs(vv(x) - dv(x)) > .001 ? 'mod' : ''}" data-k="${x.k}">${iconSVG(x.ic)}${x.l}</button>`).join('')}</div>`;
     makeRuler($('#adjR'), { min: a.min, max: a.max, step: a.step, value: vv(a), label: a.l, fmt: a.f, def: dv(a), onInput: v => { S.P[a.k] = v; renderEd(); $(`.chip[data-k="${a.k}"]`).classList.toggle('mod', Math.abs(v - dv(a)) > .001); }, onEnd: commit });
     $$('.chip', p).forEach(b => b.onclick = () => { const sl = $('#chipRow').scrollLeft; S.adjKey = b.dataset.k; setTab('adj', true); $('#chipRow').scrollLeft = sl; });
