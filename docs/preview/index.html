@@ -130,6 +130,8 @@ a{color:var(--amber)}
 .fxp .seg{display:flex;flex:1;min-width:0}
 .fxp .seg button{flex:1;padding:0 4px;height:28px;font-size:10.5px;letter-spacing:.02em;white-space:nowrap;text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .fxp .srow .hs{grid-column:2/4;display:flex;gap:8px;align-items:center;overflow-x:auto;padding:5px;margin:-5px}
+.fxp .sq.wide{width:auto;padding:0 12px;font-size:12px;white-space:nowrap}
+.fxp .sq.on{color:var(--amber);border-color:rgba(255,196,61,.5)}
 .fxp .sq{width:34px;height:34px;flex:none;border-radius:10px;border:1px solid var(--line);color:var(--fg);font-size:14px;display:grid;place-items:center}
 .fxh b{font-family:var(--f-mono);font-size:11px;letter-spacing:.16em;color:#cfc7bc;font-weight:500}
 .fxh .ib{width:34px;height:34px}
@@ -356,7 +358,7 @@ a{color:var(--amber)}
 .ecanvas{position:relative;max-width:100%;max-height:100%;border-radius:6px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.5)}
 .ecanvas canvas{display:block;width:100%;height:100%}
 #eGlow,#pcGlow{position:absolute;inset:0;width:100%;height:100%;display:none}
-#eDate{position:absolute;left:0;top:0;pointer-events:none}
+#eDate,#pcOver{position:absolute;left:0;top:0;pointer-events:none}
 .eload{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);z-index:4;display:flex;align-items:center;gap:10px;height:40px;padding:0 16px;border-radius:999px;background:rgba(10,9,8,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font:11px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:#d0c8be;opacity:0;pointer-events:none;transition:opacity .15s,transform .2s}
 .eload.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
 .eload i{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,196,61,.25);border-top-color:var(--amber);animation:spin .7s linear infinite}
@@ -434,7 +436,8 @@ a{color:var(--amber)}
 .cropbox::before,.cropbox::after{content:"";position:absolute;width:18px;height:18px;border:3px solid #fff}
 .cropbox::before{top:-3px;left:-3px;border-right:0;border-bottom:0}
 .cropbox::after{bottom:-3px;right:-3px;border-left:0;border-top:0}
-.fx{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:76px;gap:8px;padding:8px 14px;overflow:visible}
+.fx{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-auto-rows:76px;gap:7px;padding:8px 14px;overflow:visible}
+.fx button{font-size:10px!important;padding:12px 1px 10px!important;white-space:nowrap}
 .fx button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 2px 10px;border-radius:16px;background:var(--panel);font-size:10.5px;color:#cbc3b8;border:1px solid var(--line);height:76px}
 .fx button .px{color:#8d847a}
 .fx button.on{border-color:rgba(255,196,61,.4)}
@@ -735,7 +738,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
 <body>
 <div class="shell" id="shell">
   <aside class="nav">
-    <div class="brand">QAMERA<small>Náhled 0.11</small></div>
+    <div class="brand">QAMERA<small>Náhled 0.12</small></div>
     <div>
       <div class="navlabel">Zobrazení</div>
       <div class="seg" id="viewSeg"><button class="on" data-v="m">MOBIL 390×844</button><button data-v="pc">PC 1440×900</button></div>
@@ -934,7 +937,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
         <section class="scr pt" id="s-about" hidden>
           <div class="top"><button class="ib" data-back aria-label="Zpět" data-ic="back"></button><span class="title">O appce</span><span style="width:40px"></span></div>
           <div class="about">
-            <div class="hero"><div class="lens"><svg class="eyes" id="aboutEyes" viewBox="14 24 92 72"></svg></div><h2>QAMERA</h2><div class="ver">NÁHLED 0.11</div></div>
+            <div class="hero"><div class="lens"><svg class="eyes" id="aboutEyes" viewBox="14 24 92 72"></svg></div><h2>QAMERA</h2><div class="ver">NÁHLED 0.12</div></div>
             <div class="card"><h3>Poděkování</h3>
               <p><a href="https://github.com/thetechgeekko/Spektrafilm-android" target="_blank" rel="noopener">Spektrafilm for Android</a> by <b>Akshay Sharma</b></p>
               <p>Film modeling powered by <a href="https://github.com/andreavolpato/spektrafilm" target="_blank" rel="noopener">spektrafilm</a> (Andrea Volpato)</p>
@@ -972,7 +975,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
         <aside class="pcleft"><div class="pcsec"><h4>Filmy <button class="pcadd" id="pcScanBtn" title="Nový film z fotky (Film scan)">+ Nový</button></h4><div id="pcFilms"></div></div>
           <div class="pcsec"><h4>Recepty</h4><div id="pcPresets"></div></div></aside>
         <section class="pcblob" id="pcBlobV" hidden><div class="pbc" id="pbCard"></div><div class="pbr"><div class="pbh" id="pbHead"><b>BLOB KARTA</b><button class="pcghost" id="pbClose">Zpět do editoru</button></div><div class="pbs" id="pbScroll"></div><div class="pbb" id="pbBar"></div></div></section>
-        <section class="pccenter" id="pcCenter"><div class="ecanvas" id="pcWrap"><canvas id="pcGlow"></canvas><canvas id="pcCanvas"></canvas></div>
+        <section class="pccenter" id="pcCenter"><div class="ecanvas" id="pcWrap"><canvas id="pcGlow"></canvas><canvas id="pcCanvas"></canvas><canvas id="pcOver"></canvas></div>
           <div class="croplayer" id="pcCrop" hidden><div class="cropbox" id="pcCropBox"></div></div>
           <div class="badge" id="pcBadge">PŘED</div>
           <div class="pcmodal" id="pcScan" hidden><div class="pcm"><h3>Film scan<small>barvy a tóny z fotky, která se ti líbí → tvůj vlastní film</small></h3>
@@ -1060,6 +1063,9 @@ const ICONS = {
   film:   ['....####....', '.##########.', '.#........#.', '.#.######.#.', '.#.#....#.#.', '.#.#....#.#.', '.#.######.#.', '.#........#.', '.##########.', '....####....'],
   camera: ['', '...###......', '.##########.', '.#........#.', '.#..####..#.', '.#.#....#.#.', '.#.#....#.#.', '.#..####..#.', '.#........#.', '.##########.'],
   sliders:['', '..#.........', '.###.######.', '..#.........', '', '.......#....', '.######.###.', '.......#....', '', '...#........', '.#####.####.', '...#........'],
+  fish:   ['', '...######...', '..#......#..', '.#..####..#.', '#..#....#..#', '#.#..##..#.#', '#.#..##..#.#', '#..#....#..#', '.#..####..#.', '..#......#..', '...######...', ''],
+  lidar:  ['', '.#..#..#..#.', '', '#..#..#..#..', '', '.#..#..#..#.', '', '..#..#..#..#', '', '.#..#..#..#.', '', ''],
+  layers: ['', '.##....###..', '#..####...##', '', '..###....##.', '##...####..#', '', '.##...####..', '#..###....##', '', '', ''],
   level:  ['', '', '....####....', '...#....#...', '...#....#...', '############', '#..........#', '############', '', '..#......#..', '.###....###.', ''],
   crop:   ['..#.........', '..#.........', '########....', '..#.....#...', '..#.....#...', '..#.....#...', '..#.....#...', '..#######...', '........#...', '........####', '........#...'],
   magic:  ['.......#....', '......###...', '.......#....', '..#.........', '.###....#...', '..#....#....', '......#.....', '.....#......', '....#.......', '...#........', '..#.........'],
@@ -1333,6 +1339,7 @@ uniform vec3 uTrMs,uTrSs,uTrMr,uTrSr; uniform float uTr;
 uniform float uSeed, uGlow, uIR, uStyle, uCells, uLevels, uPalN, uZebra;
 uniform vec3 uPal[6];
 uniform highp sampler3D uLut3; uniform float uLut;
+uniform float uFish, uFishS, uFishK, uFishC, uFishR, uFishL, uFishD, uLay, uLayN, uLayS, uLayM;
 uniform sampler2D uDepth; uniform float uDOn, uDMode, uDAmt, uFocus, uVFlash; uniform vec2 uPar; uniform int uSampN;
 float bayer2(vec2 a){ a = floor(a); return fract(dot(a, vec2(.5, a.y*.75))); }
 float bayer4(vec2 a){ return bayer2(.5*a)*.25 + bayer2(a); }
@@ -1347,15 +1354,22 @@ float grainN(vec2 p){ return vnoise(R1*p)*.5 + vnoise(R2*p*1.37+vec2(5.2,1.3))*.
 vec3 rgb2hsv(vec3 c){ vec4 K=vec4(0.,-1./3.,2./3.,-1.); vec4 p=mix(vec4(c.bg,K.wz),vec4(c.gb,K.xy),step(c.b,c.g)); vec4 q=mix(vec4(p.xyw,c.r),vec4(c.r,p.yzx),step(p.x,c.r)); float d=q.x-min(q.w,q.y); return vec3(abs(q.z+(q.w-q.y)/(6.*d+1e-10)),d/(q.x+1e-10),q.x); }
 vec3 hsv2rgb(vec3 c){ vec3 p=abs(fract(c.xxx+vec3(1.,2./3.,1./3.))*6.-3.); return c.z*mix(vec3(1.),clamp(p-1.,0.,1.),c.y); }
 float luma(vec3 c){ return dot(c, vec3(.2126,.7152,.0722)); }
+vec2 qToUv(vec2 q){ float cs = cos(uRot), sn = sin(uRot); vec2 ts0 = vec2(textureSize(uTex,0)); float sar = ts0.x/ts0.y; vec2 v0 = q * uCover / uZoom; v0.x *= sar; v0 = mat2(cs,-sn,sn,cs) * v0; v0.x /= sar; return v0 + .5 + uOff; } // otočení bez zkosení
 void main(){
   float ar0 = uRes.x/uRes.y; vec2 cells = vec2(uCells*ar0, uCells);
   vec2 bUv = uStyle > .5 ? (floor(vUv*cells)+.5)/cells : vUv; // dither / pixel art: vzorkuje se po buňkách
-  vec2 q = bUv - .5; float cs = cos(uRot), sn = sin(uRot);
-  vec2 ts0 = vec2(textureSize(uTex,0)); float sar = ts0.x/ts0.y; vec2 v0 = q * uCover / uZoom; v0.x *= sar; v0 = mat2(cs,-sn,sn,cs) * v0; v0.x /= sar; // otočení bez zkosení (v poměru stran fotky)
-  vec2 uv = v0 + .5 + uOff;
+  vec2 q = bUv - .5;
+  /* fisheye: výstupní kruh → přímočará fotka (r_src = tan(r·θ)/tan θ), blízké věci podle hloubky víc vyboulené */
+  float far1 = uRes.x/uRes.y, fr = 0., fth = radians(28. + 30. * uFishS), fRs = .5 * length(vec2(far1, 1.)) * (uFishC > .5 ? .78 : .82), fR = 1.; vec2 fdir = vec2(0.);
+  if (uFish > .5) { vec2 pp = q * vec2(far1, 1.); fR = uFishC > .5 ? .5 * min(far1, 1.) * uFishR : .5 * length(vec2(far1, 1.)); fr = length(pp) / fR; fdir = pp / max(length(pp), 1e-5);
+    float sr = tan(min(fr, 1.25) * fth) / tan(fth); vec2 qs = fdir * sr * fRs / vec2(far1, 1.);
+    if (uFishD > .5 && uFishK > 0.) { float d0 = texture(uDepth, qToUv(qs)).r; sr /= 1. + uFishK * d0 * (1. - min(fr, 1.) * min(fr, 1.)); qs = fdir * sr * fRs / vec2(far1, 1.); }
+    q = qs; }
+  vec2 uv = qToUv(q);
   float dep = 0.; // hloubka: 1 = blízko, 0 = daleko (Depth Anything V2)
   if (uDOn > .5) { dep = texture(uDepth, uv).r; if (uPar.x != 0. || uPar.y != 0.) { uv -= uPar * (dep - uFocus) * .045; dep = texture(uDepth, uv).r; } }
   vec3 col = texture(uTex, uv).rgb;
+  if (uFish > .5) { float ca = pow(min(fr, 1.), 3.) * .03; col.r = texture(uTex, qToUv(q * (1. + ca))).r; col.b = texture(uTex, qToUv(q * (1. - ca))).b; } // barevné lemy k okraji
   if (uBypass > .5) { o = vec4(col,1.); return; }
   if (uDOn > .5 && uDMode > 3.5) { o = vec4(vec3(dep),1.); return; }
   if (uDOn > .5 && uDMode < 1.5 && uDAmt > 0.) { // bokeh: kruhové rozmazání podle vzdálenosti od roviny ostření, světla se rozsvítí do koleček
@@ -1418,6 +1432,21 @@ void main(){
   c *= mix(1., smoothstep(.95,.2,length(vq)*1.15), uVig);
   /* grain: zrna v souřadnicích fotky (stejně velká v náhledu i exportu), hladký šum ve 3 oktávách,
      shluky, barevná oblaka barviv, odezva podle jasu (nejvíc ve středních tónech) */
+  /* Layers: hloubka jako vrstevnice – MAPA (papír, hnědé linky, každá 5. silná) nebo NEON (tmavá fotka, svítící linky v jejích barvách) */
+  if (uLay > .5) { float dl = textureLod(uDepth, uv, 2.2).r, lv = dl * uLayN, fw = max(fwidth(lv), 1e-4), f2 = abs(fract(lv + .5) - .5);
+    float line = (1. - smoothstep(fw * .55, fw * 1.6, f2)) * step(.035, dl), major = step(mod(floor(lv + .5), 5.), .5);
+    if (uLayM < 1.5) { vec3 paper = vec3(.95, .93, .88), tint = c * .55 + paper * .45; vec3 base = mix(paper, tint * (.75 + .25 * luma(c)) + paper * .12, uLayS * .75); vec3 ink = major > .5 ? vec3(.35, .2, .12) : vec3(.55, .35, .22); c = mix(base, ink, line * (major > .5 ? .95 : .7)); }
+    else { vec3 lc = normalize(c + .04) * 1.25 + .12; float soft = (1. - smoothstep(0., fw * 7., f2)) * step(.035, dl);
+      c = c * (.1 + .3 * uLayS) + lc * line * (major > .5 ? 1. : .55) + lc * soft * .22; } }
+  /* okraj objektivu: kovový prstenec s odrazem fotky, odlesk ze strany světla */
+  if (uFish > .5 && uFishC > .5) {
+    if (fr < 1.) c *= 1. - .5 * pow(fr, 4.);
+    else { float t = clamp((fr - 1.) / .16, 0., 1.), ang = atan(fdir.y, fdir.x), da = abs(mod(ang - uFishL + 3.14159, 6.28318) - 3.14159), face = .5 + .5 * cos(da);
+      float rm = max(1. - (fr - 1.) * 1.6, 0.), srm = tan(rm * fth) / tan(fth); vec3 refl = textureLod(uTex, qToUv(fdir * srm * fRs / vec2(far1, 1.)), 3.5).rgb;
+      vec3 metal = vec3(.06, .057, .055) * (1.4 - t) + exp(-pow((t - .1) / .06, 2.)) * (.18 + .5 * pow(face, 6.)) + exp(-pow((t - .7) / .12, 2.)) * .06;
+      vec3 rim = metal + refl * (.55 * pow(1. - t, 1.5) + .05) + exp(-pow((t - .35) / .07, 2.)) * pow(face, 10.) * .8 * vec3(1., .95, .85);
+      vec3 body = vec3(.035, .033, .03) * (1. + .6 * exp(-pow((fr - 1.16) / .08, 2.)));
+      c = fr < 1.16 ? rim : body; c += exp(-da * da / .015) * exp(-pow((fr - 1.03) / .06, 2.)) * vec3(1., .9, .75) * .6; } }
   if (uStyle > .5) { // dither (2–4 úrovně mezi dvěma barvami) / pixel art (nejbližší barva palety + Bayer)
     float th = bayer8(floor(vUv*cells)) - .5;
     if (uStyle < 1.5) { float lv = max(uLevels-1., 1.); float Lq = clamp(luma(c) + th/lv, 0., 1.); c = mix(uPal[0], uPal[1], floor(Lq*lv+.5)/lv); }
@@ -1492,11 +1521,15 @@ class Engine {
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.texImage3D(gl.TEXTURE_3D, 0, gl.RGBA8, LUTN, LUTN, LUTN, 0, gl.RGBA, gl.UNSIGNED_BYTE, L); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); }
       else gl.bindTexture(gl.TEXTURE_3D, t); }
     gl.uniform1f(u.uLut, L ? 1 : 0);
-    const D = P.depth && o.depth ? o.depth : null; // hloubková mapa fotky
+    const D = (P.depth || P.fish || P.layers) && o.depth ? o.depth : null; // hloubková mapa fotky (pro Hloubku, Fisheye i Layers)
     if (D) { gl.activeTexture(gl.TEXTURE2); if (!this.dtex) { this.dtex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, this.dtex); [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER].forEach(k => gl.texParameteri(gl.TEXTURE_2D, k, gl.LINEAR)); [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(k => gl.texParameteri(gl.TEXTURE_2D, k, gl.CLAMP_TO_EDGE)); }
       gl.bindTexture(gl.TEXTURE_2D, this.dtex); if (this.dSrc !== D) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, D); gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); this.dSrc = D; } }
-    gl.uniform1f(u.uDOn, D ? 1 : 0); gl.uniform1f(u.uDMode, D ? { bokeh: 1, fog: 2, hal: 3, map: 4 }[P.depth.mode] || 1 : 0); gl.uniform1f(u.uDAmt, D ? P.depth.amt : 0); gl.uniform1f(u.uFocus, D ? P.depth.focus : .8);
-    const par = D && P.depth.mode === 'par' && o.par ? o.par : [0, 0]; gl.uniform2f(u.uPar, par[0], par[1]); gl.uniform1i(u.uSampN, S.lowGpu ? 12 : IOS ? 18 : 28); gl.uniform1f(u.uVFlash, P.vflash || 0);
+    const fi = P.fish, ly = P.layers && D && !o.bypass ? P.layers : null; gl.uniform1f(u.uFish, fi && !o.bypass ? 1 : 0);
+    if (fi) { if (this.fishSrc !== this.srcEl) { this.fishSrc = this.srcEl; this.fishL = lightAngle(this.srcEl); }
+      gl.uniform1f(u.uFishS, fi.s); gl.uniform1f(u.uFishK, fi.k); gl.uniform1f(u.uFishC, fi.c ? 1 : 0); gl.uniform1f(u.uFishR, fi.r || .9); gl.uniform1f(u.uFishL, this.fishL); gl.uniform1f(u.uFishD, D ? 1 : 0); }
+    gl.uniform1f(u.uLay, ly ? 1 : 0); if (ly) { gl.uniform1f(u.uLayN, ly.n); gl.uniform1f(u.uLayS, ly.s); gl.uniform1f(u.uLayM, ly.m === 'neon' ? 2 : 1); }
+    gl.uniform1f(u.uDOn, D && P.depth ? 1 : 0); gl.uniform1f(u.uDMode, D && P.depth ? { bokeh: 1, fog: 2, hal: 3, map: 4 }[P.depth.mode] || 1 : 0); gl.uniform1f(u.uDAmt, D && P.depth ? P.depth.amt : 0); gl.uniform1f(u.uFocus, D && P.depth ? P.depth.focus : .8);
+    const par = D && P.depth && P.depth.mode === 'par' && o.par ? o.par : [0, 0]; gl.uniform2f(u.uPar, par[0], par[1]); gl.uniform1i(u.uSampN, S.lowGpu ? 12 : IOS ? 18 : 28); gl.uniform1f(u.uVFlash, P.vflash || 0);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.tex);
     const dstAR = this.c.width / this.c.height, sAR = this.srcAR;
     const cov = dstAR > sAR ? [1, sAR / dstAR] : [dstAR / sAR, 1];
@@ -1524,6 +1557,10 @@ class Engine {
   pixels() { const gl = this.gl, w = this.c.width, h = this.c.height, d = new Uint8Array(w * h * 4); gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, d); return d; }
 }
 const util = { e: null };
+/* odkud ve fotce svítí (jasná místa, víc váhy nahoře) – pro odlesk na okraji fisheye; úhel v souřadnicích shaderu (y nahoru) */
+function lightAngle(src) { try { const w = 32, h = 40, c = mk(w, h), g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(src, 0, 0, w, h); const d = g.getImageData(0, 0, w, h).data; let sx = 0, sy = 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = (y * w + x) * 4, L = (d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11) / 255, wt = Math.max(0, L - .55) ** 2 * (1.6 - y / h); sx += (x - w / 2) * wt; sy += (y - h / 2) * wt; }
+  return Math.atan2(-sy, sx || .001); } catch { return .8; } }
 /* filmové LUT upečené ze spektrafilmu (tools/bake_luts.py → luts/KOD.png, řezy podle modré vedle sebe) – CC BY-SA 4.0, Andrea Volpato */
 const LUTN = 33, LUTD = {};
 async function loadLuts() {
@@ -2172,7 +2209,9 @@ async function dbLoad() {
   } catch {}
 }
 const phAr = ph => (ph.P && ph.P.crop && ph.P.crop.ar) || ph.src.width / ph.src.height;
-function rethumb(ph) { const cr = ph.P.crop || DEF().crop, o = utilRender(srcOf(ph, ph.P), ph.P, 300, Math.round(300 / phAr(ph)), { depth: ph.depth, zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180 }); ph.thumb = o.toDataURL('image/jpeg', .85); ph.film = ph.kind === 'arch' ? 'ARCH' : ph.P.film; }
+function rethumb(ph) { if (ph.P.lidar && ph.depth) { const cr0 = ph.P.crop || DEF().crop, w0 = 300, h0 = Math.round(300 / phAr(ph)), o0 = copyCanvas(utilRender(srcOf(ph, ph.P), ph.P, w0, h0, { depth: ph.depth, zoom: cr0.s, offX: cr0.x, offY: cr0.y, rot: cr0.rot * Math.PI / 180 }));
+    ph.thumb = lidarRender(o0, ph.depth, w0, h0, Object.assign({}, ph.P.lidar, { hud: false })).toDataURL('image/jpeg', .85); ph.film = ph.P.film; return; }
+  const cr = ph.P.crop || DEF().crop, o = utilRender(srcOf(ph, ph.P), ph.P, 300, Math.round(300 / phAr(ph)), { depth: ph.depth, zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180 }); ph.thumb = o.toDataURL('image/jpeg', .85); ph.film = ph.kind === 'arch' ? 'ARCH' : ph.P.film; }
 function seedPhotos() {
   const list = [['plaz', 720, 900, 'G200', ['léto', 'moře', 'modrá', 'červená'], 14, 32], ['les', 720, 960, '400H', ['les', 'zelená', 'ráno'], 7, 12], ['zapad', 900, 720, 'P400', ['západ', 'moře', 'oranžová'], 19, 48],
     ['hory', 720, 960, 'VEL', ['hory', 'růžová', 'fialová'], 6, 21], ['kvet', 720, 720, 'E100', ['květina', 'růžová', 'zelená'], 11, 5], ['mesto', 720, 960, 'V3-500T', ['noc', 'ulice', 'praha'], 22, 17],
@@ -2489,9 +2528,47 @@ function drawDate(g, W, H, date, D) {
     x += cw(ch) + gap; }
   g.restore();
 }
+/* LiDAR: každý bod fotky se podle hloubky vysune do 3D, pootočí a vykreslí jako tečka (vzdálené menší); sken = zelenomodré linky */
+function lidarRender(colorSrc, depthSrc, W, H, L, k = 1) {
+  const sw = Math.round(Math.min(480, 400 * Math.sqrt(L.dens || 1))), sh = Math.max(1, Math.round(sw * H / W)), cc = mk(sw, sh), cg = cc.getContext('2d', { willReadFrequently: true }); cg.drawImage(colorSrc, 0, 0, sw, sh);
+  const dc = mk(sw, sh), dg = dc.getContext('2d', { willReadFrequently: true }); dg.drawImage(depthSrc, 0, 0, sw, sh); const col = cg.getImageData(0, 0, sw, sh).data, dep = dg.getImageData(0, 0, sw, sh).data;
+  const N = sw * sh, X = new Float32Array(N), Y = new Float32Array(N), Z = new Float32Array(N), idx = new Uint32Array(N); let n = 0, zs = 0; const f = sw * 1.1;
+  for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) { const i = y * sw + x, d = dep[i * 4] / 255; if (d < .06) continue; const z = 1 / (.12 + d * 1.1); X[n] = (x - sw / 2) / f * z; Y[n] = (y - sh / 2) / f * z; Z[n] = z; idx[n] = i; zs += z; n++; }
+  const zc = zs / Math.max(1, n), ya = (L.yaw || 0) * Math.PI / 180, pa = (L.pitch || 0) * Math.PI / 180, cy = Math.cos(ya), sy = Math.sin(ya), cp = Math.cos(pa), sp = Math.sin(pa);
+  const PX = new Float32Array(n), PY = new Float32Array(n), PZ = new Float32Array(n), ord = new Uint32Array(n), sc = W / sw;
+  for (let j = 0; j < n; j++) { let x = X[j], z = Z[j] - zc, y = Y[j]; const x2 = x * cy + z * sy, z2 = -x * sy + z * cy, y2 = y * cp - z2 * sp, z3 = y * sp + z2 * cp + zc; PX[j] = x2 / z3 * f * sc + W / 2; PY[j] = y2 / z3 * f * sc + H / 2; PZ[j] = z3; ord[j] = j; }
+  ord.sort((a, b) => PZ[b] - PZ[a]);
+  const out = new ImageData(W, H), o32 = new Uint32Array(out.data.buffer); o32.fill(0xff090706); const scan = L.st === 'scan';
+  for (let q = 0; q < n; q++) { const j = ord[q], i = idx[j], x0 = PX[j] | 0, y0 = PY[j] | 0, rad = Math.max(1, Math.round(sc / PZ[j] * .62 + .35)), band = ((i / sw | 0) % 6) === 0;
+    let rr, gg, bb; if (scan) { const d = dep[i * 4] / 255; rr = 20 + d * 40; gg = 70 + d * 120; bb = 80 + d * 100; if (band) { rr = 170; gg = 255; bb = 225; } }
+    else { rr = col[i * 4]; gg = col[i * 4 + 1]; bb = col[i * 4 + 2]; if (band) { rr = rr * .8 + 25; gg = Math.min(255, gg * .8 + 60); bb = Math.min(255, bb * .8 + 55); } }
+    const v = (0xff000000 | ((bb & 255) << 16) | ((gg & 255) << 8) | (rr & 255)) >>> 0;
+    for (let yy = y0 - rad + 1; yy < y0 + rad; yy++) { if (yy < 0 || yy >= H) continue; const row = yy * W; for (let xx = x0 - rad + 1; xx < x0 + rad; xx++) if (xx >= 0 && xx < W) o32[row + xx] = v; } }
+  const c = mk(W, H), g = c.getContext('2d'); g.putImageData(out, 0, 0);
+  if (L.hud !== false) { const fs = Math.max(10, Math.round(W * .03)); g.font = `${fs}px Silkscreen, monospace`; g.fillStyle = 'rgba(170,255,230,.9)'; g.fillText(`LIDAR · ${n.toLocaleString('cs-CZ')} BODŮ`, fs, fs * 1.8); g.fillText(`YAW ${Math.round(L.yaw || 0)}°  PITCH ${Math.round(L.pitch || 0)}°`, fs, H - fs); }
+  return c;
+}
+/* Layers: popisky výšek a měřítko jako na mapě (jen styl MAPA) */
+function layerLabels(g, W, H, depthSrc, Ly) { if (!Ly || Ly.m === 'neon' || Ly.lab === false || !depthSrc || S.P.fish) return; const c = mk(40, 50), cg = c.getContext('2d', { willReadFrequently: true }); cg.drawImage(depthSrc, 0, 0, 40, 50); const d = cg.getImageData(0, 0, 40, 50).data;
+  const fs = Math.max(9, Math.round(W * .028)); g.font = `${fs}px "Geist Mono", monospace`; g.textBaseline = 'middle';
+  [[.18, .82], [.75, .74], [.55, .3], [.3, .45], [.82, .9]].forEach(([u, v]) => { const dv = d[((v * 49 | 0) * 40 + (u * 39 | 0)) * 4] / 255; if (dv < .05) return; const t = `${Math.round(dv * Ly.n) * 10} m`, tw = g.measureText(t).width;
+    g.fillStyle = 'rgba(242,237,226,.95)'; g.fillRect(u * W - 3, v * H - fs * .7, tw + 6, fs * 1.4); g.fillStyle = '#5a321e'; g.fillText(t, u * W, v * H); });
+  g.fillStyle = '#5a321e'; g.fillText('MAPA HLOUBKY  1 : 25', fs, fs * 1.6); for (let i = 0; i < 6; i++) { g.fillStyle = i % 2 ? 'rgba(242,237,226,.95)' : '#5a321e'; g.fillRect(fs + i * fs * 1.3, H - fs * 1.6, fs * .7, fs * .45); } }
+async function lidarVideo() { const ph = S.cur, L = S.P.lidar; if (!ph || !L || !ph.depth) return;
+  const src = copyCanvas(utilRender(srcOf(ph, S.P), Object.assign({}, S.P, { lidar: null }), 1080, Math.round(1080 / phAr(ph)), { depth: ph.depth })), W = 1080, H = Math.round(1080 / phAr(ph)) & ~1, c = mk(W, H), g = c.getContext('2d');
+  const types = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'], type = types.find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t));
+  if (!type) return toast('Tenhle prohlížeč neumí nahrát video'); const stream = c.captureStream(30), rec = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: 8e6 }), chunks = [];
+  rec.ondataavailable = e => e.data.size && chunks.push(e.data); toast('Nahrávám 4 s smyčku…'); rec.start();
+  const t0 = performance.now(), base = L.yaw || 0; await new Promise(res => { const step = () => { const t = (performance.now() - t0) / 4000; if (t >= 1) return res();
+    g.drawImage(lidarRender(src, ph.depth, W, H, Object.assign({}, L, { yaw: base + 28 * Math.sin(t * Math.PI * 2), pitch: (L.pitch || 0) + 6 * Math.sin(t * Math.PI * 4) })), 0, 0); requestAnimationFrame(step); }; step(); });
+  rec.stop(); await new Promise(r => rec.onstop = r); const ext = type.includes('mp4') ? 'mp4' : 'webm', blob = new Blob(chunks, { type: type.split(';')[0] }), file = new File([blob], `qamera-lidar-${Date.now()}.${ext}`, { type: blob.type });
+  try { if (isMobile() && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file] }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); toast('Video uložené'); }
 function dateOverlay() { const cv = $('#eDate'); if (!cv || !S.cur) return; const r = S._pr || { x: 0, y: 0, w: 0, h: 0 }, k = Math.min(2, devicePixelRatio || 1), W = Math.round(r.w * k), H = Math.round(r.h * k);
   Object.assign(cv.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' }); if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
-  const g = cv.getContext('2d'); g.clearRect(0, 0, W, H); if (S.P.date && !before && W) drawDate(g, W, H, S.cur.date, S.P.date); }
+  const g = cv.getContext('2d'); g.clearRect(0, 0, W, H); if (!W || before) return;
+  if (S.P.lidar && S.cur.depth) g.drawImage(lidarRender(edE.c, S.cur.depth, W, H, S.P.lidar), 0, 0);
+  else if (S.P.layers && S.cur.depth) layerLabels(g, W, H, S.cur.depth, S.P.layers); }
 /* export v plném rozlišení: render celé fotky přes stejný shader, glow rám, pak sdílení (iPhone: Uložit obrázek) nebo stažení */
 async function exportCanvas(c, name, type = 'image/jpeg') {
   const blob = await new Promise(r => c.toBlob(r, type, .95)), file = new File([blob], name, { type });
@@ -2505,7 +2582,7 @@ async function renderFull(ph, P, st = () => {}) {
   const ar = P.crop.ar || src.width / src.height, max = Math.min(util.e.gl.getParameter(util.e.gl.MAX_TEXTURE_SIZE), 4096);
   let w = Math.round(Math.min(src.width, max)), h = Math.round(w / ar); if (h > max) { h = max; w = Math.round(h * ar); }
   const cr = P.crop, o = utilRender(src, P, w, h, { zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180, transfer: P.tr ? transferFor() : null, seed: 7, depth: ph.depth });
-  const c = copyCanvas(o); if (P.date) drawDate(c.getContext('2d'), c.width, c.height, ph.date, P.date); return framed(c, P, ph);
+  let c = copyCanvas(o); if (P.lidar && ph.depth) c = lidarRender(c, ph.depth, c.width, c.height, P.lidar); else if (P.layers && ph.depth) layerLabels(c.getContext('2d'), c.width, c.height, ph.depth, P.layers); return framed(c, P, ph);
 }
 /* export vzhledu: .cube (projetí identity 33³ stejným shaderem), JSON preset Qamery, XMP pro Lightroom */
 const ATTR = ['Derived from spektrafilm by Andrea Volpato', 'https://github.com/andreavolpato/spektrafilm', 'Licensed CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/', 'Modified by Qamera (jendovyapky): baked look incl. user adjustments'];
@@ -2670,9 +2747,9 @@ function setTab(t, quiet) {
     hscroll($('#aspRow')); requestAnimationFrame(placeCropBox);
   } else if (t === 'fx' && S.fxOpen) { renderFxPanel(p);
   } else if (t === 'fx') {
-    const fx = [['double', 'Double', 'double'], ['dither', 'Dither', 'dither'], ['pixel', 'Pixel art', 'pixel'], ['frame', 'Rám', 'frame'],
-      ['depth', 'Hloubka', 'depth'], ['recipe', 'Recepty', 'recipe'], ['blob', 'Blob karta', 'blob']]; // co jde nastavit v Úpravách, tady není
-    const st = S.P.style && S.P.style.type, on = k => (k === 'glowfx' && (S.P.glow ?? 0) > .45) || (k === 'sharp' && S.P.sharp) || (k === 'scan' && S.P.tr) || (k === 'double' && S.P.dx && S.P.dx.other) || (k === 'dither' && st === 'dither') || (k === 'pixel' && st === 'pixel') || (k === 'frame' && S.P.frame) || (k === 'depth' && S.P.depth) || (k === 'date' && S.P.date);
+    const fx = [['fish', 'Fisheye', 'fish'], ['lidar', 'LiDAR', 'lidar'], ['layers', 'Layers', 'layers'], ['depth', 'Hloubka', 'depth'], ['double', 'Double', 'double'],
+      ['dither', 'Dither', 'dither'], ['pixel', 'Pixel art', 'pixel'], ['frame', 'Rám', 'frame'], ['recipe', 'Recepty', 'recipe'], ['blob', 'Blob karta', 'blob']]; // co jde nastavit v Úpravách, tady není
+    const st = S.P.style && S.P.style.type, on = k => (k === 'glowfx' && (S.P.glow ?? 0) > .45) || (k === 'sharp' && S.P.sharp) || (k === 'scan' && S.P.tr) || (k === 'double' && S.P.dx && S.P.dx.other) || (k === 'dither' && st === 'dither') || (k === 'pixel' && st === 'pixel') || (k === 'frame' && S.P.frame) || (k === 'fish' && S.P.fish) || (k === 'lidar' && S.P.lidar) || (k === 'layers' && S.P.layers) || (k === 'depth' && S.P.depth) || (k === 'date' && S.P.date);
     p.innerHTML = `<div class="fx hs" id="fxRow">${fx.map(([k, l, ic, e]) => `<button data-fx="${k}" class="${on(k) ? 'on' : ''}">${iconSVG(ic)}${l}${e ? `<em>${e}</em>` : ''}</button>`).join('')}</div>`;
     hscroll($('#fxRow'));
     $$('[data-fx]', p).forEach(b => b.onclick = () => fxClick(b));
@@ -2681,7 +2758,7 @@ function setTab(t, quiet) {
 }
 function fxClick(b) {
   const k = b.dataset.fx;
-  if (['double', 'dither', 'pixel', 'frame', 'depth', 'date'].includes(k)) { openFx(k); return; }
+  if (['double', 'dither', 'pixel', 'frame', 'depth', 'date', 'fish', 'lidar', 'layers'].includes(k)) { openFx(k); return; }
   if (k === 'recipe') { recipeActs(); return; }
   if (k === 'blob') { S.blobFrom = S.cur; go('blob'); return; }
   if (k === 'grain') { S.adjKey = 'grain'; setTab('adj'); return; }
@@ -2697,12 +2774,18 @@ function openFx(k) {
   if (k === 'frame' && !S.P.frame) { S.P.frame = 'glow'; S.P.fo = S.P.fo || { pad: .72, ar: 0 }; }
   if (k === 'date' && !S.P.date) S.P.date = { f: 0, c: 0 };
   if (k === 'depth') { S.P.depth = S.P.depth || { mode: 'bokeh', amt: .7, focus: .8 }; if (!S.cur.depth) runDepth(); }
+  if (k === 'fish' && !S.P.fish) S.P.fish = { s: .7, k: .45, c: 1, r: .9 };
+  if (k === 'lidar') { S.P.lidar = S.P.lidar || { yaw: 18, pitch: 6, st: 'foto', dens: 1 }; S.P.layers = null; if (!S.cur.depth) runDepth(); }
+  if (k === 'layers') { S.P.layers = S.P.layers || { n: 26, s: .8, m: 'mapa', lab: true }; S.P.lidar = null; if (!S.cur.depth) runDepth(); }
   S.fxOpen = k; layoutEditor(); dxChanged(); commit(); setTab('fx', true); buzz(5);
   if (k === 'double' && !S.P.dx.other) setTimeout(dxPickGallery, 200);
 }
+/* panel, který potřebuje hloubku, ukazuje do jejího spočítání skutečný postup */
+function depthWait() { return `<div class="fxrow"><div class="dprog ${DEPTH.phase === 'dl' && DEPTH.tot ? '' : DEPTH.err ? '' : 'ind'}"><i id="dpBar" style="width:${DEPTH.phase === 'dl' ? Math.round(DEPTH.prog * 100) : 0}%"></i></div></div>
+  <p class="note" id="dpNote">${S.cur._dRun || DEPTH.loading ? depthText() : 'Tenhle efekt potřebuje hloubku fotky.'}</p>${!S.cur._dRun ? '<button class="go" id="dpRetry">Spočítat hloubku</button>' : ''}`; }
 function closeFx() { S.fxOpen = null; stopPar(); setTab('fx', true); }
 function renderFxPanel(p) {
-  const k = S.fxOpen, name = { double: 'DOUBLE', dither: 'DITHER', pixel: 'PIXEL ART', frame: 'RÁM', depth: 'HLOUBKA', date: 'DATUMOVKA' }[k];
+  const k = S.fxOpen, name = { double: 'DOUBLE', dither: 'DITHER', pixel: 'PIXEL ART', frame: 'RÁM', depth: 'HLOUBKA', date: 'DATUMOVKA', fish: 'FISHEYE', lidar: 'LIDAR', layers: 'LAYERS' }[k];
   let body = '';
   if (k === 'double') { const dx = S.P.dx, o = S.photos.find(x => x.id === dx.other), sil = dx.mode === 'sil', blend = !sil;
     const pal = [...new Set([DXBG, '#e33a22', '#F2EFE8', ...(o ? [...kmeansOf(S.cur.src, 2), ...kmeansOf(o.src, 2)] : [])])];
@@ -2714,6 +2797,20 @@ function renderFxPanel(p) {
     body = `<div class="fxrow"><div class="seg" id="fxPal">${pals.map(([q, l]) => `<button class="${st.pn === q ? 'on' : ''}" data-p="${q}">${l.toUpperCase()}</button>`).join('')}</div></div>
       <label class="srow"><span>${dith ? 'Hustota' : 'Pixely'}</span><input type="range" id="fxCells" min="${dith ? 80 : 40}" max="${dith ? 420 : 220}" value="${st.cells}" data-def="${dith ? 240 : 110}"><output>${st.cells}</output></label>
       ${dith ? `<label class="srow"><span>Úrovně</span><input type="range" id="fxLev" min="2" max="4" value="${st.levels}" data-def="2"><output>${st.levels}</output></label>` : ''}`; }
+  else if ((k === 'lidar' || k === 'layers') && !S.cur.depth) body = depthWait();
+  else if (k === 'lidar') { const L = S.P.lidar;
+    body = `<div class="fxrow"><div class="seg" id="fxLst">${[['foto', 'FOTO'], ['scan', 'SKEN']].map(([m, l]) => `<button data-m="${m}" class="${L.st === m ? 'on' : ''}">${l}</button>`).join('')}</div><button class="sq wide" id="fxLvid">Video</button></div>
+      <label class="srow"><span>Otočení</span><input type="range" id="fxLyaw" min="-60" max="60" value="${Math.round(L.yaw)}" data-def="18"><output>${Math.round(L.yaw)}°</output></label>
+      <label class="srow"><span>Náklon</span><input type="range" id="fxLpit" min="-30" max="30" value="${Math.round(L.pitch)}" data-def="6"><output>${Math.round(L.pitch)}°</output></label>`; }
+  else if (k === 'layers') { const Ly = S.P.layers;
+    body = `<div class="fxrow"><div class="seg" id="fxLym">${[['mapa', 'MAPA'], ['neon', 'NEON']].map(([m, l]) => `<button data-m="${m}" class="${Ly.m === m ? 'on' : ''}">${l}</button>`).join('')}</div>${Ly.m === 'mapa' ? `<button class="sq wide ${Ly.lab !== false ? 'on' : ''}" id="fxLylab">Popisky</button>` : ''}</div>
+      <label class="srow"><span>Vrstvy</span><input type="range" id="fxLyn" min="8" max="48" value="${Ly.n}" data-def="26"><output>${Ly.n}</output></label>
+      <label class="srow"><span>Fotka</span><input type="range" id="fxLys" min="0" max="100" value="${Math.round(Ly.s * 100)}" data-def="80"><output>${Math.round(Ly.s * 100)}</output></label>`; }
+  else if (k === 'fish') { const F = S.P.fish, hasD = !!S.cur.depth;
+    body = `<div class="fxrow"><div class="seg" id="fxFm">${[[1, 'KRUH'], [0, 'CELÁ PLOCHA']].map(([m, l]) => `<button data-m="${m}" class="${(F.c ? 1 : 0) === m ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+      <label class="srow"><span>Síla</span><input type="range" id="fxFs" min="0" max="100" value="${Math.round(F.s * 100)}" data-def="70"><output>${Math.round(F.s * 100)}</output></label>
+      ${hasD ? `<label class="srow"><span>Hloubka</span><input type="range" id="fxFk" min="0" max="150" value="${Math.round(F.k * 100)}" data-def="45"><output>${Math.round(F.k * 100)}</output></label>` : `<div class="fxrow"><button class="sq wide" id="fxFd" style="flex:1">Spočítat hloubku – blízké věci se víc vyboulí</button></div>`}
+`; }
   else if (k === 'depth') { const d = S.P.depth, ready = !!S.cur.depth;
     body = !ready ? `<div class="fxrow"><div class="dprog ${DEPTH.phase === 'dl' ? '' : DEPTH.err ? '' : 'ind'}"><i id="dpBar" style="width:${DEPTH.phase === 'dl' ? Math.round(DEPTH.prog * 100) : 0}%"></i></div></div>
       <p class="note" id="dpNote">${depthText()}</p>${DEPTH.err ? '<button class="go" id="dpRetry">Zkusit znovu</button>' : ''}`
@@ -2729,7 +2826,7 @@ function renderFxPanel(p) {
       <label class="srow"><span>Prostor</span><input type="range" id="fxPad" min="0" max="60" value="${Math.round((1 - fo.pad) * 100)}" data-def="28"><output>${Math.round((1 - fo.pad) * 100)}</output></label>`; }
   p.innerHTML = `<div class="fxp"><div class="fxh"><button class="ib" id="fxBack" aria-label="Zpět na efekty">${iconSVG('back')}</button><b>${name}</b><button class="off" id="fxOff">Vypnout</button></div>${body}</div>`;
   $('#fxBack').onclick = closeFx;
-  $('#fxOff').onclick = () => { if (k === 'double') S.P.dx = null; if (k === 'dither' || k === 'pixel') S.P.style = null; if (k === 'frame') S.P.frame = null; if (k === 'depth') { S.P.depth = null; stopPar(); } if (k === 'date') S.P.date = null; S.fxOpen = null; dxChanged(); layoutEditor(); commit(); setTab('fx', true); };
+  $('#fxOff').onclick = () => { if (k === 'fish') S.P.fish = null; if (k === 'lidar') S.P.lidar = null; if (k === 'layers') S.P.layers = null; if (k === 'double') S.P.dx = null; if (k === 'dither' || k === 'pixel') S.P.style = null; if (k === 'frame') S.P.frame = null; if (k === 'depth') { S.P.depth = null; stopPar(); } if (k === 'date') S.P.date = null; S.fxOpen = null; dxChanged(); layoutEditor(); commit(); setTab('fx', true); };
   const rng = (id, f) => { const i = $(id); if (!i) return; paintRange(i); i.oninput = () => { i.nextElementSibling.textContent = i.value; paintRange(i); f(+i.value); }; i.onchange = commit; };
   if (k === 'double') { const dx = S.P.dx;
     $('#fxPick').onclick = dxPickGallery;
@@ -2741,11 +2838,24 @@ function renderFxPanel(p) {
   if (k === 'dither' || k === 'pixel') { const st = S.P.style, dith = k === 'dither';
     $$('#fxPal [data-p]').forEach(b => b.onclick = () => { const q = b.dataset.p; st.pn = q; st.pal = dith ? (q === 'photo' ? photoPal(2) : DPALS[q]) : photoPal(+q.replace('photo', '') || 6); $$('#fxPal [data-p]').forEach(x => x.classList.toggle('on', x === b)); renderEd(true); commit(); buzz(4); });
     rng('#fxCells', v => { st.cells = v; renderEd(); }); rng('#fxLev', v => { st.levels = v; renderEd(); }); }
+  if ((k === 'lidar' || k === 'layers') && !S.cur.depth) { const rt = $('#dpRetry'); if (rt) rt.onclick = () => { DEPTH.err = null; runDepth(); setTab('fx', true); }; }
   if (k === 'depth') { const d = S.P.depth; const rt = $('#dpRetry'); if (rt) rt.onclick = () => { DEPTH.err = null; runDepth(); setTab('fx', true); };
     $$('#fxDm button').forEach(b => b.onclick = () => { d.mode = b.dataset.m; heavyRender(); commit(); setTab('fx', true); buzz(4); });
     const live = () => S.depthMs != null && S.depthMs < 45; // stihne telefon přepočet během tažení?
     const dr = (id, f) => { const i = $(id); if (!i) return; paintRange(i); i.oninput = () => { i.nextElementSibling.textContent = i.value; paintRange(i); f(+i.value); if (live()) renderEd(); }; i.onchange = () => { if (!live()) heavyRender(); commit(); }; };
     dr('#fxDa', v => d.amt = v / 100); dr('#fxDf', v => { d.focus = v / 100; d.fset = 1; }); }
+  if (k === 'lidar' && S.P.lidar && S.cur.depth) { const L = S.P.lidar;
+    $$('#fxLst button').forEach(b => b.onclick = () => { L.st = b.dataset.m; renderEd(true); commit(); setTab('fx', true); });
+    const lr = (id, f, u = '') => { const i = $(id); paintRange(i); i.oninput = () => { f(+i.value); i.nextElementSibling.textContent = i.value + u; paintRange(i); dateOverlay(); }; i.onchange = commit; };
+    lr('#fxLyaw', v => L.yaw = v, '°'); lr('#fxLpit', v => L.pitch = v, '°'); $('#fxLvid').onclick = lidarVideo; }
+  if (k === 'layers' && S.P.layers && S.cur.depth) { const Ly = S.P.layers;
+    $$('#fxLym button').forEach(b => b.onclick = () => { Ly.m = b.dataset.m; renderEd(true); commit(); setTab('fx', true); });
+    const lb = $('#fxLylab'); if (lb) lb.onclick = () => { Ly.lab = Ly.lab === false; renderEd(true); commit(); setTab('fx', true); };
+    rng('#fxLyn', v => { Ly.n = v; renderEd(); }); rng('#fxLys', v => { Ly.s = v / 100; renderEd(); }); }
+  if (k === 'fish') { const F = S.P.fish;
+    $$('#fxFm button').forEach(b => b.onclick = () => { F.c = +b.dataset.m; renderEd(true); commit(); setTab('fx', true); });
+    rng('#fxFs', v => { F.s = v / 100; renderEd(); }); rng('#fxFk', v => { F.k = v / 100; renderEd(); }); 
+    const fd = $('#fxFd'); if (fd) fd.onclick = () => { runDepth(); S.fxOpen = 'fish'; setTab('fx', true); }; }
   if (k === 'date') { const d = S.P.date;
     $$('#fxDf2 button').forEach(b => b.onclick = () => { d.f = +b.dataset.f; $$('#fxDf2 button').forEach(x => x.classList.toggle('on', x === b)); renderEd(true); commit(); buzz(4); });
     $$('.fxp [data-c]').forEach(b => b.onclick = () => { d.c = +b.dataset.c; $$('.fxp [data-c]').forEach(x => x.classList.toggle('on', x === b)); renderEd(true); commit(); buzz(4); }); }
@@ -2782,8 +2892,8 @@ function depthText() { if (DEPTH.err) return 'Hloubku se nepodařilo spočítat:
   return { dl: DEPTH.tot ? `Stahuju model hloubky · ${MB(DEPTH.got)} / ${MB(DEPTH.tot)} MB (jen poprvé)` : 'Stahuju model hloubky (jen poprvé, asi 25 MB)…', cache: 'Načítám model z telefonu…', init: 'Připravuju model…', run: 'Počítám hloubku fotky…' }[DEPTH.phase] || 'Připravuju…'; }
 function depthUi() { const b = $('#dpBar'), n = $('#dpNote'); if (!b) return; const dl = DEPTH.phase === 'dl' && DEPTH.tot; b.parentNode.classList.toggle('ind', !dl); b.style.width = dl ? Math.round(DEPTH.prog * 100) + '%' : ''; if (n) n.textContent = depthText(); }
 async function runDepth() { const ph = S.cur; if (!ph || ph._dRun) return; ph._dRun = true; if (DEPTH.pipe) { DEPTH.phase = 'run'; depthUi(); }
-  try { await computeDepth(ph); DEPTH.prog = 1; S.depthMs = null; const pp = DEPTH.pipe; DEPTH.pipe = null; DEPTH.loading = null; DEPTH.cached = true; DEPTH.phase = 'cache'; try { await pp.dispose(); } catch {} /* model hned uvolnit z paměti (iPhone 13 jinak spadl), příště se načte z telefonu */ if (S.cur === ph) { if (S.P.depth && !S.P.depth.fset) { S.P.depth.focus = ph.dFocus; commit(); } layoutEditor(); heavyRender(); if (S.fxOpen === 'depth') setTab('fx', true); } rethumb(ph); if (S.view === 'pc') { renderPc(); buildPcRight(); } toast('Hloubka je hotová'); buzz(10); }
-  catch (e) { DEPTH.err = (e && e.message || 'chyba').slice(0, 80); if (S.cur === ph && S.fxOpen === 'depth') setTab('fx', true); if (S.view === 'pc') buildPcRight(); }
+  try { await computeDepth(ph); DEPTH.prog = 1; S.depthMs = null; const pp = DEPTH.pipe; DEPTH.pipe = null; DEPTH.loading = null; DEPTH.cached = true; DEPTH.phase = 'cache'; try { await pp.dispose(); } catch {} /* model hned uvolnit z paměti (iPhone 13 jinak spadl), příště se načte z telefonu */ if (S.cur === ph) { if (S.P.depth && !S.P.depth.fset) { S.P.depth.focus = ph.dFocus; commit(); } layoutEditor(); heavyRender(); if (['depth', 'lidar', 'layers', 'fish'].includes(S.fxOpen)) setTab('fx', true); } rethumb(ph); if (S.view === 'pc') { renderPc(); buildPcRight(); } toast('Hloubka je hotová'); buzz(10); }
+  catch (e) { DEPTH.err = (e && e.message || 'chyba').slice(0, 80); if (S.cur === ph && ['depth', 'lidar', 'layers', 'fish'].includes(S.fxOpen)) setTab('fx', true); if (S.view === 'pc') buildPcRight(); }
   ph._dRun = false; }
 /* 3D paralaxa: naklánění telefonu (iOS se zeptá na povolení), na PC myš, jinak se fotka sama jemně houpe */
 let parRaf = 0, parT = { x: 0, y: 0, at: 0 }, parBase = null;
@@ -3433,7 +3543,11 @@ function layoutPc() {
   renderPc();
   Object.assign($('#pcCropBox').style, { left: (box.clientWidth - w) / 2 + 'px', top: (box.clientHeight - h) / 2 + 'px', width: w + 'px', height: h + 'px' });
 }
-function renderPc() { if (S.view !== 'pc' || !S.cur) return; const cr = S.P.crop; pcE.render(S.P, { bypass: pcBefore, zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180, transfer: S.P.tr ? transferFor() : null, depth: S.cur.depth }); if (S.P.frame && S._pfr) { const wr = $('#pcWrap'); frameBg($('#pcGlow'), pcE.c, wr.clientWidth, wr.clientHeight, S._pfr, 1, S.P, S.cur); } const c = $('#pcHist'); if (c) histInto(c); }
+function pcOverlay() { const cv = $('#pcOver'), pc = $('#pcCanvas'); if (!cv) return; const k = Math.min(2, devicePixelRatio || 1), w = pc.clientWidth, h = pc.clientHeight, W = Math.round(w * k), H = Math.round(h * k);
+  Object.assign(cv.style, { left: pc.offsetLeft + 'px', top: pc.offsetTop + 'px', width: w + 'px', height: h + 'px' }); if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const g = cv.getContext('2d'); g.clearRect(0, 0, W, H); if (pcBefore || !W) return;
+  if (S.P.lidar && S.cur.depth) g.drawImage(lidarRender(pcE.c, S.cur.depth, W, H, S.P.lidar), 0, 0); else if (S.P.layers && S.cur.depth) layerLabels(g, W, H, S.cur.depth, S.P.layers); }
+function renderPc() { if (S.view !== 'pc' || !S.cur) return; const cr = S.P.crop; pcE.render(S.P, { bypass: pcBefore, zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180, transfer: S.P.tr ? transferFor() : null, depth: S.cur.depth }); pcOverlay(); if (S.P.frame && S._pfr) { const wr = $('#pcWrap'); frameBg($('#pcGlow'), pcE.c, wr.clientWidth, wr.clientHeight, S._pfr, 1, S.P, S.cur); } const c = $('#pcHist'); if (c) histInto(c); }
 function buildPcRight() {
   const P = S.P, f = FILM[P.film];
   $('#pcRight').innerHTML = `<div class="pcsec"><h4>Histogram <span>${P.film}</span></h4><canvas class="hist" id="pcHist" width="580" height="150"></canvas></div>
@@ -3457,6 +3571,15 @@ function buildPcRight() {
       <div class="seg" id="pcPal">${(P.style.type === 'dither' ? [['amber', 'AMBER'], ['lime', 'LIME'], ['paper', 'PAPÍR'], ['ir', 'NEON'], ['photo', 'Z FOTKY']] : [['photo4', 'STYL 1'], ['photo', 'STYL 2'], ['photo8', 'STYL 3']]).map(([q, l]) => `<button data-p="${q}" class="${P.style.pn === q ? 'on' : ''}">${l}</button>`).join('')}</div>
       <label class="srow"><span>${P.style.type === 'dither' ? 'Hustota' : 'Pixely'}</span><input type="range" id="pcCells" min="${P.style.type === 'dither' ? 80 : 40}" max="${P.style.type === 'dither' ? 420 : 220}" value="${P.style.cells}" data-def="${P.style.type === 'dither' ? 240 : 110}"><output>${P.style.cells}</output></label>${P.style.type === 'dither' ? `
       <label class="srow"><span>Úrovně</span><input type="range" id="pcLev" min="2" max="4" value="${P.style.levels}" data-def="2"><output>${P.style.levels}</output></label>` : ''}` : ''}</div>
+    <div class="pcsec"><h4>Fisheye</h4><div class="seg" id="pcFm">${[['', 'VYP'], ['1', 'KRUH'], ['0', 'CELÁ']].map(([m, l]) => `<button data-m="${m}" class="${(P.fish ? String(P.fish.c ? 1 : 0) : '') === m ? 'on' : ''}">${l}</button>`).join('')}</div>${P.fish ? `
+      <label class="srow"><span>Síla</span><input type="range" id="pcFs" min="0" max="100" value="${Math.round(P.fish.s * 100)}" data-def="70"><output>${Math.round(P.fish.s * 100)}</output></label>
+      <label class="srow"><span>Hloubka</span><input type="range" id="pcFk" min="0" max="150" value="${Math.round(P.fish.k * 100)}" data-def="45"><output>${Math.round(P.fish.k * 100)}</output></label>` : ''}</div>
+    <div class="pcsec"><h4>LiDAR / Layers <span>z hloubky</span></h4><div class="seg" id="pcLx">${[['', 'VYP'], ['lidar', 'LIDAR'], ['mapa', 'MAPA'], ['neon', 'NEON']].map(([m, l]) => `<button data-m="${m}" class="${(P.lidar ? 'lidar' : P.layers ? P.layers.m : '') === m ? 'on' : ''}">${l}</button>`).join('')}</div>${!S.cur.depth && (P.lidar || P.layers) ? `<p class="note">Počítám hloubku…</p>` : ''}${P.lidar ? `
+      <label class="srow"><span>Otočení</span><input type="range" id="pcLyaw" min="-60" max="60" value="${Math.round(P.lidar.yaw)}" data-def="18"><output>${Math.round(P.lidar.yaw)}</output></label>
+      <label class="srow"><span>Náklon</span><input type="range" id="pcLpit" min="-30" max="30" value="${Math.round(P.lidar.pitch)}" data-def="6"><output>${Math.round(P.lidar.pitch)}</output></label>
+      <div class="row2"><button class="pcghost" id="pcLst">${P.lidar.st === 'scan' ? 'Barvy fotky' : 'Styl sken'}</button><button class="pcghost" id="pcLvid">Video smyčka</button></div>` : P.layers ? `
+      <label class="srow"><span>Vrstvy</span><input type="range" id="pcLyn" min="8" max="48" value="${P.layers.n}" data-def="26"><output>${P.layers.n}</output></label>
+      <label class="srow"><span>Fotka</span><input type="range" id="pcLys" min="0" max="100" value="${Math.round(P.layers.s * 100)}" data-def="80"><output>${Math.round(P.layers.s * 100)}</output></label>` : ''}</div>
     ${pcDoubleHtml(P)}
     <div class="pcsec"><h4>Blob karta</h4><div class="row2"><button class="pcghost" id="pcBlob">Otevřít blob kartu</button></div></div>`;
   bindRanges($('#pcRight'), renderPc); bindGrainPills($('#pcGt'), buildPcRight); bindPcExtra();
@@ -3482,6 +3605,13 @@ function bindPcExtra() {
   pcRange('#pcCells', v => P.style.cells = v); pcRange('#pcLev', v => P.style.levels = v);
   $$('#pcPal button').forEach(b => b.onclick = () => { const q = b.dataset.p, st = P.style; st.pn = q; st.pal = st.type === 'dither' ? (q === 'photo' ? photoPal(2) : DPALS[q]) : photoPal(+q.replace('photo', '') || 6); commit(); renderPc(); buildPcRight(); });
   $('#pcBlob').onclick = () => pcBlob(true); bindPcDouble();
+  $$('#pcFm button').forEach(b => b.onclick = () => { P.fish = b.dataset.m === '' ? null : Object.assign(P.fish || { s: .7, k: .45, r: .9 }, { c: +b.dataset.m }); commit(); renderPc(); buildPcRight(); });
+  pcRange('#pcFs', v => P.fish.s = v / 100); pcRange('#pcFk', v => P.fish.k = v / 100);
+  $$('#pcLx button').forEach(b => b.onclick = () => { const m = b.dataset.m; P.lidar = m === 'lidar' ? (P.lidar || { yaw: 18, pitch: 6, st: 'foto', dens: 1 }) : null; P.layers = m === 'mapa' || m === 'neon' ? Object.assign(P.layers || { n: 26, s: .8, lab: true }, { m }) : null;
+    if ((P.lidar || P.layers) && !S.cur.depth) runDepth(); commit(); renderPc(); buildPcRight(); });
+  pcRange('#pcLyaw', v => P.lidar.yaw = v); pcRange('#pcLpit', v => P.lidar.pitch = v); pcRange('#pcLyn', v => P.layers.n = v); pcRange('#pcLys', v => P.layers.s = v / 100);
+  const ls = $('#pcLst'); if (ls) ls.onclick = () => { P.lidar.st = P.lidar.st === 'scan' ? 'foto' : 'scan'; commit(); renderPc(); buildPcRight(); };
+  const lv = $('#pcLvid'); if (lv) lv.onclick = lidarVideo;
 }
 /* PC: Double přímo v pravém panelu */
 function pcDoubleHtml(P) { const dx = P.dx, o = dx && S.photos.find(x => x.id === dx.other), sil = dx && dx.mode === 'sil', blend = dx && dx.mode === 'blend';
