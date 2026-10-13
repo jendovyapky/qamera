@@ -60,6 +60,8 @@ ve stylu **Prequel**, na PC se používá spíš jako **Lightroom**. Celá v **�
 - **PC verze = skutečná appka:** na počítači (ne dotyk, šířka > 700) se otevře rovnou Lightroom rozložení přes celé okno (`body.pcapp`); náhled s telefonem přes tlačítko Mobil nebo `#nahled`. Import (tlačítko, + v pásu, přetažení), Export fotky / .cube, ořez (C + tažení, kolečko), Rám, Hloubka, Styl, Flash, Film scan v okně, Del = smazat.
 - Rám = jen **Glow** (+ síla glow, poměr, prostor); Instant zrušený. Hloubka: režimy Bokeh / Mlha / **Halation** (záře jen u vzdálených světel) / Mapa; na iOS model přes WASM (WebGPU + WebGL na iPhonu 13 došla paměť), při ztrátě WebGL obnova v úsporném režimu. **Blesk** = vyp / bílý / vintage (teplé tvrdé světlo, i jako „Flash“ v Úpravách; přední kamera svítí displejem v barvě).
 - Moje filmy: vlastní ukázková fotka (Vyfotit / Z galerie – telefon i Qamera). Film scan: výběr i pro „Tvůj záběr“, ťuknutí na náhled = celá obrazovka (zavřít křížkem nebo přejetím do strany).
+- **Spodní pás na iOS 26 vyřešený** (Honza ověřil): stavový řádek `black` + **appku smazat z plochy a přidat znovu** (iOS čte meta jen při přidání). Při změně těchto meta vždycky připomenout.
+- PC: rozložení se přizpůsobuje oknu (clamp sloupců, schovávání nápovědy kláves), miniatury i galerie podle ořezu (`phAr`). Double, Blob karta a Recepty se na PC otevřou v telefonním rozhraní v okně (Hotovo / Esc).
 - Telefon na šířku zůstává v mobilním rozložení (`pointer:coarse`). Kamera: ikona zmizí po povolení, appka si pamatuje zapnutí, DEMO scéna v menu.
 - **Arch** (ne „kontaktní arch“): z role, z dneška (od půlnoci) nebo výběrem fotek. **Jednorázovka** = filtr na den s oknem od–do, ráno vyvolání → arch.
 

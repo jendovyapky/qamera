@@ -600,6 +600,19 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 .kbd{display:flex;gap:14px;margin-left:auto;font-size:12px;color:var(--mute)}
 .kbd kbd{font-family:var(--f-mono);font-size:11px;padding:2px 6px;border-radius:5px;background:#1f1c19;border:1px solid #2e2a26;color:#d8d0c5;margin-right:5px}
 body.pcapp .nav{display:none}
+.pc{grid-template-columns:clamp(190px,17vw,260px) minmax(0,1fr) clamp(270px,23vw,340px)!important;grid-template-rows:52px minmax(0,1fr) clamp(86px,13vh,118px)!important}
+.pctop{min-width:0;white-space:nowrap}
+.pctop .file{min-width:0;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto}
+.pctop button{flex:none;white-space:nowrap}
+.pcstrip img{height:calc(100% - 4px)!important;max-height:90px}
+.pcstrip .padd{height:calc(100% - 4px)!important;max-height:90px}
+@media (max-width:1350px){.pctop .kbd{display:none}.pctools{margin-left:auto}}
+@media (max-width:1100px){.pctop .brand{font-size:20px}.pctop{gap:10px}.pcghost{padding:0 9px}}
+@media (max-height:640px){.pc{grid-template-rows:46px minmax(0,1fr) 76px!important}}
+/* telefonní rozhraní v okně (Double, Blob karta, Recepty na PC) */
+#pcPhoneBg{position:fixed;inset:0;z-index:55;background:rgba(8,7,6,.78);backdrop-filter:blur(10px)}
+#pcPhoneBg button{position:fixed;top:18px;right:22px;height:40px;padding:0 16px;border-radius:12px;background:var(--lcd);color:var(--lcd-ink);font-weight:600}
+body.pcphone .device{z-index:60}
 body.pcapp .shell{display:block}
 body.pcapp .stage{position:fixed;inset:0}
 body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!important;border-radius:0;box-shadow:none}
@@ -614,7 +627,8 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
 .pcsec .seg{display:flex;width:100%;margin:2px 0 8px}
 .pcsec .seg button{flex:1;padding:6px 0;font-size:10.5px;text-align:center}
 .pcsec .row2{display:flex;gap:6px;margin:4px 0 8px}
-.pcsec .row2 .pcghost{flex:1;height:30px}
+.pcsec .row2 .pcghost{flex:1;min-width:0;height:30px;padding:0 6px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcsec .seg button{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .pcsec .note{font-size:11.5px;color:var(--mute);line-height:1.45;margin:4px 0 8px}
 .pcsec .dprog{margin:6px 0}
 .pccenter.cropping{cursor:grab}
@@ -647,7 +661,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
 .pccenter{position:relative;display:grid;place-items:center;padding:24px;min-width:0;min-height:0;background:radial-gradient(circle at 50% 40%,#171513,#0d0c0b 70%)}
 .pccenter .ecanvas{box-shadow:0 30px 70px rgba(0,0,0,.6)}
 .pcstrip{grid-column:1/-1;display:flex;gap:8px;padding:12px 18px;border-top:1px solid #1f1c19;overflow-x:auto;background:#100f0e;align-items:center}
-.pcstrip img{height:90px;border-radius:6px;opacity:.7;cursor:pointer;transition:opacity .2s;flex:none}
+.pcstrip img{height:90px;border-radius:6px;opacity:.7;cursor:pointer;transition:opacity .2s;flex:none;object-fit:cover;display:block}
 .pcstrip img.on,.pcstrip img:hover{opacity:1}
 .pcstrip img.on{outline:2px solid var(--amber);outline-offset:2px}
 .pcsec h4{margin:0 0 8px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.16em;color:var(--mute);font-weight:500;text-transform:uppercase;display:flex;justify-content:space-between}
@@ -888,6 +902,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
     </div>
 
     <!-- PC -->
+    <div id="pcPhoneBg" hidden><button id="pcPhoneClose">Hotovo</button></div>
     <div class="pcwrap" id="pcwrap" hidden>
       <div class="pc">
         <header class="pctop"><div class="brand">QAMERA</div><span class="file" id="pcFile"></span>
@@ -2081,7 +2096,8 @@ async function dbLoad() {
     if (all.length) { $('#galThumb').src = S.photos[0].thumb; if (S.screen === 'gallery') renderGallery(); }
   } catch {}
 }
-function rethumb(ph) { const o = utilRender(srcOf(ph, ph.P), ph.P, 300, Math.round(300 / (ph.src.width / ph.src.height)), { depth: ph.depth }); ph.thumb = o.toDataURL('image/jpeg', .85); ph.film = ph.kind === 'arch' ? 'ARCH' : ph.P.film; }
+const phAr = ph => (ph.P && ph.P.crop && ph.P.crop.ar) || ph.src.width / ph.src.height;
+function rethumb(ph) { const cr = ph.P.crop || DEF().crop, o = utilRender(srcOf(ph, ph.P), ph.P, 300, Math.round(300 / phAr(ph)), { depth: ph.depth, zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180 }); ph.thumb = o.toDataURL('image/jpeg', .85); ph.film = ph.kind === 'arch' ? 'ARCH' : ph.P.film; }
 function seedPhotos() {
   const list = [['plaz', 720, 900, 'G200', ['léto', 'moře', 'modrá', 'červená'], 14, 32], ['les', 720, 960, '400H', ['les', 'zelená', 'ráno'], 7, 12], ['zapad', 900, 720, 'P400', ['západ', 'moře', 'oranžová'], 19, 48],
     ['hory', 720, 960, 'VEL', ['hory', 'růžová', 'fialová'], 6, 21], ['kvet', 720, 720, 'E100', ['květina', 'růžová', 'zelená'], 11, 5], ['mesto', 720, 960, 'V3-500T', ['noc', 'ulice', 'praha'], 22, 17],
@@ -2112,8 +2128,8 @@ function renderGallery() {
 function filterGallery() {
   const q = $('#gSearch').value.trim().toLowerCase();
   const list = S.photos.filter(p => !S.gFilm || p.film === S.gFilm).filter(p => !q || p.film.toLowerCase().includes(q) || p.tags.some(t => t.includes(q)) || p.date.toLocaleDateString('cs-CZ').includes(q));
-  const cols = [[], []], hg = [0, 0], item = p => `<button class="gitem ${p.fresh ? 'new' : ''} ${S.sel && S.sel.has(p.id) ? 'sel' : ''}" data-id="${p.id}"><img src="${p.thumb}" alt="" style="aspect-ratio:${p.src.width}/${p.src.height}"><span>${p.film}</span></button>`;
-  list.forEach(p => { const i = hg[0] <= hg[1] ? 0 : 1; cols[i].push(p); hg[i] += p.src.height / p.src.width + .04; }); // vždy do kratšího sloupce, horní hrany sedí
+  const cols = [[], []], hg = [0, 0], item = p => `<button class="gitem ${p.fresh ? 'new' : ''} ${S.sel && S.sel.has(p.id) ? 'sel' : ''}" data-id="${p.id}"><img src="${p.thumb}" alt="" style="aspect-ratio:${phAr(p).toFixed(4)}"><span>${p.film}</span></button>`;
+  list.forEach(p => { const i = hg[0] <= hg[1] ? 0 : 1; cols[i].push(p); hg[i] += 1 / phAr(p) + .04; }); // vždy do kratšího sloupce, horní hrany sedí
   $('#masonry').innerHTML = cols.map(c => `<div class="mcol">${c.map(item).join('')}</div>`).join('');
   list.forEach(p => p.fresh = false);
   $('#gEmpty').hidden = list.length > 0;
@@ -3132,7 +3148,7 @@ function openPc() {
   $('#pcPresets').innerHTML = RECIPES.length ? RECIPES.map((r, i) => `<button class="pcfilm" data-r="${i}"><canvas width="88" height="88"></canvas><span><b>${r.name}</b><small>recept · ${r.P.film}</small></span></button>`).join('') : '<p style="font-size:12px;color:var(--mute);margin:4px 6px">Recepty uložíš v Efektech → Recepty.</p>';
   $$('#pcPresets [data-r]').forEach(b => { const r = RECIPES[+b.dataset.r]; b.querySelector('canvas').getContext('2d').drawImage(utilRender(srcOf(S.cur, S.P), Object.assign(DEF(), r.P), 88, 88, {}), 0, 0);
     b.onclick = () => { S.P = Object.assign(DEF(), JSON.parse(JSON.stringify(r.P)), { crop: S.P.crop, dx: S.P.dx }); commit(); renderPc(); buildPcRight(); toast(`Recept ${r.name} použitý`); }; });
-  $('#pcStrip').innerHTML = `<button class="padd" id="pcAddTile" title="Importovat fotky">+</button>` + S.photos.map(p => `<img src="${p.thumb}" data-id="${p.id}" class="${p === S.cur ? 'on' : ''}" alt="">`).join('');
+  $('#pcStrip').innerHTML = `<button class="padd" id="pcAddTile" title="Importovat fotky">+</button>` + S.photos.map(p => `<img src="${p.thumb}" data-id="${p.id}" class="${p === S.cur ? 'on' : ''}" style="width:${Math.round(90 * clamp(phAr(p), .5, 2.2))}px" alt="">`).join('');
   $('#pcAddTile').onclick = () => $('#fileImport').click();
   const on = $('#pcStrip img.on'); if (on) requestAnimationFrame(() => on.scrollIntoView({ inline: 'nearest', block: 'nearest' }));
   $$('#pcStrip img').forEach(im => im.onclick = () => pcSelect(S.photos.find(p => p.id === +im.dataset.id)));
@@ -3169,7 +3185,10 @@ function buildPcRight() {
       <label class="srow"><span>Síla</span><input type="range" id="pcDa" min="0" max="100" value="${Math.round(P.depth.amt * 100)}" data-def="70"><output>${Math.round(P.depth.amt * 100)}</output></label>
       <label class="srow"><span>${P.depth.mode === 'fog' ? 'Začátek' : P.depth.mode === 'hal' ? 'Odkud' : 'Ostření'}</span><input type="range" id="pcDf" min="0" max="100" value="${Math.round(P.depth.focus * 100)}" data-def="80"><output>${Math.round(P.depth.focus * 100)}</output></label>` : ''}`}</div>
     <div class="pcsec"><h4>Styl</h4><div class="seg" id="pcSty">${[['', 'ŽÁDNÝ'], ['dither', 'DITHER'], ['pixel', 'PIXEL ART']].map(([t, l]) => `<button data-t="${t}" class="${(P.style ? P.style.type : '') === t ? 'on' : ''}">${l}</button>`).join('')}</div>${P.style ? `
-      <label class="srow"><span>${P.style.type === 'dither' ? 'Hustota' : 'Pixely'}</span><input type="range" id="pcCells" min="${P.style.type === 'dither' ? 80 : 40}" max="${P.style.type === 'dither' ? 420 : 220}" value="${P.style.cells}" data-def="${P.style.type === 'dither' ? 240 : 110}"><output>${P.style.cells}</output></label>` : ''}</div>`;
+      <div class="seg" id="pcPal">${(P.style.type === 'dither' ? [['amber', 'AMBER'], ['lime', 'LIME'], ['paper', 'PAPÍR'], ['ir', 'NEON'], ['photo', 'Z FOTKY']] : [['photo4', 'STYL 1'], ['photo', 'STYL 2'], ['photo8', 'STYL 3']]).map(([q, l]) => `<button data-p="${q}" class="${P.style.pn === q ? 'on' : ''}">${l}</button>`).join('')}</div>
+      <label class="srow"><span>${P.style.type === 'dither' ? 'Hustota' : 'Pixely'}</span><input type="range" id="pcCells" min="${P.style.type === 'dither' ? 80 : 40}" max="${P.style.type === 'dither' ? 420 : 220}" value="${P.style.cells}" data-def="${P.style.type === 'dither' ? 240 : 110}"><output>${P.style.cells}</output></label>${P.style.type === 'dither' ? `
+      <label class="srow"><span>Úrovně</span><input type="range" id="pcLev" min="2" max="4" value="${P.style.levels}" data-def="2"><output>${P.style.levels}</output></label>` : ''}` : ''}</div>
+    <div class="pcsec"><h4>Další</h4><div class="row2"><button class="pcghost" id="pcDouble">Double${P.dx && P.dx.other ? ' ●' : ''}</button><button class="pcghost" id="pcBlob">Blob karta</button><button class="pcghost" id="pcRecipe">Recepty</button></div></div>`;
   bindRanges($('#pcRight'), renderPc); bindGrainPills($('#pcGt'), buildPcRight); bindPcExtra();
   $('#pcReset').onclick = resetAll;
   curveEditor($('#pcCurve'), () => S.P.curve.rgb, pts => { S.P.curve.rgb = pts; renderPc(); }, commit, '#f3eee6');
@@ -3189,8 +3208,16 @@ function bindPcExtra() {
   $$('#pcDm button').forEach(b => b.onclick = () => { if (!b.dataset.m) P.depth = null; else { P.depth = P.depth || { mode: 'bokeh', amt: .7, focus: S.cur.dFocus || .8 }; P.depth.mode = b.dataset.m; } commit(); renderPc(); buildPcRight(); });
   pcRange('#pcDa', v => P.depth.amt = v / 100); pcRange('#pcDf', v => { P.depth.focus = v / 100; P.depth.fset = 1; });
   $$('#pcSty button').forEach(b => b.onclick = () => { const t = b.dataset.t; P.style = !t ? null : t === 'dither' ? { type: 'dither', pal: ['#0B0C0E', '#F5C542'], pn: 'amber', cells: 240, levels: 2 } : { type: 'pixel', pal: photoPal(6), pn: 'photo', cells: 110 }; commit(); renderPc(); buildPcRight(); });
-  pcRange('#pcCells', v => P.style.cells = v);
+  pcRange('#pcCells', v => P.style.cells = v); pcRange('#pcLev', v => P.style.levels = v);
+  $$('#pcPal button').forEach(b => b.onclick = () => { const q = b.dataset.p, st = P.style; st.pn = q; st.pal = st.type === 'dither' ? (q === 'photo' ? photoPal(2) : DPALS[q]) : photoPal(+q.replace('photo', '') || 6); commit(); renderPc(); buildPcRight(); });
+  $('#pcDouble').onclick = () => pcPhone(() => { openEditor(S.cur); setTimeout(() => { setTab('fx', true); openFx('double'); }, 420); });
+  $('#pcBlob').onclick = () => pcPhone(() => { S.blobFrom = S.cur; stack.length = 0; go('blob'); });
+  $('#pcRecipe').onclick = () => pcPhone(() => { openEditor(S.cur); setTimeout(() => { setTab('fx', true); recipeActs(); }, 420); });
 }
+/* na PC se Double, Blob karta a Recepty otevřou v telefonním rozhraní v okně (stejné ovládání jako v mobilu) */
+function pcPhone(fn) { document.body.classList.add('pcphone'); $('#pcPhoneBg').hidden = false; $('#device').hidden = false; fit(); fn(); }
+function pcPhoneClose() { document.body.classList.remove('pcphone'); $('#pcPhoneBg').hidden = true; $('#device').hidden = true; closeSheets(); closeActs && closeActs();
+  if (S.cur) { S.P = JSON.parse(JSON.stringify(S.cur.P)); pcE.setSource(srcOf(S.cur, S.P)); } openPc(); }
 function pcDelete() { const ph = S.cur; if (!ph) return; const i = S.photos.indexOf(ph); S.photos.splice(i, 1); if (ph.saved) dbDel(ph.id); S.cur = S.photos[Math.min(i, S.photos.length - 1)] || null;
   if (S.cur) pcSelect(S.cur); toast('Fotka smazaná', { label: 'Vrátit', fn: () => { S.photos.splice(i, 0, ph); dbPut(ph); pcSelect(ph); } }); }
 /* film scan na PC: reference z galerie nebo z disku, náhled na otevřené fotce */
@@ -3218,7 +3245,7 @@ function initPcApp() {
   const bf = $('#pcBefore'); bf.onpointerdown = () => { pcBefore = true; bf.classList.add('on'); $('#pcBadge').classList.add('show'); renderPc(); };
   bf.onpointerup = bf.onpointerleave = () => { if (!pcBefore) return; pcBefore = false; bf.classList.remove('on'); $('#pcBadge').classList.remove('show'); renderPc(); };
   $('#pcMobile').onclick = () => { document.body.classList.remove('pcapp'); setView('m'); };
-  $('#pcScanBtn').onclick = pcScanOpen;
+  $('#pcScanBtn').onclick = pcScanOpen; $('#pcPhoneClose').onclick = pcPhoneClose;
   // ořez tažením a kolečkem (C)
   const cen = $('#pcCenter'); let drag = null;
   cen.addEventListener('pointerdown', e => { if ($('#pcCrop').hidden || e.target.closest('.pcmodal')) return; cen.setPointerCapture(e.pointerId); drag = { x: e.clientX, y: e.clientY, cx: S.P.crop.x, cy: S.P.crop.y }; });
@@ -3270,6 +3297,7 @@ addEventListener('unhandledrejection', e => { try { const m = e.reason && e.reas
 const PCAPP = () => !matchMedia('(max-width:700px),(pointer:coarse)').matches && /^(|pc)$/.test(location.hash.slice(1));
 const isMobile = () => matchMedia('(max-width:700px),(pointer:coarse)').matches; // telefon i na šířku zůstane v mobilním rozložení
 function fit() {
+  if (document.body.classList.contains('pcphone')) { const W = innerWidth, H = innerHeight; $('#device').style.transform = `translate(-50%,-50%) scale(${Math.min(1, (H - 40) / 868, (W - 40) / 414)})`; }
   if (document.body.classList.contains('pcapp')) { $('#pcwrap').style.transform = ''; }
   else if (!isMobile()) {
     const st = $('#stage'), W = st.clientWidth, H = st.clientHeight;
@@ -3430,6 +3458,8 @@ function boot2(h) {
     if (e.key === '\\') { pcBefore = true; $('#pcBadge').classList.add('show'); renderPc(); }
     if (e.key.toLowerCase() === 'c') { $('#pcCrop').hidden = !$('#pcCrop').hidden; $('#pcCenter').classList.toggle('cropping', !$('#pcCrop').hidden); }
     if ((e.key === 'Delete' || e.key === 'Backspace') && $('#pcScan').hidden) { e.preventDefault(); pcDelete(); return; }
+    if (e.key === 'Escape' && document.body.classList.contains('pcphone')) { pcPhoneClose(); return; }
+    if (document.body.classList.contains('pcphone')) return;
     if (e.key === 'Escape') { $('#pcScan').hidden = true; $('#pcCrop').hidden = true; $('#pcCenter').classList.remove('cropping'); }
     if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { const i = S.photos.indexOf(S.cur) + (e.key === 'ArrowRight' ? 1 : -1); pcSelect(S.photos[clamp(i, 0, S.photos.length - 1)]); }
   });
