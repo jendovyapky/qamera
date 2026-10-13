@@ -411,7 +411,7 @@ a{color:var(--amber)}
 
 /* pravítko (posuvník ve stylu Prequel) */
 .ruler{position:relative;height:84px;padding-top:2px}
-.ruler .rv{text-align:center;font-family:var(--f-dot);font-weight:900;font-size:23px;height:26px;line-height:26px;color:var(--fg);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ruler .rv{cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:manipulation;text-align:center;font-family:var(--f-dot);font-weight:900;font-size:23px;height:26px;line-height:26px;color:var(--fg);font-variant-numeric:tabular-nums;white-space:nowrap}
 .ruler .rl{text-align:center;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.16em;color:var(--dim);text-transform:uppercase;height:13px;white-space:nowrap}
 .ruler .tr{position:relative;height:40px;margin-top:4px;overflow:hidden;touch-action:none;cursor:ew-resize;
   -webkit-mask:linear-gradient(90deg,transparent,#000 16%,#000 84%,transparent);mask:linear-gradient(90deg,transparent,#000 16%,#000 84%,transparent)}
@@ -740,7 +740,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
 <body>
 <div class="shell" id="shell">
   <aside class="nav">
-    <div class="brand">QAMERA<small>Náhled 0.14</small></div>
+    <div class="brand">QAMERA<small>Náhled 0.15</small></div>
     <div>
       <div class="navlabel">Zobrazení</div>
       <div class="seg" id="viewSeg"><button class="on" data-v="m">MOBIL 390×844</button><button data-v="pc">PC 1440×900</button></div>
@@ -868,7 +868,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
             <button class="ib" data-back aria-label="Zpět" data-ic="back"></button>
             <div style="display:flex"><button class="ib" id="undoBtn" data-ic="undo" aria-label="Zpět o krok"></button><button class="ib" id="redoBtn" data-ic="redo" aria-label="Znovu"></button></div>
             <button class="advsw" id="advSw">ADVANCED <span class="sw" id="advKnob"></span></button>
-            <div style="display:flex"><button class="ib" id="resetBtn" data-ic="reset" aria-label="Vrátit úpravy na výchozí film"></button><button class="ib" id="expBtn" data-ic="share" aria-label="Exportovat"></button></div>
+            <div style="display:flex"><button class="ib" id="resetBtn" data-ic="reset" aria-label="Vrátit tuhle sekci na původní"></button><button class="ib" id="expBtn" data-ic="share" aria-label="Exportovat"></button></div>
           </div>
           <div class="ephoto" id="ePhoto">
             <div class="frame" id="eFrame"><div class="ecanvas" id="eWrap"><canvas id="eGlow"></canvas><canvas id="edCanvas"></canvas><canvas id="eDate"></canvas><button class="ib fsbtn" id="fsBtn" data-ic="expand" aria-label="Celá obrazovka"></button></div></div>
@@ -939,7 +939,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
         <section class="scr pt" id="s-about" hidden>
           <div class="top"><button class="ib" data-back aria-label="Zpět" data-ic="back"></button><span class="title">O appce</span><span style="width:40px"></span></div>
           <div class="about">
-            <div class="hero"><div class="lens"><svg class="eyes" id="aboutEyes" viewBox="14 24 92 72"></svg></div><h2>QAMERA</h2><div class="ver">NÁHLED 0.14</div></div>
+            <div class="hero"><div class="lens"><svg class="eyes" id="aboutEyes" viewBox="14 24 92 72"></svg></div><h2>QAMERA</h2><div class="ver">NÁHLED 0.15</div></div>
             <div class="card"><h3>Poděkování</h3>
               <p><a href="https://github.com/thetechgeekko/Spektrafilm-android" target="_blank" rel="noopener">Spektrafilm for Android</a> by <b>Akshay Sharma</b></p>
               <p>Film modeling powered by <a href="https://github.com/andreavolpato/spektrafilm" target="_blank" rel="noopener">spektrafilm</a> (Andrea Volpato)</p>
@@ -1157,11 +1157,15 @@ const FILMS = [
   { code: 'ORTHO', sub: 'ortho 25', chem: 'ortochromatický · ISO 25', desc: 'Starý ortochromatický film necitlivý na červenou: rty a červená ztmavnou, nebe vybledne. Vzhled fotek z počátku 20. století.', iso: 25, g: 'fine', bw: [.04, .58, .38], tone: [1.02, 1, .95], toe: .02, sh: [0, 0, 0], hi: [1, 1, 1], con: 1.18, sat: 0, fade: .02, hal: .05, c: ['#1a1712', '#e6dcc6', '#4a6b8a'] },
 ];
 FILMS.push({ code: 'IR', sub: 'infrared color', chem: 'barevný infračervený', desc: 'Infračervený vzhled jako z přestavěného foťáku: zeleň a tráva do růžovobílé, nebe tyrkysové, beton do pudrové.', iso: 400, g: 'classic', sh: [0, 0, 0], hi: [1, 1, 1], con: 1.02, sat: 1, fade: .02, hal: .3, gl: .28, ir: 1, c: ['#5fb7b4', '#f2a7bc', '#fbe9ee'] });
+FILMS.push({ code: 'IRC', sub: 'infra red', chem: 'barevný infračervený', desc: 'Sytá infra jako Aerochrome: listí a tráva rudé, nebe tyrkysové, oblaka bílá.', iso: 400, g: 'fine', sh: [0, 0, 0], hi: [1, 1, 1], con: 1.06, sat: 1.1, fade: 0, hal: .25, gl: .2, ir: 3, c: ['#d81b2a', '#4fb3b0', '#f4f1ee'] });
+FILMS.push({ code: 'IRR', sub: 'infra mono red', chem: 'ČB infračervený + barva', desc: 'Černobílá infra, kde svítí jen listí a tráva – rudě.', iso: 400, g: 'mono', sh: [0, 0, 0], hi: [1, 1, 1], con: 1.08, sat: 1, fade: 0, hal: .15, gl: .2, ir: 4, c: ['#141414', '#e8e8e8', '#d81b2a'] });
+FILMS.push({ code: 'IRG', sub: 'infra mono gold', chem: 'ČB infračervený + barva', desc: 'Černobílá infra, kde svítí jen listí a tráva – zlatě.', iso: 400, g: 'mono', sh: [0, 0, 0], hi: [1, 1, 1], con: 1.08, sat: 1, fade: 0, hal: .15, gl: .2, ir: 4, irh: 1, c: ['#141414', '#e8e8e8', '#f2b52e'] });
 FILMS.push({ code: 'IR400', sub: 'infrared 400', chem: 'ČB infračervený', desc: 'Černobílý infračervený film ve stylu Rollei Infrared 400 s červeným filtrem: zeleň září bíle (Woodův efekt), nebe a voda ztmavnou skoro do černa, ostrý kontrast.', iso: 400, g: 'mono', sh: [0, 0, 0], hi: [1, 1, 1], con: 1.1, sat: 0, fade: .0, hal: .12, gl: .2, ir: 2, c: ['#1a1a1a', '#e8e8e8', '#b3122e'] });
 /* soft glow (difúze, „Pro-Mist“) podle filmu */
 const GLOW = { P160: .2, P400: .18, P800: .22, E100: .08, G200: .18, UM400: .12, KC64: .05, EC100: .06, 'V3-50D': .15, 'V3-250D': .2, 'V3-500T': .3, C200: .12, '400H': .28, SX400: .1, PV100: .05, VEL: .05, IR: .25 };
 FILMS.forEach(f => f.gl = GLOW[f.code] ?? .12);
 const FILM = Object.fromEntries(FILMS.map(f => [f.code, f]));
+FILM.NONE = { code: 'NONE', sub: 'bez filmu', chem: '', desc: 'Původní fotka bez filmu.', iso: 400, g: 'classic', sh: [0, 0, 0], hi: [1, 1, 1], con: 1, sat: 1, fade: 0, hal: 1, gl: 0, chr: 0, c: ['#333', '#999', '#eee'] };
 let FAV = store.get('fav', []);
 let HIDDEN = store.get('hiddenFilms', []);
 const filmsOrdered = () => { const vis = FILMS.filter(f => !HIDDEN.includes(f.code) || f.code === S.film || (S.P && f.code === S.P.film)); return [...vis.filter(f => FAV.includes(f.code)), ...vis.filter(f => !FAV.includes(f.code))]; };
@@ -1171,8 +1175,8 @@ const GRAINS = {
   fine:    { l: 'Fine', d: 'jemný, diapozitivy a ISO 100', f: 1.45, sh: .9, ch: .22, cl: .15, a: .8, mot: 0 },
   classic: { l: 'Classic', d: 'klasický negativ ISO 400', f: 1.0, sh: 1.0, ch: .42, cl: .35, a: 1, mot: 0 },
   cine:    { l: 'Cine', d: 'měkký kino negativ', f: 1.2, sh: .72, ch: .3, cl: .2, a: .85, mot: 0 },
-  push:    { l: 'Push', d: 'hrubý, film tlačený na 3200', f: .66, sh: 1.45, ch: .55, cl: .55, a: 1.35, mot: 0 },
-  mono:    { l: 'Mono', d: 'stříbrný černobílý grain', f: .95, sh: 1.6, ch: 0, cl: .3, a: 1.1, mot: 0 },
+  push:    { l: 'Push', d: 'hrubý, film tlačený na 3200', f: 1.0, sh: 1.08, ch: .16, cl: .35, a: .95, mot: 0 },
+  mono:    { l: 'Mono', d: 'stříbrný černobílý grain', f: 1.75, sh: 1.15, ch: 0, cl: .2, a: .9, mot: 0 },
   expired: { l: 'Expired', d: 'prošlý film, skvrnitý', f: .8, sh: 1.1, ch: .85, cl: .9, a: 1.15, mot: 1 },
 };
 const gtypeOf = P => P.gtype || FILM[P.film]?.g || 'classic';
@@ -1348,7 +1352,7 @@ uniform sampler2D uTex, uCurve;
 uniform vec2 uCover, uOff, uRes; uniform float uZoom, uRot, uTime, uBypass, uStatic;
 uniform float uExp,uTemp,uTint,uCon,uSat,uStr,uHal,uBloom,uVig,uFade,uSharp;
 uniform float uGrain,uGFreq,uGSharp,uGChroma,uGClump,uGMot;
-uniform vec3 uSh,uHi; uniform float uFCon,uFSat,uFFade, uChar; uniform vec3 uBW, uBTone; uniform float uBToe;
+uniform vec3 uSh,uHi; uniform float uFCon,uFSat,uFFade, uChar, uFSoft, uIRHue; uniform vec3 uBW, uBTone; uniform float uBToe;
 uniform vec3 uHsl[8]; uniform vec3 uGSh,uGMid,uGHi;
 uniform vec3 uTrMs,uTrSs,uTrMr,uTrSr; uniform float uTr;
 uniform float uSeed, uGlow, uIR, uStyle, uCells, uLevels, uPalN, uZebra;
@@ -1369,6 +1373,11 @@ vec3 rgb2hsv(vec3 c){ vec4 K=vec4(0.,-1./3.,2./3.,-1.); vec4 p=mix(vec4(c.bg,K.w
 vec3 hsv2rgb(vec3 c){ vec3 p=abs(fract(c.xxx+vec3(1.,2./3.,1./3.))*6.-3.); return c.z*mix(vec3(1.),clamp(p-1.,0.,1.),c.y); }
 float luma(vec3 c){ return dot(c, vec3(.2126,.7152,.0722)); }
 vec2 qToUv(vec2 q){ float cs = cos(uRot), sn = sin(uRot); vec2 ts0 = vec2(textureSize(uTex,0)); float sar = ts0.x/ts0.y; vec2 v0 = q * uCover / uZoom; v0.x *= sar; v0 = mat2(cs,-sn,sn,cs) * v0; v0.x /= sar; return v0 + .5 + uOff; } // otočení bez zkosení
+/* zjednodušený vzhled pro rozmazané vrstvy (glow): stejné základní úpravy a film jako fotka, ať záře má barvy upravené fotky */
+vec3 lookOf(vec3 s){ vec3 l = pow(max(s, 0.), vec3(2.2)) * exp2(uExp) * vec3(1.+uTemp*.22, 1.+uTint*.1, 1.-uTemp*.22); vec3 c = pow(l/(1.+l*.06*uStr), vec3(1./2.2));
+  c = (c-.5)*(1.+uCon*.55)+.5; c = mix(vec3(luma(c)), c, 1.+uSat); vec3 f = c;
+  if (uLut > .5) f = texture(uLut3, clamp(f,0.,1.)*(32./33.) + .5/33.).rgb; if (uBW.r + uBW.g + uBW.b > .01) f = vec3(dot(clamp(f,0.,1.), uBW)) * uBTone;
+  return clamp(mix(c, f, uStr), 0., 1.); }
 void main(){
   float ar0 = uRes.x/uRes.y; vec2 cells = vec2(uCells*ar0, uCells);
   vec2 bUv = uStyle > .5 ? (floor(vUv*cells)+.5)/cells : vUv; // dither / pixel art: vzorkuje se po buňkách
@@ -1403,17 +1412,22 @@ void main(){
   c = (c-.5)*(1.+uCon*.55)+.5;
   float l = luma(c); c = mix(vec3(l), c, 1.+uSat);
   vec3 f = c; float fl = clamp(luma(f),0.,1.);
-  if (uIR > .5) { vec3 x = clamp(f,0.,1.); float lx = luma(x), sat0 = max(x.r, max(x.g, x.b)) - min(x.r, min(x.g, x.b));
-    float veg = smoothstep(0., .12, x.g - max(x.r, x.b) * .92) * smoothstep(.03, .14, sat0); // zeleň (v IR silně odráží)
-    float sky = smoothstep(.02, .16, x.b - max(x.r, x.g) * .95) * smoothstep(.2, .55, lx);  // modré nebe (v IR tmavé)
-    float irl = clamp(lx * .8 + veg * (.55 + lx * .5), 0., 1.);
-    if (uIR < 1.5) { // barevná IR (filtr 590–720 nm + prohození kanálů): zeleň do růžovobílé, nebe do tyrkysu, zbytek pudrově růžový
-      vec3 base = mix(vec3(irl), irl * vec3(1.1, .84, .89), .8);
-      vec3 fol = mix(vec3(.93, .48, .6), vec3(1., .82, .87), smoothstep(.35, .95, irl));
-      vec3 sk = mix(vec3(.08, .45, .47), vec3(.35, .72, .72), lx);
-      f = mix(base, fol, veg); f = mix(f, sk, sky);
-    } else { // ČB IR (Rollei Infrared 400 + R72): Woodův efekt, černé nebe, tvrdý kontrast
-      float g = clamp(lx * .55 + veg * .85 + lx * veg * .3 - sky * .55 - smoothstep(.02, .2, x.b - x.r) * (1. - sky) * .12, 0., 1.); f = vec3(smoothstep(.04, .96, g)); }
+  if (uIR > .5) { /* infra: odhad odrazivosti v IR (zeleň silně, nebe a voda slabě, oblaka a bílá vysoko) – plynulé váhy, žádné ostré masky
+       barevné varianty = CIR jako Aerochrome: zobrazená červená = IR, zelená = viditelná červená, modrá = viditelná zelená */
+    vec3 x = clamp(f, 0., 1.); float lx = luma(x), sat0 = max(x.r, max(x.g, x.b)) - min(x.r, min(x.g, x.b));
+    float veg = smoothstep(-.02, .14, x.g - .5 * (x.r + x.b)) * smoothstep(.0, .16, sat0) + smoothstep(.0, .2, .5 * (x.r + x.g) - x.b) * smoothstep(.06, .3, sat0) * .45 * (1. - smoothstep(.0, .2, x.r - x.g)); veg = clamp(veg, 0., 1.);
+    float blu = smoothstep(-.02, .2, x.b - .5 * (x.r + x.g)) * (1. - smoothstep(.72, .97, lx));          // modrá (nebe, voda) – v IR tmavá, oblaka ne
+    float ir = clamp(lx * .78 + veg * (.42 + .5 * lx) - blu * .32, 0., 1.);
+    /* barví se jen to, co infra opravdu mění: listí a tráva (vysoká odrazivost) → červená, modrá → tyrkys, oblaka bílá, zbytek jen ztlumený */
+    vec3 base = mix(vec3(lx), x, .45) * vec3(1.03, .97, .98);
+    vec3 fol = mix(vec3(.78, .05, .12), vec3(1., .42, .46), smoothstep(.45, 1., ir)) * (.55 + .5 * ir);
+    vec3 sk = vec3(.22, .64, .66) * (.55 + .55 * lx);
+    vec3 cir = mix(base, fol, veg); cir = mix(cir, sk, blu * (1. - veg));
+    if (uIR < 1.5) f = mix(cir, vec3(1., .88, .92), .32) * .9 + .07;                                         // IR: pastelová růžová
+    else if (uIR < 2.5) { float g = clamp(ir * 1.08 - blu * .2, 0., 1.); f = vec3(g * g * (3. - 2. * g) * .35 + g * .65); } // IR400: ČB, Woodův efekt
+    else if (uIR < 3.5) f = cir;                                                                             // IRC: sytá červená infra
+    else { float g = clamp(ir * 1.05 - blu * .15, 0., 1.); vec3 hue = uIRHue > .5 ? vec3(1., .72, .18) : vec3(1., .16, .2);  // IRR / IRG: ČB + listí v jedné barvě
+      f = mix(vec3(g), hue * (.35 + g * .85), veg * .92); }
     fl = clamp(luma(f),0.,1.); }
   if (uBW.r + uBW.g + uBW.b > .01) { // černobílý film: spektrální citlivost emulze (kanálový mix), charakteristická křivka, tón papíru
     float y = clamp(dot(clamp(f, 0., 1.), uBW), 0., 1.); y = (y - .5) * uFCon + .5; y = mix(y, y * y * (3. - 2. * y), clamp(uFCon - .9, 0., .6));
@@ -1429,8 +1443,9 @@ void main(){
   f += uSh*(1.-fl)*(1.-fl)*1.6;
   f *= mix(vec3(1.), uHi, smoothstep(.15,1.,fl));
   f = uFFade + f*(1.-uFFade*1.4); }
+  if (uFSoft > 0.) f = mix(f, (f - .5) * .66 + .53, uFSoft); // měkkost: zjemní křivku filmu (méně kontrastu, světlejší stíny)
   c = mix(c, f, uStr);
-  if (uGlow > 0.) { vec3 dg = textureLod(uTex, uv, 4.6).rgb; c = mix(c, 1.-(1.-c)*(1.-dg*.85), uGlow*.6); c = mix(c, c*.92+.05, uGlow*.18); } // soft glow / difúze
+  if (uGlow > 0.) { vec3 dg = lookOf(textureLod(uTex, uv, 4.6).rgb); c = mix(c, 1.-(1.-c)*(1.-dg*.85), uGlow*.6); c = mix(c, c*.92+.05, uGlow*.18); } // soft glow / difúze
   c = clamp(c,0.,1.);
   c = vec3(texture(uCurve,vec2(c.r,.5)).r, texture(uCurve,vec2(c.g,.5)).g, texture(uCurve,vec2(c.b,.5)).b);
   vec3 h = rgb2hsv(c); float hc[8] = float[8](0.,.083,.166,.333,.5,.625,.75,.875);
@@ -1460,7 +1475,7 @@ void main(){
     vec3 n = mix(vec3(nm), nc, uGChroma) * clump;
     n = sign(n)*pow(abs(n)*1.25, vec3(1./uGSharp));
     float w = (1.-smoothstep(.6,1.,L)*.75)*(.5+.5*smoothstep(0.,.22,L));
-    c += n*uGrain*.13*w + (hash(gl_FragCoord.xy + jit*3.1) - .5)*uGrain*.018; // jemný nepravidelný šum navrch
+    c += n*uGrain*.13*w + (hash(gl_FragCoord.xy + jit*3.1) - .5)*uGrain*.006; // jen velmi jemný šum navrch (víc vypadalo jako špatná komprese)
     if (uGMot > 0.) { vec2 mp = vUv*vec2(ar,1.)*2.3; c += vec3(vnoise(mp+3.), vnoise(mp+17.), vnoise(mp+29.))*.045*uGMot*uGrain; }
   }
   if (uBW.r + uBW.g + uBW.b > .01 && uStr > .001) c = mix(c, vec3(dot(c, vec3(.299, .587, .114))) * uBTone, clamp(uStr, 0., 1.)); // ČB film: halation i zrno bez barvy
@@ -1532,18 +1547,18 @@ class Engine {
     gl.uniform1f(u.uZoom, o.zoom || 1); gl.uniform1f(u.uRot, o.rot || 0); gl.uniform1f(u.uTime, o.time || 0); gl.uniform1f(u.uBypass, o.bypass ? 1 : 0); gl.uniform1f(u.uStatic, o.time == null ? 1 : 0);
     const isoK = Math.sqrt((o.iso || f.iso) / 400);
     gl.uniform1f(u.uExp, P.exp); gl.uniform1f(u.uTemp, P.temp); gl.uniform1f(u.uTint, P.tint); gl.uniform1f(u.uCon, P.con); gl.uniform1f(u.uSat, P.sat);
-    const k = clamp(P.str, 0, 1); // síla filmu řídí celý filmový vzhled – při 0 % je fotka původní (zůstanou jen Úpravy)
-    gl.uniform1f(u.uStr, P.str); gl.uniform1f(u.uHal, P.hal * f.hal * k); gl.uniform1f(u.uBloom, P.bloom * k);
+    const k = P.film === 'NONE' ? 0 : clamp(P.str, 0, 1); // síla filmu řídí celý filmový vzhled – při 0 % je fotka původní (zůstanou jen Úpravy)
+    gl.uniform1f(u.uStr, k); gl.uniform1f(u.uFSoft, (P.fsoft || 0) * k); gl.uniform1f(u.uHal, P.hal * f.hal * k); gl.uniform1f(u.uBloom, P.bloom * k);
     gl.uniform1f(u.uGrain, P.grain * G.a * (.6 + .4 * isoK) * k); gl.uniform1f(u.uGFreq, 560 / P.gsize * G.f / (.72 + .38 * isoK));
     gl.uniform1f(u.uSeed, o.seed != null ? o.seed : 7); gl.uniform1f(u.uGSharp, G.sh); gl.uniform1f(u.uGChroma, G.ch); gl.uniform1f(u.uGClump, G.cl); gl.uniform1f(u.uGMot, G.mot);
     gl.uniform1f(u.uVig, P.vig * k); gl.uniform1f(u.uFade, P.fade); gl.uniform1f(u.uSharp, P.sharp);
-    gl.uniform1f(u.uChar, f.chr ?? .6); gl.uniform3fv(u.uBW, f.bw || [0, 0, 0]); gl.uniform3fv(u.uBTone, f.tone || [1, 1, 1]); gl.uniform1f(u.uBToe, f.toe || 0);
+    gl.uniform1f(u.uChar, P.chr ?? f.chr ?? .6); gl.uniform3fv(u.uBW, f.bw || [0, 0, 0]); gl.uniform3fv(u.uBTone, f.tone || [1, 1, 1]); gl.uniform1f(u.uBToe, f.toe || 0);
     gl.uniform3fv(u.uSh, f.sh); gl.uniform3fv(u.uHi, f.hi); gl.uniform1f(u.uFCon, f.con); gl.uniform1f(u.uFSat, f.sat); gl.uniform1f(u.uFFade, f.fade);
     gl.uniform3fv(u.uHsl, P.hsl.flat());
     const g = P.grade; gl.uniform3fv(u.uGSh, hue2rgb(g.sh[0], g.sh[1])); gl.uniform3fv(u.uGMid, hue2rgb(g.mid[0], g.mid[1])); gl.uniform3fv(u.uGHi, hue2rgb(g.hi[0], g.hi[1]));
     let T = o.transfer;
     if (!T && f.scan && this.srcEl) { if (!this.st) this.st = stats(this.srcEl); T = { k: Math.min(1, P.str) * (f.scan.k ?? 1), ms: this.st.m, ss: this.st.s, mr: f.scan.m, sr: f.scan.s }; }
-    gl.uniform1f(u.uGlow, (P.glow ?? f.gl ?? .12) * k); gl.uniform1f(u.uIR, f.ir || 0);
+    gl.uniform1f(u.uGlow, (P.glow ?? f.gl ?? .12) * k); gl.uniform1f(u.uIR, f.ir || 0); gl.uniform1f(u.uIRHue, f.irh || 0);
     const st = (!o.bypass && P.style) || {}, sty = st.type === 'dither' ? 1 : st.type === 'pixel' ? 2 : 0, pal = (st.pal || []).slice(0, 6), pf = new Float32Array(18);
     pal.forEach((c, i) => { const v = rgbOf(c); pf.set([v[0] / 255, v[1] / 255, v[2] / 255], i * 3); });
     gl.uniform1f(u.uStyle, sty); gl.uniform1f(u.uCells, st.cells || 200); gl.uniform1f(u.uLevels, st.levels || 2); gl.uniform3fv(u.uPal, pf); gl.uniform1f(u.uPalN, pal.length || 2); gl.uniform1f(u.uZebra, o.zebra ? 1 : 0);
@@ -2204,7 +2219,7 @@ async function dbLoad() {
 const phAr = ph => (ph.P && ph.P.crop && ph.P.crop.ar) || ph.src.width / ph.src.height;
 function rethumb(ph) { if (ph.P.lidar && ph.depth) { const cr0 = ph.P.crop || DEF().crop, w0 = 300, h0 = Math.round(300 / phAr(ph)), o0 = copyCanvas(utilRender(srcOf(ph, ph.P), ph.P, w0, h0, { depth: ph.depth, zoom: cr0.s, offX: cr0.x, offY: cr0.y, rot: cr0.rot * Math.PI / 180 }));
     ph.thumb = lidarRender(o0, ph.depth, w0, h0, Object.assign({}, ph.P.lidar, { hud: false })).toDataURL('image/jpeg', .85); ph.film = ph.P.film; return; }
-  const cr = ph.P.crop || DEF().crop, o = utilRender(srcOf(ph, ph.P), ph.P, 300, Math.round(300 / phAr(ph)), { depth: ph.depth, zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180 }); ph.thumb = o.toDataURL('image/jpeg', .85); ph.film = ph.kind === 'arch' ? 'ARCH' : ph.P.film; }
+  const cr = ph.P.crop || DEF().crop, o = utilRender(srcOf(ph, ph.P), ph.P, 300, Math.round(300 / phAr(ph)), { depth: ph.depth, zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180 }); ph.thumb = o.toDataURL('image/jpeg', .85); ph.film = ph.kind === 'arch' ? 'ARCH' : ph.P.film === 'NONE' ? 'ORIG' : ph.P.film; }
 function seedPhotos() {
   const list = [['plaz', 720, 900, 'G200', ['léto', 'moře', 'modrá', 'červená'], 14, 32], ['les', 720, 960, '400H', ['les', 'zelená', 'ráno'], 7, 12], ['zapad', 900, 720, 'P400', ['západ', 'moře', 'oranžová'], 19, 48],
     ['hory', 720, 960, 'VEL', ['hory', 'růžová', 'fialová'], 6, 21], ['kvet', 720, 720, 'E100', ['květina', 'růžová', 'zelená'], 11, 5], ['mesto', 720, 960, 'V3-500T', ['noc', 'ulice', 'praha'], 22, 17],
@@ -2377,7 +2392,7 @@ function showArch(photos, title, film, opt = {}) {
   if (S.screen === 'gallery') renderGallery(); viewImage(c, ph);
 }
 /* prohlížeč obrázku: pinch / kolečko = zoom, tažení = posun, dvojťuk = 1× / 2,5× */
-function viewImage(src, ph) {
+function viewImage(src, ph, alt) {
   const el = document.createElement('div'); el.className = 'zoomv'; el.innerHTML = `<canvas></canvas><button class="zx" aria-label="Zavřít">${iconSVG('x')}</button>${ph ? '<button class="zsh">Export</button>' : ''}`;
   $('#phone').appendChild(el); const cv = $('canvas', el); cv.width = src.width; cv.height = src.height; cv.getContext('2d').drawImage(src, 0, 0);
   const W = el.clientWidth, H = el.clientHeight, k0 = Math.min(W / src.width, H / src.height); let z = { s: k0, x: (W - src.width * k0) / 2, y: (H - src.height * k0) / 2 };
@@ -2387,6 +2402,10 @@ function viewImage(src, ph) {
   const pts = new Map(); let base = null, lastTap = 0, sw = 0;
   const close = () => { el.style.transition = 'opacity .25s'; el.style.opacity = 0; setTimeout(() => el.remove(), 260); };
   const rel = e => { const b = el.getBoundingClientRect(), sc = b.width / el.offsetWidth; return [(e.clientX - b.left) / sc, (e.clientY - b.top) / sc]; };
+  let holdT = 0, held = false; const showAlt = on => { if (!alt) return; cv.getContext('2d').drawImage(on ? alt : src, 0, 0, cv.width, cv.height); };
+  el.addEventListener('pointerdown', e => { if (alt && !pts.size) { held = false; holdT = setTimeout(() => { held = true; showAlt(true); buzz(6); }, 260); } }, true);
+  el.addEventListener('pointermove', e => { if (holdT && pts.size && (pts.size > 1 || Math.hypot(...rel(e).map((v, i) => v - base.c[i])) > 8)) { clearTimeout(holdT); holdT = 0; } }, true);
+  el.addEventListener('pointerup', () => { clearTimeout(holdT); holdT = 0; if (held) { held = false; showAlt(false); } }, true);
   el.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; el.setPointerCapture(e.pointerId); pts.set(e.pointerId, rel(e)); const a = [...pts.values()];
     base = { ...z, d: a[1] ? Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]) : 0, c: a[1] ? [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2] : a[0] }; });
   el.addEventListener('pointermove', e => { if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, rel(e)); const a = [...pts.values()];
@@ -2408,7 +2427,7 @@ let edE, edRaf = 0, before = false;
 const PANEL_H = 186;
 function cleanP(P) { delete P.fish; delete P.layers; if (P.frame && !FRAMES[P.frame]) P.frame = 'glow'; P.date = null; P.tr = 0; if (P.depth && !['bokeh', 'fog', 'hal', 'map'].includes(P.depth.mode)) P.depth.mode = 'bokeh'; return P; } // zrušené efekty
 function openEditor(ph, fromImg) {
-  stopPar(); S.cur = ph; S.fxOpen = null; cleanP(ph.P); S.P = JSON.parse(JSON.stringify(ph.P)); S.cur._last = JSON.parse(JSON.stringify(ph.P)); S.hist = []; S.fut = [];
+  stopPar(); S.cur = ph; S.fxOpen = null; S.filmOpen = false; cleanP(ph.P); S.P = JSON.parse(JSON.stringify(ph.P)); S.cur._last = JSON.parse(JSON.stringify(ph.P)); S.hist = []; S.fut = [];
   edE.setSource(srcOf(ph, S.P));
   go('editor');
   setTab(S.tab, true);
@@ -2663,6 +2682,14 @@ function commit() { if (S.cur) S.cur.dirty = true; S.hist.push(JSON.stringify(S.
 function undo() { if (!S.hist.length) return toast('Není co vracet'); S.fut.push(JSON.stringify(S.P)); S.P = JSON.parse(S.hist.pop()); syncCur(); }
 function redo() { if (!S.fut.length) return; S.hist.push(JSON.stringify(S.P)); S.P = JSON.parse(S.fut.pop()); syncCur(); }
 function syncCur() { S.cur.P = JSON.parse(JSON.stringify(S.P)); S.cur._last = JSON.parse(JSON.stringify(S.P)); rethumb(S.cur); setTab(S.tab, true); layoutEditor(); renderEd(true); if (S.view === 'pc') buildPcRight(); }
+function resetSection() { const P = S.P, D = DEF(); let what;
+  if (S.adv) { P.curve = D.curve; P.hsl = D.hsl; P.grade = D.grade; what = 'Advanced'; }
+  else if (S.tab === 'film') { P.film = 'NONE'; P.str = 1; ['chr', 'fsoft'].forEach(k => delete P[k]); S.filmOpen = false; what = 'Film'; }
+  else if (S.tab === 'adj') { ADJ.forEach(a => { if (a.film) delete P[a.k]; else P[a.k] = D[a.k]; }); P.gtype = null; what = 'Úpravy'; }
+  else if (S.tab === 'crop') { P.crop = D.crop; what = 'Ořez'; }
+  else { P.dx = null; P.style = null; P.frame = null; P.depth = null; P.lidar = null; S.fxOpen = null; what = 'Efekty'; }
+  commit(); dxChanged(); layoutEditor(); setTab(S.tab, true); renderEd(true); if (S.view === 'pc') buildPcRight(); buzz(8);
+  toast(`${what}: vráceno na původní`, { label: 'Zpět', fn: undo }); }
 function resetAll() { const film = S.P.film, crop = S.P.crop, dx = S.P.dx; S.P = DEF(); S.P.film = film; S.P.crop = crop; S.P.dx = dx; commit(); S.cur._last = JSON.parse(JSON.stringify(S.P)); setTab(S.tab, true); renderEd(true); if (S.view === 'pc') buildPcRight(); toast(`Úpravy vrácené na výchozí ${film}`); buzz(8); }
 
 /* pravítko (Prequel): tiky s čísly, žlutě vyplněný rozsah od výchozí hodnoty, setrvačnost a cvaknutí */
@@ -2685,6 +2712,7 @@ function makeRuler(el, { min, max, step, value, label, fmt, onInput, onEnd, def 
   tr.addEventListener('pointermove', e => { if (!tr.hasPointerCapture(e.pointerId)) return; const now = performance.now(); vel = (e.clientX - lx) / Math.max(1, now - lt) * 16; lx = e.clientX; lt = now; setV(v0 - (e.clientX - sx) / PX * step, true); });
   tr.addEventListener('pointerup', () => { const tgt = clamp(Math.round((v - vel * 4 / PX * step - min) / step) * step + min, min, max); sp = spring(v, tgt, x => setV(x), { k: 200, c: 24, onDone: onEnd }); });
   tr.addEventListener('dblclick', () => { sp && sp.stop(); sp = spring(v, def, x => setV(x), { onDone: onEnd }); });
+  let rvT = 0; rv.addEventListener('pointerup', () => { const n = performance.now(); if (n - rvT < 340) { rvT = 0; sp && sp.stop(); buzz(6); sp = spring(v, def, x => setV(x), { k: 220, c: 24, onDone: onEnd }); } else rvT = n; }); // dvojťuk na číslo = vynulovat
   tr.addEventListener('wheel', e => { e.preventDefault(); sp && sp.stop(); setV(v + Math.sign(e.deltaY + e.deltaX) * step * (e.shiftKey ? 5 : 1), true); clearTimeout(tr._w); tr._w = setTimeout(onEnd, 300); }, { passive: false });
   requestAnimationFrame(draw);
   return { set(nv) { v = nv; draw(); } };
@@ -2712,11 +2740,12 @@ function setTab(t, quiet) {
   S.tab = t; $$('#eTabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   const p = $('#ePanel'); $('#cropLayer').hidden = t !== 'crop' || S.adv;
   if (S.adv) { renderAdv(); sizePanel(quiet); return; }
-  if (t === 'film') {
+  if (t === 'film' && S.filmOpen && FILM[S.P.film] && S.P.film !== 'NONE') { renderFilmPanel(p);
+  } else if (t === 'film') {
     p.innerHTML = `<div class="ruler" id="strR"></div><div class="strip" id="fStrip">${filmsOrdered().map(f => `<button class="fthumb ${f.code === S.P.film ? 'on' : ''} ${FAV.includes(f.code) ? 'fav' : ''}" data-c="${f.code}"><canvas width="128" height="160"></canvas><span>${f.code}</span></button>`).join('')}</div>`;
-    makeRuler($('#strR'), { min: 0, max: 1, step: .01, value: S.P.str, label: 'Síla filmu · ' + S.P.film, fmt: v => Math.round(v * 100), def: 1, onInput: v => { S.P.str = v; renderEd(); }, onEnd: commit });
+    makeRuler($('#strR'), { min: 0, max: 1, step: .01, value: S.P.str, label: S.P.film === 'NONE' ? 'Bez filmu' : 'Síla filmu · ' + S.P.film, fmt: v => Math.round(v * 100), def: 1, onInput: v => { S.P.str = v; renderEd(); }, onEnd: commit });
     drawFilmThumbs(); hscroll($('#fStrip')); $$('.fthumb').forEach(b => { const f = FILM[b.dataset.c]; if (f && f.scan) longPress(b, () => filmActs(f.code)); });
-    $$('.fthumb').forEach(b => b.onclick = () => { S.P.film = b.dataset.c; $$('.fthumb').forEach(x => x.classList.toggle('on', x === b)); $('#strR .rl').textContent = 'Síla filmu · ' + S.P.film; renderEd(); commit(); buzz(4);
+    $$('.fthumb').forEach(b => b.onclick = () => { if (S.P.film === b.dataset.c) { S.filmOpen = true; setTab('film', true); buzz(6); return; } S.P.film = b.dataset.c; $$('.fthumb').forEach(x => x.classList.toggle('on', x === b)); $('#strR .rl').textContent = 'Síla filmu · ' + S.P.film; renderEd(); commit(); buzz(4);
       spring(.9, 1, v => b.querySelector('canvas').style.transform = `scale(${v})`, { k: 300, c: 14 }); });
     requestAnimationFrame(() => { const on = $('.fthumb.on'), s = $('#fStrip'); if (on && s) s.scrollLeft = on.offsetLeft - s.clientWidth / 2 + on.offsetWidth / 2; });
   } else if (t === 'adj') {
@@ -2789,7 +2818,7 @@ function renderFxPanel(p) {
       ${dith ? `<label class="srow"><span>Úrovně</span><input type="range" id="fxLev" min="2" max="4" value="${st.levels}" data-def="2"><output>${st.levels}</output></label>` : ''}`; }
   else if (k === 'lidar' && !S.cur.depth) body = depthWait();
   else if (k === 'lidar') { const L = S.P.lidar;
-    body = `<div class="fxrow"><div class="seg" id="fxLst">${[['foto', 'FOTO'], ['scan', 'SKEN']].map(([m, l]) => `<button data-m="${m}" class="${L.st === m ? 'on' : ''}">${l}</button>`).join('')}</div><button class="sq wide" id="fxLvid">Video</button></div>
+    body = `<div class="fxrow"><div class="seg" id="fxLst">${[['foto', 'FOTO'], ['scan', 'SKEN']].map(([m, l]) => `<button data-m="${m}" class="${L.st === m ? 'on' : ''}">${l}</button>`).join('')}</div><button class="sq wide ${L.hud !== false ? 'on' : ''}" id="fxLhud">Text</button><button class="sq wide" id="fxLvid">Video</button></div>
       <label class="srow"><span>Otočení</span><input type="range" id="fxLyaw" min="-60" max="60" value="${Math.round(L.yaw)}" data-def="18"><output>${Math.round(L.yaw)}°</output></label>
       <label class="srow"><span>Náklon</span><input type="range" id="fxLpit" min="-30" max="30" value="${Math.round(L.pitch)}" data-def="6"><output>${Math.round(L.pitch)}°</output></label>`; }
   else if (k === 'depth') { const d = S.P.depth, ready = !!S.cur.depth;
@@ -2828,7 +2857,7 @@ function renderFxPanel(p) {
   if (k === 'lidar' && S.P.lidar && S.cur.depth) { const L = S.P.lidar;
     $$('#fxLst button').forEach(b => b.onclick = () => { L.st = b.dataset.m; renderEd(true); commit(); setTab('fx', true); });
     const lr = (id, f, u = '') => { const i = $(id); paintRange(i); i.oninput = () => { f(+i.value); i.nextElementSibling.textContent = i.value + u; paintRange(i); dateOverlay(); }; i.onchange = commit; };
-    lr('#fxLyaw', v => L.yaw = v, '°'); lr('#fxLpit', v => L.pitch = v, '°'); $('#fxLvid').onclick = lidarVideo; }
+    lr('#fxLyaw', v => L.yaw = v, '°'); lr('#fxLpit', v => L.pitch = v, '°'); $('#fxLvid').onclick = lidarVideo; $('#fxLhud').onclick = () => { L.hud = L.hud === false; dateOverlay(); commit(); setTab('fx', true); }; }
   if (k === 'date') { const d = S.P.date;
     $$('#fxDf2 button').forEach(b => b.onclick = () => { d.f = +b.dataset.f; $$('#fxDf2 button').forEach(x => x.classList.toggle('on', x === b)); renderEd(true); commit(); buzz(4); });
     $$('.fxp [data-c]').forEach(b => b.onclick = () => { d.c = +b.dataset.c; $$('.fxp [data-c]').forEach(x => x.classList.toggle('on', x === b)); renderEd(true); commit(); buzz(4); }); }
@@ -2885,6 +2914,17 @@ const IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform 
 function heavyRender() { if (S.depthMs != null && S.depthMs < 45) { renderEd(true); return; } const w = $('#eWrap'); let l = $('.eload', w);
   if (!l) { l = document.createElement('div'); l.className = 'eload'; l.innerHTML = '<i></i><span>Počítám</span>'; w.appendChild(l); }
   l.classList.add('on'); requestAnimationFrame(() => requestAnimationFrame(() => { renderEd(true); setTimeout(() => l.classList.remove('on'), 120); })); }
+/* nastavení filmu: co z filmového vzhledu chceš míň / víc (jen pro tuhle fotku) */
+function renderFilmPanel(p) { const P = S.P, f = FILM[P.film], gl0 = f.gl ?? .12;
+  const rows = [['str', 'Síla', 0, 100, Math.round(P.str * 100), 100], ['chr', 'Charakter', 0, 150, Math.round((P.chr ?? f.chr ?? .6) * 100), Math.round((f.chr ?? .6) * 100)], ['fsoft', 'Měkkost', 0, 100, Math.round((P.fsoft || 0) * 100), 0],
+    ['hal', 'Halation', 0, 300, Math.round(P.hal * 100), 100], ['bloom', 'Bloom', 0, 150, Math.round(P.bloom * 100), 15], ['glow', 'Glow', 0, 150, Math.round((P.glow ?? gl0) * 100), Math.round(gl0 * 100)], ['grain', 'Grain', 0, 150, Math.round(P.grain * 100), 50], ['gsize', 'Velikost zrna', 50, 300, Math.round(P.gsize * 100), 100]];
+  p.innerHTML = `<div class="fxp"><div class="fxh"><button class="ib" id="fpBack" aria-label="Zpět na filmy">${iconSVG('back')}</button><b>FILM · ${f.code}</b><button class="off" id="fpDef">Výchozí</button></div>
+    ${rows.map(([k, l, a, b, v, d]) => `<label class="srow"><span>${l}</span><input type="range" data-fk="${k}" min="${a}" max="${b}" value="${v}" data-def="${d}"><output>${v}</output></label>`).join('')}</div>`;
+  $('#fpBack').onclick = () => { S.filmOpen = false; setTab('film', true); };
+  $('#fpDef').onclick = () => { ['chr', 'fsoft', 'glow'].forEach(k => delete S.P[k]); Object.assign(S.P, { str: 1, hal: 1, bloom: .15, grain: .5, gsize: 1 }); renderEd(true); commit(); setTab('film', true); buzz(6); };
+  $$('#ePanel [data-fk]').forEach(i => { paintRange(i); i.oninput = () => { const k = i.dataset.fk; S.P[k] = +i.value / 100; i.nextElementSibling.textContent = i.value; paintRange(i); renderEd(); }; i.onchange = commit;
+    i.ondblclick = () => { i.value = i.dataset.def; i.oninput(); commit(); }; });
+}
 function photoPal(n) { const P = JSON.parse(JSON.stringify(S.P)); P.style = null; P.grain = 0; utilRender(srcOf(S.cur, S.P), P, 60, 75, {}); return kmeans(util.e.pixels(), n).map(c => '#' + rgbOf(c).map(v => v.toString(16).padStart(2, '0')).join('')); }
 const DPALS = { amber: ['#0B0C0E', '#F5C542'], lime: ['#050505', '#D4FF3A'], paper: ['#1b1a18', '#F2EFE8'], ir: ['#1a0d2e', '#ff4f8b'] };
 function styleActs() {
@@ -2962,18 +3002,10 @@ function cropGestures() {
   el.addEventListener('wheel', e => { if (S.tab !== 'crop' || S.adv) return; e.preventDefault(); const c = S.P.crop; c.s = clamp(c.s * (1 - e.deltaY * .0015), 1, 5); fitCrop(); renderEd(); clearTimeout(el._w); el._w = setTimeout(commit, 300); }, { passive: false });
 }
 /* fotka přes celou obrazovku */
-function openFs() {
-  const v = $('#fsView'), cv = $('#fsCanvas'), phone = $('#phone'), dpr = Math.min(2, devicePixelRatio || 1);
-  const ar = S.P.crop.ar || S.cur.src.width / S.cur.src.height, W = phone.clientWidth, H = phone.clientHeight;
-  let w = W, h = W / ar; if (h > H) { h = H; w = H * ar; }
-  const G = S.P.frame ? frameGeom(S.P, ar, W, H) : null; if (G) { w = G.cw; h = G.ch; }
-  const paint = byp => { const fr = G && !byp, pw = fr ? G.r.w : w, ph = fr ? G.r.h : h, o0 = copyCanvas(utilRender(srcOf(S.cur, S.P), S.P, Math.round(pw * dpr), Math.round(ph * dpr), edOpts({ bypass: byp })));
-    if (S.P.date && !byp) drawDate(o0.getContext('2d'), o0.width, o0.height, S.cur.date, S.P.date); const o = fr ? framed(o0, S.P, S.cur) : o0; cv.width = o.width; cv.height = o.height; cv.getContext('2d').drawImage(o, 0, 0); };
-  cv.style.width = w + 'px'; cv.style.height = h + 'px'; paint(false); $('#fsHint').textContent = '';
-  v.hidden = false; spring(0, 1, t => { v.style.opacity = Math.min(1, t * 1.3); cv.style.transform = `scale(${.92 + .08 * t})`; }, { k: 220, c: 24 });
-  let hold = 0, held = false;
-  v.onpointerdown = () => { held = false; hold = setTimeout(() => { held = true; paint(true); buzz(8); }, 160); };
-  v.onpointerup = () => { clearTimeout(hold); if (held) { paint(false); return; } spring(1, 0, t => { v.style.opacity = t; cv.style.transform = `scale(${.94 + .06 * t})`; }, { k: 260, c: 28, onDone: () => v.hidden = true }); };
+function openFs() { // celá obrazovka = prohlížeč se zoomem (dva prsty, dvojťuk), podržení = před úpravou, přejetí do strany = zavřít
+  const ar = S.P.crop.ar || S.cur.src.width / S.cur.src.height, W = 2000, H = Math.round(W / ar);
+  const render = byp => { const o0 = copyCanvas(utilRender(srcOf(S.cur, S.P), S.P, W, H, edOpts({ bypass: byp }))); if (S.P.lidar && S.cur.depth && !byp) return lidarRender(o0, S.cur.depth, W, H, S.P.lidar); return !byp && S.P.frame ? framed(o0, S.P, S.cur) : o0; };
+  viewImage(render(false), null, render(true));
 }
 
 /* Advanced */
@@ -3933,7 +3965,7 @@ function boot2(h) {
   // editor
   $$('#eTabs button').forEach(b => b.onclick = () => { if (S.adv) { S.adv = false; $('#advKnob').classList.remove('on'); } setTab(b.dataset.t); syncNav(); });
   $('#advSw').onclick = () => { toggleAdv(); syncNav(); };
-  $('#undoBtn').onclick = undo; $('#redoBtn').onclick = redo; $('#resetBtn').onclick = resetAll;
+  $('#undoBtn').onclick = undo; $('#redoBtn').onclick = redo; $('#resetBtn').onclick = resetSection;
   $('#expBtn').onclick = exportPhoto; lidarDrag($('#eWrap'), () => dateOverlay());
   $('#edCanvas').addEventListener('click', e => { const d = S.P.depth, D = S.cur && S.cur.depth; if (S.fxOpen !== 'depth' || !d || !D || d.mode === 'map' || d.mode === 'hal') return;
     const r = e.currentTarget.getBoundingClientRect(), cr = S.P.crop, u = clamp(.5 + ((e.clientX - r.left) / r.width - .5) / cr.s + cr.x, 0, 1), v = clamp(.5 + ((e.clientY - r.top) / r.height - .5) / cr.s - cr.y, 0, 1);
