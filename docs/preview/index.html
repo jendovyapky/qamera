@@ -396,6 +396,8 @@ a{color:var(--amber)}
 .ctx small{font-size:10.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ctx .cpy{display:flex;gap:6px}
 .ctx .cpy button{height:30px;padding:0 11px;border-radius:10px;border:1px solid var(--line);font-size:12px;color:#cfc7bc}
+.aspects .lvl{width:38px;padding:0!important;display:grid;place-items:center}
+.aspects .lvl .px{width:18px;height:18px}
 .resetbtn{flex:none;height:26px;padding:0 10px;border-radius:9px;border:1px solid var(--line);font-size:11px;color:#cfc7bc;display:flex;align-items:center;gap:5px}
 .resetbtn .px{width:14px;height:14px}
 .chips{display:flex;gap:4px;overflow-x:auto;padding:2px 14px 4px}
@@ -520,6 +522,7 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 .mcol{display:flex;flex-direction:column;gap:8px;min-width:0}
 .gitem{margin:0;border-radius:16px;overflow:hidden;position:relative;display:block;width:100%}
 .gitem img{display:block;width:100%}
+.gitem .dirty,.pst .dirty{position:absolute;top:9px;right:9px;width:8px;height:8px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 2px rgba(0,0,0,.45),0 0 10px rgba(255,196,61,.8)}
 .gitem span{position:absolute;left:10px;bottom:10px;line-height:1.2;font-family:var(--f-mono);font-size:9.5px;padding:3px 7px;border-radius:7px;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .gitem{transition:transform .25s cubic-bezier(.3,1.5,.5,1),opacity .25s}
 .gitem.press{transform:scale(.95)}
@@ -570,6 +573,23 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 #s-scan .bbar,#s-films .bbar{background:transparent;border-top:0} /* spodní lišta jen v Blob kartě má vlastní tmavé pozadí */
 #s-films .bbar .pbtn{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
 #s-films .bbar .px{width:18px;height:18px}
+.xmod{position:absolute;inset:0;z-index:95;display:grid;place-items:center;background:rgba(8,7,6,0);backdrop-filter:blur(0);transition:background .3s,backdrop-filter .3s}
+body > .xmod{position:fixed}
+.xmod.on{background:rgba(8,7,6,.72);backdrop-filter:blur(14px)}
+.xcard{width:min(320px,86%);border-radius:24px;background:#141210;border:1px solid #2a2622;padding:18px;display:flex;flex-direction:column;gap:14px;box-shadow:0 30px 80px rgba(0,0,0,.6);transform:translateY(16px) scale(.96);opacity:0;transition:transform .45s cubic-bezier(.2,1.3,.4,1),opacity .25s}
+.xmod.on .xcard{transform:none;opacity:1}
+.xh{display:flex;justify-content:space-between;align-items:baseline}
+.xh b{font:500 11px var(--f-mono);letter-spacing:.18em;text-transform:uppercase;color:#cfc7bc}
+.xh span{font:500 12px var(--f-mono);color:var(--mute);font-variant-numeric:tabular-nums}
+.xph{height:200px;border-radius:14px;background:#0b0a09;display:grid;place-items:center;overflow:hidden}
+.xph img{max-width:100%;max-height:100%;border-radius:6px;transition:opacity .25s;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.xbar{height:4px;border-radius:2px;background:#2a2622;overflow:hidden}
+.xbar i{display:block;height:100%;width:0;background:var(--amber);box-shadow:0 0 12px rgba(255,196,61,.7);transition:width .35s cubic-bezier(.3,.9,.4,1)}
+.xmod.done .xbar i{box-shadow:0 0 18px rgba(255,196,61,.9)}
+.xrow{display:flex;justify-content:space-between;gap:10px;font:12px var(--f-mono);color:var(--mute)}
+.xrow #xPct{color:var(--fg);font-variant-numeric:tabular-nums;min-width:4ch;text-align:right}
+.xbtns{display:flex;gap:8px;justify-content:flex-end}
+.xbtns button{height:40px;padding:0 16px;border-radius:12px;font-size:13px}
 .pbtn{padding:11px 18px;border-radius:14px;background:var(--lcd);color:var(--lcd-ink);font-weight:600;font-size:13px}
 .pbtn.ghost{background:transparent;color:var(--fg);box-shadow:inset 0 0 0 1.5px #3d3731;font-weight:500}
 
@@ -607,6 +627,14 @@ body.pcapp .nav{display:none}
 .pctop .file{min-width:0;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto}
 .pctop button{flex:none;white-space:nowrap}
 .pcstrip img{height:calc(100% - 4px)!important;max-height:90px}
+.pst{position:relative;flex:none;height:100%;display:flex;align-items:center;padding:0}
+.pcmenu{position:fixed;z-index:120;min-width:210px;padding:6px;border-radius:14px;background:rgba(24,22,20,.96);border:1px solid #2e2a26;box-shadow:0 20px 50px rgba(0,0,0,.55);backdrop-filter:blur(12px);display:flex;flex-direction:column;transform-origin:top left;animation:pcm .18s cubic-bezier(.2,1.3,.4,1)}
+@keyframes pcm{from{opacity:0;transform:scale(.94)}}
+.pcmenu button{display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:9px;font-size:13px;color:#e6dfd5;text-align:left}
+.pcmenu button:hover{background:#2a2622}
+.pcmenu button .px{width:16px;height:16px;color:#9b9288}
+.pcmenu button.danger{color:#ff7a6b}
+.pcmenu hr{border:0;border-top:1px solid #2e2a26;margin:4px 6px}
 .pcstrip .padd{height:calc(100% - 4px)!important;max-height:90px}
 @media (max-width:1350px){.pctop .kbd{display:none}.pctools{margin-left:auto}}
 @media (max-width:1100px){.pctop .brand{font-size:20px}.pctop{gap:10px}.pcghost{padding:0 9px}}
@@ -699,7 +727,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
 <body>
 <div class="shell" id="shell">
   <aside class="nav">
-    <div class="brand">QAMERA<small>Náhled 0.9</small></div>
+    <div class="brand">QAMERA<small>Náhled 0.10</small></div>
     <div>
       <div class="navlabel">Zobrazení</div>
       <div class="seg" id="viewSeg"><button class="on" data-v="m">MOBIL 390×844</button><button data-v="pc">PC 1440×900</button></div>
@@ -817,7 +845,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
             <div class="masonry" id="masonry"></div>
             <div class="gempty" id="gEmpty" hidden>Nic takového tu není. Zkus kód filmu (P400), barvu nebo „noc“.</div>
           </div>
-          <div class="selbar" id="selBar" hidden><span id="selN">0 vybráno</span><button class="pbtn ghost" id="selCancel" style="color:var(--fg)">Zrušit</button><button class="pbtn2" id="selGo">Vytvořit arch</button></div>
+          <div class="selbar" id="selBar" hidden><span id="selN">0 vybráno</span><button class="pbtn ghost" id="selCancel" style="color:var(--fg)">Zrušit</button><button class="pbtn ghost" id="selMore" style="color:var(--fg)" hidden>Další</button><button class="pbtn2" id="selGo">Vytvořit arch</button></div>
           <label class="search"><svg class="px" viewBox="0 0 24 24" data-raw="search" style="color:#b9b0a5"></svg><input id="gSearch" placeholder="Hledej film, datum, barvu…" autocomplete="off"><span class="dot"></span></label>
         </section>
 
@@ -898,7 +926,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
         <section class="scr pt" id="s-about" hidden>
           <div class="top"><button class="ib" data-back aria-label="Zpět" data-ic="back"></button><span class="title">O appce</span><span style="width:40px"></span></div>
           <div class="about">
-            <div class="hero"><div class="lens"><svg class="eyes" id="aboutEyes" viewBox="14 24 92 72"></svg></div><h2>QAMERA</h2><div class="ver">NÁHLED 0.9</div></div>
+            <div class="hero"><div class="lens"><svg class="eyes" id="aboutEyes" viewBox="14 24 92 72"></svg></div><h2>QAMERA</h2><div class="ver">NÁHLED 0.10</div></div>
             <div class="card"><h3>Poděkování</h3>
               <p><a href="https://github.com/thetechgeekko/Spektrafilm-android" target="_blank" rel="noopener">Spektrafilm for Android</a> by <b>Akshay Sharma</b></p>
               <p>Film modeling powered by <a href="https://github.com/andreavolpato/spektrafilm" target="_blank" rel="noopener">spektrafilm</a> (Andrea Volpato)</p>
@@ -930,7 +958,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
     <div class="pcwrap" id="pcwrap" hidden>
       <div class="pc">
         <header class="pctop"><div class="brand">QAMERA</div><span class="file" id="pcFile"></span>
-          <div class="pctools"><button class="pcghost sm" id="pcCopy" title="Kopírovat úpravy (Ctrl+Shift+C)">Kopírovat</button><button class="pcghost sm" id="pcPaste" title="Vložit úpravy (Ctrl+Shift+V) – na vybrané fotky v pásu (Ctrl+klik)">Vložit</button><button class="pcib" id="pcUndo" title="Zpět (Ctrl+Z)"></button><button class="pcib" id="pcRedo" title="Znovu (Ctrl+Shift+Z)"></button><button class="pcib" id="pcBefore" title="Před / po"></button></div>
+          <div class="pctools"><button class="pcib" id="pcUndo" title="Zpět (Ctrl+Z)"></button><button class="pcib" id="pcRedo" title="Znovu (Ctrl+Shift+Z)"></button><button class="pcib" id="pcBefore" title="Před / po"></button></div>
           <div class="kbd"><span><kbd>\</kbd>před/po</span><span><kbd>C</kbd>ořez</span><span><kbd>←→</kbd>fotky</span><span><kbd>Del</kbd>smazat</span></div>
           <button class="pcghost" id="pcMobile" title="Mobilní náhled">Mobil</button><button class="pcghost" id="pcImport">Importovat</button><button class="pcghost" id="pcCube">Export .cube</button><button class="pbtn2" id="pcExport">Exportovat</button></header>
         <aside class="pcleft"><div class="pcsec"><h4>Filmy <button class="pcadd" id="pcScanBtn" title="Nový film z fotky (Film scan)">+ Nový</button></h4><div id="pcFilms"></div></div>
@@ -1024,6 +1052,7 @@ const ICONS = {
   film:   ['....####....', '.##########.', '.#........#.', '.#.######.#.', '.#.#....#.#.', '.#.#....#.#.', '.#.######.#.', '.#........#.', '.##########.', '....####....'],
   camera: ['', '...###......', '.##########.', '.#........#.', '.#..####..#.', '.#.#....#.#.', '.#.#....#.#.', '.#..####..#.', '.#........#.', '.##########.'],
   sliders:['', '..#.........', '.###.######.', '..#.........', '', '.......#....', '.######.###.', '.......#....', '', '...#........', '.#####.####.', '...#........'],
+  level:  ['', '', '....####....', '...#....#...', '...#....#...', '############', '#..........#', '############', '', '..#......#..', '.###....###.', ''],
   crop:   ['..#.........', '..#.........', '########....', '..#.....#...', '..#.....#...', '..#.....#...', '..#.....#...', '..#######...', '........#...', '........####', '........#...'],
   magic:  ['.......#....', '......###...', '.......#....', '..#.........', '.###....#...', '..#....#....', '......#.....', '.....#......', '....#.......', '...#........', '..#.........'],
   share:  ['.....##.....', '....####....', '...#.##.#...', '.....##.....', '.....##.....', '.....##.....', '.##..##..##.', '.#........#.', '.#........#.', '.##########.'],
@@ -1313,7 +1342,8 @@ void main(){
   float ar0 = uRes.x/uRes.y; vec2 cells = vec2(uCells*ar0, uCells);
   vec2 bUv = uStyle > .5 ? (floor(vUv*cells)+.5)/cells : vUv; // dither / pixel art: vzorkuje se po buňkách
   vec2 q = bUv - .5; float cs = cos(uRot), sn = sin(uRot);
-  vec2 uv = mat2(cs,-sn,sn,cs) * (q * uCover / uZoom) + .5 + uOff;
+  vec2 ts0 = vec2(textureSize(uTex,0)); float sar = ts0.x/ts0.y; vec2 v0 = q * uCover / uZoom; v0.x *= sar; v0 = mat2(cs,-sn,sn,cs) * v0; v0.x /= sar; // otočení bez zkosení (v poměru stran fotky)
+  vec2 uv = v0 + .5 + uOff;
   float dep = 0.; // hloubka: 1 = blízko, 0 = daleko (Depth Anything V2)
   if (uDOn > .5) { dep = texture(uDepth, uv).r; if (uPar.x != 0. || uPar.y != 0.) { uv -= uPar * (dep - uFocus) * .045; dep = texture(uDepth, uv).r; } }
   vec3 col = texture(uTex, uv).rgb;
@@ -2107,7 +2137,7 @@ function keep(ph) { ph.saved = true; dbPut(ph); return ph; }
 const WORK = 2048; // pracovní rozlišení v paměti – plné 12 Mpx fotky by iPhone neudržel
 function shrink(c, m = WORK) { const k = m / Math.max(c.width, c.height); if (k >= 1) return c; const o = mk(Math.round(c.width * k), Math.round(c.height * k)); o.getContext('2d').drawImage(c, 0, 0, o.width, o.height); return o; }
 async function dbPut(ph) { if (!ph || !ph.saved) return; try { if (!ph.blob) ph.blob = await new Promise(r => ph.src.toBlob(r, 'image/jpeg', .93)); if (Math.max(ph.src.width, ph.src.height) > WORK) { ph.src = shrink(ph.src); ph._dxKey = null; } const db = await idb();
-  db.transaction('photos', 'readwrite').objectStore('photos').put({ id: ph.id, kind: ph.kind, tags: ph.tags, date: +ph.date, P: ph.P, blob: ph.blob, depth: ph.depthBlob || null }); } catch {} }
+  db.transaction('photos', 'readwrite').objectStore('photos').put({ id: ph.id, kind: ph.kind, tags: ph.tags, date: +ph.date, P: ph.P, blob: ph.blob, depth: ph.depthBlob || null, dirty: !!ph.dirty }); } catch {} }
 async function dbDel(id) { try { const db = await idb(); db.transaction('photos', 'readwrite').objectStore('photos').delete(id); } catch {} }
 async function dbLoad() {
   try { const db = await idb(), all = await new Promise((res, rej) => { const r = db.transaction('photos').objectStore('photos').getAll(); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
@@ -2115,7 +2145,7 @@ async function dbLoad() {
     for (const it of all) { const bmp = await createImageBitmap(it.blob), k = Math.min(1, WORK / Math.max(bmp.width, bmp.height)), c = mk(Math.round(bmp.width * k), Math.round(bmp.height * k)); c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height); bmp.close && bmp.close();
       if (it.roll) { const sh = { id: it.id, src: c, P: Object.assign(DEF(), it.P), date: new Date(it.date), roll: it.roll, blob: it.blob }; // snímek z jednorázovky / zamčené role
         if (it.roll === 'active' && S.dispo) S.dispo.shots.push(sh); else { const ro = ROLLS.find(r => r.id === it.roll); if (ro) ro.shots.push(sh); } continue; }
-      const ph = addPhoto(c, Object.assign(DEF(), it.P), it.kind, it.tags, false, it.id); ph.date = new Date(it.date); ph.saved = true; ph.blob = it.blob; if (it.kind === 'arch') ph.film = 'ARCH';
+      const ph = addPhoto(c, Object.assign(DEF(), it.P), it.kind, it.tags, false, it.id); ph.date = new Date(it.date); ph.saved = true; ph.blob = it.blob; ph.dirty = !!it.dirty; if (it.kind === 'arch') ph.film = 'ARCH';
       if (it.depth) { const db2 = await createImageBitmap(it.depth), dc = mk(db2.width, db2.height); dc.getContext('2d').drawImage(db2, 0, 0); ph.depth = dc; ph.depthBlob = it.depth; if (ph.P.depth) rethumb(ph); } }
     if (S.dispo) updDispo();
     if (all.length) { $('#galThumb').src = S.photos[0].thumb; if (S.screen === 'gallery') renderGallery(); }
@@ -2153,7 +2183,7 @@ function renderGallery() {
 function filterGallery() {
   const q = $('#gSearch').value.trim().toLowerCase();
   const list = S.photos.filter(p => !S.gFilm || p.film === S.gFilm).filter(p => !q || p.film.toLowerCase().includes(q) || p.tags.some(t => t.includes(q)) || p.date.toLocaleDateString('cs-CZ').includes(q));
-  const cols = [[], []], hg = [0, 0], item = p => `<button class="gitem ${p.fresh ? 'new' : ''} ${S.sel && S.sel.has(p.id) ? 'sel' : ''}" data-id="${p.id}"><img src="${p.thumb}" alt="" style="aspect-ratio:${phAr(p).toFixed(4)}"><span>${p.film}</span></button>`;
+  const cols = [[], []], hg = [0, 0], item = p => `<button class="gitem ${p.fresh ? 'new' : ''} ${S.sel && S.sel.has(p.id) ? 'sel' : ''}" data-id="${p.id}"><img src="${p.thumb}" alt="" style="aspect-ratio:${phAr(p).toFixed(4)}"><span>${p.film}</span>${p.dirty ? '<i class="dirty" title="Upravená, ještě neexportovaná"></i>' : ''}</button>`;
   list.forEach(p => { const i = hg[0] <= hg[1] ? 0 : 1; cols[i].push(p); hg[i] += 1 / phAr(p) + .04; }); // vždy do kratšího sloupce, horní hrany sedí
   $('#masonry').innerHTML = cols.map(c => `<div class="mcol">${c.map(item).join('')}</div>`).join('');
   list.forEach(p => p.fresh = false);
@@ -2176,16 +2206,21 @@ function openActs(html, bind) { const a = $('#acts'); a.style.maxHeight = Math.r
 function closeActs() { $('#scrim').classList.remove('on'); if ($('#actSheet')._open) sheet($('#actSheet'), false); }
 const actBtn = (k, ic, l, cls = '') => `<button data-a="${k}" class="${cls}">${iconSVG(ic)}${l}</button>`;
 function photoActs(ph, el) {
-  openActs(`<h4><img src="${ph.thumb}" alt="">${ph.film} · ${ph.date.toLocaleDateString('cs-CZ')}</h4>${actBtn('edit', 'sliders', 'Upravit')}${actBtn('blob', 'blob', 'Blob karta')}${actBtn('dx', 'double', 'Double s jinou fotkou')}${actBtn('copy', 'recipe', 'Kopírovat úpravy')}${CLIP ? actBtn('paste', 'sliders', 'Vložit úpravy') : ''}${actBtn('del', 'trash', 'Smazat', 'danger')}`, root => {
+  openActs(`<h4><img src="${ph.thumb}" alt="">${ph.film} · ${ph.date.toLocaleDateString('cs-CZ')}</h4>${actBtn('edit', 'sliders', 'Upravit')}${actBtn('blob', 'blob', 'Blob karta')}${actBtn('dx', 'double', 'Double s jinou fotkou')}${actBtn('pick', 'gallery', 'Vybrat víc fotek')}${actBtn('exp', 'share', 'Export')}${actBtn('copy', 'recipe', 'Kopírovat úpravy')}${CLIP ? actBtn('paste', 'sliders', 'Vložit úpravy') : ''}${actBtn('del', 'trash', 'Smazat', 'danger')}`, root => {
     $$('[data-a]', root).forEach(b => b.onclick = () => { closeActs(); const a = b.dataset.a;
       if (a === 'edit') openEditor(ph, el.querySelector('img'));
       if (a === 'blob') { S.blobFrom = ph; go('blob'); }
       if (a === 'dx') { openEditor(ph, el.querySelector('img')); setTimeout(() => { setTab('fx', true); openFx('double'); }, 450); }
+      if (a === 'pick') { startSelect('pick'); S.sel.add(ph.id); updSel(); filterGallery(); }
+      if (a === 'exp') exportMany([ph]);
       if (a === 'copy') copyLook(ph.P);
       if (a === 'paste' && pasteLook(ph)) { filterGallery(); toast('Úpravy vložené'); }
       if (a === 'del') deletePhoto(ph, el); });
   });
 }
+function deleteMany(list) { const keep2 = S.photos.slice(); list.forEach(ph => { const i = S.photos.indexOf(ph); if (i >= 0) S.photos.splice(i, 1); if (ph.saved) dbDel(ph.id); });
+  filterGallery(); if (S.photos[0]) $('#galThumb').src = S.photos[0].thumb; buzz(10);
+  toast(`Smazáno: ${list.length}`, { label: 'Vrátit', fn: () => { S.photos.length = 0; S.photos.push(...keep2); list.forEach(dbPut); filterGallery(); if (S.view === 'pc') openPc(); } }); }
 function deletePhoto(ph, el) {
   const i = S.photos.indexOf(ph); if (i < 0) return; el && el.classList.add('gone'); buzz(10);
   setTimeout(() => { S.photos.splice(i, 1); filterGallery(); if (S.photos[0]) $('#galThumb').src = S.photos[0].thumb; if (ph.saved) dbDel(ph.id); }, 230);
@@ -2205,7 +2240,7 @@ function archActs() {
       if (b.dataset.a === 'today') { const list = S.photos.filter(p => p.date >= m); list.length ? showArch(list.slice(0, 36), 'DNEŠEK', list[0].film) : toast('Dnes zatím žádné fotky'); }
       else startSelect(); }); });
 }
-function startSelect() { S.sel = new Set(); $('#s-gallery').classList.add('selecting'); $('#selBar').hidden = false; $('.search').hidden = true; updSel(); filterGallery(); toast('Ťukáním vyber fotky na arch'); }
+function startSelect(mode = 'arch') { S.sel = new Set(); S.selMode = mode; $('#s-gallery').classList.add('selecting'); $('#selBar').hidden = false; $('.search').hidden = true; $('#selMore').hidden = mode !== 'pick'; $('#selGo').textContent = mode === 'pick' ? 'Export' : 'Vytvořit arch'; updSel(); filterGallery(); if (mode === 'arch') toast('Ťukáním vyber fotky na arch'); }
 function endSelect() { S.sel = null; $('#s-gallery').classList.remove('selecting'); $('#selBar').hidden = true; $('.search').hidden = false; filterGallery(); }
 function updSel() { const n = S.sel ? S.sel.size : 0; $('#selN').textContent = n === 1 ? '1 fotka' : n > 1 && n < 5 ? `${n} fotky` : `${n} fotek`; $('#selGo').disabled = !n; }
 async function importFiles(files) {
@@ -2443,9 +2478,10 @@ async function exportCanvas(c, name) {
   try { if (isMobile() && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Qamera' }); return toast('Hotovo'); } } catch (e) { if (e && e.name === 'AbortError') return; }
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); toast('Fotka stažená');
 }
-async function renderFull(ph, P) {
-  let src = srcOf(ph, P);
+async function renderFull(ph, P, st = () => {}) {
+  let src = srcOf(ph, P); st(0, 'Načítám originál');
   if (src === ph.src && ph.blob) { try { const bm = await createImageBitmap(ph.blob), k = Math.min(1, 4096 / Math.max(bm.width, bm.height)), c = mk(Math.round(bm.width * k), Math.round(bm.height * k)); c.getContext('2d').drawImage(bm, 0, 0, c.width, c.height); bm.close && bm.close(); src = c; } catch {} } // export z originálu
+  st(1, 'Vyvolávám film'); await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
   const ar = P.crop.ar || src.width / src.height, max = Math.min(util.e.gl.getParameter(util.e.gl.MAX_TEXTURE_SIZE), 4096);
   let w = Math.round(Math.min(src.width, max)), h = Math.round(w / ar); if (h > max) { h = max; w = Math.round(h * ar); }
   const cr = P.crop, o = utilRender(src, P, w, h, { zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180, transfer: P.tr ? transferFor() : null, seed: 7, depth: ph.depth });
@@ -2490,8 +2526,51 @@ function exportLook(kind, P0) {
 <!-- Základní posuvníky. Přesný vzhled filmu je v .cube (Lightroom: vlastní profil, Photoshop: Color Lookup). -->`;
   saveFile(base + '.xmp', xmp, 'application/rdf+xml');
 }
-async function exportPhoto() { if (!S.cur) return; toast('Připravuju fotku v plném rozlišení…'); await new Promise(r => setTimeout(r, 50)); const c = await renderFull(S.cur, S.P); exportCanvas(c, `qamera-${S.P.film}-${Date.now()}.jpg`); }
-function commit() { S.hist.push(JSON.stringify(S.cur._last || S.cur.P)); if (S.hist.length > 60) S.hist.shift(); S.fut = []; S.cur._last = JSON.parse(JSON.stringify(S.P)); S.cur.P = JSON.parse(JSON.stringify(S.P)); rethumb(S.cur); dbPut(S.cur); }
+async function exportPhoto() { if (!S.cur) return; exportMany([S.cur]); }
+/* export jedné i víc fotek: okno se skutečným postupem (načtení originálu → vyvolání filmu → uložení JPEG pro každou fotku),
+   na telefonu pak jedno klepnutí „Uložit“ (sdílení potřebuje čerstvé ťuknutí), na PC rovnou stažení (víc fotek = ZIP) */
+async function exportMany(list) {
+  list = list.filter(Boolean); if (!list.length) return;
+  const host = document.body.classList.contains('pcapp') && !document.body.classList.contains('pcphone') ? document.body : $('#phone'), N = list.length;
+  const el = document.createElement('div'); el.className = 'xmod';
+  el.innerHTML = `<div class="xcard"><div class="xh"><b>Export</b><span id="xN">1 / ${N}</span></div><div class="xph"><img id="xImg" alt=""></div>
+    <div class="xbar"><i id="xBar"></i></div><div class="xrow"><span id="xSt">Připravuju…</span><span id="xPct">0 %</span></div>
+    <div class="xbtns"><button class="pbtn ghost" id="xCancel">Zrušit</button><button class="pbtn" id="xGo" hidden>Uložit</button></div></div>`;
+  host.appendChild(el); requestAnimationFrame(() => el.classList.add('on'));
+  let cancel = false, shown = 0; const files = [], close = () => { el.classList.remove('on'); setTimeout(() => el.remove(), 300); };
+  $('#xCancel', el).onclick = () => { cancel = true; close(); };
+  const setP = (v, txt) => { const pc = Math.round(v * 100); $('#xBar', el).style.width = pc + '%'; $('#xPct', el).textContent = pc + ' %'; if (txt) $('#xSt', el).textContent = txt; };
+  for (let i = 0; i < N && !cancel; i++) { const ph = list[i], P = ph === S.cur ? S.P : ph.P;
+    $('#xN', el).textContent = `${i + 1} / ${N}`; if (shown !== ph.id) { $('#xImg', el).src = ph.thumb; shown = ph.id; }
+    await new Promise(r => setTimeout(r, 30));
+    const c = await renderFull(ph, P, (k, t) => setP((i + k / 3) / N, t)); if (cancel) break;
+    setP((i + 2 / 3) / N, 'Ukládám JPEG'); await new Promise(r => setTimeout(r, 0));
+    const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .95)), u8 = new Uint8Array(await blob.arrayBuffer()); files.push(Object.assign(new File([blob], `qamera-${(P.film || 'foto').replace(/[^\w-]/g, '')}-${i + 1}-${Date.now()}.jpg`, { type: 'image/jpeg' }), { _u8: u8 }));
+    ph.dirty = false; dbPut(ph); setP((i + 1) / N); }
+  if (cancel) return;
+  if (S.screen === 'gallery') filterGallery(); if (S.view === 'pc') openPc();
+  const mb = files.reduce((a, f) => a + f.size, 0) / 1048576;
+  $('#xSt', el).textContent = `Hotovo · ${N === 1 ? '1 fotka' : N < 5 ? N + ' fotky' : N + ' fotek'} · ${mb.toFixed(1).replace('.', ',')} MB`; el.classList.add('done'); buzz(12);
+  const go = $('#xGo', el), canShare = isMobile() && navigator.canShare && navigator.canShare({ files });
+  $('#xCancel', el).textContent = 'Zavřít'; $('#xCancel', el).onclick = close;
+  if (canShare) { go.hidden = false; go.textContent = N === 1 ? 'Uložit fotku' : `Uložit ${N} ${N < 5 ? 'fotky' : 'fotek'}`; go.onclick = async () => { try { await navigator.share({ files }); close(); } catch (e) { if (e && e.name !== 'AbortError') toast('Sdílení se nepovedlo'); } }; }
+  else { const blob = N === 1 ? files[0] : zipStore(files), name = N === 1 ? files[0].name : `qamera-export-${Date.now()}.zip`;
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+    go.hidden = false; go.textContent = 'Stáhnout znovu'; go.onclick = () => { const b = document.createElement('a'); b.href = URL.createObjectURL(blob); b.download = name; b.click(); }; }
+}
+/* ZIP bez komprese (JPEG už komprimovaný je) – víc fotek jedním stažením */
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function zipStore(files) {
+  const enc = new TextEncoder(), parts = [], cen = []; let off = 0;
+  const datas = files.map(f => f._u8), u16 = v => [v & 255, v >> 8 & 255], u32 = v => [v & 255, v >> 8 & 255, v >> 16 & 255, v >>> 24 & 255];
+  files.forEach((f, i) => { const d = datas[i], nm = enc.encode(f.name); let c = 0xFFFFFFFF; for (let k = 0; k < d.length; k++) c = CRC[(c ^ d[k]) & 255] ^ (c >>> 8); c = (c ^ 0xFFFFFFFF) >>> 0;
+    const lh = new Uint8Array([0x50, 0x4b, 3, 4, ...u16(20), ...u16(0x800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(c), ...u32(d.length), ...u32(d.length), ...u16(nm.length), ...u16(0)]);
+    parts.push(lh, nm, d); cen.push(new Uint8Array([0x50, 0x4b, 1, 2, ...u16(20), ...u16(20), ...u16(0x800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(c), ...u32(d.length), ...u32(d.length), ...u16(nm.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(off)]), nm);
+    off += lh.length + nm.length + d.length; });
+  const cs = cen.reduce((a, b) => a + b.length, 0);
+  return new Blob([...parts, ...cen, new Uint8Array([0x50, 0x4b, 5, 6, 0, 0, 0, 0, ...u16(files.length), ...u16(files.length), ...u32(cs), ...u32(off), 0, 0])], { type: 'application/zip' });
+}
+function commit() { if (S.cur) S.cur.dirty = true; S.hist.push(JSON.stringify(S.cur._last || S.cur.P)); if (S.hist.length > 60) S.hist.shift(); S.fut = []; S.cur._last = JSON.parse(JSON.stringify(S.P)); S.cur.P = JSON.parse(JSON.stringify(S.P)); rethumb(S.cur); dbPut(S.cur); }
 function undo() { if (!S.hist.length) return toast('Není co vracet'); S.fut.push(JSON.stringify(S.P)); S.P = JSON.parse(S.hist.pop()); syncCur(); }
 function redo() { if (!S.fut.length) return; S.hist.push(JSON.stringify(S.P)); S.P = JSON.parse(S.fut.pop()); syncCur(); }
 function syncCur() { S.cur.P = JSON.parse(JSON.stringify(S.P)); S.cur._last = JSON.parse(JSON.stringify(S.P)); rethumb(S.cur); setTab(S.tab, true); layoutEditor(); renderEd(true); if (S.view === 'pc') buildPcRight(); }
@@ -2562,9 +2641,11 @@ function setTab(t, quiet) {
   } else if (t === 'crop') {
     const ars = [['ORIG', 0], ['1:1', 1], ['4:5', .8], ['3:2', 1.5], ['16:9', 16 / 9], ['9:16', 9 / 16]];
     p.innerHTML = `<div style="height:16px"></div><div class="ruler" id="rotR"></div><div class="aspects" id="aspRow">${ars.map(([l, v]) => `<button data-a="${v}" class="${S.P.crop.ar === v ? 'on' : ''}">${l}</button>`).join('')}<button id="cropReset">RESET</button></div>`;
+    p.querySelector('.aspects').insertAdjacentHTML('afterbegin', `<button id="cropLevel" class="lvl" aria-label="Narovnat horizont" title="Narovnat horizont">${iconSVG('level')}</button>`);
     makeRuler($('#rotR'), { min: -45, max: 45, step: .5, value: S.P.crop.rot, label: 'Narovnání', fmt: v => sgn(v) + Math.abs(v).toFixed(1).replace('.', ',') + '°', onInput: v => { S.P.crop.rot = v; fitCrop(); renderEd(); }, onEnd: commit });
     $$('.aspects [data-a]').forEach(b => b.onclick = () => { $$('.aspects [data-a]').forEach(x => x.classList.toggle('on', x === b)); const from = S.P.crop.ar || S.cur.src.width / S.cur.src.height, to = +b.dataset.a || S.cur.src.width / S.cur.src.height;
       spring(0, 1, t => { S.P.crop.ar = lerp(from, to, t); layoutEditor(); }, { k: 200, c: 24, onDone: () => { S.P.crop.ar = +b.dataset.a; fitCrop(); layoutEditor(); commit(); } }); });
+    $('#cropLevel').onclick = () => autoLevel(() => { renderEd(); placeCropBox(); }, () => setTab('crop', true));
     $('#cropReset').onclick = () => { S.P.crop = { ar: 0, s: 1, x: 0, y: 0, rot: 0 }; setTab('crop', true); layoutEditor(); commit(); };
     hscroll($('#aspRow')); requestAnimationFrame(placeCropBox);
   } else if (t === 'fx' && S.fxOpen) { renderFxPanel(p);
@@ -2735,7 +2816,27 @@ function placeCropBox() {
 }
 /* výřez v souřadnicích fotky: u poměru stran jiného než originál zbývá místo na posun (např. 1:1 z fotky na výšku → nahoru/dolů) */
 function cropCover(P = S.P, ph = S.cur) { const sAR = ph.src.width / ph.src.height, dAR = P.crop.ar || sAR; return dAR > sAR ? [1, sAR / dAR] : [dAR / sAR, 1]; }
-function fitCrop() { const c = S.P.crop, rot = Math.abs(c.rot) * Math.PI / 180; const need = Math.cos(rot) + Math.sin(rot) * 1.4; c.s = Math.max(c.s, need); const cv = cropCover();
+/* automatické narovnání: pro každý sklon −15…15° se síla vodorovných hran sečte do řádků (a svislých do sloupců) natočených o ten sklon;
+   kde jsou profily nejostřejší, tam jsou hrany rovnoběžné → to je sklon fotky (odolné vůči schodovitým hranám) */
+function detectTilt(src) {
+  const W = 360, H = Math.round(W / (src.width / src.height)), c = mk(W, H), g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(src, 0, 0, W, H);
+  const d = g.getImageData(0, 0, W, H).data, L = new Float32Array(W * H); for (let i = 0; i < W * H; i++) L[i] = d[i * 4] * .3 + d[i * 4 + 1] * .59 + d[i * 4 + 2] * .11;
+  const E = []; let mx = 0;
+  for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) { const i = y * W + x;
+    const gx = L[i - W + 1] + 2 * L[i + 1] + L[i + W + 1] - L[i - W - 1] - 2 * L[i - 1] - L[i + W - 1], gy = L[i + W - 1] + 2 * L[i + W] + L[i + W + 1] - L[i - W - 1] - 2 * L[i - W] - L[i - W + 1];
+    const m = Math.hypot(gx, gy); if (m > 40) { E.push(x - W / 2, y - H / 2, Math.abs(gx), Math.abs(gy)); if (m > mx) mx = m; } }
+  if (E.length < 400) return null;
+  const D = Math.ceil(Math.hypot(W, H)) + 4, hy = new Float32Array(D), hx = new Float32Array(D); let best = 0, bs = -1, s0 = 0;
+  for (let t = -60; t <= 60; t++) { const a = t / 4 * Math.PI / 180, sn = Math.sin(a), cs = Math.cos(a); hy.fill(0); hx.fill(0);
+    for (let k = 0; k < E.length; k += 4) { const x = E[k], y = E[k + 1]; hy[Math.round(y * cs - x * sn + D / 2)] += E[k + 3]; hx[Math.round(x * cs + y * sn + D / 2)] += E[k + 2]; }
+    let sc = 0; for (let k = 0; k < D; k++) sc += hy[k] * hy[k] + hx[k] * hx[k]; if (t === 0) s0 = sc; if (sc > bs) { bs = sc; best = t / 4; } }
+  return bs > s0 * 1.02 || best === 0 ? best : null;
+}
+function autoLevel(during, after) { const a = detectTilt(S.cur.src); if (a === null || Math.abs(a) < .15) { toast(a === null ? 'Horizont jsem nenašel' : 'Fotka už je rovně'); return; }
+  const c = S.P.crop, from = c.rot, to = clamp(from + LEVEL_SIGN * a, -45, 45); buzz(8);
+  spring(0, 1, t => { c.rot = lerp(from, to, t); fitCrop(); during && during(); }, { k: 170, c: 22, onDone: () => { commit(); after && after(); toast(`Narovnáno o ${Math.abs(to - from).toFixed(1).replace('.', ',')}°`); } }); }
+const LEVEL_SIGN = 1;
+function fitCrop() { const c = S.P.crop, rot = Math.abs(c.rot) * Math.PI / 180, dA = c.ar || S.cur.src.width / S.cur.src.height; const need = Math.cos(rot) + Math.sin(rot) * Math.max(dA, 1 / dA); c.s = Math.max(c.s, need); const cv = cropCover();
   const lx = Math.max(0, .5 - .5 * cv[0] * need / c.s), ly = Math.max(0, .5 - .5 * cv[1] * need / c.s); c.x = clamp(c.x, -lx, lx); c.y = clamp(c.y, -ly, ly); }
 function setBefore(on) { if (before === on) return; before = on; $('#beforeBadge').classList.toggle('show', on); renderEd(true); if (on) buzz(8); }
 function cropGestures() {
@@ -2956,7 +3057,7 @@ let CLIP = store.get('clip', null);
 const lookOf = P => { const r = JSON.parse(JSON.stringify(P)); delete r.crop; delete r.dx; return r; };
 function copyLook(P) { CLIP = lookOf(P); store.set('clip', CLIP); buzz(8); toast('Úpravy zkopírované, vlož je do jiné fotky'); }
 function pasteLook(ph) { if (!CLIP) { toast('Nejdřív zkopíruj úpravy z jiné fotky'); return false; }
-  ph.P = Object.assign(DEF(), JSON.parse(JSON.stringify(CLIP)), { crop: ph.P.crop, dx: ph.P.dx }); rethumb(ph); dbPut(ph); return true; }
+  ph.P = Object.assign(DEF(), JSON.parse(JSON.stringify(CLIP)), { crop: ph.P.crop, dx: ph.P.dx }); ph.dirty = true; rethumb(ph); dbPut(ph); return true; }
 const recipeOf = P => { const r = JSON.parse(JSON.stringify(P)); delete r.crop; delete r.dx; delete r.tr; delete r.frame; return r; };
 const loadScript = src => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
 function recipeActs() {
@@ -3208,7 +3309,8 @@ function openPc() {
   $('#pcFilms').innerHTML = filmsOrdered().map(f => `<button class="pcfilm ${f.code === S.P.film ? 'on' : ''}" data-c="${f.code}"><canvas width="88" height="88"></canvas><span><b>${f.code}</b><small>${f.sub}</small></span></button>`).join('');
   const P = JSON.parse(JSON.stringify(S.P)); P.crop = DEF().crop; P.gtype = null;
   $$('.pcfilm[data-c]').forEach(b => { P.film = b.dataset.c; b.querySelector('canvas').getContext('2d').drawImage(utilRender(srcOf(S.cur, S.P), P, 88, 88, {}), 0, 0);
-    b.onclick = () => { S.P.film = b.dataset.c; $$('.pcfilm[data-c]').forEach(x => x.classList.toggle('on', x === b)); commit(); renderPc(); buildPcRight(); }; });
+    b.onclick = () => { S.P.film = b.dataset.c; $$('.pcfilm[data-c]').forEach(x => x.classList.toggle('on', x === b)); commit(); renderPc(); buildPcRight(); };
+    b.onmouseenter = e => { PCH.film = b.dataset.c; if (e.shiftKey) pcPeek(true); }; b.onmouseleave = () => { PCH.film = null; pcPeek(false); }; });
   $('#pcPresets').innerHTML = `<div class="pcrsave"><input id="pcRName" placeholder="Název receptu" maxlength="24" autocomplete="off"><button class="pcghost" id="pcRSave">Uložit</button></div>` + RECIPES.map((r, i) => `<div class="pcrrow"><button class="pcfilm" data-r="${i}"><canvas width="88" height="88"></canvas><span><b>${r.name}</b><small>${r.P.film}</small></span></button><button class="pcib" data-rl="${i}" title="Kopírovat odkaz na recept">${iconSVG('share')}</button><button class="pcib" data-rd="${i}" title="Smazat recept">${iconSVG('trash')}</button></div>`).join('');
   $$('#pcPresets [data-r]').forEach(b => { const r = RECIPES[+b.dataset.r]; b.querySelector('canvas').getContext('2d').drawImage(utilRender(srcOf(S.cur, S.P), Object.assign(DEF(), r.P), 88, 88, {}), 0, 0);
     b.onclick = () => { S.P = Object.assign(DEF(), JSON.parse(JSON.stringify(r.P)), { crop: S.P.crop, dx: S.P.dx }); commit(); dxChanged(); buildPcRight(); toast(`Recept ${r.name} použitý`); }; });
@@ -3216,11 +3318,11 @@ function openPc() {
   $$('#pcPresets [data-rl]').forEach(b => b.onclick = async () => { const r = RECIPES[+b.dataset.rl], url = location.origin + location.pathname + '#recept=' + btoa(unescape(encodeURIComponent(JSON.stringify(r))));
     try { await navigator.clipboard.writeText(url); toast('Odkaz na recept zkopírovaný'); } catch { toast('Odkaz se nepodařilo zkopírovat'); } });
   $('#pcRSave').onclick = () => { const name = $('#pcRName').value.trim() || `Recept ${RECIPES.length + 1}`; RECIPES.unshift({ name, P: recipeOf(S.P) }); store.set('recipes', RECIPES); openPc(); toast(`Recept ${name} uložený`); };
-  $('#pcStrip').innerHTML = `<button class="padd" id="pcAddTile" title="Importovat fotky">+</button>` + S.photos.map(p => `<img src="${p.thumb}" data-id="${p.id}" class="${p === S.cur ? 'on' : ''}" style="width:${Math.round(90 * clamp(phAr(p), .5, 2.2))}px" alt="">`).join('');
+  $('#pcStrip').innerHTML = `<button class="padd" id="pcAddTile" title="Importovat fotky">+</button>` + S.photos.map(p => `<button class="pst" data-id="${p.id}"><img src="${p.thumb}" data-id="${p.id}" class="${p === S.cur ? 'on' : ''}" style="width:${Math.round(90 * clamp(phAr(p), .5, 2.2))}px" alt="">${p.dirty ? '<i class="dirty"></i>' : ''}</button>`).join('');
   $('#pcAddTile').onclick = () => $('#fileImport').click();
   const on = $('#pcStrip img.on'); if (on) requestAnimationFrame(() => on.scrollIntoView({ inline: 'nearest', block: 'nearest' }));
   S.pcSel = S.pcSel || new Set();
-  $$('#pcStrip img').forEach(im => { im.classList.toggle('sel', S.pcSel.has(+im.dataset.id)); im.onclick = e => { const id = +im.dataset.id;
+  $$('#pcStrip img').forEach(im => { im.classList.toggle('sel', S.pcSel.has(+im.dataset.id)); im.oncontextmenu = e => { e.preventDefault(); pcMenu(e, S.photos.find(p => p.id === +im.dataset.id)); }; im.onclick = e => { const id = +im.dataset.id;
     if (e.ctrlKey || e.metaKey || e.shiftKey) { S.pcSel.has(id) ? S.pcSel.delete(id) : S.pcSel.add(id); im.classList.toggle('sel', S.pcSel.has(id)); return; }
     S.pcSel.clear(); const ph = S.photos.find(p => p.id === id); if (BLOBPC) { S.cur = ph; S.P = JSON.parse(JSON.stringify(ph.P)); S.blobFrom = ph; openBlob(); openPc(); } else pcSelect(ph); }; });
   $('#pcFile').textContent = `${PHNAME[S.cur.kind] || 'fotka'} · ${S.cur.date.toLocaleDateString('cs-CZ')} · ${S.P.film}`;
@@ -3247,6 +3349,7 @@ function buildPcRight() {
     <div class="pcsec"><h4>Efekty</h4>${rangeRow('vig', 'Vignette', 0, 1, P)}${rangeRow('fade', 'Fade', 0, 1, P)}${rangeRow('sharp', 'Ostrost', 0, 1.5, P)}${rangeRow('vflash', 'Flash', 0, 1, P)}</div>
     <div class="pcsec"><h4>Ořez <span>C = upravit tažením</span></h4><div class="seg" id="pcAr">${[['ORIG', 0], ['1:1', 1], ['4:5', .8], ['3:2', 1.5], ['16:9', 16 / 9], ['9:16', 9 / 16]].map(([l, v]) => `<button data-a="${v}" class="${P.crop.ar === v ? 'on' : ''}">${l}</button>`).join('')}</div>
       <label class="srow"><span>Narovnání</span><input type="range" id="pcRot" min="-450" max="450" value="${Math.round(P.crop.rot * 10)}" data-def="0"><output>${P.crop.rot.toFixed(1)}°</output></label>
+      <div class="row2"><button class="pcghost" id="pcLevel">Narovnat horizont</button></div>
       <label class="srow"><span>Přiblížení</span><input type="range" id="pcZoom" min="100" max="400" value="${Math.round(P.crop.s * 100)}" data-def="100"><output>${Math.round(P.crop.s * 100)}</output></label></div>
     <div class="pcsec"><h4>Rám <span>Glow</span></h4><div class="row2"><button class="pcghost" id="pcFrame">${P.frame ? 'Vypnout rám' : 'Zapnout glow rám'}</button></div>${P.frame ? `
       <label class="srow"><span>Glow</span><input type="range" id="pcFGlow" min="0" max="300" value="${Math.round((P.fo && P.fo.glow != null ? P.fo.glow : 1) * 100)}" data-def="100"><output>${Math.round((P.fo && P.fo.glow != null ? P.fo.glow : 1) * 100)}</output></label>
@@ -3274,6 +3377,7 @@ function bindPcExtra() {
   $$('#pcAr button').forEach(b => b.onclick = () => { P.crop.ar = +b.dataset.a; fitCrop(); commit(); layoutPc(); buildPcRight(); });
   pcRange('#pcRot', v => { P.crop.rot = v / 10; fitCrop(); }, v => (v / 10).toFixed(1) + '°');
   pcRange('#pcZoom', v => { P.crop.s = v / 100; fitCrop(); });
+  $('#pcLevel').onclick = () => autoLevel(() => { renderPc(); }, () => buildPcRight());
   $('#pcFrame').onclick = () => { P.frame = P.frame ? null : 'glow'; P.fo = P.fo || { pad: .72, ar: 0, glow: 1 }; commit(); layoutPc(); buildPcRight(); };
   pcRange('#pcFGlow', v => P.fo.glow = v / 100); pcRange('#pcFPad', v => { P.fo.pad = 1 - v / 100; layoutPc(); });
   const dg = $('#pcDepthGo'); if (dg) dg.onclick = () => { P.depth = P.depth || { mode: 'bokeh', amt: .7, focus: .8 }; runDepth(); buildPcRight(); };
@@ -3312,6 +3416,26 @@ function pcBlob(open) { const card = $('#bCard'), sc = $('#s-blob .bscroll'), ba
 function pcPhone(fn) { document.body.classList.add('pcphone'); $('#pcPhoneBg').hidden = false; $('#device').hidden = false; fit(); fn(); }
 function pcPhoneClose() { document.body.classList.remove('pcphone'); $('#pcPhoneBg').hidden = true; $('#device').hidden = true; closeSheets(); closeActs && closeActs();
   if (S.cur) { S.P = JSON.parse(JSON.stringify(S.cur.P)); pcE.setSource(srcOf(S.cur, S.P)); } openPc(); }
+/* pravé tlačítko na fotce = stejná nabídka jako podržení v mobilu; s vybranými fotkami (Ctrl+klik) platí pro všechny */
+function pcMenu(e, ph) { $$('.pcmenu').forEach(m => m.remove()); const inSel = S.pcSel && S.pcSel.has(ph.id), list = inSel ? S.photos.filter(p => S.pcSel.has(p.id)) : [ph], n = list.length, nn = n > 1 ? ` (${n})` : '';
+  const m = document.createElement('div'); m.className = 'pcmenu';
+  const it = (k, ic, l, cls = '') => `<button data-a="${k}" class="${cls}">${iconSVG(ic)}${l}</button>`;
+  m.innerHTML = (n === 1 ? it('edit', 'sliders', 'Upravit') : '') + it('exp', 'share', 'Export' + nn) + '<hr>' + (n === 1 ? it('copy', 'recipe', 'Kopírovat úpravy') : '') + (CLIP ? it('paste', 'sliders', 'Vložit úpravy' + nn) : '')
+    + it('sel', 'gallery', inSel ? 'Zrušit výběr' : 'Vybrat') + (n === 1 ? it('blob', 'blob', 'Blob karta') : '') + '<hr>' + it('del', 'trash', 'Smazat' + nn, 'danger');
+  document.body.appendChild(m); const W = m.offsetWidth, H = m.offsetHeight; m.style.left = Math.min(e.clientX, innerWidth - W - 8) + 'px'; m.style.top = Math.min(e.clientY, innerHeight - H - 8) + 'px';
+  const off = ev => { if (!m.contains(ev.target)) { m.remove(); removeEventListener('pointerdown', off, true); } }; setTimeout(() => addEventListener('pointerdown', off, true));
+  $$('button', m).forEach(b => b.onclick = () => { m.remove(); removeEventListener('pointerdown', off, true); const a = b.dataset.a;
+    if (a === 'edit') pcSelect(ph);
+    if (a === 'exp') exportMany(list);
+    if (a === 'copy') copyLook(ph === S.cur ? S.P : ph.P);
+    if (a === 'paste') { list.forEach(pasteLook); S.pcSel.clear(); S.P = JSON.parse(JSON.stringify(S.cur.P)); S.cur._last = JSON.parse(JSON.stringify(S.P)); pcE.setSource(srcOf(S.cur, S.P)); openPc(); toast(n > 1 ? `Úpravy vložené do ${n} fotek` : 'Úpravy vložené'); }
+    if (a === 'sel') { inSel ? S.pcSel.delete(ph.id) : S.pcSel.add(ph.id); openPc(); }
+    if (a === 'blob') { pcSelect(ph); pcBlob(true); }
+    if (a === 'del') { S.pcSel && S.pcSel.clear(); deleteMany(list); if (!S.photos.includes(S.cur)) S.cur = S.photos[0] || null; if (S.cur) pcSelect(S.cur); } }); }
+/* Shift nad filmem v levém panelu = film se dočasně ukáže na fotce, pustíš a vrátí se */
+const PCH = { film: null, on: false };
+function pcPeek(on) { if (on && PCH.film && PCH.film !== S.P.film) { const keep = S.P.film; S.P.film = PCH.film; renderPc(); S.P.film = keep; PCH.on = true; const bd = $('#pcBadge'); bd.textContent = 'NÁHLED ' + PCH.film; bd.classList.add('show'); }
+  else if (!on && PCH.on) { PCH.on = false; renderPc(); const bd = $('#pcBadge'); bd.classList.remove('show'); bd.textContent = 'PŘED'; } }
 function pcPaste() { if (!CLIP) return toast('Nejdřív zkopíruj úpravy (Kopírovat)'); const ids = S.pcSel && S.pcSel.size ? [...S.pcSel] : [S.cur.id]; let n = 0;
   ids.forEach(id => { const ph = S.photos.find(p => p.id === id); if (ph && pasteLook(ph)) n++; }); S.pcSel && S.pcSel.clear();
   S.P = JSON.parse(JSON.stringify(S.cur.P)); S.cur._last = JSON.parse(JSON.stringify(S.P)); pcE.setSource(srcOf(S.cur, S.P)); openPc(); toast(n > 1 ? `Úpravy vložené do ${n} fotek` : 'Úpravy vložené'); }
@@ -3335,7 +3459,7 @@ function pcScanOpen() { ensureRef(); PCS.ref = refSrc; PCS.st = stats(PCS.ref); 
     addFilm(f); store.set('scans', FILMS.filter(x => x.scan)); buildCarousel(); S.P.film = f.code; commit(); m.hidden = true; openPc(); toast(`Film ${f.code} uložený`); };
 }
 function initPcApp() {
-  $('#pcExport').onclick = exportPhoto; $('#pcCube').onclick = () => exportLook('.cube');
+  $('#pcExport').onclick = () => exportMany(S.pcSel && S.pcSel.size ? S.photos.filter(p => S.pcSel.has(p.id)) : [S.cur]); $('#pcCube').onclick = () => exportLook('.cube');
   $('#pcImport').onclick = () => $('#fileImport').click();
   $('#pcUndo').innerHTML = iconSVG('undo'); $('#pcRedo').innerHTML = iconSVG('redo'); $('#pcBefore').innerHTML = iconSVG('eye');
   $('#pcUndo').onclick = () => { undo(); if (S.view === 'pc') openPc(); }; $('#pcRedo').onclick = () => { redo(); if (S.view === 'pc') openPc(); };
@@ -3343,7 +3467,7 @@ function initPcApp() {
   bf.onpointerup = bf.onpointerleave = () => { if (!pcBefore) return; pcBefore = false; bf.classList.remove('on'); $('#pcBadge').classList.remove('show'); renderPc(); };
   $('#pcMobile').onclick = () => { document.body.classList.remove('pcapp'); setView('m'); };
   $('#pcScanBtn').onclick = pcScanOpen; $('#pcPhoneClose').onclick = pcPhoneClose; $('#pbClose').onclick = () => pcBlob(false);
-  $('#pcCopy').onclick = () => copyLook(S.P); $('#pcPaste').onclick = pcPaste;
+
   // ořez tažením a kolečkem (C)
   const cen = $('#pcCenter'); let drag = null;
   cen.addEventListener('pointerdown', e => { if ($('#pcCrop').hidden || e.target.closest('.pcmodal')) return; cen.setPointerCapture(e.pointerId); drag = { x: e.clientX, y: e.clientY, cx: S.P.crop.x, cy: S.P.crop.y }; });
@@ -3458,7 +3582,12 @@ function boot2(h) {
   $('#dxSlot').onclick = $('#dxGal').onclick = dxPickGallery;
   $('#dxShoot').onclick = () => { S.dxReturn = S.cur.id; sheet($('#dxSheet'), false); go('camera'); toast('Vyfoť druhou expozici'); };
   $('#dxOff').onclick = () => { S.P.dx = null; sheet($('#dxSheet'), false); dxChanged(); commit(); setTab(S.tab, true); toast('Double vypnutý'); };
-  $('#selCancel').onclick = endSelect; $('#selGo').onclick = () => { const list = S.photos.filter(p => S.sel.has(p.id)); endSelect(); showArch(list, 'VÝBĚR', list[0].film); };
+  $('#selCancel').onclick = endSelect; $('#selGo').onclick = () => { const list = S.photos.filter(p => S.sel.has(p.id)); const m = S.selMode; endSelect(); if (m === 'pick') exportMany(list); else showArch(list, 'VÝBĚR', list[0].film); };
+  $('#selMore').onclick = () => { const list = S.photos.filter(p => S.sel.has(p.id)); if (!list.length) return toast('Nejdřív vyber fotky');
+    openActs(`<h4>${$('#selN').textContent}</h4>${actBtn('arch', 'sheet', 'Vytvořit arch')}${CLIP ? actBtn('paste', 'sliders', 'Vložit úpravy') : ''}${actBtn('del', 'trash', 'Smazat vybrané', 'danger')}`, root => {
+      $('[data-a=arch]', root).onclick = () => { closeActs(); endSelect(); showArch(list, 'VÝBĚR', list[0].film); };
+      const pa = $('[data-a=paste]', root); if (pa) pa.onclick = () => { closeActs(); list.forEach(pasteLook); endSelect(); toast(`Úpravy vložené do ${list.length} ${list.length === 1 ? 'fotky' : 'fotek'}`); };
+      $('[data-a=del]', root).onclick = () => { closeActs(); deleteMany(list); endSelect(); }; }); };
   $('#gAdd').onclick = galleryAdd; $('#scrim').onclick = closeActs; sheetDrag($('#actSheet'));
   $('#fileImport').onchange = async e => { const fs = [...e.target.files]; e.target.value = ''; await importFiles(fs); if (S.view === 'pc' && S.photos[0]) pcSelect(S.photos[0]); };
   $('#fmShoot').onchange = e => { fmFromFile(e.target.files[0]); e.target.value = ''; }; $('#fmFile').onchange = e => { fmFromFile(e.target.files[0]); e.target.value = ''; };
@@ -3555,6 +3684,7 @@ function boot2(h) {
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && S.view === 'pc' && e.key.toLowerCase() === 'v') { e.preventDefault(); pcPaste(); return; }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (!S.cur) return; e.shiftKey ? redo() : undo(); return; }
     if (S.view !== 'pc') return;
+    if (e.key === 'Shift' && PCH.film) { pcPeek(true); return; }
     if (e.key === '\\') { pcBefore = true; $('#pcBadge').classList.add('show'); renderPc(); }
     if (e.key.toLowerCase() === 'c') { $('#pcCrop').hidden = !$('#pcCrop').hidden; $('#pcCenter').classList.toggle('cropping', !$('#pcCrop').hidden); }
     if ((e.key === 'Delete' || e.key === 'Backspace') && $('#pcScan').hidden) { e.preventDefault(); pcDelete(); return; }
@@ -3564,7 +3694,7 @@ function boot2(h) {
     if (e.key === 'Escape') { $('#pcScan').hidden = true; $('#pcCrop').hidden = true; $('#pcCenter').classList.remove('cropping'); }
     if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { const i = S.photos.indexOf(S.cur) + (e.key === 'ArrowRight' ? 1 : -1); pcSelect(S.photos[clamp(i, 0, S.photos.length - 1)]); }
   });
-  addEventListener('keyup', e => { if (e.key === '\\' && pcBefore) { pcBefore = false; $('#pcBadge').classList.remove('show'); renderPc(); } });
+  addEventListener('keyup', e => { if (e.key === 'Shift') pcPeek(false); if (e.key === '\\' && pcBefore) { pcBefore = false; $('#pcBadge').classList.remove('show'); renderPc(); } });
   // zákaz zoomu stránky (iOS) – kromě hledáčku, ořezu a blob karty, které mají vlastní pinch
   document.addEventListener('gesturestart', e => e.preventDefault()); document.addEventListener('gesturechange', e => e.preventDefault());
   document.addEventListener('touchmove', e => { if (e.touches.length > 1 && !e.target.closest('.vf,.ephoto,.bcard')) e.preventDefault(); }, { passive: false });
