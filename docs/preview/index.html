@@ -394,6 +394,8 @@ a{color:var(--amber)}
 .gpill{flex:none;height:26px;padding:0 10px;border-radius:9px;background:var(--panel);border:1px solid transparent;font-family:var(--f-mono);font-size:10.5px;color:var(--mute);letter-spacing:.04em}
 .gpill.on{color:var(--amber);border-color:rgba(255,196,61,.4);background:rgba(255,196,61,.07)}
 .ctx small{font-size:10.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctx .cpy{display:flex;gap:6px}
+.ctx .cpy button{height:30px;padding:0 11px;border-radius:10px;border:1px solid var(--line);font-size:12px;color:#cfc7bc}
 .resetbtn{flex:none;height:26px;padding:0 10px;border-radius:9px;border:1px solid var(--line);font-size:11px;color:#cfc7bc;display:flex;align-items:center;gap:5px}
 .resetbtn .px{width:14px;height:14px}
 .chips{display:flex;gap:4px;overflow-x:auto;padding:2px 14px 4px}
@@ -610,6 +612,27 @@ body.pcapp .nav{display:none}
 @media (max-width:1100px){.pctop .brand{font-size:20px}.pctop{gap:10px}.pcghost{padding:0 9px}}
 @media (max-height:640px){.pc{grid-template-rows:46px minmax(0,1fr) 76px!important}}
 /* telefonní rozhraní v okně (Double, Blob karta, Recepty na PC) */
+.pctop{grid-row:1}.pcleft{grid-column:1;grid-row:2}.pccenter{grid-column:2;grid-row:2}.pcright{grid-column:3;grid-row:2}.pcstrip{grid-row:3}
+.pcblob{grid-column:2/4;grid-row:2/3;z-index:4;display:grid;grid-template-columns:minmax(0,1fr) clamp(300px,26vw,390px);min-height:0;background:#0B0C0E radial-gradient(circle,#26282D 1.2px,transparent 1.6px) 0 0/24px 24px}
+.pbc{display:grid;place-items:center;padding:28px;min-width:0;min-height:0}
+.pbc .bcard{width:auto!important;height:min(100%,780px);max-width:100%;max-height:100%}
+.pbr{display:flex;flex-direction:column;min-height:0;border-left:1px solid #1f1c19;background:rgba(13,12,11,.92)}
+.pbh{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid #1f1c19}
+.pbh b{font:500 11px var(--f-mono);letter-spacing:.16em;color:#cfc7bc;margin-right:auto}
+.pbs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:16px;padding:16px 0}
+.pbs .shapes,.pbs .bpresets{flex-wrap:wrap;overflow:visible;padding-left:16px;padding-right:16px}
+.pbb{display:flex;gap:8px;justify-content:center;padding:12px;border-top:1px solid #1f1c19}
+.pbb .pbtn{white-space:nowrap}
+.pcdx{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px}
+.pcdx button{flex:none;width:44px;height:54px;border-radius:8px;overflow:hidden;border:2px solid transparent;padding:0}
+.pcdx button.on{border-color:var(--amber)}
+.pcdx img{width:100%;height:100%;object-fit:cover;display:block}
+.pcsw{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 10px}
+.pcrsave{display:grid;grid-template-columns:1fr auto;gap:6px;margin:0 0 8px}
+.pcrsave input{height:34px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--fg);font:500 13px var(--f-mono);padding:0 10px;min-width:0}
+.pcrsave input:focus-visible{outline:0;border-color:var(--amber)}
+.pcrrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:2px}
+.pcstrip img.sel{outline:2px solid #7fb4ff;outline-offset:2px;opacity:1}
 #pcPhoneBg{position:fixed;inset:0;z-index:55;background:rgba(8,7,6,.78);backdrop-filter:blur(10px)}
 #pcPhoneBg button{position:fixed;top:18px;right:22px;height:40px;padding:0 16px;border-radius:12px;background:var(--lcd);color:var(--lcd-ink);font-weight:600}
 body.pcphone .device{z-index:60}
@@ -620,6 +643,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
 .pcib{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#cfc7bc}
 .pcib:hover,.pcghost:hover{background:#1c1a17}
 .pcib.on{color:var(--amber)}
+.pcghost.sm{height:30px;padding:0 10px;font-size:12px}
 .pcghost{height:34px;padding:0 12px;border-radius:10px;border:1px solid var(--line);font-size:12.5px;color:#d6cec3}
 .pctop .kbd{margin-left:auto}
 .pcadd{font:500 10.5px var(--f-mono);letter-spacing:.06em;color:var(--amber);padding:2px 6px;border-radius:6px}
@@ -675,7 +699,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
 <body>
 <div class="shell" id="shell">
   <aside class="nav">
-    <div class="brand">QAMERA<small>Náhled 0.8</small></div>
+    <div class="brand">QAMERA<small>Náhled 0.9</small></div>
     <div>
       <div class="navlabel">Zobrazení</div>
       <div class="seg" id="viewSeg"><button class="on" data-v="m">MOBIL 390×844</button><button data-v="pc">PC 1440×900</button></div>
@@ -874,7 +898,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
         <section class="scr pt" id="s-about" hidden>
           <div class="top"><button class="ib" data-back aria-label="Zpět" data-ic="back"></button><span class="title">O appce</span><span style="width:40px"></span></div>
           <div class="about">
-            <div class="hero"><div class="lens"><svg class="eyes" id="aboutEyes" viewBox="14 24 92 72"></svg></div><h2>QAMERA</h2><div class="ver">NÁHLED 0.8</div></div>
+            <div class="hero"><div class="lens"><svg class="eyes" id="aboutEyes" viewBox="14 24 92 72"></svg></div><h2>QAMERA</h2><div class="ver">NÁHLED 0.9</div></div>
             <div class="card"><h3>Poděkování</h3>
               <p><a href="https://github.com/thetechgeekko/Spektrafilm-android" target="_blank" rel="noopener">Spektrafilm for Android</a> by <b>Akshay Sharma</b></p>
               <p>Film modeling powered by <a href="https://github.com/andreavolpato/spektrafilm" target="_blank" rel="noopener">spektrafilm</a> (Andrea Volpato)</p>
@@ -906,11 +930,12 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
     <div class="pcwrap" id="pcwrap" hidden>
       <div class="pc">
         <header class="pctop"><div class="brand">QAMERA</div><span class="file" id="pcFile"></span>
-          <div class="pctools"><button class="pcib" id="pcUndo" title="Zpět (Ctrl+Z)"></button><button class="pcib" id="pcRedo" title="Znovu (Ctrl+Shift+Z)"></button><button class="pcib" id="pcBefore" title="Před / po"></button></div>
+          <div class="pctools"><button class="pcghost sm" id="pcCopy" title="Kopírovat úpravy (Ctrl+Shift+C)">Kopírovat</button><button class="pcghost sm" id="pcPaste" title="Vložit úpravy (Ctrl+Shift+V) – na vybrané fotky v pásu (Ctrl+klik)">Vložit</button><button class="pcib" id="pcUndo" title="Zpět (Ctrl+Z)"></button><button class="pcib" id="pcRedo" title="Znovu (Ctrl+Shift+Z)"></button><button class="pcib" id="pcBefore" title="Před / po"></button></div>
           <div class="kbd"><span><kbd>\</kbd>před/po</span><span><kbd>C</kbd>ořez</span><span><kbd>←→</kbd>fotky</span><span><kbd>Del</kbd>smazat</span></div>
           <button class="pcghost" id="pcMobile" title="Mobilní náhled">Mobil</button><button class="pcghost" id="pcImport">Importovat</button><button class="pcghost" id="pcCube">Export .cube</button><button class="pbtn2" id="pcExport">Exportovat</button></header>
         <aside class="pcleft"><div class="pcsec"><h4>Filmy <button class="pcadd" id="pcScanBtn" title="Nový film z fotky (Film scan)">+ Nový</button></h4><div id="pcFilms"></div></div>
           <div class="pcsec"><h4>Recepty</h4><div id="pcPresets"></div></div></aside>
+        <section class="pcblob" id="pcBlobV" hidden><div class="pbc" id="pbCard"></div><div class="pbr"><div class="pbh" id="pbHead"><b>BLOB KARTA</b><button class="pcghost" id="pbClose">Zpět do editoru</button></div><div class="pbs" id="pbScroll"></div><div class="pbb" id="pbBar"></div></div></section>
         <section class="pccenter" id="pcCenter"><div class="ecanvas" id="pcWrap"><canvas id="pcGlow"></canvas><canvas id="pcCanvas"></canvas></div>
           <div class="croplayer" id="pcCrop" hidden><div class="cropbox" id="pcCropBox"></div></div>
           <div class="badge" id="pcBadge">PŘED</div>
@@ -2151,11 +2176,13 @@ function openActs(html, bind) { const a = $('#acts'); a.style.maxHeight = Math.r
 function closeActs() { $('#scrim').classList.remove('on'); if ($('#actSheet')._open) sheet($('#actSheet'), false); }
 const actBtn = (k, ic, l, cls = '') => `<button data-a="${k}" class="${cls}">${iconSVG(ic)}${l}</button>`;
 function photoActs(ph, el) {
-  openActs(`<h4><img src="${ph.thumb}" alt="">${ph.film} · ${ph.date.toLocaleDateString('cs-CZ')}</h4>${actBtn('edit', 'sliders', 'Upravit')}${actBtn('blob', 'blob', 'Blob karta')}${actBtn('dx', 'double', 'Double s jinou fotkou')}${actBtn('del', 'trash', 'Smazat', 'danger')}`, root => {
+  openActs(`<h4><img src="${ph.thumb}" alt="">${ph.film} · ${ph.date.toLocaleDateString('cs-CZ')}</h4>${actBtn('edit', 'sliders', 'Upravit')}${actBtn('blob', 'blob', 'Blob karta')}${actBtn('dx', 'double', 'Double s jinou fotkou')}${actBtn('copy', 'recipe', 'Kopírovat úpravy')}${CLIP ? actBtn('paste', 'sliders', 'Vložit úpravy') : ''}${actBtn('del', 'trash', 'Smazat', 'danger')}`, root => {
     $$('[data-a]', root).forEach(b => b.onclick = () => { closeActs(); const a = b.dataset.a;
       if (a === 'edit') openEditor(ph, el.querySelector('img'));
       if (a === 'blob') { S.blobFrom = ph; go('blob'); }
       if (a === 'dx') { openEditor(ph, el.querySelector('img')); setTimeout(() => { setTab('fx', true); openFx('double'); }, 450); }
+      if (a === 'copy') copyLook(ph.P);
+      if (a === 'paste' && pasteLook(ph)) { filterGallery(); toast('Úpravy vložené'); }
       if (a === 'del') deletePhoto(ph, el); });
   });
 }
@@ -2526,11 +2553,12 @@ function setTab(t, quiet) {
     requestAnimationFrame(() => { const on = $('.fthumb.on'), s = $('#fStrip'); if (on && s) s.scrollLeft = on.offsetLeft - s.clientWidth / 2 + on.offsetWidth / 2; });
   } else if (t === 'adj') {
     const a = ADJ.find(x => x.k === S.adjKey) || ADJ[0], dv = x => x.film ? (FILM[S.P.film] || FILM.P400).gl : (x.def || 0), vv = x => S.P[x.k] ?? dv(x);
-    const ctx = a.k === 'grain' ? `<div class="gt hs" id="gtRow">${grainPills()}</div>` : `<span></span>`;
+    const ctx = a.k === 'grain' ? `<div class="gt hs" id="gtRow">${grainPills()}</div>` : `<span class="cpy"><button id="lookCopy">Kopírovat</button><button id="lookPaste">Vložit</button></span>`;
     p.innerHTML = `<div class="ctx">${ctx}<button class="resetbtn" id="resetAll">${iconSVG('reset')}Vše</button></div><div class="ruler" id="adjR"></div><div class="chips" id="chipRow">${ADJ.map(x => `<button class="chip ${x.k === S.adjKey ? 'on' : ''} ${Math.abs(vv(x) - dv(x)) > .001 ? 'mod' : ''}" data-k="${x.k}">${iconSVG(x.ic)}${x.l}</button>`).join('')}</div>`;
     makeRuler($('#adjR'), { min: a.min, max: a.max, step: a.step, value: vv(a), label: a.l, fmt: a.f, def: dv(a), onInput: v => { S.P[a.k] = v; renderEd(); $(`.chip[data-k="${a.k}"]`).classList.toggle('mod', Math.abs(v - dv(a)) > .001); }, onEnd: commit });
     $$('.chip', p).forEach(b => b.onclick = () => { const sl = $('#chipRow').scrollLeft; S.adjKey = b.dataset.k; setTab('adj', true); $('#chipRow').scrollLeft = sl; });
-    $('#resetAll').onclick = resetAll; hscroll($('#chipRow')); if ($('#gtRow')) { hscroll($('#gtRow')); bindGrainPills($('#gtRow')); }
+    $('#resetAll').onclick = resetAll;
+    const lc = $('#lookCopy'); if (lc) { lc.onclick = () => copyLook(S.P); $('#lookPaste').onclick = () => { if (!pasteLook(S.cur)) return; S.P = JSON.parse(JSON.stringify(S.cur.P)); S.cur._last = JSON.parse(JSON.stringify(S.P)); dxChanged(); setTab('adj', true); toast('Úpravy vložené'); }; } hscroll($('#chipRow')); if ($('#gtRow')) { hscroll($('#gtRow')); bindGrainPills($('#gtRow')); }
   } else if (t === 'crop') {
     const ars = [['ORIG', 0], ['1:1', 1], ['4:5', .8], ['3:2', 1.5], ['16:9', 16 / 9], ['9:16', 9 / 16]];
     p.innerHTML = `<div style="height:16px"></div><div class="ruler" id="rotR"></div><div class="aspects" id="aspRow">${ars.map(([l, v]) => `<button data-a="${v}" class="${S.P.crop.ar === v ? 'on' : ''}">${l}</button>`).join('')}<button id="cropReset">RESET</button></div>`;
@@ -2705,7 +2733,10 @@ function placeCropBox() {
   const wrap = $('#eWrap'), box = $('#ePhoto'), cb = $('#cropBox'); const wr = wrap.getBoundingClientRect(), br = box.getBoundingClientRect(), sc = br.width / box.offsetWidth || 1;
   Object.assign(cb.style, { left: (wr.left - br.left) / sc + 'px', top: (wr.top - br.top) / sc + 'px', width: wr.width / sc + 'px', height: wr.height / sc + 'px' });
 }
-function fitCrop() { const c = S.P.crop, rot = Math.abs(c.rot) * Math.PI / 180; const need = Math.cos(rot) + Math.sin(rot) * 1.4; c.s = Math.max(c.s, need); const lim = .5 - .5 / c.s; c.x = clamp(c.x, -lim, lim); c.y = clamp(c.y, -lim, lim); }
+/* výřez v souřadnicích fotky: u poměru stran jiného než originál zbývá místo na posun (např. 1:1 z fotky na výšku → nahoru/dolů) */
+function cropCover(P = S.P, ph = S.cur) { const sAR = ph.src.width / ph.src.height, dAR = P.crop.ar || sAR; return dAR > sAR ? [1, sAR / dAR] : [dAR / sAR, 1]; }
+function fitCrop() { const c = S.P.crop, rot = Math.abs(c.rot) * Math.PI / 180; const need = Math.cos(rot) + Math.sin(rot) * 1.4; c.s = Math.max(c.s, need); const cv = cropCover();
+  const lx = Math.max(0, .5 - .5 * cv[0] * need / c.s), ly = Math.max(0, .5 - .5 * cv[1] * need / c.s); c.x = clamp(c.x, -lx, lx); c.y = clamp(c.y, -ly, ly); }
 function setBefore(on) { if (before === on) return; before = on; $('#beforeBadge').classList.toggle('show', on); renderEd(true); if (on) buzz(8); }
 function cropGestures() {
   const el = $('#ePhoto'), pts = new Map(); let base = null, holdT = 0;
@@ -2720,7 +2751,7 @@ function cropGestures() {
     const arr = [...pts.values()], c = S.P.crop, w = $('#eWrap').clientWidth, h = $('#eWrap').clientHeight;
     const cx = (arr[0].x + (arr[1] || arr[0]).x) / 2, cy = (arr[0].y + (arr[1] || arr[0]).y) / 2;
     if (arr[1] && base.d) c.s = clamp(base.s * Math.hypot(arr[0].x - arr[1].x, arr[0].y - arr[1].y) / base.d, 1, 5);
-    c.x = base.x - (cx - base.cx) / w / c.s; c.y = base.y + (cy - base.cy) / h / c.s; fitCrop(); renderEd(); });
+    const cv = cropCover(); c.x = base.x - (cx - base.cx) / w * cv[0] / c.s; c.y = base.y + (cy - base.cy) / h * cv[1] / c.s; fitCrop(); renderEd(); });
   const end = e => { clearTimeout(holdT); setBefore(false);
     if (pts.has(e.pointerId)) { pts.delete(e.pointerId); if (pts.size) startBase(); else commit(); } };
   el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
@@ -2920,6 +2951,12 @@ function useDxOther(ph) { const cur = S.cur; S.dxReturn = null; $('#camBanner').
    Recepty: uložený vzhled (film + grain + úpravy), sdílení odkazem a QR
    ===================================================================== */
 let RECIPES = store.get('recipes', []);
+/* kopírovat / vložit úpravy mezi fotkami: všechno kromě ořezu a druhé fotky z Double */
+let CLIP = store.get('clip', null);
+const lookOf = P => { const r = JSON.parse(JSON.stringify(P)); delete r.crop; delete r.dx; return r; };
+function copyLook(P) { CLIP = lookOf(P); store.set('clip', CLIP); buzz(8); toast('Úpravy zkopírované, vlož je do jiné fotky'); }
+function pasteLook(ph) { if (!CLIP) { toast('Nejdřív zkopíruj úpravy z jiné fotky'); return false; }
+  ph.P = Object.assign(DEF(), JSON.parse(JSON.stringify(CLIP)), { crop: ph.P.crop, dx: ph.P.dx }); rethumb(ph); dbPut(ph); return true; }
 const recipeOf = P => { const r = JSON.parse(JSON.stringify(P)); delete r.crop; delete r.dx; delete r.tr; delete r.frame; return r; };
 const loadScript = src => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
 function recipeActs() {
@@ -2948,7 +2985,9 @@ async function shareRecipe(r) {
 /* tvary podle inspirace: jednotlivé (blob, rozlitý rám, hvězda, jiskra, kytka, známka, měkký rám)
    i rozházené vzory (hvězdičky, puntíky, kytky, jiskry, vlnovky); kostka generuje náhodné */
 const SHAPES = [{ k: 'splat', s: 3 }, { k: 'blob', n: 5, a: .2, s: 9 }, { k: 'star', s: 2 }, { k: 'sparkle', s: 4 }, { k: 'flower', s: 5 }, { k: 'stamp' }, { k: 'soft' },
-  { k: 'stars', s: 11 }, { k: 'dots', s: 12 }, { k: 'flowers', s: 13 }, { k: 'sparkles', s: 14 }, { k: 'waves', s: 15 }, { k: 'blob', n: 7, a: .28, s: 1 }, { k: 'blob', n: 3, a: .3, s: 12 }];
+  { k: 'stars', s: 11 }, { k: 'dots', s: 12 }, { k: 'flowers', s: 13 }, { k: 'sparkles', s: 14 }, { k: 'waves', s: 15 },
+  { k: 'shoot', s: 21 }, { k: 'chain', s: 22 }, { k: 'beacons', s: 23 }, { k: 'stars3', s: 24 }, { k: 'snake', s: 25 }, { k: 'daisygrid', s: 26 }, { k: 'halfdaisy', s: 27 }, { k: 'outlineflowers', s: 28 }, { k: 'daisyfield', s: 29 }, { k: 'loops', s: 30 },
+  { k: 'blob', n: 7, a: .28, s: 1 }, { k: 'blob', n: 3, a: .3, s: 12 }];
 const f2 = v => v.toFixed(2);
 function smoothClosed(pts, t = .18) { const N = pts.length; let d = `M${f2(pts[0][0])} ${f2(pts[0][1])}`;
   for (let i = 0; i < N; i++) { const p0 = pts[(i - 1 + N) % N], p1 = pts[i], p2 = pts[(i + 1) % N], p3 = pts[(i + 2) % N];
@@ -2969,6 +3008,16 @@ const sparklePath = (cx, cy, R, n, rot) => { let d = ''; for (let i = 0; i < n; 
   if (!i) d += `M${f2(cx + Math.cos(a) * R)} ${f2(cy + Math.sin(a) * R)}`; d += `Q${f2(cx + Math.cos(a2) * R * .16)} ${f2(cy + Math.sin(a2) * R * .16)} ${f2(cx + Math.cos(an) * R)} ${f2(cy + Math.sin(an) * R)}`; } return d + 'Z'; };
 const circ = (x, y, r) => `M${f2(x - r)} ${f2(y)}a${f2(r)} ${f2(r)} 0 1 0 ${f2(2 * r)} 0a${f2(r)} ${f2(r)} 0 1 0 ${f2(-2 * r)} 0`;
 const flowerPath = (cx, cy, R, rot) => { let d = ''; for (let i = 0; i < 5; i++) { const a = rot + i * Math.PI * 2 / 5; d += circ(cx + Math.cos(a) * R * .55, cy + Math.sin(a) * R * .55, R * .47); } return d + circ(cx, cy, R * .4); };
+/* květ jedním obrysem (okvětní lístky z polární funkce) – jde do něj vyříznout střed (evenodd) */
+const petalPath = (cx, cy, R, n, rot, sharp = .8, depth = .5, wob = 0) => { const pts = [], N = Math.max(56, n * 12);
+  for (let i = 0; i < N; i++) { const a = i / N * Math.PI * 2, k = ((1 - depth) + depth * Math.pow(Math.abs(Math.cos(n * (a - rot) / 2)), sharp)) * (1 + wob * Math.sin(a * 2 + rot * 3)); pts.push([cx + Math.cos(a) * R * k, cy + Math.sin(a) * R * k]); }
+  return smoothClosed(pts, .16); };
+/* čtyřcípá jiskra s různě dlouhými cípy (fat = jak baculatá je uprostřed) */
+const sparkle4 = (cx, cy, L, rot, fat = .13) => { let d = ''; for (let i = 0; i < 4; i++) { const a = rot + i * Math.PI / 2 - Math.PI / 2, an = a + Math.PI / 2, am = a + Math.PI / 4, m = Math.min(L[i], L[(i + 1) % 4]) * fat;
+  if (!i) d += `M${f2(cx + Math.cos(a) * L[0])} ${f2(cy + Math.sin(a) * L[0])}`; d += `Q${f2(cx + Math.cos(am) * m)} ${f2(cy + Math.sin(am) * m)} ${f2(cx + Math.cos(an) * L[(i + 1) % 4])} ${f2(cy + Math.sin(an) * L[(i + 1) % 4])}`; } return d + 'Z'; };
+/* nepravidelná hvězda s kulatými cípy (padající hvězda) */
+const curvyStar = (cx, cy, tips, valley, sc = 1, rot = 0) => { const pts = []; tips.forEach(([deg, L], i) => { const nd = tips[(i + 1) % tips.length][0] + (i === tips.length - 1 ? 360 : 0), a = deg * Math.PI / 180 + rot, am = (deg + nd) / 2 * Math.PI / 180 + rot;
+  pts.push([cx + Math.cos(a) * L * sc, cy + Math.sin(a) * L * sc]); pts.push([cx + Math.cos(am) * valley * sc, cy + Math.sin(am) * valley * sc]); }); return smoothClosed(pts, .1); };
 function scatter(r, n, gap, rMin, rMax) { const out = []; let t = 0;
   while (out.length < n && t++ < n * 80) { const R = rMin + r() * (rMax - rMin), x = 4 + r() * 92, y = 4 + r() * 117; if (out.every(o => Math.hypot(o[0] - x, o[1] - y) > (o[2] + R) * gap)) out.push([x, y, R]); }
   return out; }
@@ -2986,6 +3035,21 @@ function shapeSvg(sh, fg, bg, fid = 'bsoft') {
     case 'dots': return scatter(r, 12, 1.6, 5.5, 8).map(([x, y, R]) => P(circ(x, y, R))).join('');
     case 'flowers': return scatter(r, 10, 1.25, 6, 12).map(([x, y, R]) => P(flowerPath(x, y, R, r() * 6))).join('');
     case 'sparkles': return scatter(r, 8, 1.05, 7, 19).map(([x, y, R]) => P(sparklePath(x, y, R, r() < .6 ? 4 : 8, r() * .8))).join('');
+    case 'shoot': { const T = [[-100, 34], [-28, 60], [38, 30], [112, 48], [172, 36]]; return `<path d="${curvyStar(46, 66, T, 15)}${curvyStar(50, 61, T, 15, .3, .15)}" fill="${fg}" fill-rule="evenodd"/>`; }
+    case 'chain': { let c = `<path d="${smoothOpen([[20, 62], [34, 70], [48, 74], [64, 68], [80, 57]])}" fill="none" stroke="${fg}" stroke-width="1.6" stroke-linecap="round"/>`;
+      [[20, 62, 12, .5], [48, 74, 14, -.2], [80, 57, 18, .35]].forEach(([x, y, R, rt]) => c += P(sparkle4(x, y, [R, R * .85, R * 1.1, R * .8], rt, .3))); return c; }
+    case 'beacons': return [[14, 64, 9], [31, 79, 7], [50, 30, 15], [69, 48, 10], [86, 94, 7]].map(([x, y, R]) => P(sparkle4(x, y, [R * 1.3, R, R * .5, R], (r() - .5) * .08, .1)) + `<rect x="${f2(x - .7)}" y="${f2(y)}" width="1.4" height="${f2(130 - y)}" fill="${fg}"/>`).join('');
+    case 'stars3': return [[24, 72, 13, -.32], [50, 60, 16, 0], [76, 72, 13, .32]].map(([x, y, R, rt]) => `<path d="${starPath(x, y, R, 5, .48, rt)}" fill="${fg}" stroke="${fg}" stroke-width="2.6" stroke-linejoin="round"/>`).join('');
+    case 'snake': return `<path d="${smoothOpen([[-6, 116], [12, 110], [28, 96], [24, 80], [34, 68], [54, 72], [66, 60], [62, 42], [70, 26], [84, 24], [90, 38], [86, 52], [96, 60], [108, 54]], .22)}" fill="none" stroke="${fg}" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>`;
+    case 'daisygrid': { let c = ''; [22, 50, 78].forEach((x, ci) => [26, 52, 78, 104].forEach(y => { const R = 10.5;
+      const d = ci === 0 ? petalPath(x, y, R, 11, .2, .9, .5) + starPath(x, y, R * .24, 9, .6, 0) : ci === 1 ? petalPath(x, y, R, 5, .3, 1.4, .42) + circ(x, y, R * .22) : petalPath(x, y, R, 5, 1.1, 2.2, .5, .12) + circ(x + R * .05, y, R * .2);
+      c += `<path d="${d}" fill="${fg}" fill-rule="evenodd"/>`; })); return c; }
+    case 'halfdaisy': { const cx = 64, cy = 40; let c = ''; [98, 123, 148, 173, 198, 223].forEach((deg, i) => { const a = deg * Math.PI / 180, L = 46 - Math.abs(i - 2.5) * 3, W = 5.2, ux = Math.cos(a), uy = Math.sin(a), px = -uy, py = ux, s0 = 12, at = (t, w) => [cx + ux * (s0 + L * t) + px * W * w, cy + uy * (s0 + L * t) + py * W * w];
+      c += P(smoothClosed([at(0, .35), at(.45, 1), at(.85, .8), at(1, 0), at(.85, -.8), at(.45, -1), at(0, -.35)], .18)); });
+      return c + P(blobPath({ n: 3, a: .1, s: 8 }, cx, cy, 7.5)); }
+    case 'outlineflowers': return [[40, 44, 17, .2], [72, 68, 12, .9], [46, 92, 18, -.3]].map(([x, y, R, rt]) => `<path d="${petalPath(x, y, R, 5, rt, 1.3, .45)}" fill="none" stroke="${fg}" stroke-width="2.4"/><path d="${circ(x, y, R * .12)}" fill="none" stroke="${fg}" stroke-width="1.8"/>`).join('');
+    case 'daisyfield': return scatter(r, 9, 1.12, 9, 12.5).map(([x, y, R]) => `<path d="${petalPath(x, y, R, 7, r() * 6, 1.1, .5)}${circ(x, y, R * .24)}" fill="${fg}" fill-rule="evenodd"/>`).join('');
+    case 'loops': return scatter(r, 8, .85, 11, 19).map(([x, y, R], i) => { const ex = x + R * .2, ey = y - R * .15; return `<path d="${blobPath({ n: 2 + (i % 2), a: .2, s: (sh.s || 1) * 7 + i }, x, y, R)}" fill="none" stroke="${fg}" stroke-width="1.8"/><ellipse cx="${f2(ex)}" cy="${f2(ey)}" rx="${f2(R * .28)}" ry="${f2(R * .16)}" transform="rotate(${Math.round(r() * 80 - 40)} ${f2(ex)} ${f2(ey)})" fill="none" stroke="${fg}" stroke-width="1.6"/>`; }).join('');
     case 'waves': { let c = ''; const n = 3; for (let j = 0; j < n; j++) { const y0 = 18 + j * 42 + (r() - .5) * 10, ph = r() * 6, amp = 8 + r() * 10, pts = []; for (let x = -10; x <= 110; x += 10) pts.push([x, y0 + Math.sin(x * .065 + ph) * amp + (r() - .5) * 5]);
       c += `<path d="${smoothOpen(pts)}" fill="none" stroke="${fg}" stroke-width="7" stroke-linecap="round"/>`; } return c; }
   }
@@ -3037,7 +3101,7 @@ function selectShape(i) {
   drawBlob(); spring(.94, 1, v => $('#bCard').style.transform = `scale(${v})`, { k: 300, c: 16 });
 }
 function diceShape() { // kostka: jeden „náhodný“ slot, náhodný tvar i nastavení; líbí-li se, ulož ho jako preset
-  const kinds = ['blob', 'blob', 'splat', 'star', 'sparkle', 'flower', 'stars', 'dots', 'flowers', 'sparkles', 'waves'], rnd = a => a[Math.floor(Math.random() * a.length)];
+  const kinds = ['blob', 'blob', 'splat', 'star', 'sparkle', 'flower', 'stars', 'dots', 'flowers', 'sparkles', 'waves', 'shoot', 'chain', 'beacons', 'stars3', 'snake', 'daisygrid', 'halfdaisy', 'outlineflowers', 'daisyfield', 'loops'], rnd = a => a[Math.floor(Math.random() * a.length)];
   const sh = { k: rnd(kinds), s: 1 + Math.floor(Math.random() * 9999), n: 3 + Math.floor(Math.random() * 6), a: .1 + Math.random() * .25, rnd: true };
   let i = SHAPES.findIndex(x => x.rnd); if (i < 0) { SHAPES.push(sh); i = SHAPES.length - 1; } else SHAPES[i] = sh;
   Object.assign(B, { inv: Math.random() < .3, dis: Math.random() < .35 ? +(.15 + Math.random() * .45).toFixed(2) : 0, blend: rnd(['normal', 'normal', 'screen', 'glow']), size: +(.75 + Math.random() * .3).toFixed(2), bg: Math.floor(Math.random() * 5) });
@@ -3145,13 +3209,20 @@ function openPc() {
   const P = JSON.parse(JSON.stringify(S.P)); P.crop = DEF().crop; P.gtype = null;
   $$('.pcfilm[data-c]').forEach(b => { P.film = b.dataset.c; b.querySelector('canvas').getContext('2d').drawImage(utilRender(srcOf(S.cur, S.P), P, 88, 88, {}), 0, 0);
     b.onclick = () => { S.P.film = b.dataset.c; $$('.pcfilm[data-c]').forEach(x => x.classList.toggle('on', x === b)); commit(); renderPc(); buildPcRight(); }; });
-  $('#pcPresets').innerHTML = RECIPES.length ? RECIPES.map((r, i) => `<button class="pcfilm" data-r="${i}"><canvas width="88" height="88"></canvas><span><b>${r.name}</b><small>recept · ${r.P.film}</small></span></button>`).join('') : '<p style="font-size:12px;color:var(--mute);margin:4px 6px">Recepty uložíš v Efektech → Recepty.</p>';
+  $('#pcPresets').innerHTML = `<div class="pcrsave"><input id="pcRName" placeholder="Název receptu" maxlength="24" autocomplete="off"><button class="pcghost" id="pcRSave">Uložit</button></div>` + RECIPES.map((r, i) => `<div class="pcrrow"><button class="pcfilm" data-r="${i}"><canvas width="88" height="88"></canvas><span><b>${r.name}</b><small>${r.P.film}</small></span></button><button class="pcib" data-rl="${i}" title="Kopírovat odkaz na recept">${iconSVG('share')}</button><button class="pcib" data-rd="${i}" title="Smazat recept">${iconSVG('trash')}</button></div>`).join('');
   $$('#pcPresets [data-r]').forEach(b => { const r = RECIPES[+b.dataset.r]; b.querySelector('canvas').getContext('2d').drawImage(utilRender(srcOf(S.cur, S.P), Object.assign(DEF(), r.P), 88, 88, {}), 0, 0);
-    b.onclick = () => { S.P = Object.assign(DEF(), JSON.parse(JSON.stringify(r.P)), { crop: S.P.crop, dx: S.P.dx }); commit(); renderPc(); buildPcRight(); toast(`Recept ${r.name} použitý`); }; });
+    b.onclick = () => { S.P = Object.assign(DEF(), JSON.parse(JSON.stringify(r.P)), { crop: S.P.crop, dx: S.P.dx }); commit(); dxChanged(); buildPcRight(); toast(`Recept ${r.name} použitý`); }; });
+  $$('#pcPresets [data-rd]').forEach(b => b.onclick = () => { const i = +b.dataset.rd, r = RECIPES[i]; RECIPES.splice(i, 1); store.set('recipes', RECIPES); openPc(); toast(`Recept ${r.name} smazaný`, { label: 'Vrátit', fn: () => { RECIPES.splice(i, 0, r); store.set('recipes', RECIPES); openPc(); } }); });
+  $$('#pcPresets [data-rl]').forEach(b => b.onclick = async () => { const r = RECIPES[+b.dataset.rl], url = location.origin + location.pathname + '#recept=' + btoa(unescape(encodeURIComponent(JSON.stringify(r))));
+    try { await navigator.clipboard.writeText(url); toast('Odkaz na recept zkopírovaný'); } catch { toast('Odkaz se nepodařilo zkopírovat'); } });
+  $('#pcRSave').onclick = () => { const name = $('#pcRName').value.trim() || `Recept ${RECIPES.length + 1}`; RECIPES.unshift({ name, P: recipeOf(S.P) }); store.set('recipes', RECIPES); openPc(); toast(`Recept ${name} uložený`); };
   $('#pcStrip').innerHTML = `<button class="padd" id="pcAddTile" title="Importovat fotky">+</button>` + S.photos.map(p => `<img src="${p.thumb}" data-id="${p.id}" class="${p === S.cur ? 'on' : ''}" style="width:${Math.round(90 * clamp(phAr(p), .5, 2.2))}px" alt="">`).join('');
   $('#pcAddTile').onclick = () => $('#fileImport').click();
   const on = $('#pcStrip img.on'); if (on) requestAnimationFrame(() => on.scrollIntoView({ inline: 'nearest', block: 'nearest' }));
-  $$('#pcStrip img').forEach(im => im.onclick = () => pcSelect(S.photos.find(p => p.id === +im.dataset.id)));
+  S.pcSel = S.pcSel || new Set();
+  $$('#pcStrip img').forEach(im => { im.classList.toggle('sel', S.pcSel.has(+im.dataset.id)); im.onclick = e => { const id = +im.dataset.id;
+    if (e.ctrlKey || e.metaKey || e.shiftKey) { S.pcSel.has(id) ? S.pcSel.delete(id) : S.pcSel.add(id); im.classList.toggle('sel', S.pcSel.has(id)); return; }
+    S.pcSel.clear(); const ph = S.photos.find(p => p.id === id); if (BLOBPC) { S.cur = ph; S.P = JSON.parse(JSON.stringify(ph.P)); S.blobFrom = ph; openBlob(); openPc(); } else pcSelect(ph); }; });
   $('#pcFile').textContent = `${PHNAME[S.cur.kind] || 'fotka'} · ${S.cur.date.toLocaleDateString('cs-CZ')} · ${S.P.film}`;
   buildPcRight(); requestAnimationFrame(layoutPc);
 }
@@ -3188,7 +3259,8 @@ function buildPcRight() {
       <div class="seg" id="pcPal">${(P.style.type === 'dither' ? [['amber', 'AMBER'], ['lime', 'LIME'], ['paper', 'PAPÍR'], ['ir', 'NEON'], ['photo', 'Z FOTKY']] : [['photo4', 'STYL 1'], ['photo', 'STYL 2'], ['photo8', 'STYL 3']]).map(([q, l]) => `<button data-p="${q}" class="${P.style.pn === q ? 'on' : ''}">${l}</button>`).join('')}</div>
       <label class="srow"><span>${P.style.type === 'dither' ? 'Hustota' : 'Pixely'}</span><input type="range" id="pcCells" min="${P.style.type === 'dither' ? 80 : 40}" max="${P.style.type === 'dither' ? 420 : 220}" value="${P.style.cells}" data-def="${P.style.type === 'dither' ? 240 : 110}"><output>${P.style.cells}</output></label>${P.style.type === 'dither' ? `
       <label class="srow"><span>Úrovně</span><input type="range" id="pcLev" min="2" max="4" value="${P.style.levels}" data-def="2"><output>${P.style.levels}</output></label>` : ''}` : ''}</div>
-    <div class="pcsec"><h4>Další</h4><div class="row2"><button class="pcghost" id="pcDouble">Double${P.dx && P.dx.other ? ' ●' : ''}</button><button class="pcghost" id="pcBlob">Blob karta</button><button class="pcghost" id="pcRecipe">Recepty</button></div></div>`;
+    ${pcDoubleHtml(P)}
+    <div class="pcsec"><h4>Blob karta</h4><div class="row2"><button class="pcghost" id="pcBlob">Otevřít blob kartu</button></div></div>`;
   bindRanges($('#pcRight'), renderPc); bindGrainPills($('#pcGt'), buildPcRight); bindPcExtra();
   $('#pcReset').onclick = resetAll;
   curveEditor($('#pcCurve'), () => S.P.curve.rgb, pts => { S.P.curve.rgb = pts; renderPc(); }, commit, '#f3eee6');
@@ -3210,14 +3282,39 @@ function bindPcExtra() {
   $$('#pcSty button').forEach(b => b.onclick = () => { const t = b.dataset.t; P.style = !t ? null : t === 'dither' ? { type: 'dither', pal: ['#0B0C0E', '#F5C542'], pn: 'amber', cells: 240, levels: 2 } : { type: 'pixel', pal: photoPal(6), pn: 'photo', cells: 110 }; commit(); renderPc(); buildPcRight(); });
   pcRange('#pcCells', v => P.style.cells = v); pcRange('#pcLev', v => P.style.levels = v);
   $$('#pcPal button').forEach(b => b.onclick = () => { const q = b.dataset.p, st = P.style; st.pn = q; st.pal = st.type === 'dither' ? (q === 'photo' ? photoPal(2) : DPALS[q]) : photoPal(+q.replace('photo', '') || 6); commit(); renderPc(); buildPcRight(); });
-  $('#pcDouble').onclick = () => pcPhone(() => { openEditor(S.cur); setTimeout(() => { setTab('fx', true); openFx('double'); }, 420); });
-  $('#pcBlob').onclick = () => pcPhone(() => { S.blobFrom = S.cur; stack.length = 0; go('blob'); });
-  $('#pcRecipe').onclick = () => pcPhone(() => { openEditor(S.cur); setTimeout(() => { setTab('fx', true); recipeActs(); }, 420); });
+  $('#pcBlob').onclick = () => pcBlob(true); bindPcDouble();
 }
+/* PC: Double přímo v pravém panelu */
+function pcDoubleHtml(P) { const dx = P.dx, o = dx && S.photos.find(x => x.id === dx.other), sil = dx && dx.mode === 'sil', blend = dx && dx.mode === 'blend';
+  const pal = o ? [...new Set([DXBG, '#e33a22', '#F2EFE8', ...kmeansOf(S.cur.src, 2), ...kmeansOf(o.src, 2)])] : [];
+  return `<div class="pcsec"><h4>Double <span>${o ? 'zapnuto' : 'druhá fotka'}</span></h4><div class="pcdx" id="pcDxPick">${S.photos.filter(x => x !== S.cur && x.kind !== 'arch').slice(0, 30).map(x => `<button data-id="${x.id}" class="${o === x ? 'on' : ''}"><img src="${x.thumb}" alt=""></button>`).join('')}</div>${o ? `
+    <div class="seg" id="pcDxMode"><button data-m="blend" class="${blend ? 'on' : ''}">PROLNUTÍ</button><button data-m="sil" data-w="this" class="${sil && dx.who === 'this' ? 'on' : ''}">TVAR TÉTO</button><button data-m="sil" data-w="other" class="${sil && dx.who === 'other' ? 'on' : ''}">TVAR DRUHÉ</button></div>
+    ${sil ? `<div class="pcsw" id="pcDxBg">${pal.map(c => `<button class="sw2 ${c === dx.bg ? 'on' : ''}" data-c="${c}" style="background:${c}"></button>`).join('')}<label class="sw2" style="display:grid;place-items:center;color:var(--mute)">+<input type="color" id="pcDxColor" value="#e33a22"></label><button class="sw2" id="pcDxInv" title="Obrátit" style="display:grid;place-items:center;color:var(--fg)">⇄</button></div>` : ''}
+    <label class="srow"><span>${blend ? 'Síla' : 'Práh'}</span><input type="range" id="pcDxSl" min="${blend ? 10 : 5}" max="${blend ? 100 : 95}" value="${Math.round((blend ? dx.mix : dx.th) * 100)}" data-def="${blend ? 60 : 42}"><output>${Math.round((blend ? dx.mix : dx.th) * 100)}</output></label>
+    <div class="row2"><button class="pcghost" id="pcDxOff">Vypnout double</button></div>` : ''}</div>`; }
+function bindPcDouble() { const P = S.P, re = () => { dxChanged(); commit(); buildPcRight(); };
+  $$('#pcDxPick [data-id]').forEach(b => b.onclick = () => { P.dx = P.dx || { other: null, mode: 'sil', who: 'this', th: .42, inv: false, bg: DXBG, mix: .6 }; P.dx.other = +b.dataset.id; re(); });
+  $$('#pcDxMode button').forEach(b => b.onclick = () => { P.dx.mode = b.dataset.m; if (b.dataset.w) P.dx.who = b.dataset.w; re(); });
+  $$('#pcDxBg [data-c]').forEach(b => b.onclick = () => { P.dx.bg = b.dataset.c; re(); });
+  const ci = $('#pcDxColor'); if (ci) ci.onchange = () => { P.dx.bg = ci.value; re(); };
+  const iv = $('#pcDxInv'); if (iv) iv.onclick = () => { P.dx.inv = !P.dx.inv; re(); };
+  const sl = $('#pcDxSl'); if (sl) { paintRange(sl); sl.oninput = () => { sl.nextElementSibling.textContent = sl.value; paintRange(sl); if (P.dx.mode === 'blend') P.dx.mix = sl.value / 100; else P.dx.th = sl.value / 100; dxChanged(); }; sl.onchange = commit; }
+  const off = $('#pcDxOff'); if (off) off.onclick = () => { P.dx = null; re(); };
+  hscroll($('#pcDxPick')); }
+/* PC: Blob karta přes střed a pravý panel – stejné ovládací prvky jako v mobilu, jen se přesunou */
+let BLOBPC = false;
+function pcBlob(open) { const card = $('#bCard'), sc = $('#s-blob .bscroll'), bar = $('#s-blob .bbar'), top = $('#s-blob .top'), rand = $('#bRand');
+  if (open && !BLOBPC) { S.blobFrom = S.cur; openBlob(); $('#pbCard').appendChild(card); [...sc.children].forEach(ch => $('#pbScroll').appendChild(ch)); [...bar.children].forEach(ch => $('#pbBar').appendChild(ch)); $('#pbHead').insertBefore(rand, $('#pbClose'));
+    $('#pcBlobV').hidden = false; BLOBPC = true; }
+  else if (!open && BLOBPC) { sc.appendChild(card); [...$('#pbScroll').children].forEach(ch => sc.appendChild(ch)); [...$('#pbBar').children].forEach(ch => bar.appendChild(ch)); top.appendChild(rand);
+    $('#pcBlobV').hidden = true; BLOBPC = false; } }
 /* na PC se Double, Blob karta a Recepty otevřou v telefonním rozhraní v okně (stejné ovládání jako v mobilu) */
 function pcPhone(fn) { document.body.classList.add('pcphone'); $('#pcPhoneBg').hidden = false; $('#device').hidden = false; fit(); fn(); }
 function pcPhoneClose() { document.body.classList.remove('pcphone'); $('#pcPhoneBg').hidden = true; $('#device').hidden = true; closeSheets(); closeActs && closeActs();
   if (S.cur) { S.P = JSON.parse(JSON.stringify(S.cur.P)); pcE.setSource(srcOf(S.cur, S.P)); } openPc(); }
+function pcPaste() { if (!CLIP) return toast('Nejdřív zkopíruj úpravy (Kopírovat)'); const ids = S.pcSel && S.pcSel.size ? [...S.pcSel] : [S.cur.id]; let n = 0;
+  ids.forEach(id => { const ph = S.photos.find(p => p.id === id); if (ph && pasteLook(ph)) n++; }); S.pcSel && S.pcSel.clear();
+  S.P = JSON.parse(JSON.stringify(S.cur.P)); S.cur._last = JSON.parse(JSON.stringify(S.P)); pcE.setSource(srcOf(S.cur, S.P)); openPc(); toast(n > 1 ? `Úpravy vložené do ${n} fotek` : 'Úpravy vložené'); }
 function pcDelete() { const ph = S.cur; if (!ph) return; const i = S.photos.indexOf(ph); S.photos.splice(i, 1); if (ph.saved) dbDel(ph.id); S.cur = S.photos[Math.min(i, S.photos.length - 1)] || null;
   if (S.cur) pcSelect(S.cur); toast('Fotka smazaná', { label: 'Vrátit', fn: () => { S.photos.splice(i, 0, ph); dbPut(ph); pcSelect(ph); } }); }
 /* film scan na PC: reference z galerie nebo z disku, náhled na otevřené fotce */
@@ -3245,11 +3342,12 @@ function initPcApp() {
   const bf = $('#pcBefore'); bf.onpointerdown = () => { pcBefore = true; bf.classList.add('on'); $('#pcBadge').classList.add('show'); renderPc(); };
   bf.onpointerup = bf.onpointerleave = () => { if (!pcBefore) return; pcBefore = false; bf.classList.remove('on'); $('#pcBadge').classList.remove('show'); renderPc(); };
   $('#pcMobile').onclick = () => { document.body.classList.remove('pcapp'); setView('m'); };
-  $('#pcScanBtn').onclick = pcScanOpen; $('#pcPhoneClose').onclick = pcPhoneClose;
+  $('#pcScanBtn').onclick = pcScanOpen; $('#pcPhoneClose').onclick = pcPhoneClose; $('#pbClose').onclick = () => pcBlob(false);
+  $('#pcCopy').onclick = () => copyLook(S.P); $('#pcPaste').onclick = pcPaste;
   // ořez tažením a kolečkem (C)
   const cen = $('#pcCenter'); let drag = null;
   cen.addEventListener('pointerdown', e => { if ($('#pcCrop').hidden || e.target.closest('.pcmodal')) return; cen.setPointerCapture(e.pointerId); drag = { x: e.clientX, y: e.clientY, cx: S.P.crop.x, cy: S.P.crop.y }; });
-  cen.addEventListener('pointermove', e => { if (!drag) return; const w = $('#pcWrap').clientWidth, h = $('#pcWrap').clientHeight; S.P.crop.x = drag.cx - (e.clientX - drag.x) / w / S.P.crop.s; S.P.crop.y = drag.cy + (e.clientY - drag.y) / h / S.P.crop.s; fitCrop(); renderPc(); });
+  cen.addEventListener('pointermove', e => { if (!drag) return; const w = $('#pcWrap').clientWidth, h = $('#pcWrap').clientHeight; const cv = cropCover(); S.P.crop.x = drag.cx - (e.clientX - drag.x) / w * cv[0] / S.P.crop.s; S.P.crop.y = drag.cy + (e.clientY - drag.y) / h * cv[1] / S.P.crop.s; fitCrop(); renderPc(); });
   cen.addEventListener('pointerup', () => { if (drag) { drag = null; commit(); } });
   cen.addEventListener('wheel', e => { if ($('#pcCrop').hidden) return; e.preventDefault(); S.P.crop.s = clamp(S.P.crop.s * (1 - e.deltaY * .001), 1, 4); fitCrop(); renderPc(); clearTimeout(cen._w); cen._w = setTimeout(() => { commit(); buildPcRight(); }, 300); }, { passive: false });
   // přetažení fotek do okna
@@ -3453,12 +3551,15 @@ function boot2(h) {
   // PC klávesy
   addEventListener('keydown', e => {
     if (e.target.isContentEditable || (e.target.tagName === 'INPUT' && e.target.type !== 'range')) return;
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && S.view === 'pc' && e.key.toLowerCase() === 'c') { e.preventDefault(); copyLook(S.P); return; }
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && S.view === 'pc' && e.key.toLowerCase() === 'v') { e.preventDefault(); pcPaste(); return; }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (!S.cur) return; e.shiftKey ? redo() : undo(); return; }
     if (S.view !== 'pc') return;
     if (e.key === '\\') { pcBefore = true; $('#pcBadge').classList.add('show'); renderPc(); }
     if (e.key.toLowerCase() === 'c') { $('#pcCrop').hidden = !$('#pcCrop').hidden; $('#pcCenter').classList.toggle('cropping', !$('#pcCrop').hidden); }
     if ((e.key === 'Delete' || e.key === 'Backspace') && $('#pcScan').hidden) { e.preventDefault(); pcDelete(); return; }
     if (e.key === 'Escape' && document.body.classList.contains('pcphone')) { pcPhoneClose(); return; }
+    if (BLOBPC) { if (e.key === 'Escape') pcBlob(false); return; }
     if (document.body.classList.contains('pcphone')) return;
     if (e.key === 'Escape') { $('#pcScan').hidden = true; $('#pcCrop').hidden = true; $('#pcCenter').classList.remove('cropping'); }
     if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { const i = S.photos.indexOf(S.cur) + (e.key === 'ArrowRight' ? 1 : -1); pcSelect(S.photos[clamp(i, 0, S.photos.length - 1)]); }
