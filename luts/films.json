@@ -4,111 +4,139 @@
   "film": "kodak_portra_160",
   "print": "kodak_portra_endura",
   "size": 33,
-  "soften": 0.5
+  "soften": 0.0
  },
  {
   "code": "P400",
   "film": "kodak_portra_400",
   "print": "kodak_portra_endura",
   "size": 33,
-  "soften": 0.5
+  "soften": 0.0
  },
  {
   "code": "P800",
   "film": "kodak_portra_800",
   "print": "kodak_portra_endura",
   "size": 33,
-  "soften": 0.5
+  "soften": 0.0
  },
  {
   "code": "E100",
   "film": "kodak_ektar_100",
   "print": "kodak_endura_premier",
   "size": 33,
-  "soften": 0.5
+  "soften": 0.0
  },
  {
   "code": "G200",
   "film": "kodak_gold_200",
   "print": "kodak_endura_premier",
   "size": 33,
-  "soften": 0.5
+  "soften": 0.0
  },
  {
   "code": "UM400",
   "film": "kodak_ultramax_400",
   "print": "kodak_endura_premier",
   "size": 33,
-  "soften": 0.5
+  "soften": 0.0
  },
  {
   "code": "KC64",
   "film": "kodak_kodachrome_64",
   "print": null,
   "size": 33,
-  "soften": 0.5
+  "soften": 0.0
  },
  {
   "code": "EC100",
   "film": "kodak_ektachrome_100",
   "print": null,
   "size": 33,
-  "soften": 0.5
+  "soften": 0.0
  },
  {
   "code": "V3-50D",
   "film": "kodak_vision3_50d",
   "print": "kodak_2383",
   "size": 33,
-  "soften": 0.5
+  "soften": 0.0
  },
  {
   "code": "V3-250D",
   "film": "kodak_vision3_250d",
   "print": "kodak_2383",
   "size": 33,
-  "soften": 0.5
+  "soften": 0.0
  },
  {
   "code": "V3-500T",
   "film": "kodak_vision3_500t",
   "print": "kodak_2383",
   "size": 33,
-  "soften": 0.5
+  "soften": 0.0
+ },
+ {
+  "code": "V3-200T",
+  "film": "kodak_vision3_200t",
+  "print": "kodak_2383",
+  "size": 33,
+  "soften": 0.0
+ },
+ {
+  "code": "VR200",
+  "film": "kodak_verita_200d",
+  "print": "kodak_endura_premier",
+  "size": 33,
+  "soften": 0.0
+ },
+ {
+  "code": "P800P",
+  "film": "kodak_portra_800_push2",
+  "print": "kodak_portra_endura",
+  "size": 33,
+  "soften": 0.0
+ },
+ {
+  "code": "E100C",
+  "film": "kodak_ektar_100",
+  "print": "kodak_2383",
+  "size": 33,
+  "soften": 0.0
  },
  {
   "code": "C200",
   "film": "fujifilm_c200",
   "print": "fujifilm_crystal_archive_typeii",
   "size": 33,
-  "soften": 0.5
+  "soften": 0.0
  },
  {
   "code": "400H",
   "film": "fujifilm_pro_400h",
   "print": "fujifilm_crystal_archive_typeii",
   "size": 33,
-  "soften": 0.5
+  "soften": 0.0
  },
  {
   "code": "SX400",
   "film": "fujifilm_xtra_400",
   "print": "fujifilm_crystal_archive_typeii",
   "size": 33,
-  "soften": 0.5
+  "soften": 0.0
  },
  {
   "code": "PV100",
   "film": "fujifilm_provia_100f",
   "print": null,
   "size": 33,
-  "soften": 0.5
+  "soften": 0.0
  },
  {
   "code": "VEL",
   "film": "fujifilm_velvia_100",
   "print": null,
   "size": 33,
-  "soften": 0.5
+  "soften": 0.0
  }
 ]

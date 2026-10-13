@@ -14,3 +14,11 @@ Upravil: Qamera (jendovyapky), skript tools/bake_luts.py
 - Vypnuté prostorové a náhodné efekty (grain, halation, DIR difúze, ostření skeneru) a automatická
   expozice; grain a halation dělá v appce vlastní shader.
 - Názvy v appce jsou vlastní kódy (P400, G200, KC64, V3-500T…), mapování na profily je v films.json.
+
+2026-10-14
+- Přepečeno: vypnutá výstupní komprese barevného rozsahu (output gamut compress = off, hodnoty jen oříznuté
+  na 0–1) – původní komprese ubírala sytost a stahovala bílou, takže se filmy navzájem málo lišily.
+- Místo zjemnění tónové křivky jen zesílení podle neutrální bílé (bílá papíru → 0,95); křivka, barva bílé
+  i černá filmu zůstávají.
+- Nové LUT: V3-200T (Vision3 200T → 2383), VR200 (Verita 200D → Endura Premier), P800P (Portra 800 push 2
+  → Portra Endura), E100C (Ektar 100 → tisk 2383).

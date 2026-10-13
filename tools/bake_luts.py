@@ -12,7 +12,7 @@ Vstup LUT = sRGB, výstup = sRGB. Prostorové a náhodné efekty (grain, halatio
 jsou vypnuté – ty dělá shader Qamery živě. Automatická expozice je vypnutá, aby LUT nezávisela na obsahu.
 Upečené LUT jsou odvozené dílo profilů spektrafilmu → licence CC BY-SA 4.0 (viz luts/SPEKTRAFILM_LICENSE.txt).
 """
-import argparse, json, os, sys, time
+import argparse, dataclasses, json, os, sys, time
 import numpy as np
 
 # kód v Qameře → (profil filmu, tiskový profil nebo None = sken diapozitivu)
@@ -28,6 +28,10 @@ FILMS = {
     'V3-50D':  ('kodak_vision3_50d', 'kodak_2383'),
     'V3-250D': ('kodak_vision3_250d', 'kodak_2383'),
     'V3-500T': ('kodak_vision3_500t', 'kodak_2383'),
+    'V3-200T': ('kodak_vision3_200t', 'kodak_2383'),
+    'VR200':   ('kodak_verita_200d', 'kodak_endura_premier'),
+    'P800P':   ('kodak_portra_800_push2', 'kodak_portra_endura'),
+    'E100C':   ('kodak_ektar_100', 'kodak_2383'),
     'C200':    ('fujifilm_c200', 'fujifilm_crystal_archive_typeii'),
     '400H':    ('fujifilm_pro_400h', 'fujifilm_crystal_archive_typeii'),
     'SX400':   ('fujifilm_xtra_400', 'fujifilm_crystal_archive_typeii'),
@@ -56,11 +60,19 @@ def bake(code, film, prt, n, simulate, init_params):
     p.debug.deactivate_spatial_effects = True; p.debug.deactivate_stochastic_effects = True
     p.film_render.grain.active = False; p.film_render.halation.active = False
     p.settings.use_enlarger_lut = False; p.settings.use_scanner_lut = False
+    p.io.output_gamut_compress = dataclasses.replace(p.io.output_gamut_compress, algorithm='off')  # komprese rozsahu ubírala sytost a stahovala bílou → filmy vypadaly stejně
     out = np.clip(np.asarray(simulate(identity(n), p), dtype=np.float64).reshape(n, n, n, 3), 0, 1)  # [b, g, r, c]
-    return soften_tone(out, n)
+    return normalize_white(out, n)
 
 
-SOFTEN = 0.5  # 0 = přesně tiskový papír, 1 = neutrální osa lineární; barvy filmu zůstávají
+SOFTEN = 0.0  # zjemnění tónové křivky (staré pečení 0.5 smazávalo rozdíly mezi filmy), teď vypnuto
+
+
+def normalize_white(lut, n, target=.95):
+    """Jen zesílení podle neutrální bílé (bílá papíru → ~0.95); křivka, barva bílé a černé filmu zůstávají."""
+    w = lut[n - 1, n - 1, n - 1].mean()
+    out = np.clip(lut * (target / max(w, .05)), 0, 1)
+    return soften_tone(out, n) if SOFTEN else out
 
 
 def soften_tone(lut, n):
