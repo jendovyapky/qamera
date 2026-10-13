@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Qamera">
-<title>Qamera náhled</title>
+<title>Qamera</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Doto:wght@500;700;900&family=Geist:wght@300..700&family=Geist+Mono:wght@400;500;600&family=Silkscreen:wght@400;700&display=swap">
@@ -515,6 +515,22 @@ input[type=range].drag::-webkit-slider-thumb{transform:scale(1.16);box-shadow:0 
 #s-gallery{background:#050505}
 .gscroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 0 110px}
 .rolls{display:flex;gap:10px;overflow-x:auto;padding:6px 14px 14px}
+/* galerie: role i filtry filmů v jedné řadě skleněných karet */
+.grow{display:flex;gap:8px;overflow-x:auto;padding:6px 14px 16px;align-items:stretch}
+.gt{flex:none;width:78px;height:104px;border-radius:20px;position:relative;overflow:hidden;isolation:isolate;transform:translateZ(0);-webkit-mask-image:-webkit-radial-gradient(white,black);
+  background:#15130f;border:1px solid rgba(255,255,255,.06);text-align:center;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
+.gt:active{transform:scale(.95)}
+.gt .glow{position:absolute;inset:-25%;filter:blur(16px);opacity:.55;transition:opacity .3s}
+.gt svg.cas{position:absolute;left:50%;top:8px;width:42px;height:42px;margin-left:-21px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5))}
+.gt .ic{position:absolute;left:50%;top:15px;width:28px;height:28px;margin-left:-14px;color:#cfc7bc}
+.gt .gl{position:absolute;left:0;right:0;bottom:0;height:46px;backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);background:rgba(20,18,16,.38);border-top:1px solid rgba(255,255,255,.08);padding-top:8px}
+.gt b{display:block;font-family:var(--f-mono);font-size:11px;font-weight:600;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px;color:#efe8dd}
+.gt small{display:block;font-family:var(--f-mono);font-size:9.5px;color:#9a9188;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px}
+.gt.roll2{width:128px}.gt.roll2 b{font-family:var(--f-ui,inherit);font-size:11.5px;font-weight:500;letter-spacing:0}
+.gt.roll2.lock small{color:var(--amber)}
+.gt.on{border-color:rgba(255,196,61,.6);box-shadow:inset 0 0 0 1px rgba(255,196,61,.35),0 0 18px rgba(255,196,61,.18)}
+.gt.on b{color:var(--amber)}.gt.on .glow{opacity:.85}
+.gsep{flex:none;width:1px;margin:14px 2px;background:linear-gradient(transparent,rgba(255,255,255,.14),transparent)}
 .roll{display:block;flex:none;width:136px;height:116px;border-radius:22px;position:relative;overflow:hidden;text-align:center;isolation:isolate;-webkit-mask-image:-webkit-radial-gradient(white,black);transform:translateZ(0);
   background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08)}
 .roll .glow{position:absolute;inset:-20%;filter:blur(18px);opacity:.75}
@@ -862,8 +878,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
             <button class="ib tile" id="gAdd" aria-label="Přidat" data-ic="plus"></button>
           </div>
           <div class="gscroll" id="gScroll">
-            <div class="rolls hs" id="rolls"></div>
-            <div class="fchips hs" id="fChips"></div>
+            <div class="grow hs" id="gRow"></div>
             <div class="masonry" id="masonry"></div>
             <div class="gempty" id="gEmpty" hidden>Nic takového tu není. Zkus kód filmu (P400), barvu nebo „noc“.</div>
           </div>
@@ -1851,7 +1866,7 @@ function playIntro() {
    ===================================================================== */
 const S = {
   screen: 'camera', film: store.get('film', 'P400'), grid: 0, timer: 0, flash: false, zoom: 1,
-  isoIdx: 0, timeIdx: 0, ev: 0, collapsed: store.get('collapsed', false), fmt: 'full', zebra: false, dbl: false, dblFirst: null, busy: null, dxReturn: null, camRecipe: null, sel: null, halfPending: null, dispo: null, slowMode: 0, photos: [], cur: null, P: DEF(), tab: 'film', adv: false, adjKey: 'exp',
+  isoIdx: 0, timeIdx: 0, ev: 0, collapsed: store.get('ctlHidden', true), fmt: 'full', zebra: false, dbl: false, dblFirst: null, busy: null, dxReturn: null, camRecipe: null, sel: null, halfPending: null, dispo: null, slowMode: 0, photos: [], cur: null, P: DEF(), tab: 'film', adv: false, adjKey: 'exp',
   hist: [], fut: [], view: 'm',
 };
 const ISO_STOPS = ['A', '100', '200', '400', '800', '1600', '3200'];
@@ -1943,7 +1958,7 @@ function camParams() {
 function camIso() { const v = ISO_STOPS[S.isoIdx]; return v === 'A' ? FILM[S.film].iso : +v; }
 let ctlSp = null;
 function setCollapsed(c, instant) { // kriticky tlumená pružina (bez překmitu) → po vysunutí nic neposkočí
-  S.collapsed = c; store.set('collapsed', c); const el = $('#camCtl'), prev = el.style.height; el.style.height = 'auto'; const H = el.offsetHeight; el.style.height = prev;
+  S.collapsed = c; store.set('ctlHidden', c); const el = $('#camCtl'), prev = el.style.height; el.style.height = 'auto'; const H = el.offsetHeight; el.style.height = prev;
   $('#camHandle').classList.toggle('col', c); $('#pTime').hidden = !(c && S.timeIdx > 0); $('#vf').classList.toggle('exp', !c); // ISO a EV jsou na displeji, v hledáčku jen při schovaném ovládání
   ctlSp && ctlSp.stop(); const from = el.offsetHeight, to = c ? 0 : H;
   const upd = v => { v = clamp(v, 0, H); el.style.height = v + 'px'; el.style.opacity = clamp(v / H, 0, 1); layoutVf(); };
@@ -2259,11 +2274,16 @@ let ROLLS = [
   { name: 'Hory', meta: 'VEL · 8/36', film: 'VEL', glow: ['#7d2a8f', '#2bb04a'] },
 ];
 function renderGallery() {
-  $('#rolls').innerHTML = ROLLS.map(r => `<button class="roll ${r.lock ? 'lock' : ''}"><div class="glow" style="background:radial-gradient(circle at 30% 40%,${r.glow[0]},transparent 55%),radial-gradient(circle at 75% 60%,${r.glow[1]},transparent 55%)"></div>${cassette(FILM[r.film])}<div class="glass"><b>${r.name}</b><small>${r.meta}</small></div></button>`).join('');
   const cnt = {}; S.photos.forEach(p => cnt[p.film] = (cnt[p.film] || 0) + 1);
-  $('#fChips').innerHTML = `<button data-f="__m">${iconSVG('film')}</button><button data-f="" class="${S.gFilm ? '' : 'on'}">VŠE</button>` + Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]).map(f => `<button data-f="${f}" class="${S.gFilm === f ? 'on' : ''}">${f} · ${cnt[f]}</button>`).join('');
-  $$('#fChips button').forEach(b => b.onclick = () => { if (b.dataset.f === '__m') return go('films'); S.gFilm = b.dataset.f || null; $$('#fChips button').forEach(x => x.classList.toggle('on', x === b)); filterGallery(); buzz(3); });
-  $$('.roll').forEach((b, i) => { const ro = ROLLS[i];
+  const glowOf = (a, b) => `<div class="glow" style="background:radial-gradient(circle at 30% 35%,${a},transparent 58%),radial-gradient(circle at 75% 65%,${b},transparent 58%)"></div>`;
+  const cas = f => cassette(f).replace('<svg ', '<svg class="cas" '), n = S.photos.length;
+  $('#gRow').innerHTML = `<button class="gt ${S.gFilm ? '' : 'on'}" data-f="">${glowOf('#f2c230', '#5a4c40')}${iconSVG('gallery').replace('<svg ', '<svg class="ic" ')}<div class="gl"><b>VŠE</b><small>${n} fotek</small></div></button>`
+    + ROLLS.map((r, i) => `<button class="gt roll2 ${r.lock ? 'lock' : ''}" data-r="${i}">${glowOf(r.glow[0], r.glow[1])}${cas(FILM[r.film])}<div class="gl"><b>${r.name}</b><small>${r.meta}</small></div></button>`).join('')
+    + '<i class="gsep"></i>'
+    + Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]).map(c => { const f = FILM[c] || FILM.P400; return `<button class="gt ${S.gFilm === c ? 'on' : ''}" data-f="${c}">${glowOf(f.c[1] || f.c[0], f.c[2] || f.c[0])}${cas(f)}<div class="gl"><b>${c}</b><small>${cnt[c]} ${cnt[c] === 1 ? 'fotka' : cnt[c] < 5 ? 'fotky' : 'fotek'}</small></div></button>`; }).join('')
+    + `<button class="gt" data-f="__m">${glowOf('#3a342e', '#22201c')}${iconSVG('film').replace('<svg ', '<svg class="ic" ')}<div class="gl"><b>FILMY</b><small>moje</small></div></button>`;
+  $$('#gRow [data-f]').forEach(b => b.onclick = () => { if (b.dataset.f === '__m') return go('films'); S.gFilm = b.dataset.f || null; $$('#gRow [data-f]').forEach(x => x.classList.toggle('on', x === b)); filterGallery(); buzz(3); });
+  $$('#gRow [data-r]').forEach(b => { const i = +b.dataset.r, ro = ROLLS[i];
     const acts = () => openActs(`<h4>${ro.name}</h4>${ro.lock ? actBtn('dev', 'film', 'Vyvolat hned (ukázka)') : actBtn('show', 'gallery', 'Ukázat fotky z role')}${ro.lock ? '' : actBtn('sheet', 'sheet', 'Arch z role')}`, root => {
       $$('[data-a]', root).forEach(x => x.onclick = () => { closeActs(); const a = x.dataset.a;
         if (a === 'dev') setTimeout(() => developAsk(ro), 250); if (a === 'show') { S.gFilm = ro.film; renderGallery(); }
@@ -4063,7 +4083,7 @@ function boot2(h) {
 
   $('#bText').onclick = () => { B.text = B.text === false; $('#bLbl').style.visibility = B.text ? '' : 'hidden'; $('#bText').textContent = 'Text: ' + (B.text ? 'zap' : 'vyp'); buzz(4); };
   $('#bShare').onclick = exportBlob;
-  blobGestures(); hscroll($('#bShapes')); hscroll($('#bCats')); hscroll($('#rolls')); hscroll($('#pcStrip'));
+  blobGestures(); hscroll($('#bShapes')); hscroll($('#bCats')); hscroll($('#gRow')); hscroll($('#pcStrip'));
   // o appce
   $('#lowMo').classList.toggle('on', LOWMO);
   $('#lowMo').onclick = () => { LOWMO = !LOWMO; store.set('lowmo', LOWMO); $('#lowMo').classList.toggle('on', LOWMO); toast(LOWMO ? 'Úsporné animace zapnuté' : 'Plné animace'); };
