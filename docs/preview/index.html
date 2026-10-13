@@ -559,6 +559,9 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 .palette button.mx{transform:translateY(-4px);box-shadow:0 0 0 2px #0B0C0E,0 0 0 4px var(--amber)}
 .palette .add input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 .shapes{display:flex;gap:6px;overflow-x:auto;padding:0 16px}
+.bcats{display:flex;gap:6px;overflow-x:auto;padding:0 16px 10px}
+.bcats button{flex:none;height:28px;padding:0 11px;border-radius:9px;font:500 10px var(--f-mono);letter-spacing:.1em;color:var(--mute);box-shadow:inset 0 0 0 1px var(--line)}
+.bcats button.on{color:var(--lcd-ink);background:var(--lcd);box-shadow:none}
 .shapes button{flex:none;width:52px;height:52px;border-radius:14px;display:grid;place-items:center}
 .shapes button.on{background:rgba(255,255,255,.08)}
 .shapes .drawbtn{box-shadow:inset 0 0 0 1.5px #3d3731;color:var(--fg);font-size:22px}
@@ -905,7 +908,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
             <div class="brow"><button class="pbtn ghost sm" id="bInv">Obrátit</button><div class="seg" id="bBlend"><button data-b="normal" class="on">NORMÁL</button><button data-b="screen">SCREEN</button><button data-b="glow">GLOW</button></div></div>
             <div class="bsl"><label class="srow"><span>Dissolve</span><input type="range" id="bDis" min="0" max="100" value="0" data-def="0"><output>0</output></label>
               <label class="srow"><span>Velikost</span><input type="range" id="bSize" min="40" max="160" value="100" data-def="100"><output id="bSizeO">100</output></label></div>
-            <div><div class="bh">TVARY</div><div class="shapes hs" id="bShapes"></div></div>
+            <div><div class="bcats hs" id="bCats"></div><div class="shapes hs" id="bShapes"></div></div>
             <div><div class="bh">PRESETY</div><div class="bpresets hs" id="bPresets"></div></div>
           </div>
           <div class="bbar pb"><button class="pbtn ghost" id="bText">Text: zap</button><button class="pbtn ghost" id="bSave">Uložit blob</button><button class="pbtn" id="bShare">Export</button></div>
@@ -3223,6 +3226,11 @@ async function shareRecipe(r) {
 const SHAPES = [{ k: 'splat', s: 3 }, { k: 'blob', n: 5, a: .2, s: 9 }, { k: 'star', s: 2 }, { k: 'sparkle', s: 4 }, { k: 'flower', s: 5 }, { k: 'stamp' }, { k: 'soft' },
   { k: 'stars', s: 11 }, { k: 'dots', s: 12 }, { k: 'flowers', s: 13 }, { k: 'sparkles', s: 14 }, { k: 'waves', s: 15 },
   { k: 'shoot', s: 21 }, { k: 'chain', s: 22 }, { k: 'beacons', s: 23 }, { k: 'stars3', s: 24 }, { k: 'snake', s: 25 }, { k: 'daisygrid', s: 26 }, { k: 'halfdaisy', s: 27 }, { k: 'outlineflowers', s: 28 }, { k: 'daisyfield', s: 29 }, { k: 'loops', s: 30 },
+  { k: 'flock', s: 41 }, { k: 'gulls', s: 42 }, { k: 'birds', s: 43 }, { k: 'birdcloud', s: 44 }, { k: 'swallows', s: 45 }, { k: 'wires', s: 46 }, { k: 'onebird', s: 47 },
+  { k: 'orchid', s: 48 }, { k: 'stems', s: 49 }, { k: 'poppies', s: 50 }, { k: 'tulips', s: 51 }, { k: 'bouquet', s: 52 },
+  { k: 'vase', v: 'jar', f: 'balls', s: 53 }, { k: 'vase', v: 'bottle', f: 'balls2', s: 54 }, { k: 'vase', v: 'slim', f: 'balls3', s: 55 },
+  { k: 'vase', v: 'slim', f: 'puff', s: 56 }, { k: 'vase', v: 'bottle', f: 'sprigs', s: 57 }, { k: 'vase', v: 'round', f: 'berries', s: 58 }, { k: 'vase', v: 'carafe', f: 'hydra', s: 59 }, { k: 'vase', v: 'slim', f: 'spike', s: 60 },
+  { k: 'constellation', s: 61 }, { k: 'figures', s: 62 }, { k: 'player', s: 63 }, { k: 'bang', s: 64 }, { k: 'bolts', s: 65 },
   { k: 'bigstars', s: 31 }, { k: 'lattice', s: 32 }, { k: 'clouds', s: 33 }, { k: 'leaf', s: 34 }, { k: 'rays', s: 35 }, { k: 'blossoms', s: 36 }, { k: 'spiral', s: 37 }, { k: 'coral', s: 38 }, { k: 'hearts', s: 39 }, { k: 'blobstars', s: 40 },
   { k: 'blob', n: 7, a: .28, s: 1 }, { k: 'blob', n: 3, a: .3, s: 12 }];
 const f2 = v => v.toFixed(2);
@@ -3255,6 +3263,47 @@ const sparkle4 = (cx, cy, L, rot, fat = .13) => { let d = ''; for (let i = 0; i 
 /* nepravidelná hvězda s kulatými cípy (padající hvězda) */
 const curvyStar = (cx, cy, tips, valley, sc = 1, rot = 0) => { const pts = []; tips.forEach(([deg, L], i) => { const nd = tips[(i + 1) % tips.length][0] + (i === tips.length - 1 ? 360 : 0), a = deg * Math.PI / 180 + rot, am = (deg + nd) / 2 * Math.PI / 180 + rot;
   pts.push([cx + Math.cos(a) * L * sc, cy + Math.sin(a) * L * sc]); pts.push([cx + Math.cos(am) * valley * sc, cy + Math.sin(am) * valley * sc]); }); return smoothClosed(pts, .1); };
+/* tah tuší jako od ruky: hladká křivka přes body, chvění do stran, kolísající tloušťka, zúžené konce → vyplněná cesta */
+function crPts(pts, n = 10) { const out = []; for (let i = 0; i < pts.length - 1; i++) { const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+  for (let k = 0; k < n; k++) { const t = k / n, t2 = t * t, t3 = t2 * t; out.push([0, 1].map(j => .5 * (2 * p1[j] + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2 + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t3))); } }
+  out.push(pts[pts.length - 1]); return out; }
+function ink(pts, w, seed, o = {}) { const r = rng(seed * 7919 + 13), raw = crPts(pts), cl = [0]; for (let i = 1; i < raw.length; i++) cl.push(cl[i - 1] + Math.hypot(raw[i][0] - raw[i - 1][0], raw[i][1] - raw[i - 1][1]));
+  const Lt = cl[cl.length - 1], N = Math.max(8, Math.round(Lt / .7)), jit = o.jit ?? .35, tap = o.taper ?? .55, ph = [r() * 9, r() * 9, r() * 9, r() * 9], fr = [.21 + r() * .1, .53 + r() * .2, .13 + r() * .08];
+  const S = []; let j = 0; for (let k = 0; k <= N; k++) { const d = k / N * Lt; while (j < cl.length - 2 && cl[j + 1] < d) j++; const t = (d - cl[j]) / Math.max(1e-6, cl[j + 1] - cl[j]); S.push([raw[j][0] + (raw[j + 1][0] - raw[j][0]) * t, raw[j][1] + (raw[j + 1][1] - raw[j][1]) * t, d]); }
+  const Lp = [], Rp = []; S.forEach(([x, y, d], k) => { const a = S[Math.max(0, k - 1)], b = S[Math.min(S.length - 1, k + 1)], tx = b[0] - a[0], ty = b[1] - a[1], tl = Math.hypot(tx, ty) || 1, nx = -ty / tl, ny = tx / tl;
+    const wob = (Math.sin(d * fr[0] + ph[0]) * .7 + Math.sin(d * fr[1] + ph[1]) * .3) * jit, u = d / Lt, end = Math.min(1, Math.min(u, 1 - u) * Lt / (w * 3)), hw = w / 2 * (.82 + .3 * Math.sin(d * fr[2] + ph[2])) * (1 - tap + tap * Math.sqrt(Math.max(.05, end)));
+    Lp.push([x + nx * (wob + hw), y + ny * (wob + hw)]); Rp.push([x + nx * (wob - hw), y + ny * (wob - hw)]); });
+  const pt = q => `${f2(q[0])} ${f2(q[1])}`; return `M${Lp.map(pt).join('L')}L${Rp.reverse().map(pt).join('L')}Z`; }
+/* nepravidelné kolečko / skvrna od ruky */
+function wcirc(x, y, R, seed, a = .07) { const r = rng(seed * 31 + 7), p = [r() * 9, r() * 9], pts = []; for (let i = 0; i < 18; i++) { const t = i / 18 * Math.PI * 2, k = 1 + (Math.sin(t * 2 + p[0]) * .6 + Math.sin(t * 3 + p[1]) * .4) * a; pts.push([x + Math.cos(t) * R * k, y + Math.sin(t) * R * k * (1 - a * .5)]); } return smoothClosed(pts, .17); }
+/* cesta v jednotkových souřadnicích → posun, měřítko, otočení (M/L/Q/C/Z) */
+function pathT(cmds, cx, cy, s, rot = 0, fx = 1) { const cs = Math.cos(rot), sn = Math.sin(rot); let d = '', i = 0;
+  while (i < cmds.length) { const c = cmds[i++]; if (c === 'Z') { d += 'Z'; continue; } const n = { M: 1, L: 1, Q: 2, C: 3 }[c]; d += c;
+    for (let k = 0; k < n; k++) { const x = cmds[i++] * fx, y = cmds[i++]; d += `${f2(cx + (x * cs - y * sn) * s)} ${f2(cy + (x * sn + y * cs) * s)} `; } } return d; }
+const BIRD = f => ['M', -1, .28, 'L', -.42, .12, 'Q', -.62, -.32, -.98, -.78 + f, 'Q', -.28, -.42, -.02, -.04, 'Q', .25, -.5, .62, -.86 + f, 'Q', .42, -.22, .5, -.02, 'Q', .72, -.12, .92, -.04, 'L', .7, .08, 'Q', .3, .32, -.32, .26, 'Z'];
+const SWALLOW = ['M', -1.05, .5, 'L', -.55, .14, 'L', -1, .06, 'L', -.45, .02, 'Q', -.68, -.55, -1.05, -.92, 'Q', -.22, -.45, .05, -.1, 'Q', .3, -.6, .88, -.78, 'Q', .42, -.25, .45, -.02, 'Q', .78, -.06, .98, .06, 'Q', .6, .22, .18, .22, 'Q', -.2, .26, -.55, .22, 'Z'];
+const PERCH = ['M', -.05, -1, 'Q', .3, -1.02, .32, -.72, 'L', .5, -.66, 'L', .3, -.58, 'Q', .36, -.2, .12, .05, 'L', .02, .55, 'L', -.12, .55, 'L', -.08, .08, 'Q', -.42, -.1, -.36, -.55, 'Q', -.32, -.95, -.05, -1, 'Z'];
+const boltPath = (cx, cy, L, rot) => pathT(['M', -.14, -.5, 'L', .22, -.5, 'L', .05, -.06, 'L', .25, -.06, 'L', -.18, .52, 'L', -.03, .05, 'L', -.24, .05, 'Z'], cx, cy, L, rot);
+const tulipPath = (cx, cy, s, rot) => pathT(['M', -.5, -.15, 'Q', -.6, .55, 0, .62, 'Q', .6, .55, .5, -.15, 'L', .33, -.62, 'L', .17, -.2, 'L', 0, -.72, 'L', -.17, -.2, 'L', -.33, -.62, 'Z'], cx, cy, s, rot);
+const VASES = { jar: [[0, 0], [.42, 0], [.5, .14], [.5, .52], [.36, .68], [.3, .78], [.36, .86]], bottle: [[0, 0], [.36, 0], [.41, .08], [.41, .5], [.3, .62], [.14, .7], [.12, .95], [.16, 1]],
+  slim: [[0, 0], [.22, 0], [.25, .1], [.21, .6], [.16, .86], [.21, 1]], carafe: [[0, 0], [.4, 0], [.47, .2], [.41, .5], [.2, .7], [.14, .9], [.19, 1]], round: [[0, 0], [.3, 0], [.5, .25], [.48, .46], [.25, .62], [.16, .76], [.21, .86]] };
+function vaseSvg(sh, P, fg, r) { const pr = VASES[sh.v], H = 54, W = 46, by = 117, cx = 50, top = pr[pr.length - 1], my = by - top[1] * H, mw = top[0] * W, sd = (sh.s || 1) * 101;
+  const G = (d, g) => `<path data-g="${g}" d="${d}" fill="${fg}"/>`, side = pr.map(([x, y]) => [cx + x * W, by - y * H]), other = pr.slice().reverse().map(([x, y]) => [cx - x * W, by - y * H]);
+  let c = G(ink([...other, ...side.slice(1)], 1.9, sd, { jit: .3, taper: .25 }), 'vase'), n = 0;
+  /* stonek: od květu přes hrdlo až skoro na dno vázy (v obrysu je vidět) */
+  const stem = (x2, y2, bend = 0) => { const bx = cx + (x2 - cx) * .22 + (r() - .5) * 6; c += G(ink([[bx, by - 3], [cx + (x2 - cx) * .12 + bend * .2, my + 2], [cx + (x2 - cx) * .55 + bend, (my + y2) / 2], [x2, y2]], 1.2, sd + ++n, { jit: .25, taper: .3 }), 'stem'); };
+  const head = (d, g) => { c += G(d, g); };
+  switch (sh.f) {
+    case 'balls': [[37, 32, 'h'], [52, 25], [63, 33]].forEach(([x, y, h], i) => { stem(x, y + 4); head(h ? pathT(['M', 0, .95, 'C', -1.7, -.15, -.7, -1.35, 0, -.42, 'C', .7, -1.35, 1.6, -.2, 0, .95, 'Z'], x, y, 4.4, -.15) : wcirc(x, y, 4.6, sd + i), 'f' + i); }); break;
+    case 'balls2': [[44, 18], [58, 27]].forEach(([x, y], i) => { stem(x, y + 4); head(wcirc(x, y, 5.2, sd + i), 'f' + i); }); break;
+    case 'balls3': [[46, 27], [56, 19]].forEach(([x, y], i) => { stem(x, y + 4); head(wcirc(x, y, 4.3, sd + i), 'f' + i); }); break;
+    case 'puff': { const x = 50, y = 22; stem(x, y + 6); for (let i = 0; i < 26; i++) { const a = i / 26 * Math.PI * 2 + r() * .1, L = 7.5 + r() * 2; c += G(ink([[x + Math.cos(a) * 2, y + Math.sin(a) * 2], [x + Math.cos(a) * L, y + Math.sin(a) * L]], .55, sd + 40 + i, { jit: .1 }), 'f0') + G(wcirc(x + Math.cos(a) * (L + .8), y + Math.sin(a) * (L + .8), .9, i), 'f0'); } head(wcirc(x, y, 1.8, 3), 'f0'); break; }
+    case 'sprigs': [[37, 31], [50, 20], [63, 28], [44, 40], [57, 41]].forEach(([x, y], i) => { stem(x, y + 3, (r() - .5) * 7); head(petalPath(x, y, 3.6, 5, r() * 6, 1, .45, .1), 'f' + i % 2); head(wcirc(x, y, .9, i), 'c'); }); break;
+    case 'berries': [[41, 35, -5], [52, 25, 2], [61, 37, 6]].forEach(([x, y, b], k) => { stem(x, y + 5, b); for (let i = 0; i < 8; i++) { const a = r() * 6.3, rr = Math.sqrt(r()) * 4.5; c += G(ink([[x, y + 4], [x + Math.cos(a) * rr, y + Math.sin(a) * rr]], .5, sd + k * 9 + i, { jit: .05 }), 'stem'); head(wcirc(x + Math.cos(a) * rr, y + Math.sin(a) * rr, 1.5, k * 9 + i), 'f' + k); } }); break;
+    case 'hydra': { const x = 50, y = 29; stem(x, y + 7); for (let i = 0; i < 30; i++) { const a = r() * 6.3, rr = Math.sqrt(r()) * 10.5; head(petalPath(x + Math.cos(a) * rr, y + Math.sin(a) * rr * .85, 2.2, 4, r() * 3, 1.2, .5, .1), 'f0'); } break; }
+    case 'spike': { stem(52, 24, 2); for (let i = 0; i < 10; i++) { const y = 15 + i * 3.4, k = 1 - i * .04; head(petalPath(52 + (i % 2 ? 2.4 : -2.4) * k, y, 2.6 * k, 5, i, 1.1, .5, .1), 'f0'); } break; }
+  }
+  return c; }
 const cloudPath = (cx, cy, w) => smoothClosed([[-.46, .12], [0, .15], [.46, .12], [.5, -.02], [.4, -.16], [.24, -.2], [.12, -.36], [-.06, -.4], [-.2, -.3], [-.32, -.22], [-.46, -.12]].map(([x, y]) => [cx + x * w, cy + y * w]), .2);
 const heartPath = (cx, cy, R, rot) => { const pts = []; for (let i = 0; i < 40; i++) { const t = i / 40 * Math.PI * 2, x = 16 * Math.pow(Math.sin(t), 3), y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)), cs = Math.cos(rot), sn = Math.sin(rot);
   pts.push([cx + (x * cs - y * sn) * R / 17, cy + (x * sn + y * cs) * R / 17]); } return smoothClosed(pts, .16); };
@@ -3293,6 +3342,44 @@ function shapeSvg(sh, fg, bg, fid = 'bsoft') {
     case 'outlineflowers': return [[40, 44, 17, .2], [72, 68, 12, .9], [46, 92, 18, -.3]].map(([x, y, R, rt]) => `<path d="${petalPath(x, y, R, 5, rt, 1.3, .45)}" fill="none" stroke="${fg}" stroke-width="2.4"/><path d="${circ(x, y, R * .12)}" fill="none" stroke="${fg}" stroke-width="1.8"/>`).join('');
     case 'daisyfield': return scatter(r, 9, 1.12, 9, 12.5).map(([x, y, R]) => `<path d="${petalPath(x, y, R, 7, r() * 6, 1.1, .5)}${circ(x, y, R * .24)}" fill="${fg}" fill-rule="evenodd"/>`).join('');
     case 'loops': return scatter(r, 8, .85, 11, 19).map(([x, y, R], i) => { const ex = x + R * .2, ey = y - R * .15; return `<path d="${blobPath({ n: 2 + (i % 2), a: .2, s: (sh.s || 1) * 7 + i }, x, y, R)}" fill="none" stroke="${fg}" stroke-width="1.8"/><ellipse cx="${f2(ex)}" cy="${f2(ey)}" rx="${f2(R * .28)}" ry="${f2(R * .16)}" transform="rotate(${Math.round(r() * 80 - 40)} ${f2(ex)} ${f2(ey)})" fill="none" stroke="${fg}" stroke-width="1.6"/>`; }).join('');
+    case 'flock': { let c = ''; for (let i = 0; i < 18; i++) { const t = i / 17, x = 20 + t * 62 + (r() - .5) * 16, y = 18 + Math.abs(t - .45) * 90 + (r() - .5) * 14; c += P(pathT(BIRD((r() - .5) * .4), x, y, 2.3 + r() * 1.3, (r() - .5) * .6)); } return c; }
+    case 'gulls': return Array.from({ length: 8 }, (_, i) => { const x = 30 + r() * 55, y = 26 + r() * 40, s = 3 + r() * 2.5; const rt = (r() - .5) * .5, T = (u, v) => [x + (u * Math.cos(rt) - v * Math.sin(rt)) * s, y + (u * Math.sin(rt) + v * Math.cos(rt)) * s]; return P(ink([T(-1, .15), T(-.55, -.4), T(-.05, .12), T(.45, -.45), T(1, .05)], 1.1, 4200 + i, { jit: .12, taper: .7 })); }).join('');
+    case 'birds': return scatter(r, 9, 1.3, 7, 9.5).map(([x, y, R]) => P(pathT(BIRD((r() - .5) * .5), x, y, R, (r() - .5) * .9, r() < .25 ? -1 : 1))).join('');
+    case 'birdcloud': return scatter(r, 18, .78, 8.5, 12).map(([x, y, R]) => P(pathT(BIRD((r() - .5) * .6), x, y, R, -.5 + (r() - .5) * .8))).join('');
+    case 'swallows': return Array.from({ length: 11 }, (_, i) => { const a = i / 11 * Math.PI * 2, x = 50 + Math.cos(a) * 33, y = 62 + Math.sin(a) * 36; return P(pathT(SWALLOW, x, y, 7.5, a + Math.PI / 2 + .3)); }).join('');
+    case 'wires': { let c = ''; const ys = [26, 46, 66, 86, 106]; ys.forEach((y0, k) => c += P(ink([[-3, y0], [30, y0 + 3.8], [70, y0 + 3.6], [103, y0 - 2]], .85, 4600 + k, { jit: .18, taper: 0 })));
+      for (let i = 0; i < 10; i++) { const j = Math.floor(r() * 5), x = 12 + r() * 76, y = ys[j] + 5 * (1 - ((x - 50) / 52) ** 2) - (x / 104) * 2; c += P(pathT(PERCH, x, y - .4, 4.6, (r() - .5) * .2, r() < .5 ? -1 : 1)); } return c; }
+    case 'onebird': return P(pathT(BIRD(.05), 56, 50, 10, -.25));
+    case 'orchid': { const pts = [[52, 126], [50, 104], [47, 84], [46, 62], [48, 44], [52, 30], [57, 20]]; let c = P(ink(pts, 2, 4800, { jit: .3, taper: .35 }));
+      [[47, 90, 10.5, -1], [46, 74, 11, 1], [47, 58, 10, -1], [50, 44, 8.5, 1], [53, 33, 6.5, -1]].forEach(([x, y, R, sd]) => c += `<path d="${petalPath(x + sd * R * .7, y, R, 5, sd * .5, .9, .42, .08)}${circ(x + sd * R * .7, y, R * .18)}" fill="${fg}" fill-rule="evenodd"/>`);
+      c += P(`M57 23 q5 -2 5 -7 q-5 1 -5 7Z`) + P(circ(59, 13, 2.6)); return c; }
+    case 'stems': { let c = ''; [[16, 'p', 30], [30, 'f', 52], [44, 'p', 36], [62, 'p', 24], [76, 'f', 48], [88, 'f', 38]].forEach(([x, t, y]) => { const tx = x + (r() - .5) * 6;
+      c += `<path data-g="s" d="${ink([[x, 128], [x + (tx - x) * .5 + (r() - .5) * 5, (128 + y) / 2], [tx, y]], 1.1, x * 3, { jit: .3, taper: .2 })}" fill="${fg}"/>`;
+      if (t === 'f') c += P(petalPath(tx, y - 2, 4.6, 11, r() * 3, 1.5, .4, .12)) + P(wcirc(tx, y - 2, 1.2, x));
+      else { for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2; c += P(ink([[tx + Math.cos(a) * 1.4, y - 4 + Math.sin(a) * 1.4], [tx + Math.cos(a) * 4.8, y - 4 + Math.sin(a) * 4.8]], .45, x + i, { jit: .08 })); } c += P(wcirc(tx, y - 4, 1.5, x)); } }); return c; }
+    case 'poppies': return [[30, 40, 8.5], [55, 30, 9.5], [76, 46, 8], [20, 66, 7], [44, 58, 8.5], [66, 66, 7.5], [84, 72, 6.5], [33, 84, 7], [57, 84, 7.5], [16, 92, 6]].map(([x, y, R], i) =>
+      P(ink([[x, y + R * .3], [x + (r() - .5) * 5, (y + 128) / 2], [x + (r() - .5) * 8, 129]], .8, 5600 + i, { jit: .25, taper: .1 })) + `<path d="${petalPath(x, y, R, 5, r() * 6, .5, .3, .16)}${wcirc(x, y + R * .1, R * .16, i)}" fill="${fg}" fill-rule="evenodd"/>`).join('');
+    case 'tulips': { let c = ''; [[-1.05, 34], [-.62, 26], [-.3, 40], [.08, 22], [.42, 34], [.78, 28]].forEach(([a, len], i) => { const ang = -Math.PI / 2 + a * .45, x = 50 + Math.cos(ang) * (46 + len * .5) * 1.05, y = 98 + Math.sin(ang) * (46 + len * .5);
+        c += P(ink([[50 + (x - 50) * .05, 108], [50 + (x - 50) * .45, 100 + (y - 100) * .5], [x, y + 6]], 1.9, 5100 + i, { jit: .3, taper: .3 })) + P(tulipPath(x, y, 11.5, a * .3)); });
+      [[-1, 30], [1, 26], [-.6, 22], [.6, 24]].forEach(([sd, L]) => c += P(pathT(['M', 0, 0, 'Q', sd * .45, -.4, sd * .9, -1, 'Q', sd * .2, -.55, 0, 0, 'Z'], 50, 110, L * 1.5))); return c; }
+    case 'bouquet': { let c = ''; [[36, 34], [50, 26], [64, 32], [42, 46], [58, 46], [50, 38], [30, 48], [70, 46]].forEach(([x, y], i) => { c += P(ink([[x, y + 3], [50 + (x - 50) * .45, (y + 76) / 2], [50 + (x - 50) * .1, 86]], 1, 5200 + i, { jit: .2, taper: .2 })); c += `<path d="${petalPath(x, y, 6.2, 6 + (i % 3), r() * 6, 1.2, .45)}${circ(x, y, 1.5)}" fill="${fg}" fill-rule="evenodd"/>`; });
+      [[-1, 0], [1, .3]].forEach(([sd]) => c += P(pathT(['M', 0, 0, 'Q', sd * .5, -.5, sd, -.6, 'Q', sd * .45, -.15, 0, 0, 'Z'], 50, 70, 18)));
+      const H2 = (pts, k) => P(ink(pts, 1.5, 5300 + k, { jit: .25, taper: .3 }));
+      c += H2([[44, 74], [41.5, 79], [42, 86], [45, 92]], 1) + H2([[44.5, 74], [52, 72.5], [60, 74.5], [61, 78]], 2) + H2([[43.5, 78.5], [52, 77.5], [61, 79.5], [60.5, 82.5]], 3) + H2([[43, 83], [52, 82.5], [60.5, 84], [59.5, 87.5]], 4)
+        + H2([[44, 87.5], [52, 87.5], [59.5, 89], [57, 92]], 5) + H2([[61, 78], [64, 83], [61.5, 87]], 6) + H2([[45, 92], [42.5, 110], [40.5, 128]], 7) + H2([[57, 92], [59.5, 110], [62, 128]], 8); return c; }
+    case 'vase': return vaseSvg(sh, P, fg, r);
+    case 'constellation': { const st = [[14, 30], [35, 36], [44, 49], [57, 62], [55, 79], [77, 91], [87, 75]]; let c = ''; [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 3]].forEach(([a, b], k) => c += P(ink([st[a], st[b]], .8, 6100 + k, { jit: .12, taper: .1 })));
+      st.forEach(([x, y], i) => c += P(starPath(x, y, i === 3 ? 3.4 : 2.8, 5, .42, .1))); return c; }
+    case 'figures': { const sd = 6200, I = (pts, w = 3.4, k = 0) => P(ink(pts, w, sd + k, { jit: .5, taper: .4 }));
+      return P(wcirc(29, 49.5, 3.6, 1, .12)) + I([[28.5, 53.5], [25.5, 62], [22, 71]], 4, 1) + I([[29, 55.5], [37, 54.5], [46, 55], [55, 55.8], [63, 56.5]], 2.6, 2) + I([[28, 55.5], [20, 55], [11, 56.5]], 2.5, 3)
+        + I([[22, 71], [17.5, 80.5], [12, 92], [9, 93.5]], 3.2, 4) + I([[22.5, 71], [22.5, 82], [19, 93], [22, 94]], 3.2, 5)
+        + P(wcirc(68, 55.5, 3.6, 2, .12)) + I([[70, 59.5], [74, 68], [78, 77]], 4, 6) + I([[69.5, 59], [80, 57.5], [88.5, 58.5]], 2.5, 7)
+        + I([[78, 77], [82, 86.5], [84, 97.5], [87.5, 98.5]], 3.2, 9) + I([[78.5, 77], [86.5, 85], [91, 96.5], [94.5, 97]], 3.2, 10)
+        + I([[51, 26], [50.5, 34.5], [51.5, 44]], 3.1, 11) + I([[45, 35], [51, 34.5], [57.5, 35.5]], 3.1, 12); }
+    case 'player': { const tri = (x, y, s, d) => `M${f2(x - s * d)} ${f2(y - s)}L${f2(x + s * d)} ${y}L${f2(x - s * d)} ${f2(y + s)}Z`;
+      return P(tri(15, 62, 7, -1) + tri(26, 62, 7, -1)) + P(`M43 52.5h5.5v19h-5.5zM51.5 52.5h5.5v19h-5.5z`) + P(tri(74, 62, 7, 1) + tri(85, 62, 7, 1)); }
+    case 'bang': return [[36, 54, -.22, 1], [62, 58, .12, 1.15]].map(([x, y, rt, k]) => P(pathT(['M', -.17, -.62, 'L', .17, -.62, 'L', .09, .25, 'L', -.09, .25, 'Z'], x, y, 44 * k, rt)) + P(pathT(['M', -.09, .36, 'L', .09, .36, 'L', .09, .5, 'L', -.09, .5, 'Z'], x, y, 44 * k, rt))).join('');
+    case 'bolts': return [-160, -125, -90, -55, -20].map(dg => { const a = dg * Math.PI / 180; return P(boltPath(50 + Math.cos(a) * 36, 80 + Math.sin(a) * 38, 30, a + Math.PI / 2)); }).join('');
     case 'bigstars': return scatter(r, 20, 1.05, 4.5, 10).map(([x, y, R]) => P(starPath(x, y, R, 5, .42, r() * 6))).join('');
     case 'lattice': { let c = ''; const R = 12.7, k = .8; for (let y = 0; y <= 125.1; y += 25) for (let x = 0; x <= 100.1; x += 25) { let d = ''; // čtyřcípé hvězdy, mezi nimi zaoblené čtverce
         for (let i = 0; i <= 4; i++) { const a = i * Math.PI / 2 - Math.PI / 2, tx = x + Math.cos(a) * R, ty = y + Math.sin(a) * R; if (!i) { d += `M${f2(tx)} ${f2(ty)}`; continue; }
@@ -3377,8 +3464,16 @@ function syncBlobCtl() {
   $('#bInv').classList.toggle('on', B.inv); $$('#bBlend button').forEach(x => x.classList.toggle('on', x.dataset.b === B.blend));
   [['#bDis', B.dis], ['#bSize', B.size]].forEach(([id, v]) => { const i = $(id); i.value = Math.round(v * 100); i.nextElementSibling.textContent = i.value; paintRange(i); });
 }
+const SCAT = { zaklad: ['blob', 'splat', 'soft', 'stamp', 'snake', 'spiral', 'clouds', 'hearts'], hvezdy: ['star', 'sparkle', 'stars', 'sparkles', 'chain', 'beacons', 'stars3', 'bigstars', 'lattice', 'rays', 'blobstars', 'constellation', 'shoot'],
+  kytky: ['flower', 'flowers', 'daisygrid', 'halfdaisy', 'outlineflowers', 'daisyfield', 'blossoms', 'leaf', 'coral', 'orchid', 'stems', 'poppies', 'tulips', 'bouquet', 'vase'],
+  ptaci: ['flock', 'gulls', 'birds', 'birdcloud', 'swallows', 'wires', 'onebird'], vzory: ['dots', 'waves', 'loops', 'stars', 'flowers', 'sparkles', 'lattice', 'hearts', 'clouds', 'bigstars', 'daisyfield'], ikony: ['player', 'bang', 'bolts', 'figures'], moje: ['draw', 'img'] };
+const SCATN = [['vse', 'VŠE'], ['zaklad', 'ZÁKLAD'], ['hvezdy', 'HVĚZDY'], ['kytky', 'KYTKY'], ['ptaci', 'PTÁCI'], ['vzory', 'VZORY'], ['ikony', 'IKONY'], ['moje', 'MOJE']];
 function renderShapes() {
-  $('#bShapes').innerHTML = SHAPES.map((sh, i) => `<button data-i="${i}" class="${i === B.shape ? 'on' : ''}"><svg viewBox="0 0 100 125"><defs><filter id="ts${i}" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4"/></filter></defs>${shapeSvg(sh, '#e9e2d6', '#1a1b1f', 'ts' + i)}</svg></button>`).join('')
+  B.cat = B.cat || store.get('blobCat', 'vse');
+  $('#bCats').innerHTML = SCATN.map(([k, l]) => `<button data-c="${k}" class="${B.cat === k ? 'on' : ''}">${l}</button>`).join('');
+  $$('#bCats button').forEach(b => b.onclick = () => { B.cat = b.dataset.c; store.set('blobCat', B.cat); renderShapes(); $('#bShapes').scrollLeft = 0; buzz(4); });
+  const inCat = sh => B.cat === 'vse' || sh.rnd || (SCAT[B.cat] || []).includes(sh.k);
+  $('#bShapes').innerHTML = SHAPES.map((sh, i) => !inCat(sh) ? '' : `<button data-i="${i}" class="${i === B.shape ? 'on' : ''}"><svg viewBox="0 0 100 125"><defs><filter id="ts${i}" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4"/></filter></defs>${shapeSvg(sh, '#e9e2d6', '#1a1b1f', 'ts' + i)}</svg></button>`).join('')
     + `<button class="drawbtn" id="bDraw" aria-label="Nakreslit vlastní tvar">+</button><button class="drawbtn" id="bPhoto" aria-label="Tvar z fotky">${iconSVG('camera')}</button>`;
   $$('#bShapes [data-i]').forEach(b => { const sh = SHAPES[+b.dataset.i]; if (sh && (sh.k === 'draw' || sh.k === 'img')) longPress(b, () => openActs(`<h4>Vlastní tvar</h4>${actBtn('del', 'trash', 'Smazat tvar', 'danger')}`, root => {
     $('[data-a=del]', root).onclick = () => { closeActs(); const i = SHAPES.indexOf(sh); SHAPES.splice(i, 1); if (B.shape >= SHAPES.length) B.shape = 0; saveShapes(); renderShapes(); drawBlob(); toast('Tvar smazaný'); }; })); });
@@ -3404,7 +3499,7 @@ function selectShape(i) {
   drawBlob(); spring(.94, 1, v => $('#bCard').style.transform = `scale(${v})`, { k: 300, c: 16 });
 }
 function diceShape() { // kostka: jeden „náhodný“ slot, náhodný tvar i nastavení; líbí-li se, ulož ho jako preset
-  const kinds = ['blob', 'blob', 'splat', 'star', 'sparkle', 'flower', 'stars', 'dots', 'flowers', 'sparkles', 'waves', 'shoot', 'chain', 'beacons', 'stars3', 'snake', 'daisygrid', 'halfdaisy', 'outlineflowers', 'daisyfield', 'loops', 'bigstars', 'lattice', 'clouds', 'leaf', 'rays', 'blossoms', 'spiral', 'coral', 'hearts', 'blobstars'], rnd = a => a[Math.floor(Math.random() * a.length)];
+  const kinds = ['blob', 'blob', 'splat', 'star', 'sparkle', 'flower', 'stars', 'dots', 'flowers', 'sparkles', 'waves', 'shoot', 'chain', 'beacons', 'stars3', 'snake', 'daisygrid', 'halfdaisy', 'outlineflowers', 'daisyfield', 'loops', 'flock', 'birds', 'birdcloud', 'swallows', 'wires', 'orchid', 'poppies', 'tulips', 'stems', 'constellation', 'bolts', 'bigstars', 'lattice', 'clouds', 'leaf', 'rays', 'blossoms', 'spiral', 'coral', 'hearts', 'blobstars'], rnd = a => a[Math.floor(Math.random() * a.length)];
   const sh = { k: rnd(kinds), s: 1 + Math.floor(Math.random() * 9999), n: 3 + Math.floor(Math.random() * 6), a: .1 + Math.random() * .25, rnd: true };
   let i = SHAPES.findIndex(x => x.rnd); if (i < 0) { SHAPES.push(sh); i = SHAPES.length - 1; } else SHAPES[i] = sh;
   Object.assign(B, { inv: Math.random() < .3, dis: Math.random() < .35 ? +(.15 + Math.random() * .45).toFixed(2) : 0, blend: rnd(['normal', 'normal', 'screen', 'glow']), size: +(.75 + Math.random() * .3).toFixed(2), bg: Math.floor(Math.random() * 5) });
@@ -3893,7 +3988,7 @@ function boot2(h) {
 
   $('#bText').onclick = () => { B.text = B.text === false; $('#bLbl').style.visibility = B.text ? '' : 'hidden'; $('#bText').textContent = 'Text: ' + (B.text ? 'zap' : 'vyp'); buzz(4); };
   $('#bShare').onclick = exportBlob;
-  blobGestures(); hscroll($('#bShapes')); hscroll($('#rolls')); hscroll($('#pcStrip'));
+  blobGestures(); hscroll($('#bShapes')); hscroll($('#bCats')); hscroll($('#rolls')); hscroll($('#pcStrip'));
   // o appce
   $('#lowMo').classList.toggle('on', LOWMO);
   $('#lowMo').onclick = () => { LOWMO = !LOWMO; store.set('lowmo', LOWMO); $('#lowMo').classList.toggle('on', LOWMO); toast(LOWMO ? 'Úsporné animace zapnuté' : 'Plné animace'); };
