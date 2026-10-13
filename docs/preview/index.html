@@ -434,7 +434,7 @@ a{color:var(--amber)}
 .cropbox::before,.cropbox::after{content:"";position:absolute;width:18px;height:18px;border:3px solid #fff}
 .cropbox::before{top:-3px;left:-3px;border-right:0;border-bottom:0}
 .cropbox::after{bottom:-3px;right:-3px;border-left:0;border-top:0}
-.fx{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,76px);grid-auto-columns:80px;gap:8px;padding:8px 14px;overflow-x:auto}
+.fx{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:76px;gap:8px;padding:8px 14px;overflow:visible}
 .fx button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 2px 10px;border-radius:16px;background:var(--panel);font-size:10.5px;color:#cbc3b8;border:1px solid var(--line);height:76px}
 .fx button .px{color:#8d847a}
 .fx button.on{border-color:rgba(255,196,61,.4)}
@@ -547,6 +547,14 @@ input[type=range]:hover::-webkit-slider-thumb{background:#fff}
 .palette button{width:38px;height:38px;border-radius:12px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);transition:transform .3s cubic-bezier(.3,1.6,.5,1)}
 .palette button.on{transform:translateY(-4px);box-shadow:0 0 0 2px #0B0C0E,0 0 0 4px var(--fg)}
 .palette .add{width:38px;height:38px;border-radius:12px;cursor:pointer;background:transparent;box-shadow:inset 0 0 0 1.5px #3d3731;color:var(--fg);font-size:20px;display:grid;place-items:center;position:relative;overflow:hidden}
+.actlbl{display:flex;align-items:center;gap:12px;height:50px;padding:0 14px;border-radius:14px;background:var(--panel);border:1px solid var(--line);font-size:14px;cursor:pointer}
+.actlbl .px{width:20px;height:20px;color:#9b9288}
+.mkmod canvas{width:100%;aspect-ratio:4/5;border-radius:12px;display:block;background:#fff}
+.mkmod .srow{padding:0}
+#mkInv.on{color:var(--amber);border-color:rgba(255,196,61,.5)}
+.palette .mixb{width:38px;height:38px;border-radius:12px;box-shadow:inset 0 0 0 1.5px #3d3731;font:600 9.5px var(--f-mono);letter-spacing:.06em;color:#cfc7bc}
+.palette .mixb.on{box-shadow:inset 0 0 0 1.5px var(--amber);color:var(--amber)}
+.palette button.mx{transform:translateY(-4px);box-shadow:0 0 0 2px #0B0C0E,0 0 0 4px var(--amber)}
 .palette .add input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 .shapes{display:flex;gap:6px;overflow-x:auto;padding:0 16px}
 .shapes button{flex:none;width:52px;height:52px;border-radius:14px;display:grid;place-items:center}
@@ -727,7 +735,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
 <body>
 <div class="shell" id="shell">
   <aside class="nav">
-    <div class="brand">QAMERA<small>Náhled 0.10</small></div>
+    <div class="brand">QAMERA<small>Náhled 0.11</small></div>
     <div>
       <div class="navlabel">Zobrazení</div>
       <div class="seg" id="viewSeg"><button class="on" data-v="m">MOBIL 390×844</button><button data-v="pc">PC 1440×900</button></div>
@@ -926,7 +934,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
         <section class="scr pt" id="s-about" hidden>
           <div class="top"><button class="ib" data-back aria-label="Zpět" data-ic="back"></button><span class="title">O appce</span><span style="width:40px"></span></div>
           <div class="about">
-            <div class="hero"><div class="lens"><svg class="eyes" id="aboutEyes" viewBox="14 24 92 72"></svg></div><h2>QAMERA</h2><div class="ver">NÁHLED 0.10</div></div>
+            <div class="hero"><div class="lens"><svg class="eyes" id="aboutEyes" viewBox="14 24 92 72"></svg></div><h2>QAMERA</h2><div class="ver">NÁHLED 0.11</div></div>
             <div class="card"><h3>Poděkování</h3>
               <p><a href="https://github.com/thetechgeekko/Spektrafilm-android" target="_blank" rel="noopener">Spektrafilm for Android</a> by <b>Akshay Sharma</b></p>
               <p>Film modeling powered by <a href="https://github.com/andreavolpato/spektrafilm" target="_blank" rel="noopener">spektrafilm</a> (Andrea Volpato)</p>
@@ -1127,7 +1135,8 @@ const FILMS = [
   { code: 'PV100', sub: 'provia 100F', chem: 'E-6 · ISO 100', desc: 'Neutrální diapozitiv ve stylu Provia 100F. Přesné barvy, jemný grain.', iso: 100, g: 'fine', sh: [0, 0, .015], hi: [1.0, 1.0, 1.0], con: 1.16, sat: 1.14, fade: .0, hal: .15, c: ['#2a5fc4', '#f4f4f4', '#1c1c1c'] },
   { code: 'VEL', sub: 'velvia 100', chem: 'E-6 · ISO 100', desc: 'Extrémně sytý diapozitiv ve stylu Velvia. Krajiny, západy, purpurové stíny.', iso: 100, g: 'fine', sh: [.02, -.01, .03], hi: [1.04, .98, .96], con: 1.28, sat: 1.5, fade: .0, hal: .2, c: ['#7d2a8f', '#f4f4f4', '#2bb04a'] },
 ];
-FILMS.push({ code: 'IR', sub: 'aerochrome', chem: 'infračervený', desc: 'Falešný infračervený film ve stylu Aerochrome. Zeleň zčervená až do růžova, nebe ztmavne.', iso: 400, g: 'classic', sh: [0, .0, .02], hi: [1.02, 1, .98], con: 1.08, sat: 1.12, fade: .02, hal: .3, ir: 1, c: ['#1a1a1a', '#d62f5c', '#f2c230'] });
+FILMS.push({ code: 'IR', sub: 'infrared color', chem: 'barevný infračervený', desc: 'Infračervený vzhled jako z přestavěného foťáku: zeleň a tráva do růžovobílé, nebe tyrkysové, beton do pudrové.', iso: 400, g: 'classic', sh: [0, 0, 0], hi: [1, 1, 1], con: 1.02, sat: 1, fade: .02, hal: .3, gl: .28, ir: 1, c: ['#5fb7b4', '#f2a7bc', '#fbe9ee'] });
+FILMS.push({ code: 'IR400', sub: 'infrared 400', chem: 'ČB infračervený', desc: 'Černobílý infračervený film ve stylu Rollei Infrared 400 s červeným filtrem: zeleň září bíle (Woodův efekt), nebe a voda ztmavnou skoro do černa, ostrý kontrast.', iso: 400, g: 'mono', sh: [0, 0, 0], hi: [1, 1, 1], con: 1.1, sat: 0, fade: .0, hal: .12, gl: .2, ir: 2, c: ['#1a1a1a', '#e8e8e8', '#b3122e'] });
 /* soft glow (difúze, „Pro-Mist“) podle filmu */
 const GLOW = { P160: .2, P400: .18, P800: .22, E100: .08, G200: .18, UM400: .12, KC64: .05, EC100: .06, 'V3-50D': .15, 'V3-250D': .2, 'V3-500T': .3, C200: .12, '400H': .28, SX400: .1, PV100: .05, VEL: .05, IR: .25 };
 FILMS.forEach(f => f.gl = GLOW[f.code] ?? .12);
@@ -1373,7 +1382,18 @@ void main(){
   c = (c-.5)*(1.+uCon*.55)+.5;
   float l = luma(c); c = mix(vec3(l), c, 1.+uSat);
   vec3 f = c; float fl = clamp(luma(f),0.,1.);
-  if (uIR > .5) { vec3 x = f; float veg = clamp((x.g - max(x.r, x.b))*4., 0., 1.); float ir = clamp(luma(x)*.72 + veg*.95, 0., 1.); f = vec3(ir, x.r*.95, x.g*.88); fl = clamp(luma(f),0.,1.); }
+  if (uIR > .5) { vec3 x = clamp(f,0.,1.); float lx = luma(x), sat0 = max(x.r, max(x.g, x.b)) - min(x.r, min(x.g, x.b));
+    float veg = smoothstep(0., .12, x.g - max(x.r, x.b) * .92) * smoothstep(.03, .14, sat0); // zeleň (v IR silně odráží)
+    float sky = smoothstep(.02, .16, x.b - max(x.r, x.g) * .95) * smoothstep(.2, .55, lx);  // modré nebe (v IR tmavé)
+    float irl = clamp(lx * .8 + veg * (.55 + lx * .5), 0., 1.);
+    if (uIR < 1.5) { // barevná IR (filtr 590–720 nm + prohození kanálů): zeleň do růžovobílé, nebe do tyrkysu, zbytek pudrově růžový
+      vec3 base = mix(vec3(irl), irl * vec3(1.1, .84, .89), .8);
+      vec3 fol = mix(vec3(.93, .48, .6), vec3(1., .82, .87), smoothstep(.35, .95, irl));
+      vec3 sk = mix(vec3(.08, .45, .47), vec3(.35, .72, .72), lx);
+      f = mix(base, fol, veg); f = mix(f, sk, sky);
+    } else { // ČB IR (Rollei Infrared 400 + R72): Woodův efekt, černé nebe, tvrdý kontrast
+      float g = clamp(lx * .55 + veg * .85 + lx * veg * .3 - sky * .55 - smoothstep(.02, .2, x.b - x.r) * (1. - sky) * .12, 0., 1.); f = vec3(smoothstep(.04, .96, g)); }
+    fl = clamp(luma(f),0.,1.); }
   if (uLut > .5) f = texture(uLut3, clamp(f,0.,1.)*(32./33.) + .5/33.).rgb; // film ze spektrafilmu (3D LUT 33³)
   else {
   f = mix(vec3(fl), f, uFSat);
@@ -1493,7 +1513,7 @@ class Engine {
     const g = P.grade; gl.uniform3fv(u.uGSh, hue2rgb(g.sh[0], g.sh[1])); gl.uniform3fv(u.uGMid, hue2rgb(g.mid[0], g.mid[1])); gl.uniform3fv(u.uGHi, hue2rgb(g.hi[0], g.hi[1]));
     let T = o.transfer;
     if (!T && f.scan && this.srcEl) { if (!this.st) this.st = stats(this.srcEl); T = { k: Math.min(1, P.str) * (f.scan.k ?? 1), ms: this.st.m, ss: this.st.s, mr: f.scan.m, sr: f.scan.s }; }
-    gl.uniform1f(u.uGlow, P.glow ?? f.gl ?? .12); gl.uniform1f(u.uIR, f.ir ? 1 : 0);
+    gl.uniform1f(u.uGlow, P.glow ?? f.gl ?? .12); gl.uniform1f(u.uIR, f.ir || 0);
     const st = (!o.bypass && P.style) || {}, sty = st.type === 'dither' ? 1 : st.type === 'pixel' ? 2 : 0, pal = (st.pal || []).slice(0, 6), pf = new Float32Array(18);
     pal.forEach((c, i) => { const v = rgbOf(c); pf.set([v[0] / 255, v[1] / 255, v[2] / 255], i * 3); });
     gl.uniform1f(u.uStyle, sty); gl.uniform1f(u.uCells, st.cells || 200); gl.uniform1f(u.uLevels, st.levels || 2); gl.uniform3fv(u.uPal, pf); gl.uniform1f(u.uPalN, pal.length || 2); gl.uniform1f(u.uZebra, o.zebra ? 1 : 0);
@@ -2473,8 +2493,8 @@ function dateOverlay() { const cv = $('#eDate'); if (!cv || !S.cur) return; cons
   Object.assign(cv.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' }); if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
   const g = cv.getContext('2d'); g.clearRect(0, 0, W, H); if (S.P.date && !before && W) drawDate(g, W, H, S.cur.date, S.P.date); }
 /* export v plném rozlišení: render celé fotky přes stejný shader, glow rám, pak sdílení (iPhone: Uložit obrázek) nebo stažení */
-async function exportCanvas(c, name) {
-  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .95)), file = new File([blob], name, { type: 'image/jpeg' });
+async function exportCanvas(c, name, type = 'image/jpeg') {
+  const blob = await new Promise(r => c.toBlob(r, type, .95)), file = new File([blob], name, { type });
   try { if (isMobile() && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Qamera' }); return toast('Hotovo'); } } catch (e) { if (e && e.name === 'AbortError') return; }
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); toast('Fotka stažená');
 }
@@ -3088,6 +3108,7 @@ async function shareRecipe(r) {
 const SHAPES = [{ k: 'splat', s: 3 }, { k: 'blob', n: 5, a: .2, s: 9 }, { k: 'star', s: 2 }, { k: 'sparkle', s: 4 }, { k: 'flower', s: 5 }, { k: 'stamp' }, { k: 'soft' },
   { k: 'stars', s: 11 }, { k: 'dots', s: 12 }, { k: 'flowers', s: 13 }, { k: 'sparkles', s: 14 }, { k: 'waves', s: 15 },
   { k: 'shoot', s: 21 }, { k: 'chain', s: 22 }, { k: 'beacons', s: 23 }, { k: 'stars3', s: 24 }, { k: 'snake', s: 25 }, { k: 'daisygrid', s: 26 }, { k: 'halfdaisy', s: 27 }, { k: 'outlineflowers', s: 28 }, { k: 'daisyfield', s: 29 }, { k: 'loops', s: 30 },
+  { k: 'bigstars', s: 31 }, { k: 'lattice', s: 32 }, { k: 'clouds', s: 33 }, { k: 'leaf', s: 34 }, { k: 'rays', s: 35 }, { k: 'blossoms', s: 36 }, { k: 'spiral', s: 37 }, { k: 'coral', s: 38 }, { k: 'hearts', s: 39 }, { k: 'blobstars', s: 40 },
   { k: 'blob', n: 7, a: .28, s: 1 }, { k: 'blob', n: 3, a: .3, s: 12 }];
 const f2 = v => v.toFixed(2);
 function smoothClosed(pts, t = .18) { const N = pts.length; let d = `M${f2(pts[0][0])} ${f2(pts[0][1])}`;
@@ -3119,6 +3140,12 @@ const sparkle4 = (cx, cy, L, rot, fat = .13) => { let d = ''; for (let i = 0; i 
 /* nepravidelná hvězda s kulatými cípy (padající hvězda) */
 const curvyStar = (cx, cy, tips, valley, sc = 1, rot = 0) => { const pts = []; tips.forEach(([deg, L], i) => { const nd = tips[(i + 1) % tips.length][0] + (i === tips.length - 1 ? 360 : 0), a = deg * Math.PI / 180 + rot, am = (deg + nd) / 2 * Math.PI / 180 + rot;
   pts.push([cx + Math.cos(a) * L * sc, cy + Math.sin(a) * L * sc]); pts.push([cx + Math.cos(am) * valley * sc, cy + Math.sin(am) * valley * sc]); }); return smoothClosed(pts, .1); };
+const cloudPath = (cx, cy, w) => smoothClosed([[-.46, .12], [0, .15], [.46, .12], [.5, -.02], [.4, -.16], [.24, -.2], [.12, -.36], [-.06, -.4], [-.2, -.3], [-.32, -.22], [-.46, -.12]].map(([x, y]) => [cx + x * w, cy + y * w]), .2);
+const heartPath = (cx, cy, R, rot) => { const pts = []; for (let i = 0; i < 40; i++) { const t = i / 40 * Math.PI * 2, x = 16 * Math.pow(Math.sin(t), 3), y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)), cs = Math.cos(rot), sn = Math.sin(rot);
+  pts.push([cx + (x * cs - y * sn) * R / 17, cy + (x * sn + y * cs) * R / 17]); } return smoothClosed(pts, .16); };
+const leafPath = (x, y, ang, L, W, ph) => { const ux = Math.cos(ang), uy = Math.sin(ang), px = -uy, py = ux, side = [], back = [];
+  for (let i = 0; i <= 8; i++) { const t = i / 8, w = W * Math.sin(Math.PI * Math.pow(t, .8)) * (.55 + .45 * t), wv = Math.sin(t * 7 + ph) * W * .35, cx = x + ux * L * t + px * wv, cy = y + uy * L * t + py * wv;
+    side.push([cx + px * w, cy + py * w]); back.unshift([cx - px * w, cy - py * w]); } return smoothClosed([...side, ...back.slice(1, -1)], .18); };
 function scatter(r, n, gap, rMin, rMax) { const out = []; let t = 0;
   while (out.length < n && t++ < n * 80) { const R = rMin + r() * (rMax - rMin), x = 4 + r() * 92, y = 4 + r() * 117; if (out.every(o => Math.hypot(o[0] - x, o[1] - y) > (o[2] + R) * gap)) out.push([x, y, R]); }
   return out; }
@@ -3151,6 +3178,25 @@ function shapeSvg(sh, fg, bg, fid = 'bsoft') {
     case 'outlineflowers': return [[40, 44, 17, .2], [72, 68, 12, .9], [46, 92, 18, -.3]].map(([x, y, R, rt]) => `<path d="${petalPath(x, y, R, 5, rt, 1.3, .45)}" fill="none" stroke="${fg}" stroke-width="2.4"/><path d="${circ(x, y, R * .12)}" fill="none" stroke="${fg}" stroke-width="1.8"/>`).join('');
     case 'daisyfield': return scatter(r, 9, 1.12, 9, 12.5).map(([x, y, R]) => `<path d="${petalPath(x, y, R, 7, r() * 6, 1.1, .5)}${circ(x, y, R * .24)}" fill="${fg}" fill-rule="evenodd"/>`).join('');
     case 'loops': return scatter(r, 8, .85, 11, 19).map(([x, y, R], i) => { const ex = x + R * .2, ey = y - R * .15; return `<path d="${blobPath({ n: 2 + (i % 2), a: .2, s: (sh.s || 1) * 7 + i }, x, y, R)}" fill="none" stroke="${fg}" stroke-width="1.8"/><ellipse cx="${f2(ex)}" cy="${f2(ey)}" rx="${f2(R * .28)}" ry="${f2(R * .16)}" transform="rotate(${Math.round(r() * 80 - 40)} ${f2(ex)} ${f2(ey)})" fill="none" stroke="${fg}" stroke-width="1.6"/>`; }).join('');
+    case 'bigstars': return scatter(r, 20, 1.05, 4.5, 10).map(([x, y, R]) => P(starPath(x, y, R, 5, .42, r() * 6))).join('');
+    case 'lattice': { let c = ''; const R = 12.7, k = .8; for (let y = 0; y <= 125.1; y += 25) for (let x = 0; x <= 100.1; x += 25) { let d = ''; // čtyřcípé hvězdy, mezi nimi zaoblené čtverce
+        for (let i = 0; i <= 4; i++) { const a = i * Math.PI / 2 - Math.PI / 2, tx = x + Math.cos(a) * R, ty = y + Math.sin(a) * R; if (!i) { d += `M${f2(tx)} ${f2(ty)}`; continue; }
+          const a0 = a - Math.PI / 2; d += `C${f2(x + Math.cos(a0) * R * (1 - k))} ${f2(y + Math.sin(a0) * R * (1 - k))} ${f2(x + Math.cos(a) * R * (1 - k))} ${f2(y + Math.sin(a) * R * (1 - k))} ${f2(tx)} ${f2(ty)}`; }
+        c += P(d + 'Z'); } return c; }
+    case 'clouds': return scatter(r, 9, 1.05, 9, 15).map(([x, y, R]) => P(cloudPath(x, y, R * 2))).join('');
+    case 'leaf': { const st = [[18, 120], [30, 98], [36, 80], [40, 60], [50, 44], [64, 32], [80, 18]]; let c = `<path d="${smoothOpen(st)}" fill="none" stroke="${fg}" stroke-width="1.6" stroke-linecap="round"/>`;
+      [[30, 98, 200, 26], [34, 88, -20, 30], [37, 76, 195, 30], [39, 66, -15, 32], [44, 54, 205, 30], [50, 44, -25, 30], [58, 37, 230, 24], [66, 31, -40, 22], [74, 24, 250, 16], [80, 18, -60, 12]].forEach(([x, y, deg, L], i) => c += P(leafPath(x, y, deg * Math.PI / 180, L * 1.08, 6.8, i * 1.7))); return c; }
+    case 'rays': { let c = ''; for (let i = 0; i < 13; i++) { const a = (112 + i * 11.3) * Math.PI / 180; c += `<path d="M106 63L${f2(106 + Math.cos(a) * 170)} ${f2(63 + Math.sin(a) * 170)}" stroke="${fg}" stroke-width="2" stroke-linecap="round"/>`; }
+      return c + P(sparkle4(30, 66, [20, 14, 18, 13], .08, .14)) + P(sparkle4(66, 22, [9, 11, 8, 11], .3, .14)) + P(sparkle4(70, 104, [7, 8, 7, 8], -.2, .14)); }
+    case 'blossoms': return scatter(r, 12, 1.15, 5, 9.5).map(([x, y, R]) => `<path d="${petalPath(x, y, R, 8, r() * 6, 2, .35)}${circ(x, y, R * .26)}" fill="${fg}" fill-rule="evenodd"/>`).join('');
+    case 'spiral': { const pts = []; for (let t = 0; t < 7.2 * Math.PI; t += .25) { const rr = 1.5 + t * 3.4 + Math.sin(t * 3.1) * 1.4; pts.push([50 + Math.cos(t) * rr, 62 + Math.sin(t) * rr * 1.1]); } return `<path d="${smoothOpen(pts)}" fill="none" stroke="${fg}" stroke-width="2.6" stroke-linecap="round"/>`; }
+    case 'coral': { let c = ''; const br = (x, y, a, L, w, d) => { const x2 = x + Math.cos(a) * L, y2 = y + Math.sin(a) * L, mx = (x + x2) / 2 + (r() - .5) * L * .3, my = (y + y2) / 2 + (r() - .5) * L * .2;
+        c += `<path data-g="1" d="M${f2(x)} ${f2(y)}Q${f2(mx)} ${f2(my)} ${f2(x2)} ${f2(y2)}" fill="none" stroke="${fg}" stroke-width="${f2(w)}" stroke-linecap="round"/>`;
+        if (d > 0) { const sp = .35 + r() * .35; br(x2, y2, a - sp, L * (.68 + r() * .12), w * .78, d - 1); br(x2, y2, a + sp, L * (.68 + r() * .12), w * .78, d - 1); if (r() < .4) br(x2, y2, a + (r() - .5) * .3, L * .6, w * .7, d - 2); } };
+      [[30, 128, -1.75], [52, 128, -1.55], [72, 128, -1.38]].forEach(([x, y, a]) => br(x, y, a, 26, 5.4, 4)); return c; }
+    case 'hearts': return scatter(r, 16, .95, 7, 11).map(([x, y, R]) => P(heartPath(x, y, R, (r() - .5) * 1.4))).join('');
+    case 'blobstars': return scatter(r, 9, .9, 11, 16).map(([x, y, R]) => `<path d="${petalPath(x, y, R, 5, r() * 6, .8, .55, .1)}" fill="none" stroke="${fg}" stroke-width="1.5"/><path d="${circ(x + R * .05, y, R * .14)}" fill="none" stroke="${fg}" stroke-width="1.4"/>`).join('');
+    case 'img': return `<g><defs><filter id="${fid}t" x="0" y="0" width="1" height="1"><feFlood flood-color="${fg}"/><feComposite in2="SourceAlpha" operator="in"/></filter></defs><image href="${sh.u}" x="0" y="0" width="100" height="125" preserveAspectRatio="xMidYMid meet" filter="url(#${fid}t)"/></g>`;
     case 'waves': { let c = ''; const n = 3; for (let j = 0; j < n; j++) { const y0 = 18 + j * 42 + (r() - .5) * 10, ph = r() * 6, amp = 8 + r() * 10, pts = []; for (let x = -10; x <= 110; x += 10) pts.push([x, y0 + Math.sin(x * .065 + ph) * amp + (r() - .5) * 5]);
       c += `<path d="${smoothOpen(pts)}" fill="none" stroke="${fg}" stroke-width="7" stroke-linecap="round"/>`; } return c; }
   }
@@ -3167,7 +3213,45 @@ function kmeans(d, k = 5) {
 const B = { shape: 0, palMode: 'post', bg: 1, ox: 0, oy: 0, sc: 1, paper: true, custom: [], photo: null, drawing: false, inv: false, op: 1, color: '#e33a22', blend: 'normal', size: 1, dis: 0 };
 let BPRE = store.get('blobPresets', []);
 function rgbOf(c) { if (c[0] === '#') return [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)); return c.match(/\d+/g).slice(0, 3).map(Number); }
+const saveShapes = () => { try { store.set('blobShapes', SHAPES.filter(x => x.k === 'draw' || x.k === 'img')); } catch { toast('Místo na vlastní tvary je plné'); } };
+/* tvar z fotky: fotka → maska podle jasu (náhled černě na bílém), práh, vyhlazení, obrátit */
+function maskPick() {
+  openActs(`<h4>Tvar z fotky</h4><label class="actlbl">${iconSVG('camera')}Vyfotit<input type="file" accept="image/*" capture="environment" id="mkShoot" hidden></label><label class="actlbl">${iconSVG('gallery')}Fotky v telefonu<input type="file" accept="image/*" id="mkFile" hidden></label>
+    <div class="grid2">${S.photos.filter(p => p.kind !== 'arch').slice(0, 16).map(p => `<button data-id="${p.id}" style="padding:4px"><img src="${p.thumb}" alt="" style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:10px"></button>`).join('')}</div>`, root => {
+    const fromFile = async f => { if (!f) return; closeActs(); try { const url = URL.createObjectURL(f), img = new Image(); img.src = url; await img.decode(); const k = Math.min(1, 900 / Math.max(img.naturalWidth, img.naturalHeight)), c = mk(Math.round(img.naturalWidth * k), Math.round(img.naturalHeight * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); maskEdit(c); } catch { toast('Fotku se nepodařilo načíst'); } };
+    $('#mkShoot', root).onchange = e => fromFile(e.target.files[0]); $('#mkFile', root).onchange = e => fromFile(e.target.files[0]);
+    $$('[data-id]', root).forEach(b => b.onclick = () => { closeActs(); const ph = S.photos.find(p => p.id === +b.dataset.id); maskEdit(copyCanvas(utilRender(ph.src, DEF(), 640, Math.round(640 / (ph.src.width / ph.src.height)), { bypass: true }))); }); });
+}
+function maskEdit(src) {
+  const W = 400, H = 500, k = Math.min(W / src.width, H / src.height), dw = Math.round(src.width * k), dh = Math.round(src.height * k), ox = (W - dw) >> 1, oy = (H - dh) >> 1;
+  const base = mk(W, H), bg = base.getContext('2d', { willReadFrequently: true }); bg.fillStyle = '#fff'; bg.fillRect(0, 0, W, H); bg.drawImage(src, ox, oy, dw, dh);
+  const d = bg.getImageData(0, 0, W, H).data, L0 = new Float32Array(W * H); for (let i = 0; i < W * H; i++) L0[i] = d[i * 4] * .3 + d[i * 4 + 1] * .59 + d[i * 4 + 2] * .11;
+  const blur = (a, rad) => { if (!rad) return a; const t = new Float32Array(W * H), o = new Float32Array(W * H), n = 2 * rad + 1;
+    for (let y = 0; y < H; y++) { let s = 0; for (let x = -rad; x <= rad; x++) s += a[y * W + clamp(x, 0, W - 1)]; for (let x = 0; x < W; x++) { t[y * W + x] = s / n; s += a[y * W + Math.min(W - 1, x + rad + 1)] - a[y * W + Math.max(0, x - rad)]; } }
+    for (let x = 0; x < W; x++) { let s = 0; for (let y = -rad; y <= rad; y++) s += t[clamp(y, 0, H - 1) * W + x]; for (let y = 0; y < H; y++) { o[y * W + x] = s / n; s += t[Math.min(H - 1, y + rad + 1) * W + x] - t[Math.max(0, y - rad) * W + x]; } } return o; };
+  const hist = new Float32Array(256); L0.forEach(v => hist[v | 0]++); let sum = 0, sB = 0, wB = 0, best = 0, th0 = 128; for (let i = 0; i < 256; i++) sum += i * hist[i];
+  for (let i = 0; i < 256; i++) { wB += hist[i]; if (!wB) continue; const wF = W * H - wB; if (!wF) break; sB += i * hist[i]; const mB = sB / wB, mF = (sum - sB) / wF, v = wB * wF * (mB - mF) ** 2; if (v > best) { best = v; th0 = i; } } // Otsu
+  const st = { th: th0, bl: 2, inv: false }, host = BLOBPC ? document.body : $('#phone');
+  const el = document.createElement('div'); el.className = 'xmod mkmod';
+  el.innerHTML = `<div class="xcard"><div class="xh"><b>Tvar z fotky</b><span>černá = tvar</span></div><canvas id="mkCv" width="${W}" height="${H}"></canvas>
+    <label class="srow"><span>Práh</span><input type="range" id="mkTh" min="0" max="255" value="${th0}" data-def="${th0}"><output>${th0}</output></label>
+    <label class="srow"><span>Vyhlazení</span><input type="range" id="mkBl" min="0" max="10" value="2" data-def="2"><output>2</output></label>
+    <div class="xbtns"><button class="pbtn ghost" id="mkInv">Obrátit</button><span style="flex:1"></span><button class="pbtn ghost" id="mkNo">Zrušit</button><button class="pbtn" id="mkOk">Použít</button></div></div>`;
+  host.appendChild(el); requestAnimationFrame(() => el.classList.add('on'));
+  const cv = $('#mkCv', el), g = cv.getContext('2d'), out = mk(W, H), og = out.getContext('2d'), od = og.createImageData(W, H); let Lb = blur(L0, st.bl);
+  const paint = () => { for (let i = 0; i < W * H; i++) { let a = clamp((st.th - Lb[i]) / 10 + .5, 0, 1); if (st.inv) a = 1 - a; od.data[i * 4] = od.data[i * 4 + 1] = od.data[i * 4 + 2] = 255; od.data[i * 4 + 3] = a * 255; }
+    og.putImageData(od, 0, 0); const tb = mk(W, H), tg = tb.getContext('2d'); tg.drawImage(out, 0, 0); tg.globalCompositeOperation = 'source-in'; tg.fillStyle = '#111'; tg.fillRect(0, 0, W, H);
+    g.fillStyle = '#fff'; g.fillRect(0, 0, W, H); g.drawImage(tb, 0, 0); };
+  paint();
+  const rg = (id, f) => { const i = $(id, el); paintRange(i); i.oninput = () => { i.nextElementSibling.textContent = i.value; paintRange(i); f(+i.value); paint(); }; };
+  rg('#mkTh', v => st.th = v); rg('#mkBl', v => { st.bl = v; Lb = blur(L0, v); });
+  $('#mkInv', el).onclick = () => { st.inv = !st.inv; $('#mkInv', el).classList.toggle('on', st.inv); paint(); };
+  const close = () => { el.classList.remove('on'); setTimeout(() => el.remove(), 300); };
+  $('#mkNo', el).onclick = close;
+  $('#mkOk', el).onclick = () => { const sm = mk(240, 300); sm.getContext('2d').drawImage(out, 0, 0, 240, 300); SHAPES.push({ k: 'img', u: sm.toDataURL('image/png') }); saveShapes(); B.size = 1; syncBlobCtl(); renderShapes(); selectShape(SHAPES.length - 1); close(); buzz(10); toast('Tvar z fotky přidaný'); };
+}
 function openBlob() {
+  if (!B._loaded) { B._loaded = true; SHAPES.push(...store.get('blobShapes', [])); }
   const ph = S.blobFrom || S.photos[0]; S.blobFrom = ph; const P = ph === S.cur ? S.P : ph.P, src = srcOf(ph, P);
   B.post = kmeans(utilRender(src, P, 60, 75, {}) && util.e.pixels()); B.pre = kmeans(utilRender(src, P, 60, 75, { bypass: true }) && util.e.pixels());
   B.img = utilRender(src, Object.assign(JSON.parse(JSON.stringify(P)), { crop: DEF().crop }), 600, Math.round(600 / (src.width / src.height)), {}).toDataURL('image/jpeg', .9); B.ar = src.width / src.height;
@@ -3180,7 +3264,10 @@ function syncBlobCtl() {
 }
 function renderShapes() {
   $('#bShapes').innerHTML = SHAPES.map((sh, i) => `<button data-i="${i}" class="${i === B.shape ? 'on' : ''}"><svg viewBox="0 0 100 125"><defs><filter id="ts${i}" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4"/></filter></defs>${shapeSvg(sh, '#e9e2d6', '#1a1b1f', 'ts' + i)}</svg></button>`).join('')
-    + `<button class="drawbtn" id="bDraw" aria-label="Nakreslit vlastní tvar">+</button>`;
+    + `<button class="drawbtn" id="bDraw" aria-label="Nakreslit vlastní tvar">+</button><button class="drawbtn" id="bPhoto" aria-label="Tvar z fotky">${iconSVG('camera')}</button>`;
+  $$('#bShapes [data-i]').forEach(b => { const sh = SHAPES[+b.dataset.i]; if (sh && (sh.k === 'draw' || sh.k === 'img')) longPress(b, () => openActs(`<h4>Vlastní tvar</h4>${actBtn('del', 'trash', 'Smazat tvar', 'danger')}`, root => {
+    $('[data-a=del]', root).onclick = () => { closeActs(); const i = SHAPES.indexOf(sh); SHAPES.splice(i, 1); if (B.shape >= SHAPES.length) B.shape = 0; saveShapes(); renderShapes(); drawBlob(); toast('Tvar smazaný'); }; })); });
+  $('#bPhoto').onclick = maskPick;
   $$('#bShapes [data-i]').forEach(b => b.onclick = () => selectShape(+b.dataset.i));
   $('#bDraw').onclick = () => { B.drawing = true; $('#bCard').classList.add('drawing'); buzz(6); toast('Nakresli prstem tvar přímo na kartu'); };
 }
@@ -3202,7 +3289,7 @@ function selectShape(i) {
   drawBlob(); spring(.94, 1, v => $('#bCard').style.transform = `scale(${v})`, { k: 300, c: 16 });
 }
 function diceShape() { // kostka: jeden „náhodný“ slot, náhodný tvar i nastavení; líbí-li se, ulož ho jako preset
-  const kinds = ['blob', 'blob', 'splat', 'star', 'sparkle', 'flower', 'stars', 'dots', 'flowers', 'sparkles', 'waves', 'shoot', 'chain', 'beacons', 'stars3', 'snake', 'daisygrid', 'halfdaisy', 'outlineflowers', 'daisyfield', 'loops'], rnd = a => a[Math.floor(Math.random() * a.length)];
+  const kinds = ['blob', 'blob', 'splat', 'star', 'sparkle', 'flower', 'stars', 'dots', 'flowers', 'sparkles', 'waves', 'shoot', 'chain', 'beacons', 'stars3', 'snake', 'daisygrid', 'halfdaisy', 'outlineflowers', 'daisyfield', 'loops', 'bigstars', 'lattice', 'clouds', 'leaf', 'rays', 'blossoms', 'spiral', 'coral', 'hearts', 'blobstars'], rnd = a => a[Math.floor(Math.random() * a.length)];
   const sh = { k: rnd(kinds), s: 1 + Math.floor(Math.random() * 9999), n: 3 + Math.floor(Math.random() * 6), a: .1 + Math.random() * .25, rnd: true };
   let i = SHAPES.findIndex(x => x.rnd); if (i < 0) { SHAPES.push(sh); i = SHAPES.length - 1; } else SHAPES[i] = sh;
   Object.assign(B, { inv: Math.random() < .3, dis: Math.random() < .35 ? +(.15 + Math.random() * .45).toFixed(2) : 0, blend: rnd(['normal', 'normal', 'screen', 'glow']), size: +(.75 + Math.random() * .3).toFixed(2), bg: Math.floor(Math.random() * 5) });
@@ -3212,8 +3299,12 @@ function diceShape() { // kostka: jeden „náhodný“ slot, náhodný tvar i n
 }
 function drawPal() {
   const pal = [...B[B.palMode], ...B.custom]; B.bg = clamp(B.bg, 0, pal.length - 1);
-  $('#bPal').innerHTML = pal.map((c, i) => `<button data-i="${i}" class="${i === B.bg ? 'on' : ''}" style="background:${c}" aria-label="Barva ${i + 1}"></button>`).join('') + `<label class="add" aria-label="Vlastní barva">+<input type="color" id="bColor" value="#e33a22"></label>`;
-  $$('#bPal button').forEach(b => b.onclick = () => { B.bg = +b.dataset.i; drawPal(); });
+  B.mix = (B.mix || []).filter(c => pal.includes(c));
+  $('#bPal').innerHTML = pal.map((c, i) => `<button data-i="${i}" class="${B.mixMode ? (B.mix.includes(c) ? 'mx' : '') : i === B.bg ? 'on' : ''}" style="background:${c}" aria-label="Barva ${i + 1}"></button>`).join('') + `<label class="add" aria-label="Vlastní barva">+<input type="color" id="bColor" value="#e33a22"></label><button class="mixb ${B.mixMode ? 'on' : ''}" id="bMix" aria-label="Víc barev">MIX</button>`;
+  $$('#bPal button[data-i]').forEach(b => b.onclick = () => { const i = +b.dataset.i, c = pal[i];
+    if (B.mixMode) { B.mix = B.mix.includes(c) ? B.mix.filter(x => x !== c) : [...B.mix, c]; if (B.mix.length > 1 && !B.inv) { B.inv = true; syncBlobCtl(); } if (B.mix.length) B.bg = pal.indexOf(B.mix[0]); buzz(4); }
+    else B.bg = i; drawPal(); });
+  $('#bMix').onclick = () => { B.mixMode = !B.mixMode; if (B.mixMode) { B.mix = [pal[B.bg]]; toast('Vyber víc barev, tvary se náhodně obarví'); } else B.mix = []; drawPal(); };
   const ci = $('#bColor'); ci.oninput = () => { B.color = ci.value; drawBlob(); }; ci.onchange = () => { B.custom.push(ci.value); B.bg = B[B.palMode].length + B.custom.length - 1; drawPal(); };
   B.color = pal[B.bg]; const [r, g, b] = rgbOf(B.color), L = (r * .299 + g * .587 + b * .114) / 255;
   $('#bCard').style.backgroundColor = B.color; $('#bLbl').style.setProperty('--lc', L > .55 && B.op > .6 && !B.inv ? 'rgba(20,18,16,.75)' : 'rgba(255,250,240,.88)'); drawBlob();
@@ -3230,7 +3321,8 @@ function drawBlob(path) {
     ${B.blend === 'glow' ? `<mask id="bmg" maskUnits="userSpaceOnUse" x="-30" y="-30" width="160" height="185"><rect x="-30" y="-30" width="160" height="185" fill="${inv ? '#000' : '#fff'}"/><g filter="url(#bblur)">${grp}</g></mask>` : ''}</defs>
     <image href="${B.img}" preserveAspectRatio="none"/>
     ${B.blend === 'glow' ? `<rect x="-30" y="-30" width="160" height="185" fill="${B.color}" opacity="${B.op}" mask="url(#bmg)" style="mix-blend-mode:screen"/>` : ''}
-    <rect width="100" height="125" fill="${B.color}" opacity="${B.op}" mask="url(#bm)" ${scr}/>`;
+    ${B.inv && B.mix && B.mix.length > 1 ? `<g mask="url(#bm)" opacity="${B.op}" ${scr}><g transform="translate(50 62.5) scale(${B.size}) translate(-50 -62.5)">${mixColor(path ? `<path d="${path}" fill="#000"/>` : shapeSvg(sh, '#000', '#fff', 'bsoftm'))}</g></g>`
+      : `<rect width="100" height="125" fill="${B.color}" opacity="${B.op}" mask="url(#bm)" ${scr}/>`}`;
   placeImg();
 }
 /* export blob karty: SVG s fotkou ve vyšším rozlišení → canvas, popisky, tmavé tečkované pozadí jako v appce */
@@ -3238,15 +3330,14 @@ async function exportBlob() {
   toast('Připravuju kartu…'); const ph = B.photo, P = ph === S.cur ? S.P : ph.P, src = srcOf(ph, P);
   const hi = copyCanvas(utilRender(src, Object.assign(JSON.parse(JSON.stringify(P)), { crop: DEF().crop }), 1600, Math.round(1600 / (src.width / src.height)), { depth: ph.depth })).toDataURL('image/jpeg', .92);
   const svg = $('#bSvg').cloneNode(true); svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg'); svg.setAttribute('width', 1080); svg.setAttribute('height', 1350);
-  svg.querySelectorAll('.draft').forEach(x => x.remove()); const im = svg.querySelector('image'); if (im) im.setAttribute('href', hi);
-  const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect'); bg.setAttribute('width', 100); bg.setAttribute('height', 125); bg.setAttribute('fill', B.color); svg.insertBefore(bg, svg.querySelector('image'));
+  svg.querySelectorAll('.draft').forEach(x => x.remove()); const im = svg.querySelector(':scope > image'); if (im) im.setAttribute('href', hi);
+  const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect'); bg.setAttribute('width', 100); bg.setAttribute('height', 125); bg.setAttribute('fill', B.color); svg.insertBefore(bg, im);
   const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml' })), img = new Image(); img.src = url; await img.decode(); URL.revokeObjectURL(url);
-  const W = 1200, H = 1500, c = mk(W, H), g = c.getContext('2d'); g.fillStyle = '#0B0C0E'; g.fillRect(0, 0, W, H);
-  { g.fillStyle = '#26282D'; for (let y = 30; y < H; y += 30) for (let x = 30; x < W; x += 30) { g.beginPath(); g.arc(x, y, 2.4, 0, 7); g.fill(); } }
-  g.save(); g.beginPath(); g.roundRect(60, 75, 1080, 1350, 44); g.clip(); g.drawImage(img, 60, 75, 1080, 1350);
+  const W = 1080, H = 1350, c = mk(W, H), g = c.getContext('2d'); // průhledné pozadí, jen karta se zaoblenými rohy
+  g.save(); g.beginPath(); g.roundRect(0, 0, W, H, 48); g.clip(); g.drawImage(img, 0, 0, W, H);
   await document.fonts.ready; g.fillStyle = getComputedStyle($('#bLbl')).getPropertyValue('--lc') || 'rgba(255,250,240,.88)'; g.font = '500 30px "Geist Mono", monospace'; g.textBaseline = 'alphabetic';
-  if (B.text !== false) { g.fillText($('#bL').textContent, 60 + 44, 75 + 1350 - 40); g.textAlign = 'right'; g.fillText($('#bR').textContent, 60 + 1080 - 44, 75 + 1350 - 40); } g.restore();
-  exportCanvas(c, `qamera-karta-${Date.now()}.jpg`);
+  if (B.text !== false) { g.fillText($('#bL').textContent, 44, H - 40); g.textAlign = 'right'; g.fillText($('#bR').textContent, W - 44, H - 40); } g.restore();
+  exportCanvas(c, `qamera-karta-${Date.now()}.png`, 'image/png');
 }
 /* šum pro dissolve jako obrázek – feTurbulence v Safari občas vykreslil jen část (pruh vpravo) */
 let NOISE = null;
@@ -3254,7 +3345,11 @@ function noiseUrl() { if (NOISE) return NOISE; const W = 400, H = 500, c = mk(W,
   for (let i = 0; i < a.length; i++) a[i] = Math.random();
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x, v = (a[i] * 2 + a[y * W + (x + 1) % W] + a[((y + 1) % H) * W + x]) / 4; id.data[i * 4] = id.data[i * 4 + 1] = id.data[i * 4 + 2] = v * 255; id.data[i * 4 + 3] = 255; }
   g.putImageData(id, 0, 0); return NOISE = c.toDataURL('image/png'); }
-function placeImg() { const im = $('#bSvg image'); if (!im) return; const w = Math.max(100, 125 * B.ar) * B.sc, h = w / B.ar;
+/* víc barev: každý prvek vzoru dostane náhodně jednu z vybraných barev (stejné „data-g“ = stejná barva) */
+function mixColor(svgStr) { const r = rng(SHAPES[B.shape] ? (SHAPES[B.shape].s || 5) * 17 + B.mix.length : 5), groups = {};
+  return svgStr.replace(/<(path|rect|ellipse|circle)\b[^>]*>/g, tag => { const gk = (tag.match(/data-g="([^"]+)"/) || [])[1]; const c = gk ? (groups[gk] = groups[gk] || B.mix[Math.floor(r() * B.mix.length)]) : B.mix[Math.floor(r() * B.mix.length)];
+    return tag.replace(/(fill|stroke)="#000"/g, `$1="${c}"`); }).replace(/<(feFlood)\b[^>]*>/g, tag => tag.replace(/flood-color="#000"/, `flood-color="${B.mix[0]}"`)); }
+function placeImg() { const im = $('#bSvg > image'); if (!im) return; const w = Math.max(100, 125 * B.ar) * B.sc, h = w / B.ar;
   im.setAttribute('x', 50 - w / 2 + B.ox); im.setAttribute('y', 62.5 - h / 2 + B.oy); im.setAttribute('width', w); im.setAttribute('height', h); }
 let morphSp = null;
 function morphBlob(from) {
@@ -3288,7 +3383,7 @@ function blobGestures() {
     let L = 0; const acc = [0]; for (let i = 1; i < raw.length; i++) { L += Math.hypot(raw[i][0] - raw[i - 1][0], raw[i][1] - raw[i - 1][1]); acc.push(L); }
     const N = 40; let out = []; for (let j = 0; j < N; j++) { const t = j / N * L; let i = acc.findIndex(v => v >= t); i = Math.max(1, i); const f = (t - acc[i - 1]) / ((acc[i] - acc[i - 1]) || 1); out.push([lerp(raw[i - 1][0], raw[i][0], f), lerp(raw[i - 1][1], raw[i][1], f)]); }
     for (let it = 0; it < 3; it++) out = out.map((p, i) => { const q0 = out[(i - 1 + N) % N], q1 = out[(i + 1) % N]; return [(q0[0] + 2 * p[0] + q1[0]) / 4, (q0[1] + 2 * p[1] + q1[1]) / 4]; }); // vyhlazení dokola, bez zubů na spoji
-    B.size = 1; syncBlobCtl(); SHAPES.push({ k: 'draw', pts: out }); renderShapes(); selectShape(SHAPES.length - 1); buzz(12); toast('Vlastní tvar přidaný'); };
+    B.size = 1; syncBlobCtl(); SHAPES.push({ k: 'draw', pts: out }); saveShapes(); renderShapes(); selectShape(SHAPES.length - 1); buzz(12); toast('Vlastní tvar přidaný'); };
   el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
   el.addEventListener('wheel', e => { e.preventDefault(); B.sc = clamp(B.sc * (1 - e.deltaY * .0015), .5, 4); placeImg(); }, { passive: false });
   $$('.lbl span').forEach(s => { s.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); s.blur(); } }); s.addEventListener('focus', () => toast('Přepiš text a potvrď Enterem')); });
