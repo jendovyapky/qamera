@@ -135,6 +135,7 @@ a{color:var(--amber)}
 .fxp .sq{width:34px;height:34px;flex:none;border-radius:10px;border:1px solid var(--line);color:var(--fg);font-size:14px;display:grid;place-items:center}
 .fxh b{font-family:var(--f-mono);font-size:11px;letter-spacing:.16em;color:#cfc7bc;font-weight:500}
 .fxh .ib{width:34px;height:34px}
+.fpbtns{justify-self:end;display:flex;gap:6px}.fpbtns .off.sq{width:30px;padding:0;display:grid;place-items:center}.fpbtns .px{width:16px;height:16px}
 .fxh .off{height:30px;padding:0 12px;border-radius:10px;border:1px solid var(--line);font-size:12px;color:#cfc7bc}
 .fxrow{display:flex;align-items:center;gap:8px;min-height:34px;flex:none}
 .fxrow .hs{display:flex;gap:6px;overflow-x:auto;flex:1;min-width:0}
@@ -459,14 +460,21 @@ a{color:var(--amber)}
 .hsldots button.on{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--fg)}
 .srow{display:grid;grid-template-columns:84px 1fr 40px;align-items:center;gap:10px;font-size:12px;color:#bdb5aa;height:32px}
 .srow output{font-family:var(--f-mono);font-size:11px;text-align:right;color:var(--fg);font-variant-numeric:tabular-nums}
-input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:34px;background:transparent;margin:0;cursor:pointer;touch-action:none;-webkit-user-select:none;user-select:none;--lo:0%;--hi:0%;
-  --trk:linear-gradient(90deg,#2f2b27 var(--lo),var(--amber) var(--lo),var(--amber) var(--hi),#2f2b27 var(--hi))}
-input[type=range]::-webkit-slider-runnable-track{height:2px;border-radius:2px;background:var(--trk)}
-input[type=range]::-moz-range-track{height:2px;border-radius:2px;background:var(--trk)}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:24px;border-radius:6px;background:#f3eee6;margin-top:-11px;box-shadow:0 0 0 3px rgba(18,17,16,.9),0 2px 8px rgba(0,0,0,.6);transition:transform .15s}
-input[type=range]::-moz-range-thumb{width:8px;height:20px;border:0;border-radius:4px;background:#f3eee6;box-shadow:0 0 0 3px rgba(18,17,16,.9)}
-input[type=range]:active::-webkit-slider-thumb{transform:scaleY(1.15);background:var(--amber)}
-input[type=range]:hover::-webkit-slider-thumb{background:#fff}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:34px;background:transparent;margin:0;pointer-events:none;touch-action:pan-y;-webkit-user-select:none;user-select:none;--lo:0%;--hi:0%;
+  --trk:linear-gradient(90deg,rgba(255,255,255,.08) var(--lo),var(--amber) var(--lo),var(--amber) var(--hi),rgba(255,255,255,.08) var(--hi))}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:4px;background:var(--trk);box-shadow:inset 0 1px 1px rgba(0,0,0,.45)}
+input[type=range]::-moz-range-track{height:4px;border-radius:4px;background:var(--trk)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;margin-top:-8px;background:radial-gradient(circle at 50% 32%,#fffaf2,#e2dacd 72%);
+  box-shadow:0 0 0 1px rgba(0,0,0,.4),0 3px 10px rgba(0,0,0,.55),inset 0 -1px 1px rgba(0,0,0,.18);transition:transform .22s cubic-bezier(.3,1.7,.5,1),box-shadow .22s}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border:0;border-radius:50%;background:#f3eee6;box-shadow:0 0 0 1px rgba(0,0,0,.4),0 3px 10px rgba(0,0,0,.55)}
+input[type=range].drag::-webkit-slider-thumb{transform:scale(1.16);box-shadow:0 0 0 5px rgba(255,196,61,.18),0 0 16px rgba(255,196,61,.4),0 3px 10px rgba(0,0,0,.55)}
+.srow:hover input[type=range]::-webkit-slider-thumb{background:radial-gradient(circle at 50% 32%,#fff,#efe8dc 72%)}
+.srow{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:pan-y;cursor:default}
+.srow:has(input[type=range]){cursor:ew-resize}
+.srow>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .2s}
+.srow output{transition:color .2s}
+.srow.drag>span,.srow.drag output{color:var(--amber)}
+.fxp .srow.fk{grid-template-columns:96px 1fr 34px}
 .wheels{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
 .wheel{position:relative;width:100%;aspect-ratio:1;border-radius:50%;touch-action:none;cursor:crosshair;
   background:radial-gradient(circle,#2a2622 0 8%,transparent 70%),conic-gradient(from 90deg,#e04848,#e0c048,#58d058,#48c8e0,#5058e0,#d048d0,#e04848);}
@@ -595,6 +603,7 @@ body > .xmod{position:fixed}
 .xh b{font:500 11px var(--f-mono);letter-spacing:.18em;text-transform:uppercase;color:#cfc7bc}
 .xh span{font:500 12px var(--f-mono);color:var(--mute);font-variant-numeric:tabular-nums}
 .xph{height:200px;border-radius:14px;background:#0b0a09;display:grid;place-items:center;overflow:hidden}
+.xph canvas{max-width:100%;max-height:100%;border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .xph img{max-width:100%;max-height:100%;border-radius:6px;transition:opacity .25s;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .xbar{height:4px;border-radius:2px;background:#2a2622;overflow:hidden}
 .xbar i{display:block;height:100%;width:0;background:var(--amber);box-shadow:0 0 12px rgba(255,196,61,.7);transition:width .35s cubic-bezier(.3,.9,.4,1)}
@@ -1374,6 +1383,8 @@ vec3 hsv2rgb(vec3 c){ vec3 p=abs(fract(c.xxx+vec3(1.,2./3.,1./3.))*6.-3.); retur
 float luma(vec3 c){ return dot(c, vec3(.2126,.7152,.0722)); }
 vec2 qToUv(vec2 q){ float cs = cos(uRot), sn = sin(uRot); vec2 ts0 = vec2(textureSize(uTex,0)); float sar = ts0.x/ts0.y; vec2 v0 = q * uCover / uZoom; v0.x *= sar; v0 = mat2(cs,-sn,sn,cs) * v0; v0.x /= sar; return v0 + .5 + uOff; } // otočení bez zkosení
 /* zjednodušený vzhled pro rozmazané vrstvy (glow): stejné základní úpravy a film jako fotka, ať záře má barvy upravené fotky */
+float shd1(float v){ return min(v, .62) + .36 * (1. - exp(-max(v - .62, 0.) / .36)); } // měkké rameno: světla se plynule stáčí k bílé, neořežou se
+vec3 shd(vec3 v){ return vec3(shd1(v.r), shd1(v.g), shd1(v.b)); }
 vec3 lookOf(vec3 s){ vec3 l = pow(max(s, 0.), vec3(2.2)) * exp2(uExp) * vec3(1.+uTemp*.22, 1.+uTint*.1, 1.-uTemp*.22); vec3 c = pow(l/(1.+l*.06*uStr), vec3(1./2.2));
   c = (c-.5)*(1.+uCon*.55)+.5; c = mix(vec3(luma(c)), c, 1.+uSat); vec3 f = c;
   if (uLut > .5) f = texture(uLut3, clamp(f,0.,1.)*(32./33.) + .5/33.).rgb; if (uBW.r + uBW.g + uBW.b > .01) f = vec3(dot(clamp(f,0.,1.), uBW)) * uBTone;
@@ -1404,9 +1415,21 @@ void main(){
   if (uDOn > .5 && uDMode > 1.5 && uDMode < 2.5) { float fg = pow(clamp((uFocus - dep) / max(uFocus, .05), 0., 1.), 1.15) * uDAmt; lin = mix(lin, vec3(.74,.76,.8) * exp2(uExp) * .85, fg); } // mlha do hloubky
   /* halation = červenooranžová záře kolem světel (odraz od podložky filmu), bloom = měkká bílá záře světel */
   vec3 b1 = pow(textureLod(uTex,uv,3.).rgb, vec3(2.2)), b2 = pow(textureLod(uTex,uv,5.).rgb, vec3(2.2)), b3 = pow(textureLod(uTex,uv,6.5).rgb, vec3(2.2));
-  float hl = max(luma(b1)-.42,0.)*1.4 + max(luma(b2)-.3,0.)*1.9;
-  if (uDOn > .5 && uDMode > 2.5 && uDMode < 3.5) { float dl = textureLod(uDepth, uv, 3.5).r; hl *= smoothstep(uFocus, uFocus - .3, dl) * (1. + uDAmt * 2.5); } // halation jen u vzdálených světel
-  lin += vec3(1.,.26,.07)*hl*1.1 * uHal * exp2(uExp);
+  bool dHal = uDOn > .5 && uDMode > 2.5 && uDMode < 3.5;
+  if (uHal > .001 || dHal) { /* halation: nejdřív práh (jen opravdová světla), pak rozmazání – 3 prstence vzorků kolem pixelu;
+       mipmapa by malá světla (lampy, slunce v listí) rozmazala pod práh a záře by zmizela */
+    vec2 tsz = vec2(textureSize(uTex,0)), ak = vec2(tsz.y / tsz.x, 1.); float hr = 0.;
+    float L1 = log2(max(1., .007 * tsz.y)), L2 = log2(max(1., .017 * tsz.y)), L3 = log2(max(1., .04 * tsz.y)); // rozmazání vzorku ≈ rozestup vzorků → hladká záře bez „duchů“
+    float jr = hash(floor(uv * tsz)) * .6283; // náhodné natočení prstenců na pixel → žádné tečky po vzorcích
+    for (int i = 0; i < 10; i++) { float a = float(i) * .6283 + jr; vec2 d = vec2(cos(a), sin(a)) * ak, e = vec2(cos(a + .314), sin(a + .314)) * ak;
+      hr += smoothstep(.4, .9, luma(pow(textureLod(uTex, uv + d * .01, L1).rgb, vec3(2.2)))) * .5
+          + smoothstep(.34, .85, luma(pow(textureLod(uTex, uv + e * .024, L2).rgb, vec3(2.2)))) * .38
+          + smoothstep(.28, .8, luma(pow(textureLod(uTex, uv + d * .055, L3).rgb, vec3(2.2)))) * .26; }
+    hr /= 10.; float self = smoothstep(.4, .9, luma(pow(textureLod(uTex, uv, .5).rgb, vec3(2.2))));
+    float hl = max(hr - self * 1.05, 0.) + hr * .06; // záře kolem světla, samotné světlo (a velké světlé plochy) se nepřebarví
+    vec3 hcol = vec3(1., .2, .04) * exp2(uExp);
+    if (dHal) { float dl = textureLod(uDepth, uv, 3.5).r, far = smoothstep(uFocus, uFocus - .3, dl); hl *= far; lin += hcol * hl * (1. + uDAmt * 5.); } // halation jen u vzdálených světel
+    lin += hcol * hl * 5.5 * uHal; }
   lin += (max(b1-.35,0.)*.7 + max(b2-.22,0.)*1.1 + max(b3-.15,0.)*1.3) * uBloom * 1.6 * exp2(uExp);
   vec3 c = pow(lin/(1.+lin*.06*uStr), vec3(1./2.2)); // jemné stažení světel jen s filmem
   c = (c-.5)*(1.+uCon*.55)+.5;
@@ -1414,21 +1437,21 @@ void main(){
   vec3 f = c; float fl = clamp(luma(f),0.,1.);
   if (uIR > .5) { /* infra: odhad odrazivosti v IR (zeleň silně, nebe a voda slabě, oblaka a bílá vysoko) – plynulé váhy, žádné ostré masky
        barevné varianty = CIR jako Aerochrome: zobrazená červená = IR, zelená = viditelná červená, modrá = viditelná zelená */
-    vec3 x = clamp(f, 0., 1.); float lx = luma(x), sat0 = max(x.r, max(x.g, x.b)) - min(x.r, min(x.g, x.b));
+    vec3 x = shd(max(f, 0.)); float lx = luma(x), sat0 = max(x.r, max(x.g, x.b)) - min(x.r, min(x.g, x.b));
     float veg = smoothstep(-.02, .14, x.g - .5 * (x.r + x.b)) * smoothstep(.0, .16, sat0) + smoothstep(.0, .2, .5 * (x.r + x.g) - x.b) * smoothstep(.06, .3, sat0) * .45 * (1. - smoothstep(.0, .2, x.r - x.g)); veg = clamp(veg, 0., 1.);
     float blu = smoothstep(-.02, .2, x.b - .5 * (x.r + x.g)) * (1. - smoothstep(.72, .97, lx));          // modrá (nebe, voda) – v IR tmavá, oblaka ne
-    float ir = clamp(lx * .78 + veg * (.42 + .5 * lx) - blu * .32, 0., 1.);
+    float ir = shd1(max(lx * .78 + veg * (.42 + .5 * lx) - blu * .32, 0.));
     /* barví se jen to, co infra opravdu mění: listí a tráva (vysoká odrazivost) → červená, modrá → tyrkys, oblaka bílá, zbytek jen ztlumený */
     vec3 base = mix(vec3(lx), x, .45) * vec3(1.03, .97, .98);
     vec3 fol = mix(vec3(.78, .05, .12), vec3(1., .42, .46), smoothstep(.45, 1., ir)) * (.55 + .5 * ir);
     vec3 sk = vec3(.22, .64, .66) * (.55 + .55 * lx);
     vec3 cir = mix(base, fol, veg); cir = mix(cir, sk, blu * (1. - veg));
     if (uIR < 1.5) f = mix(cir, vec3(1., .88, .92), .32) * .9 + .07;                                         // IR: pastelová růžová
-    else if (uIR < 2.5) { float g = clamp(ir * 1.08 - blu * .2, 0., 1.); f = vec3(g * g * (3. - 2. * g) * .35 + g * .65); } // IR400: ČB, Woodův efekt
+    else if (uIR < 2.5) { float g = shd1(max(ir * 1.08 - blu * .2, 0.)); f = vec3(g * g * (3. - 2. * g) * .35 + g * .65); } // IR400: ČB, Woodův efekt
     else if (uIR < 3.5) f = cir;                                                                             // IRC: sytá červená infra
-    else { float g = clamp(ir * 1.05 - blu * .15, 0., 1.); vec3 hue = uIRHue > .5 ? vec3(1., .72, .18) : vec3(1., .16, .2);  // IRR / IRG: ČB + listí v jedné barvě
+    else { float g = shd1(max(ir * 1.05 - blu * .15, 0.)); vec3 hue = uIRHue > .5 ? vec3(1., .72, .18) : vec3(1., .16, .2);  // IRR / IRG: ČB + listí v jedné barvě
       f = mix(vec3(g), hue * (.35 + g * .85), veg * .92); }
-    fl = clamp(luma(f),0.,1.); }
+    f = shd(max(f, 0.)) * .97; fl = clamp(luma(f),0.,1.); }
   if (uBW.r + uBW.g + uBW.b > .01) { // černobílý film: spektrální citlivost emulze (kanálový mix), charakteristická křivka, tón papíru
     float y = clamp(dot(clamp(f, 0., 1.), uBW), 0., 1.); y = (y - .5) * uFCon + .5; y = mix(y, y * y * (3. - 2. * y), clamp(uFCon - .9, 0., .6));
     y = uBToe + clamp(y, 0., 1.) * (1. - uBToe - uFFade * .4); f = vec3(y) * uBTone; fl = y;
@@ -1529,9 +1552,9 @@ class Engine {
       const at = (arr, v) => arr[clamp(Math.round(v * 255), 0, 255)];
       for (let i = 0; i < 256; i++) { const v = m[i]; d[i * 4] = at(cr, v) * 255; d[i * 4 + 1] = at(cg, v) * 255; d[i * 4 + 2] = at(cb, v) * 255; d[i * 4 + 3] = 255; }
       gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, this.ctex); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 256, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, d); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); }
-    const L = !o.noLut && LUTD[P.film]; // LUT filmu (3D textura, každý WebGL kontext má svoji)
-    if (L) { let t = this.luts[P.film]; gl.activeTexture(gl.TEXTURE3);
-      if (!t) { t = this.luts[P.film] = gl.createTexture(); gl.bindTexture(gl.TEXTURE_3D, t); [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER].forEach(k => gl.texParameteri(gl.TEXTURE_3D, k, gl.LINEAR)); [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T, gl.TEXTURE_WRAP_R].forEach(k => gl.texParameteri(gl.TEXTURE_3D, k, gl.CLAMP_TO_EDGE));
+    const lk = f.base || P.film, L = !o.noLut && LUTD[lk]; // LUT filmu (varianta bere LUT základního filmu) (3D textura, každý WebGL kontext má svoji)
+    if (L) { let t = this.luts[lk]; gl.activeTexture(gl.TEXTURE3);
+      if (!t) { t = this.luts[lk] = gl.createTexture(); gl.bindTexture(gl.TEXTURE_3D, t); [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER].forEach(k => gl.texParameteri(gl.TEXTURE_3D, k, gl.LINEAR)); [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T, gl.TEXTURE_WRAP_R].forEach(k => gl.texParameteri(gl.TEXTURE_3D, k, gl.CLAMP_TO_EDGE));
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.texImage3D(gl.TEXTURE_3D, 0, gl.RGBA8, LUTN, LUTN, LUTN, 0, gl.RGBA, gl.UNSIGNED_BYTE, L); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); }
       else gl.bindTexture(gl.TEXTURE_3D, t); }
     gl.uniform1f(u.uLut, L ? 1 : 0);
@@ -1547,9 +1570,10 @@ class Engine {
     gl.uniform1f(u.uZoom, o.zoom || 1); gl.uniform1f(u.uRot, o.rot || 0); gl.uniform1f(u.uTime, o.time || 0); gl.uniform1f(u.uBypass, o.bypass ? 1 : 0); gl.uniform1f(u.uStatic, o.time == null ? 1 : 0);
     const isoK = Math.sqrt((o.iso || f.iso) / 400);
     gl.uniform1f(u.uExp, P.exp); gl.uniform1f(u.uTemp, P.temp); gl.uniform1f(u.uTint, P.tint); gl.uniform1f(u.uCon, P.con); gl.uniform1f(u.uSat, P.sat);
-    const k = P.film === 'NONE' ? 0 : clamp(P.str, 0, 1); // síla filmu řídí celý filmový vzhled – při 0 % je fotka původní (zůstanou jen Úpravy)
-    gl.uniform1f(u.uStr, k); gl.uniform1f(u.uFSoft, (P.fsoft || 0) * k); gl.uniform1f(u.uHal, P.hal * f.hal * k); gl.uniform1f(u.uBloom, P.bloom * k);
-    gl.uniform1f(u.uGrain, P.grain * G.a * (.6 + .4 * isoK) * k); gl.uniform1f(u.uGFreq, 560 / P.gsize * G.f / (.72 + .38 * isoK));
+    const vm = f.vm || { str: 1, bloom: 1, grain: 1, gsize: 1 }; // vlastní varianta filmu = násobky nastavení
+    const k = P.film === 'NONE' ? 0 : clamp(P.str * vm.str, 0, 1); // síla filmu řídí celý filmový vzhled – při 0 % je fotka původní (zůstanou jen Úpravy)
+    gl.uniform1f(u.uStr, k); gl.uniform1f(u.uFSoft, (P.fsoft ?? f.fsoft ?? 0) * k); gl.uniform1f(u.uHal, P.hal * f.hal * k); gl.uniform1f(u.uBloom, P.bloom * vm.bloom * k);
+    gl.uniform1f(u.uGrain, P.grain * vm.grain * G.a * (.6 + .4 * isoK) * k); gl.uniform1f(u.uGFreq, 560 / (P.gsize * vm.gsize) * G.f / (.72 + .38 * isoK));
     gl.uniform1f(u.uSeed, o.seed != null ? o.seed : 7); gl.uniform1f(u.uGSharp, G.sh); gl.uniform1f(u.uGChroma, G.ch); gl.uniform1f(u.uGClump, G.cl); gl.uniform1f(u.uGMot, G.mot);
     gl.uniform1f(u.uVig, P.vig * k); gl.uniform1f(u.uFade, P.fade); gl.uniform1f(u.uSharp, P.sharp);
     gl.uniform1f(u.uChar, P.chr ?? f.chr ?? .6); gl.uniform3fv(u.uBW, f.bw || [0, 0, 0]); gl.uniform3fv(u.uBTone, f.tone || [1, 1, 1]); gl.uniform1f(u.uBToe, f.toe || 0);
@@ -1573,7 +1597,7 @@ const util = { e: null };
 const LUTN = 33, LUTD = {};
 async function loadLuts() {
   if (location.protocol === 'file:') return; // z disku se PNG nedá přečíst – zůstane jednoduchý shader
-  await Promise.all(FILMS.filter(f => !f.ir && !f.scan && !f.bw).map(async f => { try {
+  await Promise.all(FILMS.filter(f => !f.ir && !f.scan && !f.bw && !f.own).map(async f => { try {
     const res = await fetch(`../../luts/${encodeURIComponent(f.code)}.png`); if (!res.ok) return;
     const bm = await createImageBitmap(await res.blob(), { colorSpaceConversion: 'none', premultiplyAlpha: 'none' }), n = LUTN, c = mk(bm.width, bm.height), g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(bm, 0, 0);
     const d = g.getImageData(0, 0, bm.width, bm.height).data, out = new Uint8Array(n * n * n * 4);
@@ -2047,7 +2071,7 @@ function setFilm(code) {
   S.film = code; store.set('film', code); const f = FILM[code];
   $('#chipCode').textContent = code; $('#chipCass').innerHTML = cassette(f); $('#cassBtn').innerHTML = cassette(f);
   const kind = /E-6|K-14/.test(f.chem) ? 'diapozitiv' : /ECN/.test(f.chem) ? 'kinofilm' : 'barevný negativ';
-  $('#fCode').textContent = code; $('#fSub').innerHTML = `${f.sub} · ${f.scan ? 'vlastní film' : f.ir ? 'infračervený' : kind} · ISO ${f.iso}`; $('#fDesc').textContent = f.desc;
+  $('#fCode').textContent = code; $('#fSub').innerHTML = `${f.sub} · ${isOwn(f) ? 'vlastní film' : f.ir ? 'infračervený' : kind} · ISO ${f.iso}`; $('#fDesc').textContent = f.desc;
   updLcd(); updFav();
 }
 function updFav() { const b = $('#favBtn'), on = FAV.includes(S.film); b.innerHTML = iconSVG(on ? 'heart' : 'heartO'); b.classList.toggle('on', on); }
@@ -2063,7 +2087,7 @@ function buildCarousel() {
     items.forEach(it => it.classList.toggle('on', it === best));
     if (best && best.dataset.c !== S.film) { S.camRecipe = null; setFilm(best.dataset.c); buzz(4); }
   };
-  $$('.citem', c).forEach(it => { const f = FILM[it.dataset.c]; if (f && f.scan) longPress(it, () => filmActs(f.code)); });
+  $$('.citem', c).forEach(it => { const f = FILM[it.dataset.c]; if (isOwn(f)) longPress(it, () => filmActs(f.code)); });
   c._sync = () => { const it = $$('.citem', c).find(i => i.dataset.c === S.film); if (it) c.scrollLeft = it.offsetLeft + it.offsetWidth / 2 - c.clientWidth / 2; upd(); };
   if (c._init) return; c._init = true;
   c.addEventListener('scroll', () => requestAnimationFrame(upd), { passive: true });
@@ -2567,15 +2591,31 @@ function lidarDrag(el, after) { let st = null;
   const up = () => { if (!st) return; st = null; commit(); if (S.view === 'pc') buildPcRight(); else if (S.fxOpen === 'lidar') setTab('fx', true); };
   el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); }
 async function lidarVideo() { const ph = S.cur, L = S.P.lidar; if (!ph || !L || !ph.depth) return;
-  const src = copyCanvas(utilRender(srcOf(ph, S.P), Object.assign({}, S.P, { lidar: null }), 1080, Math.round(1080 / phAr(ph)), { depth: ph.depth })), W = 1080, H = Math.round(1080 / phAr(ph)) & ~1, c = mk(W, H), g = c.getContext('2d');
   const types = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'], type = types.find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t));
-  if (!type) return toast('Tenhle prohlížeč neumí nahrát video'); const stream = c.captureStream(30), rec = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: 8e6 }), chunks = [];
-  rec.ondataavailable = e => e.data.size && chunks.push(e.data); toast('Nahrávám 4 s smyčku…'); rec.start();
-  const t0 = performance.now(), base = L.yaw || 0; await new Promise(res => { const step = () => { const t = (performance.now() - t0) / 4000; if (t >= 1) return res();
-    g.drawImage(lidarRender(src, ph.depth, W, H, Object.assign({}, L, { yaw: base + 28 * Math.sin(t * Math.PI * 2), pitch: (L.pitch || 0) + 6 * Math.sin(t * Math.PI * 4) })), 0, 0); requestAnimationFrame(step); }; step(); });
-  rec.stop(); await new Promise(r => rec.onstop = r); const ext = type.includes('mp4') ? 'mp4' : 'webm', blob = new Blob(chunks, { type: type.split(';')[0] }), file = new File([blob], `qamera-lidar-${Date.now()}.${ext}`, { type: blob.type });
-  try { if (isMobile() && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file] }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); toast('Video uložené'); }
+  if (!type) return toast('Tenhle prohlížeč neumí nahrát video');
+  const host = document.body.classList.contains('pcapp') && !document.body.classList.contains('pcphone') ? document.body : $('#phone'), el = document.createElement('div'); el.className = 'xmod';
+  el.innerHTML = `<div class="xcard"><div class="xh"><b>LiDAR video</b><span>4 s · 30 fps</span></div><div class="xph"><canvas id="xCv"></canvas></div>
+    <div class="xbar"><i id="xBar"></i></div><div class="xrow"><span id="xSt">Připravuju mračno bodů…</span><span id="xPct">0 %</span></div>
+    <div class="xbtns"><button class="pbtn ghost" id="xCancel">Zrušit</button><button class="pbtn" id="xGo" hidden>Uložit video</button></div></div>`;
+  host.appendChild(el); requestAnimationFrame(() => el.classList.add('on')); buzz(5);
+  let cancel = false; const close = () => { el.classList.remove('on'); setTimeout(() => el.remove(), 300); };
+  $('#xCancel', el).onclick = () => { cancel = true; close(); };
+  const setP = (v, txt) => { const pc = Math.round(v * 100); $('#xBar', el).style.width = pc + '%'; $('#xPct', el).textContent = pc + ' %'; if (txt) $('#xSt', el).textContent = txt; };
+  await new Promise(r => setTimeout(r, 80)); if (cancel) return; // okno se ukáže dřív, než se začne počítat
+  const W = 1080, H = Math.round(1080 / phAr(ph)) & ~1, src = copyCanvas(utilRender(srcOf(ph, S.P), Object.assign({}, S.P, { lidar: null }), W, H, { depth: ph.depth })), c = mk(W, H), g = c.getContext('2d');
+  const pv = $('#xCv', el), pk = Math.min(1, 200 / H, 280 / W); pv.width = Math.round(W * pk); pv.height = Math.round(H * pk); const pg = pv.getContext('2d');
+  setP(.05, 'Nahrávám smyčku'); const stream = c.captureStream(30), rec = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: 8e6 }), chunks = [];
+  rec.ondataavailable = e => e.data.size && chunks.push(e.data); rec.start();
+  const t0 = performance.now(), base = L.yaw || 0; await new Promise(res => { const step = () => { const t = (performance.now() - t0) / 4000; if (t >= 1 || cancel) return res();
+    g.drawImage(lidarRender(src, ph.depth, W, H, Object.assign({}, L, { yaw: base + 28 * Math.sin(t * Math.PI * 2), pitch: (L.pitch || 0) + 6 * Math.sin(t * Math.PI * 4) })), 0, 0);
+    pg.drawImage(c, 0, 0, pv.width, pv.height); setP(.05 + .85 * t, `Nahrávám ${(t * 4).toFixed(1).replace('.', ',')} / 4 s`); requestAnimationFrame(step); }; step(); });
+  setP(.92, 'Dokončuju video'); rec.stop(); await new Promise(r => rec.onstop = r); if (cancel) return;
+  const ext = type.includes('mp4') ? 'mp4' : 'webm', blob = new Blob(chunks, { type: type.split(';')[0] }), file = new File([blob], `qamera-lidar-${Date.now()}.${ext}`, { type: blob.type });
+  setP(1, `Hotovo · ${ext.toUpperCase()} · ${(blob.size / 1048576).toFixed(1).replace('.', ',')} MB`); el.classList.add('done'); buzz(12);
+  $('#xCancel', el).textContent = 'Zavřít'; $('#xCancel', el).onclick = close; const go = $('#xGo', el); go.hidden = false;
+  const save = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); };
+  if (isMobile() && navigator.canShare && navigator.canShare({ files: [file] })) go.onclick = async () => { try { await navigator.share({ files: [file] }); close(); } catch (e) { if (e && e.name !== 'AbortError') toast('Sdílení se nepovedlo'); } }; // sdílení potřebuje čerstvé ťuknutí
+  else { save(); go.textContent = 'Stáhnout znovu'; go.onclick = save; } }
 function dateOverlay() { const cv = $('#eDate'); if (!cv || !S.cur) return; const r = S._pr || { x: 0, y: 0, w: 0, h: 0 }, k = Math.min(2, devicePixelRatio || 1), W = Math.round(r.w * k), H = Math.round(r.h * k);
   Object.assign(cv.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' }); if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
   const g = cv.getContext('2d'); g.clearRect(0, 0, W, H); if (!W || before) return;
@@ -2736,15 +2776,23 @@ const ADJ = [
 ];
 const grainPills = () => Object.entries(GRAINS).map(([k, g]) => `<button class="gpill ${gtypeOf(S.P) === k ? 'on' : ''}" data-g="${k}" title="${g.d}">${g.l}</button>`).join('');
 function bindGrainPills(root, after) { $$('.gpill', root).forEach(b => b.onclick = () => { S.P.gtype = b.dataset.g; $$('.gpill', root).forEach(x => x.classList.toggle('on', x === b)); renderEd(); commit(); buzz(4); toast(`Grain ${GRAINS[b.dataset.g].l}: ${GRAINS[b.dataset.g].d}`); after && after(); }); }
+const TAB_I = { film: 0, adj: 1, crop: 2, fx: 3 };
+/* panel se při změně záložky / zanoření nepřekreslí natvrdo: obsah přijede ze strany (pružně), řádky s mírným zpožděním */
+function panelAnim(p) { const deep = (S.tab === 'film' && S.filmOpen) || (S.tab === 'fx' && !!S.fxOpen), key = (S.adv ? 'A' : S.tab) + (deep ? '>' + (S.fxOpen || 'f') : '');
+  const old = p._mk; p._mk = { key, t: S.tab, deep, adv: S.adv }; if (!old || old.key === key || LOWMO || !p.animate) return;
+  const dir = old.adv !== S.adv ? 0 : old.t !== S.tab ? Math.sign(TAB_I[S.tab] - TAB_I[old.t]) : deep ? 1 : -1;
+  const kids = [...p.children], rows = $$('.fxp > *, .chips > *, .fthumb, .fx > button, .aspects > button', p).slice(0, 14), E = 'cubic-bezier(.16,1,.3,1)';
+  kids.forEach(k => k.animate([{ opacity: 0, transform: `translate3d(${dir * 28}px,${dir ? 0 : 10}px,0)` }, { opacity: 1, transform: 'none' }], { duration: 420, easing: E }));
+  rows.forEach((k, i) => k.animate([{ opacity: 0, transform: `translate3d(${dir * 14}px,6px,0)` }, { opacity: 1, transform: 'none' }], { duration: 460, delay: 30 + i * 24, easing: E, fill: 'backwards' })); }
 function setTab(t, quiet) {
   S.tab = t; $$('#eTabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   const p = $('#ePanel'); $('#cropLayer').hidden = t !== 'crop' || S.adv;
-  if (S.adv) { renderAdv(); sizePanel(quiet); return; }
+  if (S.adv) { renderAdv(); panelAnim(p); sizePanel(quiet); return; }
   if (t === 'film' && S.filmOpen && FILM[S.P.film] && S.P.film !== 'NONE') { renderFilmPanel(p);
   } else if (t === 'film') {
     p.innerHTML = `<div class="ruler" id="strR"></div><div class="strip" id="fStrip">${filmsOrdered().map(f => `<button class="fthumb ${f.code === S.P.film ? 'on' : ''} ${FAV.includes(f.code) ? 'fav' : ''}" data-c="${f.code}"><canvas width="128" height="160"></canvas><span>${f.code}</span></button>`).join('')}</div>`;
     makeRuler($('#strR'), { min: 0, max: 1, step: .01, value: S.P.str, label: S.P.film === 'NONE' ? 'Bez filmu' : 'Síla filmu · ' + S.P.film, fmt: v => Math.round(v * 100), def: 1, onInput: v => { S.P.str = v; renderEd(); }, onEnd: commit });
-    drawFilmThumbs(); hscroll($('#fStrip')); $$('.fthumb').forEach(b => { const f = FILM[b.dataset.c]; if (f && f.scan) longPress(b, () => filmActs(f.code)); });
+    drawFilmThumbs(); hscroll($('#fStrip')); $$('.fthumb').forEach(b => { const f = FILM[b.dataset.c]; if (isOwn(f)) longPress(b, () => filmActs(f.code)); });
     $$('.fthumb').forEach(b => b.onclick = () => { if (S.P.film === b.dataset.c) { S.filmOpen = true; setTab('film', true); buzz(6); return; } S.P.film = b.dataset.c; $$('.fthumb').forEach(x => x.classList.toggle('on', x === b)); $('#strR .rl').textContent = 'Síla filmu · ' + S.P.film; renderEd(); commit(); buzz(4);
       spring(.9, 1, v => b.querySelector('canvas').style.transform = `scale(${v})`, { k: 300, c: 14 }); });
     requestAnimationFrame(() => { const on = $('.fthumb.on'), s = $('#fStrip'); if (on && s) s.scrollLeft = on.offsetLeft - s.clientWidth / 2 + on.offsetWidth / 2; });
@@ -2775,7 +2823,7 @@ function setTab(t, quiet) {
     hscroll($('#fxRow'));
     $$('[data-fx]', p).forEach(b => b.onclick = () => fxClick(b));
   }
-  sizePanel(quiet);
+  panelAnim(p); sizePanel(quiet);
 }
 function fxClick(b) {
   const k = b.dataset.fx;
@@ -2918,13 +2966,28 @@ function heavyRender() { if (S.depthMs != null && S.depthMs < 45) { renderEd(tru
 function renderFilmPanel(p) { const P = S.P, f = FILM[P.film], gl0 = f.gl ?? .12;
   const rows = [['str', 'Síla', 0, 100, Math.round(P.str * 100), 100], ['chr', 'Charakter', 0, 150, Math.round((P.chr ?? f.chr ?? .6) * 100), Math.round((f.chr ?? .6) * 100)], ['fsoft', 'Měkkost', 0, 100, Math.round((P.fsoft || 0) * 100), 0],
     ['hal', 'Halation', 0, 300, Math.round(P.hal * 100), 100], ['bloom', 'Bloom', 0, 150, Math.round(P.bloom * 100), 15], ['glow', 'Glow', 0, 150, Math.round((P.glow ?? gl0) * 100), Math.round(gl0 * 100)], ['grain', 'Grain', 0, 150, Math.round(P.grain * 100), 50], ['gsize', 'Velikost zrna', 50, 300, Math.round(P.gsize * 100), 100]];
-  p.innerHTML = `<div class="fxp"><div class="fxh"><button class="ib" id="fpBack" aria-label="Zpět na filmy">${iconSVG('back')}</button><b>FILM · ${f.code}</b><button class="off" id="fpDef">Výchozí</button></div>
-    ${rows.map(([k, l, a, b, v, d]) => `<label class="srow"><span>${l}</span><input type="range" data-fk="${k}" min="${a}" max="${b}" value="${v}" data-def="${d}"><output>${v}</output></label>`).join('')}</div>`;
+  p.innerHTML = `<div class="fxp"><div class="fxh"><button class="ib" id="fpBack" aria-label="Zpět na filmy">${iconSVG('back')}</button><b>FILM · ${f.code}</b><div class="fpbtns"><button class="off sq" id="fpSave" aria-label="Uložit jako vlastní film" title="Uložit jako vlastní film">${iconSVG('plus')}</button><button class="off" id="fpDef">Výchozí</button></div></div>
+    ${rows.map(([k, l, a, b, v, d]) => `<label class="srow fk"><span>${l}</span><input type="range" data-fk="${k}" min="${a}" max="${b}" value="${v}" data-def="${d}"><output>${v}</output></label>`).join('')}</div>`;
   $('#fpBack').onclick = () => { S.filmOpen = false; setTab('film', true); };
+  $('#fpSave').onclick = saveFilmVariant;
   $('#fpDef').onclick = () => { ['chr', 'fsoft', 'glow'].forEach(k => delete S.P[k]); Object.assign(S.P, { str: 1, hal: 1, bloom: .15, grain: .5, gsize: 1 }); renderEd(true); commit(); setTab('film', true); buzz(6); };
   $$('#ePanel [data-fk]').forEach(i => { paintRange(i); i.oninput = () => { const k = i.dataset.fk; S.P[k] = +i.value / 100; i.nextElementSibling.textContent = i.value; paintRange(i); renderEd(); }; i.onchange = commit;
     i.ondblclick = () => { i.value = i.dataset.def; i.oninput(); commit(); }; });
 }
+/* uloží aktuální nastavení filmu jako vlastní variantu (např. P400-JEM „portrait 400 · jemná“) – použitelná ve výběru filmů i ve foťáku */
+function saveFilmVariant() { const b = FILM[S.P.film]; if (!b || S.P.film === 'NONE') return;
+  openActs(`<h4>Uložit jako vlastní film · ${b.code}</h4><div class="rsave"><input id="fvName" value="vlastní" maxlength="14" autocomplete="off" placeholder="název, třeba jemná"><button class="go" id="fvGo">Uložit</button></div>`, root => {
+    const inp = $('#fvName', root); setTimeout(() => { inp.focus(); inp.select(); }, 350);
+    const go = () => { const nm = inp.value.trim() || 'vlastní', P = S.P, vm0 = b.vm || { str: 1, bloom: 1, grain: 1, gsize: 1 };
+      const tag = nm.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3) || 'V', root0 = (b.base || b.code).slice(0, 5);
+      let code = root0 + '-' + tag, n = 2; while (FILM[code]) code = root0 + '-' + tag.slice(0, 2) + n++;
+      const nf = JSON.parse(JSON.stringify(b)); delete nf.fav;
+      Object.assign(nf, { code, own: 1, base: b.base || (b.scan ? undefined : b.code), sub: `${b.sub.split(' · ')[0]} · ${nm}`, desc: `Tvoje varianta filmu ${b.code} (${nm}). Podržením ji přejmenuješ, smažeš nebo vyexportuješ.`,
+        chr: P.chr ?? b.chr ?? .6, gl: P.glow ?? b.gl ?? .12, fsoft: P.fsoft ?? b.fsoft ?? 0, hal: P.hal * (b.hal ?? .3), g: gtypeOf(P),
+        vm: { str: clamp(P.str, 0, 1) * vm0.str, bloom: P.bloom / .15 * vm0.bloom, grain: P.grain / .5 * vm0.grain, gsize: P.gsize * vm0.gsize } });
+      addFilm(nf); saveScans(); ['chr', 'fsoft', 'glow', 'gtype'].forEach(k => delete P[k]); Object.assign(P, { film: code, str: 1, hal: 1, bloom: .15, grain: .5, gsize: 1 });
+      closeActs(); buildCarousel(); renderEd(true); commit(); setTab('film', true); buzz(12); toast(`Film ${code} uložený – najdeš ho ve filmech i ve foťáku`); };
+    $('#fvGo', root).onclick = go; inp.onkeydown = e => { if (e.key === 'Enter') go(); }; }); }
 function photoPal(n) { const P = JSON.parse(JSON.stringify(S.P)); P.style = null; P.grain = 0; utilRender(srcOf(S.cur, S.P), P, 60, 75, {}); return kmeans(util.e.pixels(), n).map(c => '#' + rgbOf(c).map(v => v.toString(16).padStart(2, '0')).join('')); }
 const DPALS = { amber: ['#0B0C0E', '#F5C542'], lime: ['#050505', '#D4FF3A'], paper: ['#1b1a18', '#F2EFE8'], ir: ['#1a0d2e', '#ff4f8b'] };
 function styleActs() {
@@ -2945,7 +3008,7 @@ function drawFilmThumbs() {
 }
 let panelSp = null;
 function sizePanel(instant) {
-  const p = $('#ePanel'), phoneH = $('#phone').clientHeight, target = S.adv ? Math.round(phoneH * .47) : PANEL_H;
+  const p = $('#ePanel'), phoneH = $('#phone').clientHeight, target = S.adv || (S.tab === 'film' && S.filmOpen && S.P.film !== 'NONE') ? Math.round(phoneH * .47) : PANEL_H; // nastavení filmu potřebuje víc místa (8 posuvníků)
   const from = p.offsetHeight; panelSp && panelSp.stop();
   if (from === target) return;
   if (instant || !from) { p.style.height = target + 'px'; layoutEditor(); return; }
@@ -3098,10 +3161,11 @@ function filmActs(code) {
     $('[data-a=del]', root).onclick = () => { closeActs(); deleteFilm(code); };
   });
 }
-const saveScans = () => store.set('scans', FILMS.filter(x => x.scan));
+const isOwn = f => !!(f && (f.scan || f.own)); // vlastní filmy: film scan i uložené varianty
+const saveScans = () => store.set('scans', FILMS.filter(isOwn));
 function refreshFilmUI() { buildCarousel(); $('#carousel')._sync(); if (S.screen === 'editor' && S.cur) { renderEd(true); setTab(S.tab, true); } }
 function renameFilm(a, b) {
-  if (a === b) return; const f = FILM[a]; delete FILM[a]; f.code = b; f.sub = 'film scan · ' + b.toLowerCase(); FILM[b] = f;
+  if (a === b) return; const f = FILM[a]; delete FILM[a]; f.code = b; if (!f.own) f.sub = 'film scan · ' + b.toLowerCase(); FILM[b] = f;
   S.photos.forEach(p => { if (p.P.film === a) { p.P.film = b; p.film = b; } }); if (S.P.film === a) S.P.film = b; if (S.film === a) setFilm(b);
   FAV = FAV.map(c => c === a ? b : c); store.set('fav', FAV); saveScans(); refreshFilmUI(); toast(`Film přejmenovaný na ${b}`);
 }
@@ -3138,7 +3202,7 @@ function openScan() {
 function saveScan() {
   const n = FILMS.filter(f => f.scan).length + 1, code = 'SCAN' + n; utilRender(refSrc, DEF(), 60, 75, { bypass: true }); const pal = kmeans(util.e.pixels(), 3);
   const f = { code, sub: 'film scan ' + n, chem: 'vlastní', desc: 'Tvůj vlastní film naskenovaný z reference. Podržením ho přejmenuješ, smažeš nebo vyexportuješ.', iso: 400, g: 'classic', sh: [0, 0, 0], hi: [1, 1, 1], con: 1, sat: 1, fade: .02, hal: .3, gl: .15, c: [pal[4] || pal[2], pal[2], pal[0]], scan: { m: refStats.m, s: refStats.s, k: SCAN.k } };
-  addFilm(f); store.set('scans', FILMS.filter(x => x.scan)); buildCarousel(); S.camRecipe = null; setFilm(code);
+  addFilm(f); saveScans(); buildCarousel(); S.camRecipe = null; setFilm(code);
   buzz(12); toast(`Film ${code} je ve výběru filmů`); goBack();
 }
 
@@ -3764,7 +3828,7 @@ function pcScanOpen() { ensureRef(); PCS.ref = refSrc; PCS.st = stats(PCS.ref); 
   $('#pcsCancel').onclick = () => m.hidden = true;
   $('#pcsSave').onclick = () => { refSrc = PCS.ref; refStats = PCS.st; SCAN.k = rg.value / 100; const n = FILMS.filter(f => f.scan).length + 1; utilRender(refSrc, DEF(), 60, 75, { bypass: true }); const pal = kmeans(util.e.pixels(), 3);
     const f = { code: 'SCAN' + n, sub: 'film scan ' + n, chem: 'vlastní', desc: 'Tvůj vlastní film naskenovaný z reference.', iso: 400, g: 'classic', sh: [0, 0, 0], hi: [1, 1, 1], con: 1, sat: 1, fade: .02, hal: .3, gl: .15, c: [pal[4] || pal[2], pal[2], pal[0]], scan: { m: refStats.m, s: refStats.s, k: SCAN.k } };
-    addFilm(f); store.set('scans', FILMS.filter(x => x.scan)); buildCarousel(); S.P.film = f.code; commit(); m.hidden = true; openPc(); toast(`Film ${f.code} uložený`); };
+    addFilm(f); saveScans(); buildCarousel(); S.P.film = f.code; commit(); m.hidden = true; openPc(); toast(`Film ${f.code} uložený`); };
 }
 function initPcApp() {
   $('#pcExport').onclick = () => exportMany(S.pcSel && S.pcSel.size ? S.photos.filter(p => S.pcSel.has(p.id)) : [S.cur]); $('#pcCube').onclick = () => exportLook('.cube');
@@ -3907,10 +3971,29 @@ function boot2(h) {
   $('#camBannerBack').onclick = () => { S.dxReturn = null; $('#camBanner').hidden = true; goBack(); };
   document.addEventListener('pointerdown', () => { lastAct = performance.now(); }, true);
   document.addEventListener('contextmenu', e => { if (!e.target.closest('input,[contenteditable]')) e.preventDefault(); });
-  document.addEventListener('pointerdown', e => { const rg = e.target.closest && e.target.closest('input[type=range]'); if (!rg) return; e.preventDefault(); rg.setPointerCapture(e.pointerId);
-    const set = ev => { const b = rg.getBoundingClientRect(), k = clamp((ev.clientX - b.left - 6) / (b.width - 12), 0, 1), mn = +rg.min, mx = +rg.max, st = +rg.step || 1, v = Math.round((mn + k * (mx - mn)) / st) * st; if (+rg.value !== v) { rg.value = v; rg.dispatchEvent(new Event('input', { bubbles: true })); } };
-    set(e); const mv = ev => set(ev), up = () => { rg.removeEventListener('pointermove', mv); rg.removeEventListener('pointerup', up); rg.removeEventListener('pointercancel', up); rg.dispatchEvent(new Event('change', { bubbles: true })); };
-    rg.addEventListener('pointermove', mv); rg.addEventListener('pointerup', up); rg.addEventListener('pointercancel', up); }, true);
+  /* posuvníky: celý řádek je úchyt. Prstem se táhne relativně (žádný skok na místo ťuknutí) a až po jasném vodorovném pohybu –
+     svislý pohyb scrolluje panel. Myší klik do dráhy skočí na místo. Dvojťuk / dvojklik = výchozí hodnota. */
+  let rgTap = null;
+  document.addEventListener('pointerdown', e => { if (e.button > 0) return;
+    const row = e.target.closest && e.target.closest('.srow'); if (!row || e.target.closest('button,select,textarea,a,.hs,input:not([type=range])')) return;
+    const rg = row.querySelector('input[type=range]'); if (!rg || rg.disabled) return;
+    const mn = +rg.min, mx = +rg.max, st = +rg.step || 1, TH = 20, b0 = rg.getBoundingClientRect(), span = Math.max(1, b0.width - TH), touch = e.pointerType !== 'mouse';
+    const fire = v => { v = clamp(Math.round((v - mn) / st) * st + mn, mn, mx); v = +v.toFixed(5); if (+rg.value !== v) { rg.value = v; rg.dispatchEvent(new Event('input', { bubbles: true })); } };
+    const x0 = e.clientX, y0 = e.clientY; let mode = touch ? 0 : 1, moved = false; // 0 = ještě nevíme, 1 = táhne, -1 = scroll / konec
+    const grab = () => { row.classList.add('drag'); rg.classList.add('drag'); };
+    if (!touch) { e.preventDefault(); if (x0 < b0.left - 6 || x0 > b0.right + 6) mode = 2; // myš na popisku: jen dvojklik
+      else { const thx = b0.left + TH / 2 + (+rg.value - mn) / (mx - mn) * span; if (Math.abs(x0 - thx) > TH * .7) fire(mn + clamp((x0 - b0.left - TH / 2) / span, 0, 1) * (mx - mn)); grab(); } }
+    const v0 = +rg.value;
+    const mv = ev => { if (ev.pointerId !== e.pointerId) return; const dx = ev.clientX - x0, dy = ev.clientY - y0;
+      if (mode === 0) { if (Math.abs(dx) > 7 && Math.abs(dx) > Math.abs(dy) * 1.15) { mode = 1; grab(); } else if (Math.abs(dy) > 9) return end(); else return; }
+      if (mode !== 1) return; moved = true; fire(v0 + (touch ? dx - Math.sign(dx) * 7 : dx) / span * (mx - mn)); };
+    const end = ev => { removeEventListener('pointermove', mv, true); removeEventListener('pointerup', end, true); removeEventListener('pointercancel', end, true);
+      row.classList.remove('drag'); rg.classList.remove('drag'); if (mode === 1) rg.dispatchEvent(new Event('change', { bubbles: true }));
+      if (ev && ev.type === 'pointerup' && !moved && Math.abs(ev.clientX - x0) < 9 && Math.abs(ev.clientY - y0) < 9) { const now = performance.now();
+        if (rgTap && rgTap.rg === rg && now - rgTap.t < 340) { rgTap = null; rg.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })); } else rgTap = { rg, t: now }; }
+      mode = -1; };
+    addEventListener('pointermove', mv, true); addEventListener('pointerup', end, true); addEventListener('pointercancel', end, true); }, true);
+  document.addEventListener('click', e => { const l = e.target.closest && e.target.closest('label.srow'); if (l && l.querySelector('input[type=range]')) e.preventDefault(); }, true); // ťuknutí na popisek nefokusuje posuvník
   setCollapsed(!!S.collapsed, true); updFmt(); layoutVf();
   $('#navlist').innerHTML = NAV.map(([k, l, ic]) => `<button data-k="${k}">${iconSVG(ic)}${l}</button>`).join('');
   $$('#navlist button').forEach(b => b.onclick = () => navTo(b.dataset.k));
