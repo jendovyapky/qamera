@@ -436,8 +436,7 @@ a{color:var(--amber)}
 .cropbox::before,.cropbox::after{content:"";position:absolute;width:18px;height:18px;border:3px solid #fff}
 .cropbox::before{top:-3px;left:-3px;border-right:0;border-bottom:0}
 .cropbox::after{bottom:-3px;right:-3px;border-left:0;border-top:0}
-.fx{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-auto-rows:76px;gap:7px;padding:8px 14px;overflow:visible}
-.fx button{font-size:10px!important;padding:12px 1px 10px!important;white-space:nowrap}
+.fx{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:76px;gap:8px;padding:8px 14px;overflow:visible}
 .fx button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 2px 10px;border-radius:16px;background:var(--panel);font-size:10.5px;color:#cbc3b8;border:1px solid var(--line);height:76px}
 .fx button .px{color:#8d847a}
 .fx button.on{border-color:rgba(255,196,61,.4)}
@@ -2413,7 +2412,7 @@ function viewImage(src, ph) {
    ===================================================================== */
 let edE, edRaf = 0, before = false;
 const PANEL_H = 186;
-function cleanP(P) { if (P.frame && !FRAMES[P.frame]) P.frame = 'glow'; P.date = null; P.tr = 0; if (P.depth && !['bokeh', 'fog', 'hal', 'map'].includes(P.depth.mode)) P.depth.mode = 'bokeh'; return P; } // zrušené efekty
+function cleanP(P) { P.fish = null; P.layers = null; if (P.frame && !FRAMES[P.frame]) P.frame = 'glow'; P.date = null; P.tr = 0; if (P.depth && !['bokeh', 'fog', 'hal', 'map'].includes(P.depth.mode)) P.depth.mode = 'bokeh'; return P; } // zrušené efekty
 function openEditor(ph, fromImg) {
   stopPar(); S.cur = ph; S.fxOpen = null; cleanP(ph.P); S.P = JSON.parse(JSON.stringify(ph.P)); S.cur._last = JSON.parse(JSON.stringify(ph.P)); S.hist = []; S.fut = [];
   edE.setSource(srcOf(ph, S.P));
@@ -2554,6 +2553,12 @@ function layerLabels(g, W, H, depthSrc, Ly) { if (!Ly || Ly.m === 'neon' || Ly.l
   [[.18, .82], [.75, .74], [.55, .3], [.3, .45], [.82, .9]].forEach(([u, v]) => { const dv = d[((v * 49 | 0) * 40 + (u * 39 | 0)) * 4] / 255; if (dv < .05) return; const t = `${Math.round(dv * Ly.n) * 10} m`, tw = g.measureText(t).width;
     g.fillStyle = 'rgba(242,237,226,.95)'; g.fillRect(u * W - 3, v * H - fs * .7, tw + 6, fs * 1.4); g.fillStyle = '#5a321e'; g.fillText(t, u * W, v * H); });
   g.fillStyle = '#5a321e'; g.fillText('MAPA HLOUBKY  1 : 25', fs, fs * 1.6); for (let i = 0; i < 6; i++) { g.fillStyle = i % 2 ? 'rgba(242,237,226,.95)' : '#5a321e'; g.fillRect(fs + i * fs * 1.3, H - fs * 1.6, fs * .7, fs * .45); } }
+/* LiDAR: tažením po fotce se scéna otáčí (vodorovně = otočení, svisle = náklon) */
+function lidarDrag(el, after) { let st = null;
+  el.addEventListener('pointerdown', e => { if (!S.P.lidar || !S.cur || !S.cur.depth || (S.view !== 'pc' && S.fxOpen !== 'lidar')) return; st = { x: e.clientX, y: e.clientY, yaw: S.P.lidar.yaw, pitch: S.P.lidar.pitch }; el.setPointerCapture(e.pointerId); e.stopPropagation(); }, true);
+  el.addEventListener('pointermove', e => { if (!st) return; const L = S.P.lidar; L.yaw = clamp(st.yaw + (e.clientX - st.x) * .35, -60, 60); L.pitch = clamp(st.pitch - (e.clientY - st.y) * .25, -30, 30); after(); });
+  const up = () => { if (!st) return; st = null; commit(); if (S.view === 'pc') buildPcRight(); else if (S.fxOpen === 'lidar') setTab('fx', true); };
+  el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); }
 async function lidarVideo() { const ph = S.cur, L = S.P.lidar; if (!ph || !L || !ph.depth) return;
   const src = copyCanvas(utilRender(srcOf(ph, S.P), Object.assign({}, S.P, { lidar: null }), 1080, Math.round(1080 / phAr(ph)), { depth: ph.depth })), W = 1080, H = Math.round(1080 / phAr(ph)) & ~1, c = mk(W, H), g = c.getContext('2d');
   const types = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'], type = types.find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t));
@@ -2747,8 +2752,8 @@ function setTab(t, quiet) {
     hscroll($('#aspRow')); requestAnimationFrame(placeCropBox);
   } else if (t === 'fx' && S.fxOpen) { renderFxPanel(p);
   } else if (t === 'fx') {
-    const fx = [['fish', 'Fisheye', 'fish'], ['lidar', 'LiDAR', 'lidar'], ['layers', 'Layers', 'layers'], ['depth', 'Hloubka', 'depth'], ['double', 'Double', 'double'],
-      ['dither', 'Dither', 'dither'], ['pixel', 'Pixel art', 'pixel'], ['frame', 'Rám', 'frame'], ['recipe', 'Recepty', 'recipe'], ['blob', 'Blob karta', 'blob']]; // co jde nastavit v Úpravách, tady není
+    const fx = [['lidar', 'LiDAR', 'lidar'], ['depth', 'Hloubka', 'depth'], ['double', 'Double', 'double'], ['dither', 'Dither', 'dither'],
+      ['pixel', 'Pixel art', 'pixel'], ['frame', 'Rám', 'frame'], ['recipe', 'Recepty', 'recipe'], ['blob', 'Blob karta', 'blob']]; // co jde nastavit v Úpravách, tady není
     const st = S.P.style && S.P.style.type, on = k => (k === 'glowfx' && (S.P.glow ?? 0) > .45) || (k === 'sharp' && S.P.sharp) || (k === 'scan' && S.P.tr) || (k === 'double' && S.P.dx && S.P.dx.other) || (k === 'dither' && st === 'dither') || (k === 'pixel' && st === 'pixel') || (k === 'frame' && S.P.frame) || (k === 'fish' && S.P.fish) || (k === 'lidar' && S.P.lidar) || (k === 'layers' && S.P.layers) || (k === 'depth' && S.P.depth) || (k === 'date' && S.P.date);
     p.innerHTML = `<div class="fx hs" id="fxRow">${fx.map(([k, l, ic, e]) => `<button data-fx="${k}" class="${on(k) ? 'on' : ''}">${iconSVG(ic)}${l}${e ? `<em>${e}</em>` : ''}</button>`).join('')}</div>`;
     hscroll($('#fxRow'));
@@ -3571,15 +3576,10 @@ function buildPcRight() {
       <div class="seg" id="pcPal">${(P.style.type === 'dither' ? [['amber', 'AMBER'], ['lime', 'LIME'], ['paper', 'PAPÍR'], ['ir', 'NEON'], ['photo', 'Z FOTKY']] : [['photo4', 'STYL 1'], ['photo', 'STYL 2'], ['photo8', 'STYL 3']]).map(([q, l]) => `<button data-p="${q}" class="${P.style.pn === q ? 'on' : ''}">${l}</button>`).join('')}</div>
       <label class="srow"><span>${P.style.type === 'dither' ? 'Hustota' : 'Pixely'}</span><input type="range" id="pcCells" min="${P.style.type === 'dither' ? 80 : 40}" max="${P.style.type === 'dither' ? 420 : 220}" value="${P.style.cells}" data-def="${P.style.type === 'dither' ? 240 : 110}"><output>${P.style.cells}</output></label>${P.style.type === 'dither' ? `
       <label class="srow"><span>Úrovně</span><input type="range" id="pcLev" min="2" max="4" value="${P.style.levels}" data-def="2"><output>${P.style.levels}</output></label>` : ''}` : ''}</div>
-    <div class="pcsec"><h4>Fisheye</h4><div class="seg" id="pcFm">${[['', 'VYP'], ['1', 'KRUH'], ['0', 'CELÁ']].map(([m, l]) => `<button data-m="${m}" class="${(P.fish ? String(P.fish.c ? 1 : 0) : '') === m ? 'on' : ''}">${l}</button>`).join('')}</div>${P.fish ? `
-      <label class="srow"><span>Síla</span><input type="range" id="pcFs" min="0" max="100" value="${Math.round(P.fish.s * 100)}" data-def="70"><output>${Math.round(P.fish.s * 100)}</output></label>
-      <label class="srow"><span>Hloubka</span><input type="range" id="pcFk" min="0" max="150" value="${Math.round(P.fish.k * 100)}" data-def="45"><output>${Math.round(P.fish.k * 100)}</output></label>` : ''}</div>
-    <div class="pcsec"><h4>LiDAR / Layers <span>z hloubky</span></h4><div class="seg" id="pcLx">${[['', 'VYP'], ['lidar', 'LIDAR'], ['mapa', 'MAPA'], ['neon', 'NEON']].map(([m, l]) => `<button data-m="${m}" class="${(P.lidar ? 'lidar' : P.layers ? P.layers.m : '') === m ? 'on' : ''}">${l}</button>`).join('')}</div>${!S.cur.depth && (P.lidar || P.layers) ? `<p class="note">Počítám hloubku…</p>` : ''}${P.lidar ? `
+    <div class="pcsec"><h4>LiDAR <span>z hloubky · táhni po fotce</span></h4><div class="seg" id="pcLx">${[['', 'VYP'], ['foto', 'FOTO'], ['scan', 'SKEN']].map(([m, l]) => `<button data-m="${m}" class="${(P.lidar ? P.lidar.st : '') === m ? 'on' : ''}">${l}</button>`).join('')}</div>${!S.cur.depth && P.lidar ? `<p class="note">Počítám hloubku…</p>` : ''}${P.lidar ? `
       <label class="srow"><span>Otočení</span><input type="range" id="pcLyaw" min="-60" max="60" value="${Math.round(P.lidar.yaw)}" data-def="18"><output>${Math.round(P.lidar.yaw)}</output></label>
       <label class="srow"><span>Náklon</span><input type="range" id="pcLpit" min="-30" max="30" value="${Math.round(P.lidar.pitch)}" data-def="6"><output>${Math.round(P.lidar.pitch)}</output></label>
-      <div class="row2"><button class="pcghost" id="pcLst">${P.lidar.st === 'scan' ? 'Barvy fotky' : 'Styl sken'}</button><button class="pcghost" id="pcLvid">Video smyčka</button></div>` : P.layers ? `
-      <label class="srow"><span>Vrstvy</span><input type="range" id="pcLyn" min="8" max="48" value="${P.layers.n}" data-def="26"><output>${P.layers.n}</output></label>
-      <label class="srow"><span>Fotka</span><input type="range" id="pcLys" min="0" max="100" value="${Math.round(P.layers.s * 100)}" data-def="80"><output>${Math.round(P.layers.s * 100)}</output></label>` : ''}</div>
+      <div class="row2"><button class="pcghost" id="pcLvid">Video smyčka</button></div>` : ''}</div>
     ${pcDoubleHtml(P)}
     <div class="pcsec"><h4>Blob karta</h4><div class="row2"><button class="pcghost" id="pcBlob">Otevřít blob kartu</button></div></div>`;
   bindRanges($('#pcRight'), renderPc); bindGrainPills($('#pcGt'), buildPcRight); bindPcExtra();
@@ -3605,12 +3605,8 @@ function bindPcExtra() {
   pcRange('#pcCells', v => P.style.cells = v); pcRange('#pcLev', v => P.style.levels = v);
   $$('#pcPal button').forEach(b => b.onclick = () => { const q = b.dataset.p, st = P.style; st.pn = q; st.pal = st.type === 'dither' ? (q === 'photo' ? photoPal(2) : DPALS[q]) : photoPal(+q.replace('photo', '') || 6); commit(); renderPc(); buildPcRight(); });
   $('#pcBlob').onclick = () => pcBlob(true); bindPcDouble();
-  $$('#pcFm button').forEach(b => b.onclick = () => { P.fish = b.dataset.m === '' ? null : Object.assign(P.fish || { s: .7, k: .45, r: .9 }, { c: +b.dataset.m }); commit(); renderPc(); buildPcRight(); });
-  pcRange('#pcFs', v => P.fish.s = v / 100); pcRange('#pcFk', v => P.fish.k = v / 100);
-  $$('#pcLx button').forEach(b => b.onclick = () => { const m = b.dataset.m; P.lidar = m === 'lidar' ? (P.lidar || { yaw: 18, pitch: 6, st: 'foto', dens: 1 }) : null; P.layers = m === 'mapa' || m === 'neon' ? Object.assign(P.layers || { n: 26, s: .8, lab: true }, { m }) : null;
-    if ((P.lidar || P.layers) && !S.cur.depth) runDepth(); commit(); renderPc(); buildPcRight(); });
-  pcRange('#pcLyaw', v => P.lidar.yaw = v); pcRange('#pcLpit', v => P.lidar.pitch = v); pcRange('#pcLyn', v => P.layers.n = v); pcRange('#pcLys', v => P.layers.s = v / 100);
-  const ls = $('#pcLst'); if (ls) ls.onclick = () => { P.lidar.st = P.lidar.st === 'scan' ? 'foto' : 'scan'; commit(); renderPc(); buildPcRight(); };
+  $$('#pcLx button').forEach(b => b.onclick = () => { const m = b.dataset.m; P.lidar = m ? Object.assign(P.lidar || { yaw: 18, pitch: 6, dens: 1 }, { st: m }) : null; if (P.lidar && !S.cur.depth) runDepth(); commit(); renderPc(); buildPcRight(); });
+  pcRange('#pcLyaw', v => P.lidar.yaw = v); pcRange('#pcLpit', v => P.lidar.pitch = v);
   const lv = $('#pcLvid'); if (lv) lv.onclick = lidarVideo;
 }
 /* PC: Double přímo v pravém panelu */
@@ -3691,6 +3687,7 @@ function initPcApp() {
   const bf = $('#pcBefore'); bf.onpointerdown = () => { pcBefore = true; bf.classList.add('on'); $('#pcBadge').classList.add('show'); renderPc(); };
   bf.onpointerup = bf.onpointerleave = () => { if (!pcBefore) return; pcBefore = false; bf.classList.remove('on'); $('#pcBadge').classList.remove('show'); renderPc(); };
   $('#pcMobile').onclick = () => { document.body.classList.remove('pcapp'); setView('m'); };
+  lidarDrag($('#pcWrap'), () => { pcOverlay(); });
   $('#pcScanBtn').onclick = pcScanOpen; $('#pcPhoneClose').onclick = pcPhoneClose; $('#pbClose').onclick = () => pcBlob(false);
 
   // ořez tažením a kolečkem (C)
@@ -3882,7 +3879,7 @@ function boot2(h) {
   $$('#eTabs button').forEach(b => b.onclick = () => { if (S.adv) { S.adv = false; $('#advKnob').classList.remove('on'); } setTab(b.dataset.t); syncNav(); });
   $('#advSw').onclick = () => { toggleAdv(); syncNav(); };
   $('#undoBtn').onclick = undo; $('#redoBtn').onclick = redo; $('#resetBtn').onclick = resetAll;
-  $('#expBtn').onclick = exportPhoto;
+  $('#expBtn').onclick = exportPhoto; lidarDrag($('#eWrap'), () => dateOverlay());
   $('#edCanvas').addEventListener('click', e => { const d = S.P.depth, D = S.cur && S.cur.depth; if (S.fxOpen !== 'depth' || !d || !D || d.mode === 'map' || d.mode === 'hal') return;
     const r = e.currentTarget.getBoundingClientRect(), cr = S.P.crop, u = clamp(.5 + ((e.clientX - r.left) / r.width - .5) / cr.s + cr.x, 0, 1), v = clamp(.5 + ((e.clientY - r.top) / r.height - .5) / cr.s - cr.y, 0, 1);
     const px = D.getContext('2d', { willReadFrequently: true }).getImageData(Math.floor(u * (D.width - 1)), Math.floor(v * (D.height - 1)), 1, 1).data[0] / 255;
