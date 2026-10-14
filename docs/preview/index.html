@@ -449,6 +449,7 @@ a{color:var(--amber)}
 
 /* advanced */
 .adv{overflow-y:auto;padding:4px 14px 10px;display:flex;flex-direction:column;gap:14px;height:100%}
+.advgrab{height:24px}.advgrab .px{transform:rotate(180deg)}.advgrab+.adv{height:calc(100% - 24px)}
 .asec{background:var(--panel);border:1px solid #23201c;border-radius:18px;padding:12px}
 .ah{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
 .ah b{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;color:#bfb7ac;font-weight:500;text-transform:uppercase;white-space:nowrap}
@@ -2911,7 +2912,7 @@ function panelAnim(p) { const deep = (S.tab === 'film' && S.filmOpen) || (S.tab 
 function setTab(t, quiet) {
   S.tab = t; $$('#eTabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   const p = $('#ePanel'); $('#cropLayer').hidden = t !== 'crop' || S.adv;
-  if (S.adv) { renderAdv(); panelAnim(p); sizePanel(quiet); return; }
+  if (S.adv) { renderAdv(); advGrab(p); panelAnim(p); sizePanel(quiet); return; }
   if (t === 'film' && S.filmOpen && FILM[S.P.film] && S.P.film !== 'NONE') { renderFilmPanel(p);
   } else if (t === 'film') {
     p.innerHTML = `<div class="ruler" id="strR"></div><div class="strip" id="fStrip">${filmsOrdered().map(f => `<button class="fthumb ${f.code === S.P.film ? 'on' : ''} ${FAV.includes(f.code) ? 'fav' : ''}" data-c="${f.code}"><canvas width="128" height="160"></canvas><span>${f.code}</span></button>`).join('')}</div>`;
@@ -3211,7 +3212,7 @@ function bindRanges(root, after) {
 }
 function renderAdv() {
   const p = $('#ePanel'), P = S.P;
-  p.innerHTML = `<div class="adv">
+  p.innerHTML = `<button class="camhandle advgrab" id="advGrab" aria-label="Zavřít Advanced">${iconSVG('chev')}</button><div class="adv">
     <div class="asec"><div class="ah"><b>Histogram</b><span style="font-family:var(--f-mono);font-size:10px;color:var(--dim)">${P.film} · ${Math.round(P.str * 100)} %</span></div><canvas class="hist" id="hist" width="600" height="140"></canvas></div>
     <div class="asec"><div class="ah"><b>Tónová křivka</b><div class="seg" id="cvSeg">${['rgb', 'r', 'g', 'b'].map(c => `<button data-c="${c}" class="${c === curveCh ? 'on' : ''}">${c.toUpperCase()}</button>`).join('')}</div></div><canvas class="curve" id="curve" width="600" height="375"></canvas></div>
     <div class="asec"><div class="ah"><b>HSL · ${HSL_NAMES[hslSel]}</b></div><div class="hsldots">${HSL_COLS.map((c, i) => `<button data-i="${i}" class="${i === hslSel ? 'on' : ''}" style="background:${c}" aria-label="${HSL_NAMES[i]}"></button>`).join('')}</div>
@@ -3264,6 +3265,13 @@ function wheel(el, v, set, end) {
   el.onpointermove = e => { if (!el.hasPointerCapture(e.pointerId)) return; const p = pos(e); place(p); set(p); };
   el.onpointerup = end; el.ondblclick = () => { place([0, 0]); set([0, 0]); end(); };
 }
+/* úchyt nahoře v Advanced: ťuknutí nebo stažení dolů Advanced zavře (panel jede za prstem), malé tažení se vrátí */
+function advGrab(p) { const h = $('#advGrab', p); if (!h) return;
+  h.addEventListener('pointerdown', e => { h.setPointerCapture(e.pointerId); panelSp && panelSp.stop(); const sy = e.clientY, H0 = p.offsetHeight; let dy = 0;
+    const mv = ev => { dy = Math.max(0, ev.clientY - sy); p.style.height = Math.max(PANEL_H, H0 - dy) + 'px'; layoutEditor(); };
+    const up = ev => { h.removeEventListener('pointermove', mv); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up);
+      if (ev.type === 'pointerup' && (dy > 50 || dy < 6)) { toggleAdv(); syncNav(); } else sizePanel(); };
+    h.addEventListener('pointermove', mv); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up); }); }
 function toggleAdv() { S.adv = !S.adv; $('#advKnob').classList.toggle('on', S.adv); setTab(S.tab); buzz(6); }
 
 /* Reference */
