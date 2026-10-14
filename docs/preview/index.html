@@ -2917,7 +2917,7 @@ function setTab(t, quiet) {
     p.innerHTML = `<div class="ruler" id="strR"></div><div class="strip" id="fStrip">${filmsOrdered().map(f => `<button class="fthumb ${f.code === S.P.film ? 'on' : ''} ${FAV.includes(f.code) ? 'fav' : ''}" data-c="${f.code}"><canvas width="128" height="160"></canvas><span>${f.code}</span></button>`).join('')}</div>`;
     makeRuler($('#strR'), { min: 0, max: 1, step: .01, value: S.P.str, label: S.P.film === 'NONE' ? 'Bez filmu' : 'Síla filmu · ' + S.P.film, fmt: v => Math.round(v * 100), def: 1, onInput: v => { S.P.str = v; renderEd(); }, onEnd: commit });
     drawFilmThumbs(); hscroll($('#fStrip')); $$('.fthumb').forEach(b => { const f = FILM[b.dataset.c]; if (isOwn(f)) longPress(b, () => filmActs(f.code)); });
-    $$('.fthumb').forEach(b => b.onclick = () => { if (S.P.film === b.dataset.c) { S.filmOpen = true; setTab('film', true); buzz(6); return; } S.P.film = b.dataset.c; $$('.fthumb').forEach(x => x.classList.toggle('on', x === b)); $('#strR .rl').textContent = 'Síla filmu · ' + S.P.film; renderEd(); commit(); buzz(4);
+    $$('.fthumb').forEach(b => b.onclick = () => { if (S.P.film === b.dataset.c) { S.filmOpen = true; setTab('film'); buzz(6); return; } S.P.film = b.dataset.c; $$('.fthumb').forEach(x => x.classList.toggle('on', x === b)); $('#strR .rl').textContent = 'Síla filmu · ' + S.P.film; renderEd(); commit(); buzz(4);
       spring(.9, 1, v => b.querySelector('canvas').style.transform = `scale(${v})`, { k: 300, c: 14 }); });
     requestAnimationFrame(() => { const on = $('.fthumb.on'), s = $('#fStrip'); if (on && s) s.scrollLeft = on.offsetLeft - s.clientWidth / 2 + on.offsetWidth / 2; });
   } else if (t === 'adj') {
@@ -3092,7 +3092,7 @@ function renderFilmPanel(p) { const P = S.P, f = FILM[P.film], gl0 = f.gl ?? .12
     ['hal', 'Halation', 0, 300, Math.round(P.hal * 100), 100], ['bloom', 'Bloom', 0, 150, Math.round(P.bloom * 100), 15], ['glow', 'Glow', 0, 150, Math.round((P.glow ?? gl0) * 100), Math.round(gl0 * 100)], ['grain', 'Grain', 0, 150, Math.round(P.grain * 100), 50], ['gsize', 'Velikost zrna', 50, 300, Math.round(P.gsize * 100), 100]];
   p.innerHTML = `<div class="fxp"><div class="fxh"><button class="ib" id="fpBack" aria-label="Zpět na filmy">${iconSVG('back')}</button><b>FILM · ${f.code}</b><div class="fpbtns"><button class="off sq" id="fpSave" aria-label="Uložit jako vlastní film" title="Uložit jako vlastní film">${iconSVG('plus')}</button><button class="off" id="fpDef">Výchozí</button></div></div>
     ${rows.map(([k, l, a, b, v, d]) => `<label class="srow fk"><span>${l}</span><input type="range" data-fk="${k}" min="${a}" max="${b}" value="${v}" data-def="${d}"><output>${v}</output></label>`).join('')}</div>`;
-  $('#fpBack').onclick = () => { S.filmOpen = false; setTab('film', true); };
+  $('#fpBack').onclick = () => { S.filmOpen = false; setTab('film'); }; // panel pružně sjede zpět na výšku pásu filmů
   $('#fpSave').onclick = saveFilmVariant;
   $('#fpDef').onclick = () => { ['chr', 'fsoft', 'glow'].forEach(k => delete S.P[k]); Object.assign(S.P, { str: 1, hal: 1, bloom: .15, grain: .5, gsize: 1 }); renderEd(true); commit(); setTab('film', true); buzz(6); };
   $$('#ePanel [data-fk]').forEach(i => { paintRange(i); i.oninput = () => { const k = i.dataset.fk; S.P[k] = +i.value / 100; i.nextElementSibling.textContent = i.value; paintRange(i); renderEd(); }; i.onchange = commit;
@@ -3110,7 +3110,7 @@ function saveFilmVariant() { const b = FILM[S.P.film]; if (!b || S.P.film === 'N
         chr: P.chr ?? b.chr ?? .6, gl: P.glow ?? b.gl ?? .12, fsoft: P.fsoft ?? b.fsoft ?? 0, hal: P.hal * (b.hal ?? .3), g: gtypeOf(P),
         vm: { str: clamp(P.str, 0, 1) * vm0.str, bloom: P.bloom / .15 * vm0.bloom, grain: P.grain / .5 * vm0.grain, gsize: P.gsize * vm0.gsize } });
       addFilm(nf); saveScans(); ['chr', 'fsoft', 'glow', 'gtype'].forEach(k => delete P[k]); Object.assign(P, { film: code, str: 1, hal: 1, bloom: .15, grain: .5, gsize: 1 });
-      closeActs(); buildCarousel(); renderEd(true); commit(); setTab('film', true); buzz(12); toast(`Film ${code} uložený – najdeš ho ve filmech i ve foťáku`); };
+      closeActs(); buildCarousel(); renderEd(true); commit(); setTab('film'); buzz(12); toast(`Film ${code} uložený – najdeš ho ve filmech i ve foťáku`); };
     $('#fvGo', root).onclick = go; inp.onkeydown = e => { if (e.key === 'Enter') go(); }; }); }
 function photoPal(n) { const P = JSON.parse(JSON.stringify(S.P)); P.style = null; P.grain = 0; utilRender(srcOf(S.cur, S.P), P, 60, 75, {}); return kmeans(util.e.pixels(), n).map(c => '#' + rgbOf(c).map(v => v.toString(16).padStart(2, '0')).join('')); }
 const DPALS = { amber: ['#0B0C0E', '#F5C542'], lime: ['#050505', '#D4FF3A'], paper: ['#1b1a18', '#F2EFE8'], ir: ['#1a0d2e', '#ff4f8b'] };
