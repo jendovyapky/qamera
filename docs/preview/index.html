@@ -1462,8 +1462,8 @@ void main(){ vec3 acc = vec3(0.); float ea = 0.;
   o = vec4(acc / 16., ea / 16.); }`;
 const FS = `#version 300 es
 precision highp float;
-#define HALK 3.
-#define HALG 3.
+#define HALK 1.4
+#define HALG 1.7
 #define BLOOMG .8
 in vec2 vUv; out vec4 o;
 uniform sampler2D uTex, uCurve, uHL;
@@ -2065,7 +2065,7 @@ function sheetDrag(el) {
     h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
   });
 }
-function onSheetClosed(el) {}
+function onSheetClosed(el) { if (el.id === 'actSheet') $('#scrim').classList.remove('on'); } // stažení okna prstem → i šedé pozadí pryč
 function closeSheets() { ['#filmSheet', '#menuSheet', '#dxSheet'].forEach(s => { const el = $(s); if (el._open) sheet(el, false); }); }
 
 /* =====================================================================
