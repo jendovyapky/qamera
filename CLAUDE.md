@@ -20,6 +20,33 @@ ve stylu **Prequel**, na PC se používá spíš jako **Lightroom**. Celá v **�
 - [x] Datumovka (sedmisegment, 3 formáty, 3 barvy), Rám: Glow / Negativ / Instant. Jednorázovka a role se ukládají, arch je položka galerie se zoomem. `sw.js` (VERSION) pro offline.
 - [ ] Další: skutečná appka mimo `docs/preview` (rozdělení do modulů), ladění na iPhonu/Androidu, dlaždicový export nad 4096 px, video.
 
+## Jak navázat (nová session / jiný účet)
+- **Kde je kód:** celá appka je jeden soubor `docs/preview/index.html` (+ `docs/preview/raw.js`, `vendor/`, `luts/`, `icons/`, `sw.js`). Pracovní složka `E:\qamera\qamera` (git), nad ní `E:\qamera\CLAUDE.md` = kopie tohohle souboru (po úpravě vždy zkopírovat: `cp CLAUDE.md ../CLAUDE.md`).
+- **Mluvit česky**, Honza píše bez diakritiky a stručně. Na nové nápady chce **opravdu nové** věci (ne opakovat dřívější seznamy), zamítnuté nenavrhovat znovu (light leaky, prach, fisheye, layers, paralaxa, datumovka, prism/halftone/thermal, déšť, pod vodou, zlatý řez/spirála).
+- **Postup práce:**
+  1. Pracuje se na větvi **`dev`** (`git checkout dev`), push `git push origin dev` → Honza zkouší na `dev.qamera.pages.dev` (nainstalovaná jako „Qamera DEV“ s tyrkysovou ikonou).
+  2. Do `main` (= všichni uživatelé) **jen když Honza napíše „vydej“**: merge dev → main, zvýšit `VERSION` v `sw.js`, zkontrolovat položky v `NEWS` (okno Co je nového).
+  3. Po každé změně: `VERSION` v `sw.js` o patch výš (např. `qamera-0.18.7` → `0.18.8`), poznámka sem do CLAUDE.md (sekce Rozhodnutí), commit končí řádkem `Co-Authored-By: Claude …`.
+  4. Změny vzhledu nesmí rozbít dřívější edity (viz `P.gv`): nová verze efektu jen pro nové úpravy, staré uložené P si nechají starou.
+- **Testování:**
+  - Lokální server: `python -m http.server 8765` v `E:\qamera\qamera` (spustit na pozadí).
+  - Playwright testy v `tools/pw/` (`npm i` jednou, pak třeba `node tcam.js`; používají nainstalovaný Chrome `channel: 'chrome'`). Výstupy (png/jpg) jsou v .gitignore.
+    - `tlab.js` / `tlab2.js` filtry, expozice negativu, formát, učení výchozích + mřížka variant `lab_grid.jpg`; `tcam.js` nastavení filmu ve foťáku; `tsun.js` / `tsun3.js` zlatá hodina (falešné hodiny `p.clock.install`, `timezoneId: 'Europe/Prague'`) a že kartička nepřeteče; `tled.js` LED / bílý text a záře; `tscrim.js` stažení okna; `texp.js` export; `tmem.js` paměť; `tnews.js` okno novinek; `tdev.js` DEV ikona; `tgv.js` stará vs nová záře pixel po pixelu (potřebuje `git show main:docs/preview/index.html > docs/preview/_main.html`, po testu smazat).
+  - **Vždy `serviceWorkers: 'block'`** v kontextu, jinak sw.js podstrčí starou verzi a test ukáže staré chování.
+  - Screenshoty prohlédnout a důležité poslat Honzovi (je citlivý na zarovnání a přetékání – nic se nesmí „lít“ do sousední ikony).
+  - Syntaxi skriptu ověřit: vytáhnout největší `<script>` do `.mjs` a `node --check`.
+  - Honzovy osobní fotky (`C:\Users\PC\Pictures`, DNG z Nikonu) jen na lokální test, **nikdy necommitovat** (repo je veřejné).
+- **Na co si dát pozor (už se stalo):**
+  - Komentář `//` vložený doprostřed jednořádkového kódu zakomentuje zbytek řádku → rozbitý skript. Komentáře dávat na konec příkazu nebo nad funkci.
+  - GLSL konstanty vždy s tečkou (`2.0`), jinak se shader nezkompiluje a obraz je černý.
+  - Úpravy dělat Python skripty s `assert s.count(a) == 1` (přesná náhrada), soubor ukládat s `newline='\n'`. Skript psát do souboru (ne přes heredoc – zpětná lomítka v cestách ho rozbijí).
+- **Rozdělané / čeká na Honzu (stav 2. 11. 2026):**
+  - Na `dev` je nevydaná 0.18 (od commitu a49f1be): export bez zaseknutí, paměť, nová záře + verze záře, RAW/ProRAW, DEV ikona, Novinky, nastavení filmu ve foťáku, filtry / expozice negativu / formát / tvoje výchozí, zlatá a modrá hodina, oprava LED, slabší halation. Čeká na „vydej“.
+  - **ProRAW z iPhonu** zatím netestovaný na skutečném souboru (jen syntetický JPEG XL DNG a Nikon DNG).
+  - Halation po stažení (HALK 1.4, HALG 1.7) – Honza ještě nepotvrdil na telefonu.
+  - **Objektivy** (nápad, Honza chce promyslet): Swirl (z hloubky), Plastový (měkké rohy, barevné lemy), Soft focus, Uzavřený; řada „Objektiv“ v nastavení filmu. Otevřené otázky: pevné objektivy, nebo posuvník „charakter skla“? Swirl i ve foťáku (bez hloubky)?
+  - Další navržené nápady, zatím nevybrané: Zvětšovák pro ČB (gradace papíru, papír, přisvětlování prstem), Skener (Frontier / Noritsu vzhled), Long exposure z videa, Sjednotit roli.
+
 ## Přísná pravidla
 - **Nikdy nesahat na nic, co souvisí se studiem** (`studiodepo.cz`, repozitáře DEPO / depo-app, studiový Cloudflare).
   Projekty pod `jendovyapky` drž úplně oddělené.
@@ -232,6 +259,7 @@ Qamera je **GPL-3.0** (veřejné repo) – kvůli Spektrafilmu. V appce musí b�
 - Video s filmovým vzhledem (stejný shader na `<video>`), krátké klipy.
 
 ## Testování
+- Testy a postup viz „Jak navázat“ nahoře (`tools/pw/`).
 - Playwright, viewport 390×844 (mobil) a 1440×900 (PC); kamera v testech přes podvržený stream (`--use-fake-device-for-media-stream`, vlastní video).
 - Reálné testy na telefonu přes preview URL větve `dev` (kamera vyžaduje HTTPS).
 - Ověřovat výkon (fps hledáčku) na iPhonu i Androidu.
