@@ -1025,6 +1025,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
               <p>Qamera je svobodný software pod licencí <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GPL-3.0</a>. Zdrojový kód: <a href="https://github.com/jendovyapky/qamera" target="_blank" rel="noopener">jendovyapky/qamera</a>.</p>
               <p>Filmové LUT upečené ze spektrafilmu jsou pod <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>. Derived from spektrafilm by Andrea Volpato, upravené (tónová křivka, viz <a href="https://github.com/jendovyapky/qamera/blob/main/luts/CHANGELOG.txt" target="_blank" rel="noopener">CHANGELOG</a>). Exporty, které film obsahují, nesou stejnou licenci.</p>
               <p>Hloubková mapa: <a href="https://huggingface.co/onnx-community/depth-anything-v2-small" target="_blank" rel="noopener">Depth Anything V2 Small</a> (Apache-2.0) přes <a href="https://github.com/huggingface/transformers.js" target="_blank" rel="noopener">transformers.js</a> (Apache-2.0). Přenos barev podle python-color-transfer (MIT).</p>
+              <p>RAW / DNG: <a href="https://www.libraw.org" target="_blank" rel="noopener">LibRaw</a> (LGPL-2.1 / CDDL-1.0) přes <a href="https://github.com/ybouane/LibRaw-Wasm" target="_blank" rel="noopener">libraw-wasm</a> (ISC), JPEG XL v ProRAW přes <a href="https://github.com/tirr-c/jxl-oxide" target="_blank" rel="noopener">jxl-oxide</a> (MIT / Apache-2.0).</p>
               <p>Názvy filmů jsou vlastní kódy. Kodak a Fujifilm jsou ochranné známky svých vlastníků; vzhledy jsou jen „ve stylu“.</p>
             </div>
             <div class="card"><h3>Nastavení</h3>
@@ -1036,7 +1037,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
 
         <div class="scrim" id="scrim"></div>
         <div class="sheet" id="actSheet"><div class="grab"></div><div class="acts" id="acts"></div></div>
-        <input type="file" id="fileImport" accept="image/*" multiple hidden>
+        <input type="file" id="fileImport" accept="image/*,.dng,.DNG,image/x-adobe-dng,.cr2,.cr3,.nef,.arw,.raf,.orf,.rw2,.pef" multiple hidden>
         <div class="fsview" id="fsView" hidden><canvas id="fsCanvas"></canvas><span id="fsHint"></span></div>
         <div class="toast" id="toast"></div>
       </div>
@@ -1423,10 +1424,12 @@ const VS = `#version 300 es
 in vec2 p; out vec2 vUv; void main(){ vUv = p*.5+.5; gl_Position = vec4(p,0.,1.); }`;
 /* mapa světel pro halation / bloom: 4×4 vzorky na pixel, energie = jak moc je místo přepálené (ne jen světlé) */
 const HS = `#version 300 es
-precision highp float; in vec2 vUv; out vec4 o; uniform sampler2D uS; uniform vec2 uTs; uniform float uL;
+precision highp float; in vec2 vUv; out vec4 o; uniform sampler2D uS, uE; uniform vec2 uTs; uniform float uL, uHasE;
 void main(){ vec3 acc = vec3(0.); float ea = 0.;
   for (int y = 0; y < 4; y++) for (int x = 0; x < 4; x++) { vec3 c = textureLod(uS, vUv + (vec2(x, y) - 1.5) * .25 * uTs, uL).rgb;
-    float e = smoothstep(.86, .995, max(c.r, max(c.g, c.b))); e *= e; acc += c * e; ea += e; }
+    float e = smoothstep(.86, .995, max(c.r, max(c.g, c.b))); e *= e;
+    if (uHasE > .5) e = clamp(texture(uE, vUv + (vec2(x, y) - 1.5) * .25 * uTs).r * 1.5, 0., 1.); // RAW: skutečný jas (EV nad bílou), ne jen ořez
+    acc += c * e; ea += e; }
   o = vec4(acc / 16., ea / 16.); }`;
 const FS = `#version 300 es
 precision highp float;
@@ -1615,19 +1618,22 @@ class Engine {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.uniform1i(this.u.uTex, 0); gl.uniform1i(this.u.uCurve, 1); gl.uniform1i(this.u.uDepth, 2); gl.uniform1i(this.u.uLut3, 3); gl.uniform1i(this.u.uHL, 4); this.luts = {};
     const hp = this.hp = gl.createProgram(); gl.attachShader(hp, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(hp, sh(gl.FRAGMENT_SHADER, HS)); gl.bindAttribLocation(hp, loc, 'p'); gl.linkProgram(hp);
-    gl.useProgram(hp); gl.uniform1i(gl.getUniformLocation(hp, 'uS'), 0); this.hu = { ts: gl.getUniformLocation(hp, 'uTs'), l: gl.getUniformLocation(hp, 'uL') }; gl.useProgram(pr);
+    gl.useProgram(hp); gl.uniform1i(gl.getUniformLocation(hp, 'uS'), 0); gl.uniform1i(gl.getUniformLocation(hp, 'uE'), 5); this.hu = { ts: gl.getUniformLocation(hp, 'uTs'), l: gl.getUniformLocation(hp, 'uL'), he: gl.getUniformLocation(hp, 'uHasE') }; gl.useProgram(pr);
+    this.etex = gl.createTexture(); gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D, this.etex); [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER].forEach(k => gl.texParameteri(gl.TEXTURE_2D, k, gl.LINEAR)); [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(k => gl.texParameteri(gl.TEXTURE_2D, k, gl.CLAMP_TO_EDGE)); gl.activeTexture(gl.TEXTURE0);
     this.htex = gl.createTexture(); gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, this.htex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     this.hfb = gl.createFramebuffer(); this.hw = 0; this.hh = 0;
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     this.curveKey = ''; this.srcAR = 1;
   }
-  setSource(src) { if (this.dead) return; const gl = this.gl; this.srcEl = src; this.st = null; gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src); gl.generateMipmap(gl.TEXTURE_2D); this.srcAR = (src.videoWidth || src.width) / (src.videoHeight || src.height); this.hiPass(src.videoWidth || src.width, src.videoHeight || src.height); }
-  hiPass(sw, sh) { const gl = this.gl, k = Math.min(1, 512 / Math.max(sw, sh)), w = Math.max(1, Math.round(sw * k)), h = Math.max(1, Math.round(sh * k)); // mapa světel ≤ 512 px
+  setSource(src) { if (this.dead) return; const gl = this.gl; this.srcEl = src; this.st = null; gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src); gl.generateMipmap(gl.TEXTURE_2D); this.srcAR = (src.videoWidth || src.width) / (src.videoHeight || src.height); this.hiPass(src.videoWidth || src.width, src.videoHeight || src.height, src._hl); }
+  hiPass(sw, sh, hl) { const gl = this.gl;
+    if (hl && this.eSrc !== hl) { gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D, this.etex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, hl); this.eSrc = hl; }
+    const k = Math.min(1, 512 / Math.max(sw, sh)), w = Math.max(1, Math.round(sw * k)), h = Math.max(1, Math.round(sh * k)); // mapa světel ≤ 512 px
     gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, this.htex);
     if (w !== this.hw || h !== this.hh) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); this.hw = w; this.hh = h; gl.bindFramebuffer(gl.FRAMEBUFFER, this.hfb); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.htex, 0); }
     gl.bindTexture(gl.TEXTURE_2D, null); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.tex);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.hfb); gl.viewport(0, 0, w, h); gl.useProgram(this.hp); gl.uniform2f(this.hu.ts, 1 / w, 1 / h); gl.uniform1f(this.hu.l, Math.max(0, Math.log2(sw / w / 4)));
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.hfb); gl.viewport(0, 0, w, h); gl.useProgram(this.hp); gl.uniform2f(this.hu.ts, 1 / w, 1 / h); gl.uniform1f(this.hu.l, Math.max(0, Math.log2(sw / w / 4))); gl.uniform1f(this.hu.he, hl ? 1 : 0);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.useProgram(this.p);
     gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, this.htex); gl.generateMipmap(gl.TEXTURE_2D); gl.activeTexture(gl.TEXTURE0); }
   size(w, h) { if (this.c.width !== w || this.c.height !== h) { this.c.width = w; this.c.height = h; return true; } return false; }
@@ -2315,23 +2321,24 @@ function shrink(c, m = WORK) { const k = m / Math.max(c.width, c.height); if (k 
 /* paměť: každá fotka v plné pracovní velikosti = ~12 MB → s desítkami fotek iPhone došel strop pro obrázky.
    V paměti je proto jen malá verze (PREV), plná se načte z originálu v IndexedDB jen pro otevřenou fotku (a pár posledních) */
 const PREV = 640, FULLN = 3, FULL = [];
+const withHl = (c, hl) => { if (c && hl) c._hl = hl; return c; }; // mapa světel z RAW jede s plátnem fotky do engine
 async function decodeTo(blob, m) { const bm = await createImageBitmap(blob), k = Math.min(1, m / Math.max(bm.width, bm.height)), c = mk(Math.round(bm.width * k), Math.round(bm.height * k)), g = c.getContext('2d'); if (!g) { bm.close && bm.close(); freeCanvas(c); throw new Error('Došla paměť na obrázky'); } g.drawImage(bm, 0, 0, c.width, c.height); bm.close && bm.close(); return c; }
 function toPrev(ph) { if (!ph || !ph.blob || ph === S.cur) return false; // jen fotky s uloženým originálem (jinak by se ztratilo rozlišení)
-  if (Math.max(ph.src.width, ph.src.height) > PREV) { const o = ph.src; ph.src = shrink(o, PREV); freeCanvas(o); ph._dxKey = null; }
+  if (Math.max(ph.src.width, ph.src.height) > PREV) { const o = ph.src; ph.src = withHl(shrink(o, PREV), ph.hl); freeCanvas(o); ph._dxKey = null; }
   if (ph.depth && ph.depthBlob && Math.max(ph.depth.width, ph.depth.height) > PREV) { const o = ph.depth; ph.depth = shrink(o, PREV); freeCanvas(o); }
   ph._full = false; return true; }
 function noteFull(ph) { if (!ph) return; const i = FULL.indexOf(ph); if (i >= 0) FULL.splice(i, 1); FULL.unshift(ph); ph._full = true;
   for (let j = FULL.length - 1; j >= FULLN; j--) { const o = FULL[j]; if (o === S.cur) continue; if (toPrev(o)) FULL.splice(j, 1); } }
 async function ensureFull(ph) { if (!ph || ph._full || !ph.blob || Math.max(ph.src.width, ph.src.height) >= WORK) { if (ph && ph.blob) noteFull(ph); return false; }
   if (ph._loading) return ph._loading;
-  return ph._loading = (async () => { try { const c = await decodeTo(ph.blob, WORK); ph.src = c; ph._dxKey = null;
+  return ph._loading = (async () => { try { const c = await decodeTo(ph.blob, WORK); ph.src = withHl(c, ph.hl); ph._dxKey = null;
       if (ph.depthBlob) { try { const d = await decodeTo(ph.depthBlob, WORK); ph.depth = d; } catch {} }
       noteFull(ph); return true; } catch { return false; } finally { ph._loading = null; } })(); }
 /* otevřená fotka (+ druhá fotka u Double) se po načtení plné verze tiše překreslí */
 async function wantFull(ph) { if (!ph) return; const o = S.P && S.P.dx && S.P.dx.other ? S.photos.find(p => p.id === S.P.dx.other) : null;
   const a = await ensureFull(ph), b = o ? await ensureFull(o) : false; if ((a || b) && S.cur === ph && typeof dxChanged === 'function') dxChanged(); }
 async function dbPut(ph) { if (!ph || !ph.saved) return; try { if (!ph.blob) { ph.blob = await new Promise(r => ph.src.toBlob(r, 'image/jpeg', .93)); if (Math.max(ph.src.width, ph.src.height) > PREV) noteFull(ph); } if (Math.max(ph.src.width, ph.src.height) > WORK) { ph.src = shrink(ph.src); ph._dxKey = null; } const db = await idb();
-  db.transaction('photos', 'readwrite').objectStore('photos').put({ id: ph.id, kind: ph.kind, tags: ph.tags, date: +ph.date, P: ph.P, blob: ph.blob, depth: ph.depthBlob || null, dirty: !!ph.dirty }); } catch {} }
+  db.transaction('photos', 'readwrite').objectStore('photos').put({ id: ph.id, kind: ph.kind, tags: ph.tags, date: +ph.date, P: ph.P, blob: ph.blob, depth: ph.depthBlob || null, hl: ph.hlBlob || null, raw: ph.raw || null, dirty: !!ph.dirty }); } catch {} }
 async function dbDel(id) { try { const db = await idb(); db.transaction('photos', 'readwrite').objectStore('photos').delete(id); } catch {} }
 async function dbLoad() {
   try { const db = await idb(), all = await new Promise((res, rej) => { const r = db.transaction('photos').objectStore('photos').getAll(); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
@@ -2340,7 +2347,8 @@ async function dbLoad() {
 
       if (it.roll) { const sh = { id: it.id, src: c, P: Object.assign(DEF(), it.P), date: new Date(it.date), roll: it.roll, blob: it.blob }; // snímek z jednorázovky / zamčené role
         if (it.roll === 'active' && S.dispo) S.dispo.shots.push(sh); else { const ro = ROLLS.find(r => r.id === it.roll); if (ro) ro.shots.push(sh); } continue; }
-      const ph = addPhoto(c, Object.assign(DEF(), it.P), it.kind, it.tags, false, it.id); ph.date = new Date(it.date); ph.saved = true; ph.blob = it.blob; ph.dirty = !!it.dirty; if (it.kind === 'arch') ph.film = 'ARCH';
+      const ph = addPhoto(c, Object.assign(DEF(), it.P), it.kind, it.tags, false, it.id); ph.date = new Date(it.date); ph.saved = true; ph.blob = it.blob; ph.dirty = !!it.dirty; if (it.raw) ph.raw = it.raw;
+      if (it.hl) { try { ph.hl = await decodeTo(it.hl, 1024); ph.hlBlob = it.hl; withHl(ph.src, ph.hl); rethumb(ph); } catch {} } if (it.kind === 'arch') ph.film = 'ARCH';
       if (it.depth) { try { ph.depth = await decodeTo(it.depth, PREV); ph.depthBlob = it.depth; if (ph.P.depth || ph.P.lidar) rethumb(ph); } catch {} } }
     if (S.dispo) updDispo();
     if (all.length) { $('#galThumb').src = S.photos[0].thumb; if (S.screen === 'gallery') renderGallery(); }
@@ -2518,15 +2526,36 @@ function archActs() {
 function startSelect(mode = 'arch') { S.sel = new Set(); S.selMode = mode; $('#s-gallery').classList.add('selecting'); $('#selBar').hidden = false; $('.search').hidden = true; $('#selMore').hidden = mode !== 'pick'; $('#selGo').textContent = mode === 'pick' ? 'Export' : 'Vytvořit arch'; updSel(); filterGallery(); if (mode === 'arch') toast('Ťukáním vyber fotky na arch'); }
 function endSelect() { S.sel = null; $('#s-gallery').classList.remove('selecting'); $('#selBar').hidden = true; $('.search').hidden = false; filterGallery(); }
 function updSel() { const n = S.sel ? S.sel.size : 0; $('#selN').textContent = n === 1 ? '1 fotka' : n > 1 && n < 5 ? `${n} fotky` : `${n} fotek`; $('#selGo').disabled = !n; }
+/* RAW / DNG (i ProRAW): vyvolání v raw.js → fotka ≤ 4096 px jako originál + mapa světel (skutečný jas světel pro halation / bloom) */
+const RAWX = /\.(dng|cr2|cr3|nef|nrw|arw|srf|sr2|raf|orf|rw2|pef|srw|x3f|3fr|iiq|erf|kdc|mrw|mos|rwl)$/i;
+async function importRaw(f, el, i, N) {
+  const setP = (v, t) => { const pc = Math.round((i + v) / N * 100); $('#xBar', el).style.width = pc + '%'; $('#xPct', el).textContent = pc + ' %'; if (t) $('#xSt', el).textContent = t; };
+  const m = await import('./raw.js'), r = await m.developRaw(f, setP); setP(.97, 'Ukládám');
+  const full = r.canvas, blob = await new Promise(res => full.toBlob(res, 'image/jpeg', .95)); if (!blob) throw new Error('Došla paměť na obrázky');
+  const src = shrink(full, WORK); if (src !== full) freeCanvas(full);
+  const P = DEF(); P.film = S.film; const ph = addPhoto(withHl(src, r.hl), P, 'import', ['import', 'moje', 'raw'], true, uid());
+  ph.date = r.date || new Date(f.lastModified || Date.now()); ph.blob = blob; ph.raw = r.label || 'RAW';
+  if (r.hl) { ph.hl = r.hl; ph.hlBlob = await new Promise(res => r.hl.toBlob(res, 'image/png')); rethumb(ph); }
+  keep(ph); return ph;
+}
 async function importFiles(files) {
-  let n = 0;
-  for (const f of files) {
+  let n = 0; const raws = files.filter(f => RAWX.test(f.name || '') || /dng/i.test(f.type || '')), rest = files.filter(f => !raws.includes(f));
+  if (raws.length) { const host = document.body.classList.contains('pcapp') && !document.body.classList.contains('pcphone') ? document.body : $('#phone'), el = document.createElement('div'); el.className = 'xmod';
+    el.innerHTML = `<div class="xcard"><div class="xh"><b>RAW</b><span id="xN">1 / ${raws.length}</span></div><div class="xbar"><i id="xBar"></i></div><div class="xrow"><span id="xSt">Načítám…</span><span id="xPct">0 %</span></div>
+      <div class="xbtns"><button class="pbtn ghost" id="xCancel">Zrušit</button></div></div>`;
+    host.appendChild(el); requestAnimationFrame(() => el.classList.add('on')); let cancel = false, fail = '';
+    $('#xCancel', el).onclick = () => { cancel = true; el.classList.remove('on'); setTimeout(() => el.remove(), 300); };
+    for (let i = 0; i < raws.length && !cancel; i++) { $('#xN', el).textContent = `${i + 1} / ${raws.length}`;
+      try { await importRaw(raws[i], el, i, raws.length); n++; } catch (e) { fail = String((e && e.message) || e).slice(0, 120); } }
+    if (!cancel) { if (fail && !n) { el.classList.add('fail'); $('#xSt', el).textContent = 'RAW se nepodařilo vyvolat'; $('#xPct', el).textContent = ''; const why = document.createElement('div'); why.className = 'xerr'; why.textContent = fail; $('.xrow', el).after(why); $('#xCancel', el).textContent = 'Zavřít'; }
+      else { el.classList.remove('on'); setTimeout(() => el.remove(), 300); } } }
+  for (const f of rest) {
     try { const url = URL.createObjectURL(f), img = new Image(); img.src = url; await img.decode();
       const k = Math.min(1, 2048 / Math.max(img.naturalWidth, img.naturalHeight)), c = mk(Math.round(img.naturalWidth * k), Math.round(img.naturalHeight * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
       const P = DEF(); P.film = S.film; const ph = addPhoto(c, P, 'import', ['import', 'moje'], true, uid()); ph.date = new Date(f.lastModified || Date.now()); if (/^image\/(jpeg|png|webp)$/.test(f.type)) ph.blob = f; keep(ph); n++; } catch {}
   }
   if (n) { filterGallery(); $('#galThumb').src = S.photos[0].thumb; toast(n === 1 ? 'Fotka přidaná s filmem ' + S.film : `${n} fotek přidáno s filmem ${S.film}`); }
-  else toast('Fotku se nepodařilo načíst');
+  else if (rest.length) toast('Fotku se nepodařilo načíst');
 }
 /* jednorázovka */
 /* jednorázovka = filtr na celý den: fotky z nastaveného okna se schovají a ráno se vyvolají do archu */
@@ -2820,7 +2849,7 @@ async function renderFull(ph, P, st = () => {}, MAXS = 4096) {
   if (!util.e || util.e.dead || util.e.gl.isContextLost()) utilReset();
   if (P.dx && P.dx.other) { await ensureFull(ph); await ensureFull(S.photos.find(p => p.id === P.dx.other)); }
   let src = srcOf(ph, P), tmp = null; st(0, 'Načítám originál');
-  if (src === ph.src && ph.blob) { try { const bm = await withTimeout(createImageBitmap(ph.blob), 20000, 'Načtení originálu'), k = Math.min(1, MAXS / Math.max(bm.width, bm.height)), c = mk(Math.round(bm.width * k), Math.round(bm.height * k)), g = c.getContext('2d'); if (g) { g.drawImage(bm, 0, 0, c.width, c.height); src = tmp = c; } else freeCanvas(c); bm.close && bm.close(); } catch {} } // export z originálu (když nejde, zůstane fotka z paměti)
+  if (src === ph.src && ph.blob) { try { const bm = await withTimeout(createImageBitmap(ph.blob), 20000, 'Načtení originálu'), k = Math.min(1, MAXS / Math.max(bm.width, bm.height)), c = mk(Math.round(bm.width * k), Math.round(bm.height * k)), g = c.getContext('2d'); if (g) { g.drawImage(bm, 0, 0, c.width, c.height); src = tmp = withHl(c, ph.hl); } else freeCanvas(c); bm.close && bm.close(); } catch {} } // export z originálu (když nejde, zůstane fotka z paměti)
   st(1, 'Vyvolávám film'); await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
   const ar = P.crop.ar || src.width / src.height, max = Math.min(util.e.gl.getParameter(util.e.gl.MAX_TEXTURE_SIZE) || 2048, MAXS);
   let w = Math.round(Math.min(src.width, max)), h = Math.round(w / ar); if (h > max) { h = max; w = Math.round(h * ar); }
@@ -4063,7 +4092,7 @@ function initPcApp() {
   addEventListener('dragenter', e => { if (S.view !== 'pc') return; e.preventDefault(); dc++; show(true); });
   addEventListener('dragleave', () => { if (--dc <= 0) { dc = 0; show(false); } });
   addEventListener('dragover', e => { if (S.view === 'pc') e.preventDefault(); });
-  addEventListener('drop', async e => { if (S.view !== 'pc') return; e.preventDefault(); dc = 0; show(false); const fs = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/')); if (fs.length) { await importFiles(fs); S.cur = S.photos[0]; pcSelect(S.cur); } });
+  addEventListener('drop', async e => { if (S.view !== 'pc') return; e.preventDefault(); dc = 0; show(false); const fs = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/') || RAWX.test(f.name)); if (fs.length) { await importFiles(fs); S.cur = S.photos[0]; pcSelect(S.cur); } });
 }
 
 /* =====================================================================
@@ -4132,7 +4161,7 @@ function boot() {
 }
 /* Novinky po aktualizaci: jednou po nové verzi, nový uživatel je nevidí (jen se označí jako přečtené) */
 const NEWS = [
-  { v: '0.18', items: ['<b>Realističtější Halation, Bloom a Glow.</b> Záře teď vzniká jen z opravdu přepálených světel (lampy, slunce, odlesky), ne z každé světlé plochy – fotky už nejsou zamlžené.', '<b>Qamera šetří paměť telefonu.</b> Galerie drží jen náhledy, fotka v plné kvalitě se načte až při úpravě – i se stovkami fotek běží appka svižně a nepadá.', '<b>Export se už nezasekne.</b> Když telefonu dojde paměť, Qamera fotku vyvolá v menším rozlišení, a kdyby ani to nešlo, řekne to a nabídne Zkusit znovu.'] },
+  { v: '0.18', items: ['<b>RAW a ProRAW.</b> Do Qamery jde importovat DNG z iPhonu (i ProRAW) a RAW z foťáků. Vyvolá se přímo v telefonu a Halation pozná, jak silné světlo ve skutečnosti bylo.', '<b>Realističtější Halation, Bloom a Glow.</b> Záře teď vzniká jen z opravdu přepálených světel (lampy, slunce, odlesky), ne z každé světlé plochy – fotky už nejsou zamlžené.', '<b>Qamera šetří paměť telefonu.</b> Galerie drží jen náhledy, fotka v plné kvalitě se načte až při úpravě – i se stovkami fotek běží appka svižně a nepadá.', '<b>Export se už nezasekne.</b> Když telefonu dojde paměť, Qamera fotku vyvolá v menším rozlišení, a kdyby ani to nešlo, řekne to a nabídne Zkusit znovu.'] },
 ];
 const NEWS_OLD = (() => { try { return Object.keys(localStorage).some(k => k.startsWith('qamera.')); } catch { return false; } })(); // stav před startem: už appku používal?
 function showNews() {
