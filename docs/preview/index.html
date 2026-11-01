@@ -12,6 +12,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Qamera">
 <title>Qamera</title>
+<script>/* testovací verze (větev dev a další náhledy na *.qamera.pages.dev): jiná ikona a název, ať jde na ploše rozeznat */
+(function () { var h = location.hostname; if (!/\.qamera\.pages\.dev$/.test(h)) return; window.QDEV = true;
+  document.querySelectorAll('link[rel~="icon"],link[rel="apple-touch-icon"]').forEach(function (l) { l.href = l.getAttribute('href').replace('icons/', 'icons/dev/'); });
+  document.querySelector('link[rel="manifest"]').href = '../../manifest-dev.webmanifest'; document.querySelector('meta[name="apple-mobile-web-app-title"]').content = 'Qamera DEV'; document.title = 'Qamera DEV'; })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Doto:wght@500;700;900&family=Geist:wght@300..700&family=Geist+Mono:wght@400;500;600&family=Silkscreen:wght@400;700&display=swap">
