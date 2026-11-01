@@ -1,0 +1,6 @@
+{
+  "name": "qamera-pw",
+  "private": true,
+  "description": "Playwright testy náhledu Qamery (spouští se lokálně, ne v appce)",
+  "dependencies": { "playwright-core": "1.48.2" }
+}

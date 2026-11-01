@@ -1,0 +1,10 @@
+const { chromium } = require('playwright-core');
+(async () => { const b = await chromium.launch({ channel: 'chrome' }); const c = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, serviceWorkers: 'block' }), p = await c.newPage();
+  const errs = []; p.on('pageerror', e => errs.push(e.message));
+  await p.addInitScript(() => localStorage.setItem('qamera.newsSeen', '"9"'));
+  await p.goto('http://localhost:8765/docs/preview/'); await p.waitForTimeout(5000);
+  await p.evaluate(() => openSun()); await p.waitForTimeout(800);
+  const g = await p.evaluate(() => document.querySelector('#actSheet .grab').getBoundingClientRect().toJSON());
+  const x = g.x + g.width / 2, y = g.y + g.height / 2;
+  await p.mouse.move(x, y); await p.mouse.down(); for (let i = 1; i <= 10; i++) { await p.mouse.move(x, y + i * 30); await p.waitForTimeout(16); } await p.mouse.up(); await p.waitForTimeout(900);
+  console.log(await p.evaluate(() => [document.querySelector('#scrim').classList.contains('on'), document.querySelector('#actSheet')._open]), errs); await b.close(); })();
