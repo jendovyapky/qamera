@@ -1474,7 +1474,7 @@ uniform vec3 uSh,uHi; uniform float uFCon,uFSat,uFFade, uChar, uFSoft, uIRHue; u
 uniform vec3 uHsl[8]; uniform vec3 uGSh,uGMid,uGHi;
 uniform vec3 uTrMs,uTrSs,uTrMr,uTrSr; uniform float uTr;
 uniform float uSeed, uGlow, uIR, uStyle, uCells, uLevels, uPalN, uZebra;
-uniform vec3 uLF; uniform float uPol, uLat, uHR, uFBlur;
+uniform vec3 uLF; uniform float uPol, uLat, uHR, uFBlur, uGV;
 uniform vec3 uPal[6];
 uniform highp sampler3D uLut3; uniform float uLut;
 uniform sampler2D uDepth; uniform float uDOn, uDMode, uDAmt, uFocus, uVFlash; uniform vec2 uPar; uniform int uSampN;
@@ -1538,7 +1538,7 @@ void main(){
   if (uDOn > .5 && uDMode > 1.5 && uDMode < 2.5) { float fg = pow(clamp((uFocus - dep) / max(uFocus, .05), 0., 1.), 1.15) * uDAmt; lin = mix(lin, vec3(.74,.76,.8) * exp2(uExp) * .85, fg); } // mlha do hloubky
   /* halation = červenooranžová záře kolem světel (odraz od podložky filmu), bloom = měkká bílá záře světel */
   bool dHal = uDOn > .5 && uDMode > 2.5 && uDMode < 3.5;
-  if (uHal > .001 || dHal) { /* halation: nejdřív práh (jen opravdová světla), pak rozmazání – 3 prstence vzorků kolem pixelu;
+  if (uGV > 1.5 && (uHal > .001 || dHal)) { /* halation: nejdřív práh (jen opravdová světla), pak rozmazání – 3 prstence vzorků kolem pixelu;
        mipmapa by malá světla (lampy, slunce v listí) rozmazala pod práh a záře by zmizela */
     vec2 tsz = vec2(textureSize(uHL,0)), ak = vec2(tsz.y / tsz.x, 1.); float hr = 0.;
     float L1 = log2(max(1., .005 * uHR * tsz.y)), L2 = log2(max(1., .012 * uHR * tsz.y)), L3 = log2(max(1., .026 * uHR * tsz.y)); // větší políčko = relativně menší záře // rozmazání vzorku ≈ rozestup vzorků → hladká záře bez „duchů“
@@ -1550,8 +1550,21 @@ void main(){
     vec3 hcol = vec3(1., .2, .04) * exp2(uExp);
     if (dHal) { float dl = textureLod(uDepth, uv, 3.5).r, far = smoothstep(uFocus, uFocus - .3, dl); hl *= far; lin += hcol * hl * (1. + uDAmt * 5.); } // halation jen u vzdálených světel
     lin += hcol * hl * HALG * uHal / (1. + luma(lin) * 5.); } // červený lem je vidět hlavně na tmavém okolí, světlé plochy nepřebarví
-  { vec3 h1 = textureLod(uHL, uv, 2.).rgb, h2 = textureLod(uHL, uv, 3.5).rgb, h3 = textureLod(uHL, uv, 5.).rgb; // bloom jen z přepálených světel
+  if (uGV > 1.5) { vec3 h1 = textureLod(uHL, uv, 2.).rgb, h2 = textureLod(uHL, uv, 3.5).rgb, h3 = textureLod(uHL, uv, 5.).rgb; // bloom jen z přepálených světel
     vec3 bl = (h1 * .5 + h2 * .8 + h3 * 1.) * uBloom * BLOOMG * exp2(uExp); lin += bl / (1. + lin); } // na už světlých místech přidává méně
+  else { /* záře do 0.17 (beze změny): práh z jasu fotky, bloom z mipmap fotky */
+    vec3 b1 = pow(textureLod(uTex,uv,3.).rgb, vec3(2.2)), b2 = pow(textureLod(uTex,uv,5.).rgb, vec3(2.2)), b3 = pow(textureLod(uTex,uv,6.5).rgb, vec3(2.2));
+    if (uHal > .001 || dHal) { vec2 tsz = vec2(textureSize(uTex,0)), ak = vec2(tsz.y / tsz.x, 1.); float hr = 0.;
+      float L1 = log2(max(1., .007 * tsz.y)), L2 = log2(max(1., .017 * tsz.y)), L3 = log2(max(1., .04 * tsz.y)), jr = hash(floor(uv * tsz)) * .6283;
+      for (int i = 0; i < 10; i++) { float a = float(i) * .6283 + jr; vec2 d = vec2(cos(a), sin(a)) * ak, e = vec2(cos(a + .314), sin(a + .314)) * ak;
+        hr += smoothstep(.4, .9, luma(pow(textureLod(uTex, uv + d * .01, L1).rgb, vec3(2.2)))) * .5
+            + smoothstep(.34, .85, luma(pow(textureLod(uTex, uv + e * .024, L2).rgb, vec3(2.2)))) * .38
+            + smoothstep(.28, .8, luma(pow(textureLod(uTex, uv + d * .055, L3).rgb, vec3(2.2)))) * .26; }
+      hr /= 10.; float self = smoothstep(.4, .9, luma(pow(textureLod(uTex, uv, .5).rgb, vec3(2.2))));
+      float hl = max(hr - self * 1.05, 0.) + hr * .06; vec3 hcol = vec3(1., .2, .04) * exp2(uExp);
+      if (dHal) { float dl = textureLod(uDepth, uv, 3.5).r, far = smoothstep(uFocus, uFocus - .3, dl); hl *= far; lin += hcol * hl * (1. + uDAmt * 5.); }
+      lin += hcol * hl * 5.5 * uHal; }
+    lin += (max(b1-.35,0.)*.7 + max(b2-.22,0.)*1.1 + max(b3-.15,0.)*1.3) * uBloom * 1.6 * exp2(uExp); }
   vec3 c = pow(lin/(1.+lin*.06*uStr), vec3(1./2.2)); // jemné stažení světel jen s filmem
   c = (c-.5)*(1.+uCon*.55)+.5;
   float l = luma(c); c = mix(vec3(l), c, 1.+uSat);
@@ -1589,7 +1602,8 @@ void main(){
   f = uFFade + f*(1.-uFFade*1.4); }
   if (uFSoft > 0.) f = mix(f, (f - .5) * .66 + .53, uFSoft); // měkkost: zjemní křivku filmu (méně kontrastu, světlejší stíny)
   c = mix(c, f, uStr);
-  if (uGlow > 0.) { vec3 dg = lookOf(textureLod(uTex, uv, 4.6).rgb); float gw = smoothstep(.4, .95, luma(dg)); c = mix(c, 1.-(1.-c)*(1.-dg*.85*gw), uGlow*.6); c = mix(c, c*.96+.025, uGlow*.15); } // soft glow / difúze – záře ze světel, stíny jen lehce
+  if (uGlow > 0. && uGV < 1.5) { vec3 dg = lookOf(textureLod(uTex, uv, 4.6).rgb); c = mix(c, 1.-(1.-c)*(1.-dg*.85), uGlow*.6); c = mix(c, c*.92+.05, uGlow*.18); } // glow do 0.17
+  else if (uGlow > 0.) { vec3 dg = lookOf(textureLod(uTex, uv, 4.6).rgb); float gw = smoothstep(.4, .95, luma(dg)); c = mix(c, 1.-(1.-c)*(1.-dg*.85*gw), uGlow*.6); c = mix(c, c*.96+.025, uGlow*.15); } // soft glow / difúze – záře ze světel, stíny jen lehce
   c = clamp(c,0.,1.);
   c = vec3(texture(uCurve,vec2(c.r,.5)).r, texture(uCurve,vec2(c.g,.5)).g, texture(uCurve,vec2(c.b,.5)).b);
   vec3 h = rgb2hsv(c); float hc[8] = float[8](0.,.083,.166,.333,.5,.625,.75,.875);
@@ -1627,7 +1641,7 @@ void main(){
     if (Lz > .9) c = mix(c, vec3(1.,.77,.24), .85*st); if (Lz < .07) c = mix(c, vec3(.2,.45,1.), .7*st); }
   o = vec4(clamp(c,0.,1.), 1.);
 }`;
-const DEF = () => ({ film: 'P400', str: 1, exp: 0, temp: 0, tint: 0, con: 0, sat: 0, grain: .5, gsize: 1, gtype: null, hal: 1, bloom: .15, glow: null, vig: .25, fade: 0, sharp: 0, style: null, frame: null, dx: null,
+const DEF = () => ({ gv: 2, film: 'P400', str: 1, exp: 0, temp: 0, tint: 0, con: 0, sat: 0, grain: .5, gsize: 1, gtype: null, hal: 1, bloom: .15, glow: null, vig: .25, fade: 0, sharp: 0, style: null, frame: null, dx: null,
   curve: { rgb: [[0, 0], [1, 1]], r: [[0, 0], [1, 1]], g: [[0, 0], [1, 1]], b: [[0, 0], [1, 1]] }, hsl: Array.from({ length: 8 }, () => [0, 0, 0]),
   grade: { sh: [0, 0], mid: [0, 0], hi: [0, 0] }, tr: 0, crop: { ar: 0, s: 1, x: 0, y: 0, rot: 0 } });
 
@@ -1712,7 +1726,7 @@ class Engine {
     const fk = (FFMT[P.ffmt] || FFMT['35']).k, nx = P.nexp || 0, latG = 1 + .3 * Math.max(-nx, 0) - .1 * Math.max(nx, 0); // větší negativ = jemnější zrno; podexpozice = víc zrna
     gl.uniform1f(u.uGrain, P.grain * vm.grain * G.a * (.6 + .4 * isoK) * k * latG / Math.sqrt(fk)); gl.uniform1f(u.uGFreq, 560 / (P.gsize * vm.gsize) * G.f / (.72 + .38 * isoK) * fk);
     const lt = LFS[P.lf], lw = f.bw || [.2126, .7152, .0722], ln = lt ? lt[0] * lw[0] + lt[1] * lw[1] + lt[2] * lw[2] : 1;
-    gl.uniform3fv(u.uLF, lt ? lt.map(x => x / ln) : [1, 1, 1]); gl.uniform1f(u.uPol, P.lf === 'POL' ? 1 : 0); gl.uniform1f(u.uLat, nx); gl.uniform1f(u.uHR, 1 / fk); gl.uniform1f(u.uFBlur, P.ffmt === 'half' ? .55 : 0);
+    gl.uniform3fv(u.uLF, lt ? lt.map(x => x / ln) : [1, 1, 1]); gl.uniform1f(u.uPol, P.lf === 'POL' ? 1 : 0); gl.uniform1f(u.uLat, nx); gl.uniform1f(u.uHR, 1 / fk); gl.uniform1f(u.uGV, P.gv || 2); gl.uniform1f(u.uFBlur, P.ffmt === 'half' ? .55 : 0);
     gl.uniform1f(u.uSeed, o.seed != null ? o.seed : 7); gl.uniform1f(u.uGSharp, G.sh); gl.uniform1f(u.uGChroma, G.ch); gl.uniform1f(u.uGClump, G.cl); gl.uniform1f(u.uGMot, G.mot);
     gl.uniform1f(u.uVig, P.vig * k); gl.uniform1f(u.uFade, P.fade); gl.uniform1f(u.uSharp, P.sharp);
     gl.uniform1f(u.uChar, P.chr ?? f.chr ?? .6); gl.uniform3fv(u.uBW, f.bw || [0, 0, 0]); gl.uniform3fv(u.uBTone, f.tone || [1, 1, 1]); gl.uniform1f(u.uBToe, f.toe || 0);
@@ -2095,12 +2109,13 @@ const fOut = (k, v) => k === 'nexp' ? (v > 0 ? '+' : v < 0 ? '−' : '') + Math.
 /* řádky nastavení filmu: hodnota = P[k] (chybí → tovární), výchozí (dvojťuk, Výchozí) = tvoje výchozí */
 function filmCtlHtml(P, code, at, fmt, only) { const f = FILM[code] || FILM.P400, F = factBase(code), B = filmBase(code), segs = [];
   if (!f.ir) segs.push(`<div class="srow fk segrow"><span>Filtr</span><div class="seg" data-${at}seg="lf"><button data-v="">BEZ</button>${lfList(f).map(x => `<button data-v="${x}">${x}</button>`).join('')}</div></div>`);
+  if (fmt) segs.push(`<div class="srow fk segrow"><span>Záře</span><div class="seg" data-${at}seg="gv"><button data-v="1">STARÁ</button><button data-v="2">NOVÁ</button></div></div>`);
   if (fmt) segs.push(`<div class="srow fk segrow"><span>Formát</span><div class="seg" data-${at}seg="ffmt">${['half', '35', '645', '66', '67', '45'].map(x => `<button data-v="${x}">${FFMT[x].l}</button>`).join('')}</div></div>`);
   return segs.join('') + FROWS.filter(r => !only || only.includes(r[0])).map(([k, l, a, b, sc]) => { const v = Math.round((P[k] ?? F[k]) * sc), d = Math.round(B[k] * sc);
     return `<label class="srow fk"><span>${l}</span><input type="range" data-${at}="${k}" min="${a}" max="${b}" value="${v}" data-def="${d}" data-sc="${sc}"><output>${fOut(k, v)}</output></label>`; }).join(''); }
 function bindFilmCtl(root, at, get, set, input, done) {
-  $$(`[data-${at}seg]`, root).forEach(sg => { const k = sg.dataset[at + 'seg'], cur = () => get(k) || (k === 'ffmt' ? '35' : ''), mark = () => $$('button', sg).forEach(b => b.classList.toggle('on', b.dataset.v === cur()));
-    mark(); $$('button', sg).forEach(b => b.onclick = () => { set(k, b.dataset.v && !(k === 'ffmt' && b.dataset.v === '35') ? b.dataset.v : null); mark(); input(); done(); buzz(4); }); });
+  $$(`[data-${at}seg]`, root).forEach(sg => { const k = sg.dataset[at + 'seg'], cur = () => String(get(k) || (k === 'ffmt' ? '35' : k === 'gv' ? 2 : '')), mark = () => $$('button', sg).forEach(b => b.classList.toggle('on', b.dataset.v === cur()));
+    mark(); $$('button', sg).forEach(b => b.onclick = () => { set(k, k === 'gv' ? +b.dataset.v : b.dataset.v && !(k === 'ffmt' && b.dataset.v === '35') ? b.dataset.v : null); mark(); input(); done(); buzz(4); }); });
   $$(`input[data-${at}]`, root).forEach(i => { const k = i.dataset[at], sc = +i.dataset.sc; paintRange(i);
     i.oninput = () => { set(k, +i.value / sc); i.nextElementSibling.textContent = fOut(k, +i.value); paintRange(i); input(); }; i.onchange = done;
     i.ondblclick = () => { i.value = i.dataset.def; i.oninput(); done(); }; }); }
@@ -2491,9 +2506,9 @@ async function dbLoad() {
     all.sort((a, b) => a.date - b.date);
     for (const it of all) { let c; try { c = await decodeTo(it.blob, PREV); } catch { continue; } // v paměti jen malá verze, plná až při otevření
 
-      if (it.roll) { const sh = { id: it.id, src: c, P: Object.assign(DEF(), it.P), date: new Date(it.date), roll: it.roll, blob: it.blob }; // snímek z jednorázovky / zamčené role
+      if (it.roll) { const sh = { id: it.id, src: c, P: Object.assign(DEF(), oldGv(it.P)), date: new Date(it.date), roll: it.roll, blob: it.blob }; // snímek z jednorázovky / zamčené role
         if (it.roll === 'active' && S.dispo) S.dispo.shots.push(sh); else { const ro = ROLLS.find(r => r.id === it.roll); if (ro) ro.shots.push(sh); } continue; }
-      const ph = addPhoto(c, Object.assign(DEF(), it.P), it.kind, it.tags, false, it.id); ph.date = new Date(it.date); ph.saved = true; ph.blob = it.blob; ph.dirty = !!it.dirty; if (it.raw) ph.raw = it.raw;
+      const ph = addPhoto(c, Object.assign(DEF(), oldGv(it.P)), it.kind, it.tags, false, it.id); ph.date = new Date(it.date); ph.saved = true; ph.blob = it.blob; ph.dirty = !!it.dirty; if (it.raw) ph.raw = it.raw;
       if (it.hl) { try { ph.hl = await decodeTo(it.hl, 1024); ph.hlBlob = it.hl; withHl(ph.src, ph.hl); rethumb(ph); } catch {} } if (it.kind === 'arch') ph.film = 'ARCH';
       if (it.depth) { try { ph.depth = await decodeTo(it.depth, PREV); ph.depthBlob = it.depth; if (ph.P.depth || ph.P.lidar) rethumb(ph); } catch {} } }
     if (S.dispo) updDispo();
@@ -3635,9 +3650,11 @@ function useDxOther(ph) { const cur = S.cur; S.dxReturn = null; $('#camBanner').
 /* =====================================================================
    Recepty: uložený vzhled (film + grain + úpravy), sdílení odkazem a QR
    ===================================================================== */
-let RECIPES = store.get('recipes', []);
+/* úpravy uložené před 0.18 nemají gv → záře se jim počítá postaru (vypadají pořád stejně) */
+const oldGv = P => { if (P && P.gv == null) P.gv = 1; return P; };
+let RECIPES = store.get('recipes', []); RECIPES.forEach(r => oldGv(r.P));
 /* kopírovat / vložit úpravy mezi fotkami: všechno kromě ořezu a druhé fotky z Double */
-let CLIP = store.get('clip', null);
+let CLIP = oldGv(store.get('clip', null));
 const lookOf = P => { const r = JSON.parse(JSON.stringify(P)); delete r.crop; delete r.dx; return r; };
 function copyLook(P) { CLIP = lookOf(P); store.set('clip', CLIP); buzz(8); toast('Úpravy zkopírované, vlož je do jiné fotky'); }
 function pasteLook(ph) { if (!CLIP) { toast('Nejdřív zkopíruj úpravy z jiné fotky'); return false; }
@@ -4296,7 +4313,7 @@ function fit() {
 let READY = false, evApi = null;
 function boot() {
   const rm = location.hash.match(/^#recept=(.+)$/); // sdílený recept z odkazu / QR
-  if (rm) { try { const r = JSON.parse(decodeURIComponent(escape(atob(rm[1])))); const list = store.get('recipes', []); list.unshift(r); store.set('recipes', list); RECIPES = list; setTimeout(() => toast(`Recept ${r.name} přidaný, najdeš ho v Efektech`), 3200); } catch {} history.replaceState(null, '', location.pathname); }
+  if (rm) { try { const r = JSON.parse(decodeURIComponent(escape(atob(rm[1])))); oldGv(r.P); const list = store.get('recipes', []); list.unshift(r); store.set('recipes', list); RECIPES = list; setTimeout(() => toast(`Recept ${r.name} přidaný, najdeš ho v Efektech`), 3200); } catch {} history.replaceState(null, '', location.pathname); }
   hydrateIcons();
   miniEyes = mascot($('#miniEyes')); mascot($('#aboutEyes'));
   const h = location.hash.slice(1);
@@ -4308,7 +4325,7 @@ function boot() {
 }
 /* Novinky po aktualizaci: jednou po nové verzi, nový uživatel je nevidí (jen se označí jako přečtené) */
 const NEWS = [
-  { v: '0.18', items: ['<b>Zlatá a modrá hodina.</b> Ikona slunce ve foťáku svítí během zlaté nebo modré hodiny a půl hodiny předem z ní vyjede, kolik minut zbývá. Ťuknutím na ikonu uvidíš celý den.', '<b>Filtry na objektiv.</b> K černobílým filmům žlutý, oranžový, červený a zelený filtr (červený ztmaví nebe), k barevným teplý a studený filtr a polarizační (hlubší nebe, méně odlesků).', '<b>Expozice negativu a formát.</b> Přeexponovaný nebo podexponovaný film se chová jako skutečný negativ a formát (half-frame až 4×5) změní velikost zrna i záře.', '<b>Tvoje výchozí.</b> Když u filmu něco nastavuješ pořád stejně, Qamera ti to nabídne jako výchozí.', '<b>Nastavení filmu ve foťáku.</b> Ťukni na vybraný film (nebo na ikonu posuvníků) a nastav Sílu, Halation, Bloom, Grain a další – hledáček to ukáže hned a Qamera si to pro každý film pamatuje.', '<b>RAW a ProRAW.</b> Do Qamery jde importovat DNG z iPhonu (i ProRAW) a RAW z foťáků. Vyvolá se přímo v telefonu a Halation pozná, jak silné světlo ve skutečnosti bylo.', '<b>Realističtější Halation, Bloom a Glow.</b> Záře teď vzniká jen z opravdu přepálených světel (lampy, slunce, odlesky), ne z každé světlé plochy – fotky už nejsou zamlžené.', '<b>Qamera šetří paměť telefonu.</b> Galerie drží jen náhledy, fotka v plné kvalitě se načte až při úpravě – i se stovkami fotek běží appka svižně a nepadá.', '<b>Export se už nezasekne.</b> Když telefonu dojde paměť, Qamera fotku vyvolá v menším rozlišení, a kdyby ani to nešlo, řekne to a nabídne Zkusit znovu.'] },
+  { v: '0.18', items: ['<b>Zlatá a modrá hodina.</b> Ikona slunce ve foťáku svítí během zlaté nebo modré hodiny a půl hodiny předem z ní vyjede, kolik minut zbývá. Ťuknutím na ikonu uvidíš celý den.', '<b>Filtry na objektiv.</b> K černobílým filmům žlutý, oranžový, červený a zelený filtr (červený ztmaví nebe), k barevným teplý a studený filtr a polarizační (hlubší nebe, méně odlesků).', '<b>Expozice negativu a formát.</b> Přeexponovaný nebo podexponovaný film se chová jako skutečný negativ a formát (half-frame až 4×5) změní velikost zrna i záře.', '<b>Tvoje výchozí.</b> Když u filmu něco nastavuješ pořád stejně, Qamera ti to nabídne jako výchozí.', '<b>Nastavení filmu ve foťáku.</b> Ťukni na vybraný film (nebo na ikonu posuvníků) a nastav Sílu, Halation, Bloom, Grain a další – hledáček to ukáže hned a Qamera si to pro každý film pamatuje.', '<b>RAW a ProRAW.</b> Do Qamery jde importovat DNG z iPhonu (i ProRAW) a RAW z foťáků. Vyvolá se přímo v telefonu a Halation pozná, jak silné světlo ve skutečnosti bylo.', '<b>Realističtější Halation, Bloom a Glow.</b> Záře teď vzniká jen z opravdu přepálených světel (lampy, slunce, odlesky), ne z každé světlé plochy – fotky už nejsou zamlžené. Tvoje dřívější fotky a recepty si nechají původní záři, přepnout jde v nastavení filmu (Záře: stará / nová).', '<b>Qamera šetří paměť telefonu.</b> Galerie drží jen náhledy, fotka v plné kvalitě se načte až při úpravě – i se stovkami fotek běží appka svižně a nepadá.', '<b>Export se už nezasekne.</b> Když telefonu dojde paměť, Qamera fotku vyvolá v menším rozlišení, a kdyby ani to nešlo, řekne to a nabídne Zkusit znovu.'] },
 ];
 const NEWS_OLD = (() => { try { return Object.keys(localStorage).some(k => k.startsWith('qamera.')); } catch { return false; } })(); // stav před startem: už appku používal?
 function showNews() {
