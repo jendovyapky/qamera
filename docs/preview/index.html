@@ -352,6 +352,9 @@ a{color:var(--amber)}
 .ftune{display:flex;flex-direction:column;gap:2px;padding:2px 0 6px}
 .ftune .srow{grid-template-columns:96px 1fr 34px}
 .ftune .ftdef{align-self:center;margin-top:6px}
+.sheet .srow.segrow,.srow.segrow{display:grid;justify-content:stretch}
+.srow.segrow .seg{grid-column:2/4;display:flex;min-width:0}
+.ftune .seg button,.srow.segrow .seg button{flex:1;padding:0 2px;height:28px;font-size:10px;letter-spacing:.02em;white-space:nowrap;text-align:center;min-width:0}
 #filmSheet.tune .fdesc,#filmSheet.tune .flegend,#filmSheet.tune .fmtrow{display:none}
 .newfilm{position:absolute;left:18px;top:4px;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;color:var(--fg);font-size:22px;box-shadow:inset 0 0 0 1.5px #3d3731}
 .favbtn.on .px{color:#ff5b6e;filter:drop-shadow(0 0 6px rgba(255,80,100,.6))}
@@ -1452,6 +1455,7 @@ uniform vec3 uSh,uHi; uniform float uFCon,uFSat,uFFade, uChar, uFSoft, uIRHue; u
 uniform vec3 uHsl[8]; uniform vec3 uGSh,uGMid,uGHi;
 uniform vec3 uTrMs,uTrSs,uTrMr,uTrSr; uniform float uTr;
 uniform float uSeed, uGlow, uIR, uStyle, uCells, uLevels, uPalN, uZebra;
+uniform vec3 uLF; uniform float uPol, uLat, uHR, uFBlur;
 uniform vec3 uPal[6];
 uniform highp sampler3D uLut3; uniform float uLut;
 uniform sampler2D uDepth; uniform float uDOn, uDMode, uDAmt, uFocus, uVFlash; uniform vec2 uPar; uniform int uSampN;
@@ -1494,9 +1498,22 @@ void main(){
         vec3 sc = textureLod(uTex, sp, lod).rgb; float sd = textureLod(uDepth, sp, 0.).r; float w = (1. + pow(luma(sc), 5.) * 10.) * (sd > dep + .12 ? .25 : 1.); acc += sc * w; ws += w; }
       col = mix(col, acc / ws, smoothstep(0., .18, coc)); } }
   if (uSharp > 0.) { vec2 px = 1./vec2(textureSize(uTex,0)); vec3 bl = (texture(uTex,uv+vec2(px.x,0)).rgb+texture(uTex,uv-vec2(px.x,0)).rgb+texture(uTex,uv+vec2(0,px.y)).rgb+texture(uTex,uv-vec2(0,px.y)).rgb)*.25; col += (col-bl)*uSharp*1.5; }
+  if (uFBlur > 0.) col = mix(col, textureLod(uTex, uv, max(0., log2(float(textureSize(uTex,0).y) * .0007))).rgb, uFBlur); // half-frame: menší políčko = měkčí kresba
   col = mix(col, (col-uTrMs)/max(uTrSs,vec3(.03))*uTrSr+uTrMr, uTr);
   vec3 lin = pow(max(col,0.), vec3(2.2)) * exp2(uExp);
   lin *= vec3(1.+uTemp*.22, 1.+uTint*.1, 1.-uTemp*.22);
+  lin *= uLF; // filtr na objektivu: propustnost po kanálech (srovnaná na citlivost filmu → šedá zůstane stejně světlá)
+  if (uPol > 0.) { float sk = smoothstep(.04, .3, (lin.b - max(lin.r, lin.g)) / (lin.b + .02)); lin *= mix(vec3(1.), vec3(.48, .56, .78), sk * uPol); // polarizační: hlubší nebe,
+    float pl = luma(lin); lin = max(mix(vec3(pl), lin, 1. + .2 * uPol), 0.); lin *= 1. - .12 * uPol * smoothstep(.5, 1.3, pl); }                    // bez odlesků (sytější barvy, méně lesku)
+  if (uLat != 0.) { /* expozice negativu (latitude): film dostal 2^n víc/míň světla, laboratoř to při zvětšení srovná na stejný jas.
+       Pata křivky (t) spolkne stíny podexpozice, rameno (s2) jemně stlačí světla přeexpozice. Poměr k n = 0 → při 0 beze změny */
+    float t = .012, s2 = .015, g = exp2(uLat), mm = .18 * g;
+    vec3 m = lin * g, d = m * m / (m + t); d /= 1. + d * s2; float dm = mm * mm / (mm + t); dm /= 1. + dm * s2;
+    vec3 d0 = lin * lin / (lin + t); d0 /= 1. + d0 * s2; float b0 = .0324 / .192; b0 /= 1. + b0 * s2;
+    lin *= (d / dm) / max(d0 / b0, vec3(1e-5));
+    float un = max(-uLat, 0.), ov = max(uLat, 0.), ll = luma(lin);
+    lin += vec3(.004, .008, .007) * un * (1. - smoothstep(0., .2, ll)); // podexpozice: kalné, nazelenalé stíny
+    lin = max(mix(vec3(ll), lin, 1. - .07 * un + .04 * ov), 0.); }
   if (uVFlash > 0.) { float far0 = uRes.x/uRes.y; vec2 fq = q*vec2(far0>1.?far0:1., far0>1.?1.:1./far0); float fall = exp(-dot(fq,fq)*3.4); // vintage blesk: tvrdé světlo zepředu, teplý střed, tmavé kraje
     lin *= mix(1., .5 + 1.35*fall, uVFlash); lin *= mix(vec3(1.), vec3(1.12,1.,.8), uVFlash*(.4+.6*fall)); }
   if (uDOn > .5 && uDMode > 1.5 && uDMode < 2.5) { float fg = pow(clamp((uFocus - dep) / max(uFocus, .05), 0., 1.), 1.15) * uDAmt; lin = mix(lin, vec3(.74,.76,.8) * exp2(uExp) * .85, fg); } // mlha do hloubky
@@ -1505,10 +1522,10 @@ void main(){
   if (uHal > .001 || dHal) { /* halation: nejdřív práh (jen opravdová světla), pak rozmazání – 3 prstence vzorků kolem pixelu;
        mipmapa by malá světla (lampy, slunce v listí) rozmazala pod práh a záře by zmizela */
     vec2 tsz = vec2(textureSize(uHL,0)), ak = vec2(tsz.y / tsz.x, 1.); float hr = 0.;
-    float L1 = log2(max(1., .005 * tsz.y)), L2 = log2(max(1., .012 * tsz.y)), L3 = log2(max(1., .026 * tsz.y)); // rozmazání vzorku ≈ rozestup vzorků → hladká záře bez „duchů“
+    float L1 = log2(max(1., .005 * uHR * tsz.y)), L2 = log2(max(1., .012 * uHR * tsz.y)), L3 = log2(max(1., .026 * uHR * tsz.y)); // větší políčko = relativně menší záře // rozmazání vzorku ≈ rozestup vzorků → hladká záře bez „duchů“
     float jr = hash(floor(uv * tsz)) * .6283; // náhodné natočení prstenců na pixel → žádné tečky po vzorcích
     for (int i = 0; i < 10; i++) { float a = float(i) * .6283 + jr; vec2 d = vec2(cos(a), sin(a)) * ak, e = vec2(cos(a + .314), sin(a + .314)) * ak;
-      hr += textureLod(uHL, uv + d * .007, L1).a * .55 + textureLod(uHL, uv + e * .017, L2).a * .35 + textureLod(uHL, uv + d * .036, L3).a * .16; } // poloměr jako skutečná halation (podložka filmu): malý
+      hr += textureLod(uHL, uv + d * .007 * uHR, L1).a * .55 + textureLod(uHL, uv + e * .017 * uHR, L2).a * .35 + textureLod(uHL, uv + d * .036 * uHR, L3).a * .16; } // poloměr jako skutečná halation (podložka filmu): malý
     hr /= 10.; float self = textureLod(uHL, uv, 0.).a;
     float hl = max(hr - self, 0.) * HALK; // záře kolem přepáleného světla; samotné světlo se nepřebarví
     vec3 hcol = vec3(1., .2, .04) * exp2(uExp);
@@ -1673,7 +1690,10 @@ class Engine {
     const vm = f.vm || { str: 1, bloom: 1, grain: 1, gsize: 1 }; // vlastní varianta filmu = násobky nastavení
     const k = P.film === 'NONE' ? 0 : clamp(P.str * vm.str, 0, 1); // síla filmu řídí celý filmový vzhled – při 0 % je fotka původní (zůstanou jen Úpravy)
     gl.uniform1f(u.uStr, k); gl.uniform1f(u.uFSoft, (P.fsoft ?? f.fsoft ?? 0) * k); gl.uniform1f(u.uHal, P.hal * f.hal * k); gl.uniform1f(u.uBloom, P.bloom * vm.bloom * k);
-    gl.uniform1f(u.uGrain, P.grain * vm.grain * G.a * (.6 + .4 * isoK) * k); gl.uniform1f(u.uGFreq, 560 / (P.gsize * vm.gsize) * G.f / (.72 + .38 * isoK));
+    const fk = (FFMT[P.ffmt] || FFMT['35']).k, nx = P.nexp || 0, latG = 1 + .3 * Math.max(-nx, 0) - .1 * Math.max(nx, 0); // větší negativ = jemnější zrno; podexpozice = víc zrna
+    gl.uniform1f(u.uGrain, P.grain * vm.grain * G.a * (.6 + .4 * isoK) * k * latG / Math.sqrt(fk)); gl.uniform1f(u.uGFreq, 560 / (P.gsize * vm.gsize) * G.f / (.72 + .38 * isoK) * fk);
+    const lt = LFS[P.lf], lw = f.bw || [.2126, .7152, .0722], ln = lt ? lt[0] * lw[0] + lt[1] * lw[1] + lt[2] * lw[2] : 1;
+    gl.uniform3fv(u.uLF, lt ? lt.map(x => x / ln) : [1, 1, 1]); gl.uniform1f(u.uPol, P.lf === 'POL' ? 1 : 0); gl.uniform1f(u.uLat, nx); gl.uniform1f(u.uHR, 1 / fk); gl.uniform1f(u.uFBlur, P.ffmt === 'half' ? .55 : 0);
     gl.uniform1f(u.uSeed, o.seed != null ? o.seed : 7); gl.uniform1f(u.uGSharp, G.sh); gl.uniform1f(u.uGChroma, G.ch); gl.uniform1f(u.uGClump, G.cl); gl.uniform1f(u.uGMot, G.mot);
     gl.uniform1f(u.uVig, P.vig * k); gl.uniform1f(u.uFade, P.fade); gl.uniform1f(u.uSharp, P.sharp);
     gl.uniform1f(u.uChar, P.chr ?? f.chr ?? .6); gl.uniform3fv(u.uBW, f.bw || [0, 0, 0]); gl.uniform3fv(u.uBTone, f.tone || [1, 1, 1]); gl.uniform1f(u.uBToe, f.toe || 0);
@@ -2037,21 +2057,53 @@ let camE, camRaf = 0, camT0 = performance.now(), capturing = null, miniEyes, cam
 function pushK() { const iso = ISO_STOPS[S.isoIdx]; return iso === 'A' ? 0 : clamp(Math.log2(+iso / FILM[S.film].iso), -3, 3); }
 function camParams() {
   const P = S.camRecipe ? Object.assign(DEF(), JSON.parse(JSON.stringify(S.camRecipe))) : DEF(); P.film = S.film; P.exp = S.ev; const k = pushK();
-  const cs = camSetOf(S.film); if (cs) Object.assign(P, cs);
+  if (!S.camRecipe) applyMyDef(P); const cs = camSetOf(S.film); if (cs) Object.assign(P, cs);
+  P.ffmt = S.fmt === 'half' ? 'half' : S.fmt === '66' ? '66' : S.fmt === '67' ? '67' : '35'; // formát foťáku = velikost políčka filmu (zrno, halation)
   if (k) { P.con += .16 * k; P.grain *= 1 + .5 * Math.max(k, 0) - .22 * Math.max(-k, 0); P.gsize *= 1 + .15 * Math.max(k, 0); P.sat += .05 * k; P.fade += .07 * Math.max(-k, 0); P.hal *= 1 + .18 * Math.max(k, 0); }
   return P;
 }
+/* filtry na objektiv (propustnost R,G,B; POL = polarizační), formát negativu (k = úhlopříčka vůči 35 mm → zrno, halation), expozice negativu */
+const LFS = { Y: [1, .93, .38], O: [1, .62, .14], R: [1, .16, .03], G: [.42, 1, .38], '81A': [1, .95, .86], '82A': [.9, .96, 1], '85': [1, .83, .55], '80': [.62, .8, 1], POL: null };
+const FFMT = { half: { l: 'HALF', k: .71 }, '35': { l: '35', k: 1 }, '645': { l: '645', k: 1.63 }, '66': { l: '6×6', k: 1.84 }, '67': { l: '6×7', k: 2.08 }, '45': { l: '4×5', k: 3.8 } };
+const lfList = f => f.bw ? ['Y', 'O', 'R', 'G', 'POL'] : ['81A', '82A', '85', '80', 'POL'];
+/* tovární hodnoty filmu a „tvoje výchozí“ (MYDEF – co si uživatel u filmu nastavuje pořád stejně, Qamera to nabídne) */
+let MYDEF = store.get('myDef', {});
+function factBase(code) { const f = FILM[code] || FILM.P400; return { str: 1, chr: f.chr ?? .6, fsoft: f.fsoft ?? 0, nexp: 0, hal: 1, bloom: .15, glow: f.gl ?? .12, grain: .5, gsize: 1, lf: null }; }
+function filmBase(code) { return Object.assign(factBase(code), MYDEF[code] || {}); }
+const applyMyDef = P => Object.assign(P, JSON.parse(JSON.stringify(MYDEF[P.film] || {})));
+const FROWS = [['str', 'Síla', 0, 100, 100], ['chr', 'Charakter', 0, 150, 100], ['fsoft', 'Měkkost', 0, 100, 100], ['nexp', 'Exp. negativu', -30, 30, 10], ['hal', 'Halation', 0, 300, 100], ['bloom', 'Bloom', 0, 150, 100], ['glow', 'Glow', 0, 150, 100], ['grain', 'Grain', 0, 150, 100], ['gsize', 'Velikost zrna', 50, 300, 100]];
+const fOut = (k, v) => k === 'nexp' ? (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v / 10).toFixed(1) : v;
+/* řádky nastavení filmu: hodnota = P[k] (chybí → tovární), výchozí (dvojťuk, Výchozí) = tvoje výchozí */
+function filmCtlHtml(P, code, at, fmt, only) { const f = FILM[code] || FILM.P400, F = factBase(code), B = filmBase(code), segs = [];
+  if (!f.ir) segs.push(`<div class="srow fk segrow"><span>Filtr</span><div class="seg" data-${at}seg="lf"><button data-v="">BEZ</button>${lfList(f).map(x => `<button data-v="${x}">${x}</button>`).join('')}</div></div>`);
+  if (fmt) segs.push(`<div class="srow fk segrow"><span>Formát</span><div class="seg" data-${at}seg="ffmt">${['half', '35', '645', '66', '67', '45'].map(x => `<button data-v="${x}">${FFMT[x].l}</button>`).join('')}</div></div>`);
+  return segs.join('') + FROWS.filter(r => !only || only.includes(r[0])).map(([k, l, a, b, sc]) => { const v = Math.round((P[k] ?? F[k]) * sc), d = Math.round(B[k] * sc);
+    return `<label class="srow fk"><span>${l}</span><input type="range" data-${at}="${k}" min="${a}" max="${b}" value="${v}" data-def="${d}" data-sc="${sc}"><output>${fOut(k, v)}</output></label>`; }).join(''); }
+function bindFilmCtl(root, at, get, set, input, done) {
+  $$(`[data-${at}seg]`, root).forEach(sg => { const k = sg.dataset[at + 'seg'], cur = () => get(k) || (k === 'ffmt' ? '35' : ''), mark = () => $$('button', sg).forEach(b => b.classList.toggle('on', b.dataset.v === cur()));
+    mark(); $$('button', sg).forEach(b => b.onclick = () => { set(k, b.dataset.v && !(k === 'ffmt' && b.dataset.v === '35') ? b.dataset.v : null); mark(); input(); done(); buzz(4); }); });
+  $$(`input[data-${at}]`, root).forEach(i => { const k = i.dataset[at], sc = +i.dataset.sc; paintRange(i);
+    i.oninput = () => { set(k, +i.value / sc); i.nextElementSibling.textContent = fOut(k, +i.value); paintRange(i); input(); }; i.onchange = done;
+    i.ondblclick = () => { i.value = i.dataset.def; i.oninput(); done(); }; }); }
+/* učení: u každého filmu si pamatuje nastavení posledních fotek; když je hodnota pořád stejným směrem jinde než výchozí, nabídne ji jako tvoji výchozí */
+let LEARN = store.get('learn', {});
+function learnFilm(ph, P) { const code = P.film; if (!ph || !code || code === 'NONE') return; const F = factBase(code), B = filmBase(code), L = LEARN[code] || (LEARN[code] = {});
+  delete L[ph.id]; L[ph.id] = Object.fromEntries(FROWS.map(([k]) => [k, P[k] ?? F[k]])); const ids = Object.keys(L); while (ids.length > 8) delete L[ids.shift()]; store.set('learn', LEARN);
+  const vals = Object.values(L); if (vals.length < 3) return; const asked = store.get('learnAsked', {});
+  for (const [k, l, , , sc] of FROWS) { if (k === 'str') continue; const xs = vals.map(o => o[k]).sort((a, b) => a - b), md = xs[xs.length >> 1], th = k === 'nexp' ? .3 : .12;
+    if (!xs.every(x => Math.sign(x - B[k]) === Math.sign(md - B[k]) && Math.abs(x - B[k]) > th) || xs[xs.length - 1] - xs[0] > Math.abs(md - B[k]) * .8 + th) continue;
+    const r = Math.round(md * sc / 5) * 5 / sc, key = code + ':' + k; if (asked[key] != null && Math.abs(asked[key] - r) < th) continue;
+    asked[key] = r; store.set('learnAsked', asked);
+    toast(`${l} u ${code} pořád ${r < B[k] ? 'stahuješ' : 'přidáváš'} na ${fOut(k, Math.round(r * sc))} – nastavit jako tvoje výchozí?`, { label: 'Nastavit', fn: () => { (MYDEF[code] || (MYDEF[code] = {}))[k] = r; store.set('myDef', MYDEF); toast(`${code}: ${l} ${fOut(k, Math.round(r * sc))} je teď tvoje výchozí`); } }); return; } }
+/* změna filmu u fotky: nastavení filmu, na které uživatel nesáhl, přejde na výchozí nového filmu */
+function swapFilm(P, code) { const o = P.film, Fo = factBase(o), Bo = filmBase(o), untouched = FROWS.every(([k]) => Math.abs((P[k] ?? Fo[k]) - Bo[k]) < .005) && (P.lf || null) === (Bo.lf || null);
+  P.film = code; if (!untouched) return; ['chr', 'fsoft', 'glow', 'nexp', 'lf'].forEach(k => delete P[k]); Object.assign(P, { str: 1, hal: 1, bloom: .15, grain: .5, gsize: 1 }); applyMyDef(P); }
 /* nastavení filmu ve foťáku (Síla, Charakter, Halation…) – pamatuje se pro každý film zvlášť, platí pro hledáček i fotky */
 let CAMSET = store.get('camSet', {});
-const CAMK = ['str', 'chr', 'fsoft', 'hal', 'bloom', 'glow', 'grain', 'gsize'];
 function camSetOf(code) { const o = CAMSET[code]; return o && Object.keys(o).length ? o : null; }
-function renderCamTune() { const el = $('#fTune'), f = FILM[S.film], gl0 = f.gl ?? .12, P = Object.assign(DEF(), camSetOf(S.film) || {});
-  const rows = [['str', 'Síla', 0, 100, Math.round(P.str * 100), 100], ['chr', 'Charakter', 0, 150, Math.round((P.chr ?? f.chr ?? .6) * 100), Math.round((f.chr ?? .6) * 100)], ['fsoft', 'Měkkost', 0, 100, Math.round((P.fsoft || 0) * 100), 0],
-    ['hal', 'Halation', 0, 300, Math.round(P.hal * 100), 100], ['bloom', 'Bloom', 0, 150, Math.round(P.bloom * 100), 15], ['glow', 'Glow', 0, 150, Math.round((P.glow ?? gl0) * 100), Math.round(gl0 * 100)], ['grain', 'Grain', 0, 150, Math.round(P.grain * 100), 50], ['gsize', 'Velikost zrna', 50, 300, Math.round(P.gsize * 100), 100]];
-  el.innerHTML = rows.map(([k, l, a, b, v, d]) => `<label class="srow fk"><span>${l}</span><input type="range" data-ck="${k}" min="${a}" max="${b}" value="${v}" data-def="${d}"><output>${v}</output></label>`).join('') + '<button class="pbtn ghost ftdef" id="ftDef">Výchozí</button>';
-  $$('[data-ck]', el).forEach(i => { paintRange(i); i.oninput = () => { const k = i.dataset.ck, o = CAMSET[S.film] || (CAMSET[S.film] = {}); o[k] = +i.value / 100;
-      if (+i.value === +i.dataset.def) delete o[k]; i.nextElementSibling.textContent = i.value; paintRange(i); updTune(); }; i.onchange = () => store.set('camSet', CAMSET);
-    i.ondblclick = () => { i.value = i.dataset.def; i.oninput(); i.onchange(); }; });
+function renderCamTune() { const el = $('#fTune'), B = filmBase(S.film), cs = () => CAMSET[S.film] || (CAMSET[S.film] = {});
+  el.innerHTML = filmCtlHtml(Object.assign({}, B, camSetOf(S.film) || {}), S.film, 'ck') + '<button class="pbtn ghost ftdef" id="ftDef">Výchozí</button>';
+  bindFilmCtl(el, 'ck', k => (camSetOf(S.film) || {})[k] ?? B[k], (k, v) => { const o = cs(); if (v === B[k] || (typeof v === 'number' && Math.abs(v - B[k]) < .005)) delete o[k]; else o[k] = v; }, updTune, () => store.set('camSet', CAMSET));
   $('#ftDef').onclick = () => { delete CAMSET[S.film]; store.set('camSet', CAMSET); renderCamTune(); updTune(); buzz(6); }; }
 function updTune() { const b = $('#tuneBtn'); b.innerHTML = iconSVG('sliders'); b.classList.toggle('on', $('#filmSheet').classList.contains('tune')); b.classList.toggle('set', !!camSetOf(S.film)); hydrateIcons(b); }
 function toggleTune(on = !$('#filmSheet').classList.contains('tune')) { $('#filmSheet').classList.toggle('tune', on); $('#fTune').hidden = !on; if (on) renderCamTune(); updTune(); buzz(6); }
@@ -2555,7 +2607,7 @@ async function importRaw(f, el, i, N) {
   const m = await import('./raw.js'), r = await m.developRaw(f, setP); setP(.97, 'Ukládám');
   const full = r.canvas, blob = await new Promise(res => full.toBlob(res, 'image/jpeg', .95)); if (!blob) throw new Error('Došla paměť na obrázky');
   const src = shrink(full, WORK); if (src !== full) freeCanvas(full);
-  const P = DEF(); P.film = S.film; const ph = addPhoto(withHl(src, r.hl), P, 'import', ['import', 'moje', 'raw'], true, uid());
+  const P = applyMyDef(Object.assign(DEF(), { film: S.film })); const ph = addPhoto(withHl(src, r.hl), P, 'import', ['import', 'moje', 'raw'], true, uid());
   ph.date = r.date || new Date(f.lastModified || Date.now()); ph.blob = blob; ph.raw = r.label || 'RAW';
   if (r.hl) { ph.hl = r.hl; ph.hlBlob = await new Promise(res => r.hl.toBlob(res, 'image/png')); rethumb(ph); }
   keep(ph); return ph;
@@ -2574,7 +2626,7 @@ async function importFiles(files) {
   for (const f of rest) {
     try { const url = URL.createObjectURL(f), img = new Image(); img.src = url; await img.decode();
       const k = Math.min(1, 2048 / Math.max(img.naturalWidth, img.naturalHeight)), c = mk(Math.round(img.naturalWidth * k), Math.round(img.naturalHeight * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
-      const P = DEF(); P.film = S.film; const ph = addPhoto(c, P, 'import', ['import', 'moje'], true, uid()); ph.date = new Date(f.lastModified || Date.now()); if (/^image\/(jpeg|png|webp)$/.test(f.type)) ph.blob = f; keep(ph); n++; } catch {}
+      const P = applyMyDef(Object.assign(DEF(), { film: S.film })); const ph = addPhoto(c, P, 'import', ['import', 'moje'], true, uid()); ph.date = new Date(f.lastModified || Date.now()); if (/^image\/(jpeg|png|webp)$/.test(f.type)) ph.blob = f; keep(ph); n++; } catch {}
   }
   if (n) { filterGallery(); $('#galThumb').src = S.photos[0].thumb; toast(n === 1 ? 'Fotka přidaná s filmem ' + S.film : `${n} fotek přidáno s filmem ${S.film}`); }
   else if (rest.length) toast('Fotku se nepodařilo načíst');
@@ -2973,13 +3025,13 @@ function zipStore(files) {
   const cs = cen.reduce((a, b) => a + b.length, 0);
   return new Blob([...parts, ...cen, new Uint8Array([0x50, 0x4b, 5, 6, 0, 0, 0, 0, ...u16(files.length), ...u16(files.length), ...u32(cs), ...u32(off), 0, 0])], { type: 'application/zip' });
 }
-function commit() { if (S.cur) S.cur.dirty = true; S.hist.push(JSON.stringify(S.cur._last || S.cur.P)); if (S.hist.length > 60) S.hist.shift(); S.fut = []; S.cur._last = JSON.parse(JSON.stringify(S.P)); S.cur.P = JSON.parse(JSON.stringify(S.P)); rethumb(S.cur); dbPut(S.cur); }
+function commit() { if (S.cur) S.cur.dirty = true; S.hist.push(JSON.stringify(S.cur._last || S.cur.P)); if (S.hist.length > 60) S.hist.shift(); S.fut = []; S.cur._last = JSON.parse(JSON.stringify(S.P)); S.cur.P = JSON.parse(JSON.stringify(S.P)); rethumb(S.cur); dbPut(S.cur); learnFilm(S.cur, S.P); }
 function undo() { if (!S.hist.length) return toast('Není co vracet'); S.fut.push(JSON.stringify(S.P)); S.P = JSON.parse(S.hist.pop()); syncCur(); }
 function redo() { if (!S.fut.length) return; S.hist.push(JSON.stringify(S.P)); S.P = JSON.parse(S.fut.pop()); syncCur(); }
 function syncCur() { S.cur.P = JSON.parse(JSON.stringify(S.P)); S.cur._last = JSON.parse(JSON.stringify(S.P)); rethumb(S.cur); setTab(S.tab, true); layoutEditor(); renderEd(true); if (S.view === 'pc') buildPcRight(); }
 function resetSection() { const P = S.P, D = DEF(); let what;
   if (S.adv) { P.curve = D.curve; P.hsl = D.hsl; P.grade = D.grade; what = 'Advanced'; }
-  else if (S.tab === 'film') { P.film = 'NONE'; P.str = 1; ['chr', 'fsoft'].forEach(k => delete P[k]); S.filmOpen = false; what = 'Film'; }
+  else if (S.tab === 'film') { P.film = 'NONE'; P.str = 1; ['chr', 'fsoft', 'nexp', 'lf', 'ffmt'].forEach(k => delete P[k]); S.filmOpen = false; what = 'Film'; }
   else if (S.tab === 'adj') { ADJ.forEach(a => { if (a.film) delete P[a.k]; else P[a.k] = D[a.k]; }); P.gtype = null; what = 'Úpravy'; }
   else if (S.tab === 'crop') { P.crop = D.crop; what = 'Ořez'; }
   else { P.dx = null; P.style = null; P.frame = null; P.depth = null; P.lidar = null; S.fxOpen = null; what = 'Efekty'; }
@@ -3048,7 +3100,7 @@ function setTab(t, quiet) {
     p.innerHTML = `<div class="ruler" id="strR"></div><div class="strip" id="fStrip">${filmsOrdered().map(f => `<button class="fthumb ${f.code === S.P.film ? 'on' : ''} ${FAV.includes(f.code) ? 'fav' : ''}" data-c="${f.code}"><canvas width="128" height="160"></canvas><span>${f.code}</span></button>`).join('')}</div>`;
     makeRuler($('#strR'), { min: 0, max: 1, step: .01, value: S.P.str, label: S.P.film === 'NONE' ? 'Bez filmu' : 'Síla filmu · ' + S.P.film, fmt: v => Math.round(v * 100), def: 1, onInput: v => { S.P.str = v; renderEd(); }, onEnd: commit });
     drawFilmThumbs(); hscroll($('#fStrip')); $$('.fthumb').forEach(b => { const f = FILM[b.dataset.c]; if (isOwn(f)) longPress(b, () => filmActs(f.code)); });
-    $$('.fthumb').forEach(b => b.onclick = () => { if (S.P.film === b.dataset.c) { S.filmOpen = true; setTab('film'); buzz(6); return; } S.P.film = b.dataset.c; $$('.fthumb').forEach(x => x.classList.toggle('on', x === b)); $('#strR .rl').textContent = 'Síla filmu · ' + S.P.film; renderEd(); commit(); buzz(4);
+    $$('.fthumb').forEach(b => b.onclick = () => { if (S.P.film === b.dataset.c) { S.filmOpen = true; setTab('film'); buzz(6); return; } swapFilm(S.P, b.dataset.c); $$('.fthumb').forEach(x => x.classList.toggle('on', x === b)); $('#strR .rl').textContent = 'Síla filmu · ' + S.P.film; renderEd(); commit(); buzz(4);
       spring(.9, 1, v => b.querySelector('canvas').style.transform = `scale(${v})`, { k: 300, c: 14 }); });
     requestAnimationFrame(() => { const on = $('.fthumb.on'), s = $('#fStrip'); if (on && s) s.scrollLeft = on.offsetLeft - s.clientWidth / 2 + on.offsetWidth / 2; });
   } else if (t === 'adj') {
@@ -3218,18 +3270,17 @@ function heavyRender() { if (S.depthMs != null && S.depthMs < 45) { renderEd(tru
   if (!l) { l = document.createElement('div'); l.className = 'eload'; l.innerHTML = '<i></i><span>Počítám</span>'; w.appendChild(l); }
   l.classList.add('on'); requestAnimationFrame(() => requestAnimationFrame(() => { renderEd(true); setTimeout(() => l.classList.remove('on'), 120); })); }
 /* nastavení filmu: co z filmového vzhledu chceš míň / víc (jen pro tuhle fotku) */
-function renderFilmPanel(p) { const P = S.P, f = FILM[P.film], gl0 = f.gl ?? .12;
-  const rows = [['str', 'Síla', 0, 100, Math.round(P.str * 100), 100], ['chr', 'Charakter', 0, 150, Math.round((P.chr ?? f.chr ?? .6) * 100), Math.round((f.chr ?? .6) * 100)], ['fsoft', 'Měkkost', 0, 100, Math.round((P.fsoft || 0) * 100), 0],
-    ['hal', 'Halation', 0, 300, Math.round(P.hal * 100), 100], ['bloom', 'Bloom', 0, 150, Math.round(P.bloom * 100), 15], ['glow', 'Glow', 0, 150, Math.round((P.glow ?? gl0) * 100), Math.round(gl0 * 100)], ['grain', 'Grain', 0, 150, Math.round(P.grain * 100), 50], ['gsize', 'Velikost zrna', 50, 300, Math.round(P.gsize * 100), 100]];
+function renderFilmPanel(p) { const P = S.P, f = FILM[P.film];
   p.innerHTML = `<div class="fxp"><div class="fxh"><button class="ib" id="fpBack" aria-label="Zpět na filmy">${iconSVG('back')}</button><b>FILM · ${f.code}</b><div class="fpbtns"><button class="off sq" id="fpSave" aria-label="Uložit jako vlastní film" title="Uložit jako vlastní film">${iconSVG('plus')}</button><button class="off" id="fpDef">Výchozí</button></div></div>
-    ${rows.map(([k, l, a, b, v, d]) => `<label class="srow fk"><span>${l}</span><input type="range" data-fk="${k}" min="${a}" max="${b}" value="${v}" data-def="${d}"><output>${v}</output></label>`).join('')}</div>`;
+    ${filmCtlHtml(P, P.film, 'fk', true)}</div>`;
   $('#fpBack').onclick = () => { S.filmOpen = false; setTab('film'); }; // panel pružně sjede zpět na výšku pásu filmů
   $('#fpSave').onclick = saveFilmVariant;
-  $('#fpDef').onclick = () => { ['chr', 'fsoft', 'glow'].forEach(k => delete S.P[k]); Object.assign(S.P, { str: 1, hal: 1, bloom: .15, grain: .5, gsize: 1 }); renderEd(true); commit(); setTab('film', true); buzz(6); };
-  $$('#ePanel [data-fk]').forEach(i => { paintRange(i); i.oninput = () => { const k = i.dataset.fk; S.P[k] = +i.value / 100; i.nextElementSibling.textContent = i.value; paintRange(i); renderEd(); }; i.onchange = commit;
-    i.ondblclick = () => { i.value = i.dataset.def; i.oninput(); commit(); }; });
+  $('#fpDef').onclick = () => { const code = P.film, B = filmBase(code), F = factBase(code), atMine = MYDEF[code] && FROWS.every(([k]) => Math.abs((S.P[k] ?? F[k]) - B[k]) < .005);
+    ['chr', 'fsoft', 'glow', 'nexp', 'lf'].forEach(k => delete S.P[k]); Object.assign(S.P, { str: 1, hal: 1, bloom: .15, grain: .5, gsize: 1 });
+    if (!atMine) applyMyDef(S.P); else toast(`${code}: tovární nastavení`, { label: 'Zapomenout moje', fn: () => { delete MYDEF[code]; store.set('myDef', MYDEF); delete LEARN[code]; store.set('learn', LEARN); setTab('film', true); } });
+    renderEd(true); commit(); setTab('film', true); buzz(6); };
+  bindFilmCtl(p, 'fk', k => S.P[k], (k, v) => { if (v == null) delete S.P[k]; else S.P[k] = v; }, () => renderEd(), commit);
 }
-/* uloží aktuální nastavení filmu jako vlastní variantu (např. P400-JEM „portrait 400 · jemná“) – použitelná ve výběru filmů i ve foťáku */
 function saveFilmVariant() { const b = FILM[S.P.film]; if (!b || S.P.film === 'NONE') return;
   openActs(`<h4>Uložit jako vlastní film · ${b.code}</h4><div class="rsave"><input id="fvName" value="vlastní" maxlength="14" autocomplete="off" placeholder="název, třeba jemná"><button class="go" id="fvGo">Uložit</button></div>`, root => {
     const inp = $('#fvName', root); setTimeout(() => { inp.focus(); inp.select(); }, 350);
@@ -3932,7 +3983,7 @@ function openPc() {
   $('#pcFilms').innerHTML = filmsOrdered().map(f => `<button class="pcfilm ${f.code === S.P.film ? 'on' : ''}" data-c="${f.code}"><canvas width="88" height="88"></canvas><span><b>${f.code}</b><small>${f.sub}</small></span></button>`).join('');
   const P = JSON.parse(JSON.stringify(S.P)); P.crop = DEF().crop; P.gtype = null;
   $$('.pcfilm[data-c]').forEach(b => { P.film = b.dataset.c; b.querySelector('canvas').getContext('2d').drawImage(utilRender(srcOf(S.cur, S.P), P, 88, 88, {}), 0, 0);
-    b.onclick = () => { S.P.film = b.dataset.c; $$('.pcfilm[data-c]').forEach(x => x.classList.toggle('on', x === b)); commit(); renderPc(); buildPcRight(); };
+    b.onclick = () => { swapFilm(S.P, b.dataset.c); $$('.pcfilm[data-c]').forEach(x => x.classList.toggle('on', x === b)); commit(); renderPc(); buildPcRight(); };
     b.onmouseenter = e => { PCH.film = b.dataset.c; if (e.shiftKey) pcPeek(true); }; b.onmouseleave = () => { PCH.film = null; pcPeek(false); }; });
   $('#pcPresets').innerHTML = `<div class="pcrsave"><input id="pcRName" placeholder="Název receptu" maxlength="24" autocomplete="off"><button class="pcghost" id="pcRSave">Uložit</button></div>` + RECIPES.map((r, i) => `<div class="pcrrow"><button class="pcfilm" data-r="${i}"><canvas width="88" height="88"></canvas><span><b>${r.name}</b><small>${r.P.film}</small></span></button><button class="pcib" data-rl="${i}" title="Kopírovat odkaz na recept">${iconSVG('share')}</button><button class="pcib" data-rd="${i}" title="Smazat recept">${iconSVG('trash')}</button></div>`).join('');
   $$('#pcPresets [data-r]').forEach(b => { const r = RECIPES[+b.dataset.r]; b.querySelector('canvas').getContext('2d').drawImage(utilRender(srcOf(S.cur, S.P), Object.assign(DEF(), r.P), 88, 88, {}), 0, 0);
@@ -3970,6 +4021,7 @@ function buildPcRight() {
   const P = S.P, f = FILM[P.film];
   $('#pcRight').innerHTML = `<div class="pcsec"><h4>Histogram <span>${P.film}</span></h4><canvas class="hist" id="pcHist" width="580" height="150"></canvas></div>
     <div class="pcsec"><h4>Film <span style="color:var(--amber)">${f.sub}</span><button class="resetbtn" id="pcReset" style="height:22px">${iconSVG('reset')}Vše</button></h4>${rangeRow('str', 'Síla filmu', 0, 1, P)}${rangeRow('hal', 'Halation', 0, 3, P)}${rangeRow('bloom', 'Bloom', 0, 1.5, P)}${rangeRow('glow', 'Glow', 0, 1.5, P)}</div>
+    <div class="pcsec" id="pcFLab"><h4>Negativ <span>filtr · formát · expozice</span></h4>${filmCtlHtml(P, P.film, 'pk', true, ['nexp'])}</div>
     <div class="pcsec"><h4>Grain <span>${GRAINS[gtypeOf(P)].l}</span></h4><div class="gt" id="pcGt">${grainPills()}</div>${rangeRow('grain', 'Síla', 0, 1.5, P)}${rangeRow('gsize', 'Velikost', .5, 3, P)}</div>
     <div class="pcsec"><h4>Základ</h4>${rangeRow('exp', 'Expozice', -3, 3, P)}${rangeRow('temp', 'Teplota', -1, 1, P)}${rangeRow('tint', 'Odstín', -1, 1, P)}${rangeRow('con', 'Kontrast', -1, 1, P)}${rangeRow('sat', 'Saturace', -1, 1, P)}</div>
     <div class="pcsec"><h4>Tónová křivka <span>RGB</span></h4><canvas class="curve" id="pcCurve" width="580" height="360"></canvas></div>
@@ -3996,6 +4048,7 @@ function buildPcRight() {
     ${pcDoubleHtml(P)}
     <div class="pcsec"><h4>Blob karta</h4><div class="row2"><button class="pcghost" id="pcBlob">Otevřít blob kartu</button></div></div>`;
   bindRanges($('#pcRight'), renderPc); bindGrainPills($('#pcGt'), buildPcRight); bindPcExtra();
+  bindFilmCtl($('#pcFLab'), 'pk', k => S.P[k], (k, v) => { if (v == null) delete S.P[k]; else S.P[k] = v; }, renderPc, commit);
   $('#pcReset').onclick = resetAll;
   curveEditor($('#pcCurve'), () => S.P.curve.rgb, pts => { S.P.curve.rgb = pts; renderPc(); }, commit, '#f3eee6');
   const c = $('#pcHist'); if (c && S.cur) histInto(c);
@@ -4183,7 +4236,7 @@ function boot() {
 }
 /* Novinky po aktualizaci: jednou po nové verzi, nový uživatel je nevidí (jen se označí jako přečtené) */
 const NEWS = [
-  { v: '0.18', items: ['<b>Nastavení filmu ve foťáku.</b> Ťukni na vybraný film (nebo na ikonu posuvníků) a nastav Sílu, Halation, Bloom, Grain a další – hledáček to ukáže hned a Qamera si to pro každý film pamatuje.', '<b>RAW a ProRAW.</b> Do Qamery jde importovat DNG z iPhonu (i ProRAW) a RAW z foťáků. Vyvolá se přímo v telefonu a Halation pozná, jak silné světlo ve skutečnosti bylo.', '<b>Realističtější Halation, Bloom a Glow.</b> Záře teď vzniká jen z opravdu přepálených světel (lampy, slunce, odlesky), ne z každé světlé plochy – fotky už nejsou zamlžené.', '<b>Qamera šetří paměť telefonu.</b> Galerie drží jen náhledy, fotka v plné kvalitě se načte až při úpravě – i se stovkami fotek běží appka svižně a nepadá.', '<b>Export se už nezasekne.</b> Když telefonu dojde paměť, Qamera fotku vyvolá v menším rozlišení, a kdyby ani to nešlo, řekne to a nabídne Zkusit znovu.'] },
+  { v: '0.18', items: ['<b>Filtry na objektiv.</b> K černobílým filmům žlutý, oranžový, červený a zelený filtr (červený ztmaví nebe), k barevným teplý a studený filtr a polarizační (hlubší nebe, méně odlesků).', '<b>Expozice negativu a formát.</b> Přeexponovaný nebo podexponovaný film se chová jako skutečný negativ a formát (half-frame až 4×5) změní velikost zrna i záře.', '<b>Tvoje výchozí.</b> Když u filmu něco nastavuješ pořád stejně, Qamera ti to nabídne jako výchozí.', '<b>Nastavení filmu ve foťáku.</b> Ťukni na vybraný film (nebo na ikonu posuvníků) a nastav Sílu, Halation, Bloom, Grain a další – hledáček to ukáže hned a Qamera si to pro každý film pamatuje.', '<b>RAW a ProRAW.</b> Do Qamery jde importovat DNG z iPhonu (i ProRAW) a RAW z foťáků. Vyvolá se přímo v telefonu a Halation pozná, jak silné světlo ve skutečnosti bylo.', '<b>Realističtější Halation, Bloom a Glow.</b> Záře teď vzniká jen z opravdu přepálených světel (lampy, slunce, odlesky), ne z každé světlé plochy – fotky už nejsou zamlžené.', '<b>Qamera šetří paměť telefonu.</b> Galerie drží jen náhledy, fotka v plné kvalitě se načte až při úpravě – i se stovkami fotek běží appka svižně a nepadá.', '<b>Export se už nezasekne.</b> Když telefonu dojde paměť, Qamera fotku vyvolá v menším rozlišení, a kdyby ani to nešlo, řekne to a nabídne Zkusit znovu.'] },
 ];
 const NEWS_OLD = (() => { try { return Object.keys(localStorage).some(k => k.startsWith('qamera.')); } catch { return false; } })(); // stav před startem: už appku používal?
 function showNews() {
