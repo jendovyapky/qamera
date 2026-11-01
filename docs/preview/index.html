@@ -274,6 +274,24 @@ a{color:var(--amber)}
 .camctl{flex:none;overflow:hidden;overflow:clip}
 .fmtbadge{position:absolute;top:54px;right:12px;height:28px;min-width:58px;padding:0 10px;border-radius:999px;background:rgba(10,9,8,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08);font-family:var(--f-px);font-size:10px;color:var(--amber);pointer-events:auto}
 .fmtbadge.dbl{top:88px;cursor:default}
+.sunwrap{position:relative;display:flex}
+#tSun.gold{color:var(--amber)}#tSun.gold .px{filter:drop-shadow(0 0 6px rgba(255,196,61,.7))}#tSun.blue{color:#7fb2ff}#tSun.blue .px{filter:drop-shadow(0 0 6px rgba(110,160,255,.7))}
+/* kartička vyjede z ikony slunce (výřez se roztáhne doprava), ťuknutím se zabalí zpět */
+.suncard{position:absolute;left:0;top:0;height:100%;display:flex;align-items:center;gap:8px;padding:0 12px 0 10px;border-radius:12px;white-space:nowrap;overflow:hidden;z-index:3;pointer-events:none;
+  background:rgba(18,15,11,.82);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:inset 0 0 0 1px rgba(255,196,61,.45);color:var(--amber);font-family:var(--f-px);font-size:10px;font-variant-numeric:tabular-nums;
+  clip-path:inset(0 calc(100% - 36px) 0 0 round 12px);opacity:0;transition:clip-path .55s cubic-bezier(.3,1.25,.45,1),opacity .2s}
+.suncard .px{width:16px;height:16px;flex:none;filter:drop-shadow(0 0 5px rgba(255,196,61,.6))}
+.suncard b{font-weight:400;opacity:0;transform:translateX(-6px);transition:opacity .25s,transform .4s cubic-bezier(.3,1.25,.45,1)}
+.suncard.on{clip-path:inset(0 0 0 0 round 12px);opacity:1;pointer-events:auto}.suncard.on b{opacity:1;transform:none;transition-delay:.12s}
+.suncard.blue .px,.suncard.blue .px-wrap{color:#7fb2ff}
+.suncard.blue{color:#7fb2ff;box-shadow:inset 0 0 0 1px rgba(110,160,255,.45)}.suncard.blue .px{filter:drop-shadow(0 0 5px rgba(110,160,255,.6))}
+.vf.narrow .suncard{clip-path:inset(0 calc(100% - 32px) 0 0 round 10px);border-radius:10px;padding-left:8px}.vf.narrow .suncard.on{clip-path:inset(0 0 0 0 round 10px)}
+.sunsvg{width:100%;height:auto;display:block}
+.sunlist{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:0 4px;font-size:13px;color:#bdb5aa;font-variant-numeric:tabular-nums}
+.sunlist b{font-family:var(--f-mono);font-weight:500;color:var(--fg);text-align:right}
+.sunlist .g{color:var(--amber)}.sunlist .bl{color:#7fb2ff}
+.sunwhere{padding:2px 4px 0;font-size:11.5px;color:var(--mute)}
+.sunbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}.sunbtns .pbtn{width:100%;height:44px;padding:0 8px;font-size:13px;display:flex;align-items:center;justify-content:center;text-align:center}
 #pTime{width:70px}
 .lcd{margin:0 12px;border-radius:18px;background:linear-gradient(180deg,var(--lcd-hi),var(--lcd));color:var(--lcd-ink);padding:10px 16px 9px;flex:none;position:relative;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -2px 6px rgba(120,60,0,.25),0 8px 24px rgba(239,167,59,.12)}
@@ -854,7 +872,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
             <img class="dxghost" id="dxGhost" alt="" hidden>
             <svg class="gridov" id="gridOv" aria-hidden="true"></svg>
             <div class="vtools">
-              <div class="grp"><button class="ib" id="tGrid" data-ic="grid" aria-label="Mřížka"></button><button class="ib" id="tTimer" data-ic="timer" aria-label="Samospoušť"></button><button class="ib" id="tMeter" data-ic="meter" aria-label="Expozimetr"></button></div>
+              <div class="grp"><button class="ib" id="tGrid" data-ic="grid" aria-label="Mřížka"></button><button class="ib" id="tTimer" data-ic="timer" aria-label="Samospoušť"></button><button class="ib" id="tMeter" data-ic="meter" aria-label="Expozimetr"></button><span class="sunwrap" id="sunWrap"><button class="ib" id="tSun" data-ic="sun" aria-label="Světlo dnes"></button><button class="suncard" id="sunCard" aria-label="Schovat"><span class="px-wrap" data-ic="sun"></span><b id="sunTxt"></b></button></span></div>
               <div class="grp"><button class="ib" id="liveBtn" data-ic="camera" aria-label="Zapnout skutečnou kameru"></button><button class="ib" id="tFlash" data-ic="flash" aria-label="Blesk"></button><button class="ib" id="tFlip" data-ic="flip" aria-label="Otočit kameru"></button></div>
             </div>
             <button class="fmtbadge" id="fmtBadge" aria-label="Přepnout formát">3:4</button>
@@ -2107,6 +2125,59 @@ function renderCamTune() { const el = $('#fTune'), B = filmBase(S.film), cs = ()
   $('#ftDef').onclick = () => { delete CAMSET[S.film]; store.set('camSet', CAMSET); renderCamTune(); updTune(); buzz(6); }; }
 function updTune() { const b = $('#tuneBtn'); b.innerHTML = iconSVG('sliders'); b.classList.toggle('on', $('#filmSheet').classList.contains('tune')); b.classList.toggle('set', !!camSetOf(S.film)); hydrateIcons(b); }
 function toggleTune(on = !$('#filmSheet').classList.contains('tune')) { $('#filmSheet').classList.toggle('tune', on); $('#fTune').hidden = !on; if (on) renderCamTune(); updTune(); buzz(6); }
+/* zlatá a modrá hodina: výška Slunce spočítaná přímo v telefonu (zjednodušené astronomické vzorce, přesnost ~1 min).
+   Zlatá = Slunce mezi +6° a −4°, modrá = −4° až −6°. Poloha: z GPS jen po ťuknutí „Upřesnit“ (zaokrouhlená, jen v zařízení), jinak odhad z časového pásma */
+const TZPOS = { 'Europe/Prague': [50.08, 14.43, 'Praha'], 'Europe/Bratislava': [48.15, 17.11, 'Bratislava'], 'Europe/Vienna': [48.21, 16.37, 'Vídeň'], 'Europe/Berlin': [52.52, 13.4, 'Berlín'], 'Europe/Warsaw': [52.23, 21.01, 'Varšava'], 'Europe/Budapest': [47.5, 19.04, 'Budapešť'], 'Europe/London': [51.51, -.13, 'Londýn'], 'Europe/Paris': [48.86, 2.35, 'Paříž'], 'Europe/Rome': [41.9, 12.5, 'Řím'], 'Europe/Madrid': [40.42, -3.7, 'Madrid'], 'America/New_York': [40.71, -74.01, 'New York'], 'America/Los_Angeles': [34.05, -118.24, 'Los Angeles'] };
+function sunPos() { const g = store.get('geo', null); if (g) return { lat: g[0], lng: g[1], gps: true };
+  let tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch {} const t = TZPOS[tz];
+  return t ? { lat: t[0], lng: t[1], name: t[2] } : { lat: 48, lng: -new Date().getTimezoneOffset() / 4, name: 'časové pásmo' }; }
+function sunAlt(ms, lat, lng) { const R = Math.PI / 180, d = (ms - 946728000000) / 864e5, M = R * (357.5291 + .98560028 * d);
+  const L = M + R * (1.9148 * Math.sin(M) + .02 * Math.sin(2 * M) + .0003 * Math.sin(3 * M)) + R * 102.9372 + Math.PI, e = R * 23.4397;
+  const dec = Math.asin(Math.sin(L) * Math.sin(e)), ra = Math.atan2(Math.sin(L) * Math.cos(e), Math.cos(L)), H = R * (280.16 + 360.9856235 * d) + R * lng - ra;
+  return Math.asin(Math.sin(R * lat) * Math.sin(dec) + Math.cos(R * lat) * Math.cos(dec) * Math.cos(H)) / R; }
+/* den po minutách (1440 výpočtů, < 1 ms): průchody výškami → časy událostí; funguje i v polárním dni/noci (událost prostě chybí) */
+function sunDay(day, pos) { const t0 = new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime(), alt = [];
+  for (let i = 0; i <= 1440; i++) alt.push(sunAlt(t0 + i * 6e4, pos.lat, pos.lng));
+  const cross = (h, up) => { for (let i = 1; i <= 1440; i++) if (up ? alt[i - 1] < h && alt[i] >= h : alt[i - 1] > h && alt[i] <= h) return t0 + (i - 1 + (h - alt[i - 1]) / (alt[i] - alt[i - 1])) * 6e4; return null; };
+  return { t0, alt, blueAm: [cross(-6, 1), cross(-4, 1)], goldAm: [cross(-4, 1), cross(6, 1)], rise: cross(-.833, 1), set: cross(-.833, 0), goldPm: [cross(6, 0), cross(-4, 0)], bluePm: [cross(-4, 0), cross(-6, 0)] }; }
+const hm = ms => ms == null ? '–' : new Date(ms).toLocaleTimeString('cs-CZ', { hour: 'numeric', minute: '2-digit' });
+const mins = ms => { const m = Math.max(1, Math.round(ms / 6e4)); return m < 60 ? m + ' MIN' : Math.floor(m / 60) + ' H ' + String(m % 60).padStart(2, '0'); };
+/* ikona slunce: během zlaté / modré hodiny svítí její barvou; 30 min před začátkem z ní vyjede kartička „ZLATÁ ZA 12 MIN“ (ťuknutí ji zabalí, ta událost se už neukáže) */
+function updSun() { const btn = $('#tSun'), card = $('#sunCard'); if (!btn) return; const show = store.get('sunOn', true); $('#sunWrap').hidden = !show; if (!show) return;
+  const now = Date.now(), pos = sunPos(), D = sunDay(new Date(), pos), N = sunDay(new Date(now + 864e5), pos);
+  const ev = [['ZLATÁ', D.goldAm], ['ZLATÁ', D.goldPm], ['MODRÁ', D.blueAm], ['MODRÁ', D.bluePm], ['MODRÁ', N.blueAm], ['ZLATÁ', N.goldAm]].filter(([, r]) => r[0] && r[1]);
+  const cur = ev.find(([, r]) => now >= r[0] && now < r[1]); btn.classList.toggle('gold', !!cur && cur[0] === 'ZLATÁ'); btn.classList.toggle('blue', !!cur && cur[0] === 'MODRÁ');
+  const nx = ev.filter(([, r]) => r[0] > now && r[0] - now <= 30 * 6e4).sort((a, b) => a[1][0] - b[1][0])[0], key = nx ? Math.round(nx[1][0] / 6e4) : 0;
+  const on = !!nx && store.get('sunSeen', 0) !== key;
+  if (on) { const m = mins(nx[1][0] - now); card.classList.toggle('blue', nx[0] === 'MODRÁ'); card.dataset.k = key; fitSun([`${nx[0]} ZA ${m}`, `${nx[0]} ${m}`, `ZA ${m}`, m]); }
+  card.classList.toggle('on', on); }
+/* kartička nesmí zasáhnout do další ikony: vybere nejdelší text, který se vejde do místa před pravou skupinou ikon (jinak jen ikona) */
+function fitSun(opts) { const card = $('#sunCard'), t = $('#sunTxt'), wrap = $('#sunWrap'), right = $$('.vtools .grp')[1];
+  const room = right.getBoundingClientRect().left - wrap.getBoundingClientRect().left - 8; card.style.maxWidth = Math.max(0, room) + 'px';
+  for (const o of opts) { t.textContent = o; if (card.scrollWidth <= room) return; } t.textContent = ''; }
+function foldSun() { const card = $('#sunCard'); store.set('sunSeen', +card.dataset.k || 0); card.classList.remove('on'); buzz(4); }
+/* graf dne: tečky dráhy Slunce (noc stlačená, ať se vejde nad čísla hodin), pásy zlaté a modré hodiny, teď = svítící tečka */
+function sunSvg(D) { const W = 340, H = 150, y0 = 92, k = 1.15, X = i => i / 1440 * W, Y = a => y0 - (a > 0 ? a * k : 32 * Math.tanh(a / 30)), now = (Date.now() - D.t0) / 6e4;
+  const band = (r, c) => r[0] && r[1] ? `<rect x="${X((r[0] - D.t0) / 6e4)}" y="0" width="${Math.max(1, X((r[1] - r[0]) / 6e4))}" height="${H - 18}" fill="${c}"/>` : '';
+  let dots = ''; for (let i = 0; i <= 1440; i += 12) { const a = D.alt[i]; dots += `<circle cx="${X(i).toFixed(1)}" cy="${Y(a).toFixed(1)}" r="${a > 0 ? 1.7 : 1.1}" fill="${a > 6 ? '#f3eee6' : a > -4 ? '#ffc43d' : a > -6 ? '#7fb2ff' : '#4a443d'}"/>`; }
+  const ticks = [0, 6, 12, 18, 24].map(h => `<text x="${Math.min(W - 10, Math.max(8, X(h * 60)))}" y="${H - 4}" text-anchor="middle">${h}</text>`).join('');
+  const na = D.alt[Math.round(Math.min(1440, Math.max(0, now)))];
+  return `<svg class="sunsvg" viewBox="0 0 ${W} ${H}" font-family="Geist Mono, monospace" font-size="10" fill="#7d756b">
+    ${band(D.blueAm, 'rgba(110,160,255,.24)')}${band(D.goldAm, 'rgba(255,196,61,.16)')}${band(D.goldPm, 'rgba(255,196,61,.16)')}${band(D.bluePm, 'rgba(110,160,255,.24)')}
+    <line x1="0" x2="${W}" y1="${y0}" y2="${y0}" stroke="#3d3731" stroke-dasharray="2 4"/>${dots}
+    <line x1="${X(now)}" x2="${X(now)}" y1="4" y2="${H - 18}" stroke="#f3eee6" stroke-opacity=".25"/>
+    <circle cx="${X(now)}" cy="${Y(na)}" r="9" fill="${na > -4 ? '#ffc43d' : '#7fb2ff'}" opacity=".25"/><circle cx="${X(now)}" cy="${Y(na)}" r="4.5" fill="${na > -4 ? '#ffc43d' : '#7fb2ff'}"/>${ticks}</svg>`; }
+function openSun() { const pos = sunPos(), D = sunDay(new Date(), pos), r = a => a[0] && a[1] ? `${hm(a[0])}–${hm(a[1])}` : '–';
+  openActs(`<h4>Světlo dnes</h4>${sunSvg(D)}
+    <div class="sunlist"><span class="bl">Modrá hodina ráno</span><b>${r(D.blueAm)}</b><span class="g">Zlatá hodina ráno</span><b>${r(D.goldAm)}</b><span>Východ · západ</span><b>${hm(D.rise)} · ${hm(D.set)}</b>
+      <span class="g">Zlatá hodina večer</span><b>${r(D.goldPm)}</b><span class="bl">Modrá hodina večer</span><b>${r(D.bluePm)}</b></div>
+    <div class="sunwhere">${pos.gps ? 'Podle tvé polohy' : 'Odhad podle časového pásma: ' + pos.name}</div>
+    <div class="sunbtns"><button class="pbtn ghost" id="sunGeo">${pos.gps ? 'Zapomenout polohu' : 'Upřesnit polohou'}</button><button class="pbtn ghost" id="sunTgl">${store.get('sunOn', true) ? 'Skrýt ve foťáku' : 'Ukázat ve foťáku'}</button></div>`, root => {
+    $('#sunGeo', root).onclick = () => { if (pos.gps) { store.set('geo', null); updSun(); openSun(); return; }
+      if (!navigator.geolocation) { toast('Poloha tady není k dispozici'); return; }
+      navigator.geolocation.getCurrentPosition(g => { store.set('geo', [Math.round(g.coords.latitude * 100) / 100, Math.round(g.coords.longitude * 100) / 100]); updSun(); openSun(); buzz(6); },
+        () => toast('Poloha nepovolená, zůstává odhad podle časového pásma'), { maximumAge: 36e5, timeout: 15000 }); };
+    $('#sunTgl', root).onclick = () => { store.set('sunOn', !store.get('sunOn', true)); updSun(); closeActs(); }; }); }
 function camIso() { const v = ISO_STOPS[S.isoIdx]; return v === 'A' ? FILM[S.film].iso : +v; }
 let ctlSp = null;
 function setCollapsed(c, instant) { // kriticky tlumená pružina (bez překmitu) → po vysunutí nic neposkočí
@@ -4236,7 +4307,7 @@ function boot() {
 }
 /* Novinky po aktualizaci: jednou po nové verzi, nový uživatel je nevidí (jen se označí jako přečtené) */
 const NEWS = [
-  { v: '0.18', items: ['<b>Filtry na objektiv.</b> K černobílým filmům žlutý, oranžový, červený a zelený filtr (červený ztmaví nebe), k barevným teplý a studený filtr a polarizační (hlubší nebe, méně odlesků).', '<b>Expozice negativu a formát.</b> Přeexponovaný nebo podexponovaný film se chová jako skutečný negativ a formát (half-frame až 4×5) změní velikost zrna i záře.', '<b>Tvoje výchozí.</b> Když u filmu něco nastavuješ pořád stejně, Qamera ti to nabídne jako výchozí.', '<b>Nastavení filmu ve foťáku.</b> Ťukni na vybraný film (nebo na ikonu posuvníků) a nastav Sílu, Halation, Bloom, Grain a další – hledáček to ukáže hned a Qamera si to pro každý film pamatuje.', '<b>RAW a ProRAW.</b> Do Qamery jde importovat DNG z iPhonu (i ProRAW) a RAW z foťáků. Vyvolá se přímo v telefonu a Halation pozná, jak silné světlo ve skutečnosti bylo.', '<b>Realističtější Halation, Bloom a Glow.</b> Záře teď vzniká jen z opravdu přepálených světel (lampy, slunce, odlesky), ne z každé světlé plochy – fotky už nejsou zamlžené.', '<b>Qamera šetří paměť telefonu.</b> Galerie drží jen náhledy, fotka v plné kvalitě se načte až při úpravě – i se stovkami fotek běží appka svižně a nepadá.', '<b>Export se už nezasekne.</b> Když telefonu dojde paměť, Qamera fotku vyvolá v menším rozlišení, a kdyby ani to nešlo, řekne to a nabídne Zkusit znovu.'] },
+  { v: '0.18', items: ['<b>Zlatá a modrá hodina.</b> Ikona slunce ve foťáku svítí během zlaté nebo modré hodiny a půl hodiny předem z ní vyjede, kolik minut zbývá. Ťuknutím na ikonu uvidíš celý den.', '<b>Filtry na objektiv.</b> K černobílým filmům žlutý, oranžový, červený a zelený filtr (červený ztmaví nebe), k barevným teplý a studený filtr a polarizační (hlubší nebe, méně odlesků).', '<b>Expozice negativu a formát.</b> Přeexponovaný nebo podexponovaný film se chová jako skutečný negativ a formát (half-frame až 4×5) změní velikost zrna i záře.', '<b>Tvoje výchozí.</b> Když u filmu něco nastavuješ pořád stejně, Qamera ti to nabídne jako výchozí.', '<b>Nastavení filmu ve foťáku.</b> Ťukni na vybraný film (nebo na ikonu posuvníků) a nastav Sílu, Halation, Bloom, Grain a další – hledáček to ukáže hned a Qamera si to pro každý film pamatuje.', '<b>RAW a ProRAW.</b> Do Qamery jde importovat DNG z iPhonu (i ProRAW) a RAW z foťáků. Vyvolá se přímo v telefonu a Halation pozná, jak silné světlo ve skutečnosti bylo.', '<b>Realističtější Halation, Bloom a Glow.</b> Záře teď vzniká jen z opravdu přepálených světel (lampy, slunce, odlesky), ne z každé světlé plochy – fotky už nejsou zamlžené.', '<b>Qamera šetří paměť telefonu.</b> Galerie drží jen náhledy, fotka v plné kvalitě se načte až při úpravě – i se stovkami fotek běží appka svižně a nepadá.', '<b>Export se už nezasekne.</b> Když telefonu dojde paměť, Qamera fotku vyvolá v menším rozlišení, a kdyby ani to nešlo, řekne to a nabídne Zkusit znovu.'] },
 ];
 const NEWS_OLD = (() => { try { return Object.keys(localStorage).some(k => k.startsWith('qamera.')); } catch { return false; } })(); // stav před startem: už appku používal?
 function showNews() {
@@ -4366,16 +4437,18 @@ function boot2(h) {
       miniEyes.look(((e.clientX - r.left) / r.width - .5) * 2, ((e.clientY - r.top) / r.height - .5)); setTimeout(() => miniEyes.look(0, 0), 1200); buzz(4); });
     vf.addEventListener('wheel', e => { e.preventDefault(); S.zoom = clamp(S.zoom * (1 - e.deltaY * .0015), 1, 5); zoomApi.sync(); syncZoomBtns(); }, { passive: false }); })();
   // menu
-  $('#menuGrid').innerHTML = [['gallery', 'Galerie', 'gallery'], ['films', 'Moje filmy', 'film'], ['scan', 'Film scan', 'ref'], ['dbl', 'Double ve foťáku', 'double'], ['dispo', 'Jednorázovka', 'clock'], ['demo', 'DEMO scéna', 'camera'], ['about', 'O appce', 'info']].map(([k, l, ic]) => `<button data-k="${k}">${iconSVG(ic)}${l}</button>`).join('');
+  $('#menuGrid').innerHTML = [['gallery', 'Galerie', 'gallery'], ['films', 'Moje filmy', 'film'], ['scan', 'Film scan', 'ref'], ['dbl', 'Double ve foťáku', 'double'], ['dispo', 'Jednorázovka', 'clock'], ['sun', 'Světlo dnes', 'sun'], ['demo', 'DEMO scéna', 'camera'], ['about', 'O appce', 'info']].map(([k, l, ic]) => `<button data-k="${k}">${iconSVG(ic)}${l}</button>`).join('');
   $$('#menuGrid button').forEach(b => b.onclick = () => { sheet($('#menuSheet'), false); const k = b.dataset.k;
     if (k === 'reset') { S.isoIdx = 0; S.timeIdx = 0; iso.set(0); tim.set(0); ev.reset(); updLcd(); toast('Kolečka na výchozích hodnotách'); return; }
     if (k === 'dbl') { S.dbl = !S.dbl; S.dblFirst = null; showGhost(null); updFmt(); buzz(6); toast(S.dbl ? 'Double: první snímek zůstane v hledáčku, druhý se přes něj prolne' : 'Double vypnutý'); return; }
     if (k === 'dispo') { setTimeout(dispoPick, 200); return; }
+    if (k === 'sun') { setTimeout(openSun, 200); return; }
     if (k === 'films') { setTimeout(() => go('films'), 120); return; }
     if (k === 'scan') { setTimeout(() => go('scan'), 120); return; }
     if (k === 'demo') { if (CAM.live) { liveOff(); store.set('cam', false); toast('DEMO scéna, kameru zapneš ikonou v hledáčku'); } else toast('Už běží DEMO scéna'); return; }
     setTimeout(() => navTo(k), 120); });
   $('#menuBtn').onclick = () => sheet($('#menuSheet'), true);
+  $('#tSun').onclick = openSun; $('#sunCard').onclick = foldSun; updSun(); setInterval(updSun, 30000); addEventListener('resize', () => requestAnimationFrame(updSun));
   $('#mClose').onclick = () => sheet($('#menuSheet'), false);
   $$('[data-back]').forEach(b => b.onclick = () => { if (S.screen === 'editor' && S.cur) rethumb(S.cur); goBack(); });
   // galerie
