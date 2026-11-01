@@ -649,9 +649,24 @@ body > .xmod{position:fixed}
 .xbar{height:4px;border-radius:2px;background:#2a2622;overflow:hidden}
 .xbar i{display:block;height:100%;width:0;background:var(--amber);box-shadow:0 0 12px rgba(255,196,61,.7);transition:width .35s cubic-bezier(.3,.9,.4,1)}
 .xmod.done .xbar i{box-shadow:0 0 18px rgba(255,196,61,.9)}
+.xmod.fail .xbar i{background:#ff5a3c;box-shadow:0 0 14px rgba(255,90,60,.6)}
+.xerr{font:11px/1.35 'Geist Mono',monospace;color:rgba(255,255,255,.5);margin-top:6px;overflow-wrap:anywhere}
 .xrow{display:flex;justify-content:space-between;gap:10px;font:12px var(--f-mono);color:var(--mute)}
 .xrow #xPct{color:var(--fg);font-variant-numeric:tabular-nums;min-width:4ch;text-align:right}
 .xbtns{display:flex;gap:8px;justify-content:flex-end}
+.newsmod .xcard{gap:16px}
+.nwhead{display:flex;align-items:center;gap:12px}
+.nweyes{width:46px;height:46px;border-radius:14px;background:#0b0a09;border:1px solid #2a2622;display:flex;align-items:center;justify-content:center;flex:none}
+.nweyes i{display:flex;gap:7px;height:12px;margin:0;position:static}.nweyes i b{width:9px;height:12px;border-radius:3px;background:var(--amber);box-shadow:0 0 10px rgba(255,196,61,.8);animation:nwblink 3.2s infinite}
+@keyframes nwblink{0%,46%,54%,100%{transform:scaleY(1)}50%{transform:scaleY(.12)}}
+.nwhead div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.nwhead strong{font:600 19px var(--f-sans,Geist,sans-serif);color:#f3ede4;letter-spacing:-.01em}
+.nwhead span{font:500 11px var(--f-mono);letter-spacing:.14em;color:var(--mute);text-transform:uppercase}
+.nwlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px;max-height:46vh;overflow:auto}
+.nwlist li{display:grid;grid-template-columns:14px 1fr;gap:8px;font-size:13.5px;line-height:1.42;color:#d9d1c6}
+.nwlist li::before{content:'';width:6px;height:6px;margin:7px 0 0 2px;border-radius:2px;background:var(--amber);box-shadow:0 0 8px rgba(255,196,61,.7)}
+.nwlist li b{color:#f3ede4;font-weight:600}
+.newsmod .xbtns button{flex:1}
 .xbtns button{height:40px;padding:0 16px;border-radius:12px;font-size:13px}
 .pbtn{padding:11px 18px;border-radius:14px;background:var(--lcd);color:var(--lcd-ink);font-weight:600;font-size:13px}
 .pbtn.ghost{background:transparent;color:var(--fg);box-shadow:inset 0 0 0 1.5px #3d3731;font-weight:500}
@@ -2207,7 +2222,7 @@ function boxBlur(a, w, h, r) { // dvouprůchodové rozmazání jednokanálové m
   return o;
 }
 function videoFrame() { const v = CAM.video, c = mk(v.videoWidth, v.videoHeight), g = c.getContext('2d'); if (CAM.facing === 'user') { g.translate(c.width, 0); g.scale(-1, 1); } g.drawImage(v, 0, 0); return c; }
-function copyCanvas(src) { const c = mk(src.width, src.height); c.getContext('2d').drawImage(src, 0, 0); return c; }
+function copyCanvas(src) { const c = mk(src.width, src.height), g = c.getContext('2d'); if (!g) { freeCanvas(c); throw new Error('Došla paměť na obrázky'); } g.drawImage(src, 0, 0); return c; }
 function cropAr(src, ar, zoom = 1) { const sar = src.width / src.height; let w = src.width, h = src.height; if (sar > ar) w = Math.round(h * ar); else h = Math.round(w / ar);
   w = Math.round(w / zoom); h = Math.round(h / zoom);
   const c = mk(w, h); c.getContext('2d').drawImage(src, (src.width - w) / 2, (src.height - h) / 2, w, h, 0, 0, w, h); return c; }
@@ -2751,14 +2766,23 @@ async function exportCanvas(c, name, type = 'image/jpeg') {
   try { if (isMobile() && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Qamera' }); return toast('Hotovo'); } } catch (e) { if (e && e.name === 'AbortError') return; }
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); toast('Fotka stažená');
 }
-async function renderFull(ph, P, st = () => {}) {
-  let src = srcOf(ph, P); st(0, 'Načítám originál');
-  if (src === ph.src && ph.blob) { try { const bm = await createImageBitmap(ph.blob), k = Math.min(1, 4096 / Math.max(bm.width, bm.height)), c = mk(Math.round(bm.width * k), Math.round(bm.height * k)); c.getContext('2d').drawImage(bm, 0, 0, c.width, c.height); bm.close && bm.close(); src = c; } catch {} } // export z originálu
+/* uvolnění plátna hned (iOS má strop na paměť všech pláten – jinak getContext('2d') vrátí null a export spadne) */
+function freeCanvas(c) { if (c && c.getContext && c !== util.e.c) { c.width = 0; c.height = 0; } }
+/* pomocný engine po exportu zmenšit a pustit velkou texturu; při ztraceném kontextu založit nový */
+function utilReset() { try { if (!util.e || util.e.dead || util.e.gl.isContextLost()) { util.e = new Engine(mk(300, 300)); return; } util.e.size(300, 300); util.e.setSource(mk(2, 2)); } catch {} }
+const withTimeout = (pr, ms, what) => Promise.race([pr, new Promise((_, rej) => setTimeout(() => rej(new Error(what + ' – vypršel čas')), ms))]);
+async function renderFull(ph, P, st = () => {}, MAXS = 4096) {
+  if (!util.e || util.e.dead || util.e.gl.isContextLost()) utilReset();
+  let src = srcOf(ph, P), tmp = null; st(0, 'Načítám originál');
+  if (src === ph.src && ph.blob) { try { const bm = await withTimeout(createImageBitmap(ph.blob), 20000, 'Načtení originálu'), k = Math.min(1, MAXS / Math.max(bm.width, bm.height)), c = mk(Math.round(bm.width * k), Math.round(bm.height * k)), g = c.getContext('2d'); if (g) { g.drawImage(bm, 0, 0, c.width, c.height); src = tmp = c; } else freeCanvas(c); bm.close && bm.close(); } catch {} } // export z originálu (když nejde, zůstane fotka z paměti)
   st(1, 'Vyvolávám film'); await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
-  const ar = P.crop.ar || src.width / src.height, max = Math.min(util.e.gl.getParameter(util.e.gl.MAX_TEXTURE_SIZE), 4096);
+  const ar = P.crop.ar || src.width / src.height, max = Math.min(util.e.gl.getParameter(util.e.gl.MAX_TEXTURE_SIZE) || 2048, MAXS);
   let w = Math.round(Math.min(src.width, max)), h = Math.round(w / ar); if (h > max) { h = max; w = Math.round(h * ar); }
   const cr = P.crop, o = utilRender(src, P, w, h, { zoom: cr.s, offX: cr.x, offY: cr.y, rot: cr.rot * Math.PI / 180, transfer: P.tr ? transferFor() : null, seed: 7, depth: ph.depth });
-  let c = copyCanvas(o); if (P.lidar && ph.depth) c = lidarRender(c, ph.depth, c.width, c.height, P.lidar); return framed(c, P, ph);
+  if (util.e.gl.isContextLost()) throw new Error('Grafika telefonu se odpojila');
+  let c = copyCanvas(o); freeCanvas(tmp); utilReset();
+  if (P.lidar && ph.depth) { const l = lidarRender(c, ph.depth, c.width, c.height, P.lidar); freeCanvas(c); c = l; }
+  const f = framed(c, P, ph); if (f !== c) freeCanvas(c); return f;
 }
 /* export vzhledu: .cube (projetí identity 33³ stejným shaderem), JSON preset Qamery, XMP pro Lightroom */
 const ATTR = ['Derived from spektrafilm by Andrea Volpato', 'https://github.com/andreavolpato/spektrafilm', 'Licensed CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/', 'Modified by Qamera (jendovyapky): baked look incl. user adjustments'];
@@ -2816,9 +2840,18 @@ async function exportMany(list) {
   for (let i = 0; i < N && !cancel; i++) { const ph = list[i], P = ph === S.cur ? S.P : ph.P;
     $('#xN', el).textContent = `${i + 1} / ${N}`; if (shown !== ph.id) { $('#xImg', el).src = ph.thumb; shown = ph.id; }
     await new Promise(r => setTimeout(r, 30));
-    const c = await renderFull(ph, P, (k, t) => setP((i + k / 3) / N, t)); if (cancel) break;
-    setP((i + 2 / 3) / N, 'Ukládám JPEG'); await new Promise(r => setTimeout(r, 0));
-    const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .95)), u8 = new Uint8Array(await blob.arrayBuffer()); files.push(Object.assign(new File([blob], `qamera-${(P.film || 'foto').replace(/[^\w-]/g, '')}-${i + 1}-${Date.now()}.jpg`, { type: 'image/jpeg' }), { _u8: u8 }));
+    let blob = null, err = null;
+    for (const MAXS of [4096, 2048]) { let c = null; // když plné rozlišení nejde (paměť telefonu), zkusí se menší
+      try { c = await renderFull(ph, P, (k, t) => setP((i + k / 3) / N, MAXS < 4096 ? t + ' (menší)' : t), MAXS); if (cancel) break;
+        setP((i + 2 / 3) / N, 'Ukládám JPEG'); await new Promise(r => setTimeout(r, 0));
+        blob = await withTimeout(new Promise(r => c.toBlob(r, 'image/jpeg', .95)), 30000, 'Uložení JPEG'); if (!blob) throw new Error('Došla paměť na JPEG');
+        err = null; break;
+      } catch (e) { err = e; utilReset(); await new Promise(r => setTimeout(r, 250)); } finally { freeCanvas(c); } }
+    if (cancel) break;
+    if (err || !blob) { el.classList.add('fail'); $('#xBar', el).style.width = '100%'; $('#xSt', el).textContent = 'Export se nepovedl'; $('#xPct', el).textContent = '';
+      const why = document.createElement('div'); why.className = 'xerr'; why.textContent = String((err && err.message) || err || 'neznámá chyba').slice(0, 120); $('.xrow', el).after(why);
+      $('#xCancel', el).textContent = 'Zavřít'; const go = $('#xGo', el); go.hidden = false; go.textContent = 'Zkusit znovu'; go.onclick = () => { el.remove(); exportMany(list); }; return; }
+    const u8 = new Uint8Array(await blob.arrayBuffer()); files.push(Object.assign(new File([blob], `qamera-${(P.film || 'foto').replace(/[^\w-]/g, '')}-${i + 1}-${Date.now()}.jpg`, { type: 'image/jpeg' }), { _u8: u8 }));
     ph.dirty = false; dbPut(ph); setP((i + 1) / N); }
   if (cancel) return;
   if (S.screen === 'gallery') filterGallery(); if (S.view === 'pc') openPc();
@@ -4051,8 +4084,28 @@ function boot() {
   if (!h && !PCAPP()) playIntro();
   setTimeout(() => boot2(h), 40);
 }
+/* Novinky po aktualizaci: jednou po nové verzi, nový uživatel je nevidí (jen se označí jako přečtené) */
+const NEWS = [
+  { v: '0.18', items: ['<b>Export se už nezasekne.</b> Když telefonu dojde paměť, Qamera fotku vyvolá v menším rozlišení, a kdyby ani to nešlo, řekne to a nabídne Zkusit znovu.'] },
+];
+const NEWS_OLD = (() => { try { return Object.keys(localStorage).some(k => k.startsWith('qamera.')); } catch { return false; } })(); // stav před startem: už appku používal?
+function showNews() {
+  const force = location.hash === '#novinky', cur = NEWS[0].v, seen = force ? '0' : store.get('newsSeen', null); // #novinky = ukázat vždy (na zkoušku)
+  if (seen === cur) return;
+  store.set('newsSeen', cur); if (seen == null && !NEWS_OLD) return; // první spuštění: žádné novinky
+  const vn = v => v.split('.').map(Number), newer = v => { const a = vn(v), b = seen ? vn(seen) : [0]; for (let i = 0; i < 3; i++) { if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) > (b[i] || 0); } return false; };
+  const items = NEWS.filter(n => newer(n.v)).flatMap(n => n.items); if (!items.length) return;
+  const host = document.body.classList.contains('pcapp') && !document.body.classList.contains('pcphone') ? document.body : $('#phone'), el = document.createElement('div'); el.className = 'xmod newsmod';
+  el.innerHTML = `<div class="xcard"><div class="nwhead"><div class="nweyes"><i><b></b><b></b></i></div><div><strong>Co je nového</strong><span>Qamera ${cur}</span></div></div>
+    <ul class="nwlist">${items.map(t => `<li><span>${t}</span></li>`).join('')}</ul><div class="xbtns"><button class="pbtn" id="nwOk">Super</button></div></div>`;
+  host.appendChild(el); requestAnimationFrame(() => el.classList.add('on')); buzz(6);
+  if (!LOWMO) [...el.querySelectorAll('.nwlist li, .xbtns')].forEach((n, i) => n.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: 160 + i * 70, easing: 'cubic-bezier(.2,1,.3,1)', fill: 'backwards' }));
+  const close = () => { el.classList.remove('on'); setTimeout(() => el.remove(), 300); };
+  $('#nwOk', el).onclick = close; el.addEventListener('pointerdown', e => { if (e.target === el) close(); });
+}
+function newsWhenReady(t = 0) { if (INTRO && t < 40) return setTimeout(() => newsWhenReady(t + 1), 250); setTimeout(showNews, 700); }
 function boot2(h) {
-  util.e = new Engine(mk(300, 300)); camE = new Engine($('#camCanvas')); edE = new Engine($('#edCanvas')); pcE = new Engine($('#pcCanvas'));
+  newsWhenReady(); util.e = new Engine(mk(300, 300)); camE = new Engine($('#camCanvas')); edE = new Engine($('#edCanvas')); pcE = new Engine($('#pcCanvas'));
   /* když telefonu dojde paměť grafiky (iPhone + hloubka), WebGL se ztratí – místo černé plochy se obnoví v úspornějším režimu */
   const guard = (sel, re) => { const c = $(sel); c.addEventListener('webglcontextlost', e => { e.preventDefault(); S.lowGpu = true; toast('Telefon nestíhal, přepínám na úspornější výpočet'); });
     c.addEventListener('webglcontextrestored', () => { re(); }); };
