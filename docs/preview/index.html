@@ -1455,7 +1455,8 @@ const HS = `#version 300 es
 precision highp float; in vec2 vUv; out vec4 o; uniform sampler2D uS, uE; uniform vec2 uTs; uniform float uL, uHasE;
 void main(){ vec3 acc = vec3(0.); float ea = 0.;
   for (int y = 0; y < 4; y++) for (int x = 0; x < 4; x++) { vec3 c = textureLod(uS, vUv + (vec2(x, y) - 1.5) * .25 * uTs, uL).rgb;
-    float e = smoothstep(.86, .995, max(c.r, max(c.g, c.b))); e *= e;
+    float v = max(c.r, max(c.g, c.b)) * .6 + dot(c, vec3(.2126, .7152, .0722)) * .55; // jas, ne jen nejsilnější kanál: sytá červená LED (R na maximu, G a B nízko) není přepálené světlo
+    float e = smoothstep(.86, .995, v); e *= e;
     if (uHasE > .5) e = clamp(texture(uE, vUv + (vec2(x, y) - 1.5) * .25 * uTs).r * 1.5, 0., 1.); // RAW: skutečný jas (EV nad bílou), ne jen ořez
     acc += c * e; ea += e; }
   o = vec4(acc / 16., ea / 16.); }`;
