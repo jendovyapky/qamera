@@ -2287,17 +2287,36 @@ function idb() { return DBP.p || (DBP.p = new Promise((res, rej) => { const r = 
 function keep(ph) { ph.saved = true; dbPut(ph); return ph; }
 const WORK = 2048; // pracovní rozlišení v paměti – plné 12 Mpx fotky by iPhone neudržel
 function shrink(c, m = WORK) { const k = m / Math.max(c.width, c.height); if (k >= 1) return c; const o = mk(Math.round(c.width * k), Math.round(c.height * k)); o.getContext('2d').drawImage(c, 0, 0, o.width, o.height); return o; }
-async function dbPut(ph) { if (!ph || !ph.saved) return; try { if (!ph.blob) ph.blob = await new Promise(r => ph.src.toBlob(r, 'image/jpeg', .93)); if (Math.max(ph.src.width, ph.src.height) > WORK) { ph.src = shrink(ph.src); ph._dxKey = null; } const db = await idb();
+/* paměť: každá fotka v plné pracovní velikosti = ~12 MB → s desítkami fotek iPhone došel strop pro obrázky.
+   V paměti je proto jen malá verze (PREV), plná se načte z originálu v IndexedDB jen pro otevřenou fotku (a pár posledních) */
+const PREV = 640, FULLN = 3, FULL = [];
+async function decodeTo(blob, m) { const bm = await createImageBitmap(blob), k = Math.min(1, m / Math.max(bm.width, bm.height)), c = mk(Math.round(bm.width * k), Math.round(bm.height * k)), g = c.getContext('2d'); if (!g) { bm.close && bm.close(); freeCanvas(c); throw new Error('Došla paměť na obrázky'); } g.drawImage(bm, 0, 0, c.width, c.height); bm.close && bm.close(); return c; }
+function toPrev(ph) { if (!ph || !ph.blob || ph === S.cur) return false; // jen fotky s uloženým originálem (jinak by se ztratilo rozlišení)
+  if (Math.max(ph.src.width, ph.src.height) > PREV) { const o = ph.src; ph.src = shrink(o, PREV); freeCanvas(o); ph._dxKey = null; }
+  if (ph.depth && ph.depthBlob && Math.max(ph.depth.width, ph.depth.height) > PREV) { const o = ph.depth; ph.depth = shrink(o, PREV); freeCanvas(o); }
+  ph._full = false; return true; }
+function noteFull(ph) { if (!ph) return; const i = FULL.indexOf(ph); if (i >= 0) FULL.splice(i, 1); FULL.unshift(ph); ph._full = true;
+  for (let j = FULL.length - 1; j >= FULLN; j--) { const o = FULL[j]; if (o === S.cur) continue; if (toPrev(o)) FULL.splice(j, 1); } }
+async function ensureFull(ph) { if (!ph || ph._full || !ph.blob || Math.max(ph.src.width, ph.src.height) >= WORK) { if (ph && ph.blob) noteFull(ph); return false; }
+  if (ph._loading) return ph._loading;
+  return ph._loading = (async () => { try { const c = await decodeTo(ph.blob, WORK); ph.src = c; ph._dxKey = null;
+      if (ph.depthBlob) { try { const d = await decodeTo(ph.depthBlob, WORK); ph.depth = d; } catch {} }
+      noteFull(ph); return true; } catch { return false; } finally { ph._loading = null; } })(); }
+/* otevřená fotka (+ druhá fotka u Double) se po načtení plné verze tiše překreslí */
+async function wantFull(ph) { if (!ph) return; const o = S.P && S.P.dx && S.P.dx.other ? S.photos.find(p => p.id === S.P.dx.other) : null;
+  const a = await ensureFull(ph), b = o ? await ensureFull(o) : false; if ((a || b) && S.cur === ph && typeof dxChanged === 'function') dxChanged(); }
+async function dbPut(ph) { if (!ph || !ph.saved) return; try { if (!ph.blob) { ph.blob = await new Promise(r => ph.src.toBlob(r, 'image/jpeg', .93)); if (Math.max(ph.src.width, ph.src.height) > PREV) noteFull(ph); } if (Math.max(ph.src.width, ph.src.height) > WORK) { ph.src = shrink(ph.src); ph._dxKey = null; } const db = await idb();
   db.transaction('photos', 'readwrite').objectStore('photos').put({ id: ph.id, kind: ph.kind, tags: ph.tags, date: +ph.date, P: ph.P, blob: ph.blob, depth: ph.depthBlob || null, dirty: !!ph.dirty }); } catch {} }
 async function dbDel(id) { try { const db = await idb(); db.transaction('photos', 'readwrite').objectStore('photos').delete(id); } catch {} }
 async function dbLoad() {
   try { const db = await idb(), all = await new Promise((res, rej) => { const r = db.transaction('photos').objectStore('photos').getAll(); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
     all.sort((a, b) => a.date - b.date);
-    for (const it of all) { const bmp = await createImageBitmap(it.blob), k = Math.min(1, WORK / Math.max(bmp.width, bmp.height)), c = mk(Math.round(bmp.width * k), Math.round(bmp.height * k)); c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height); bmp.close && bmp.close();
+    for (const it of all) { let c; try { c = await decodeTo(it.blob, PREV); } catch { continue; } // v paměti jen malá verze, plná až při otevření
+
       if (it.roll) { const sh = { id: it.id, src: c, P: Object.assign(DEF(), it.P), date: new Date(it.date), roll: it.roll, blob: it.blob }; // snímek z jednorázovky / zamčené role
         if (it.roll === 'active' && S.dispo) S.dispo.shots.push(sh); else { const ro = ROLLS.find(r => r.id === it.roll); if (ro) ro.shots.push(sh); } continue; }
       const ph = addPhoto(c, Object.assign(DEF(), it.P), it.kind, it.tags, false, it.id); ph.date = new Date(it.date); ph.saved = true; ph.blob = it.blob; ph.dirty = !!it.dirty; if (it.kind === 'arch') ph.film = 'ARCH';
-      if (it.depth) { const db2 = await createImageBitmap(it.depth), dc = mk(db2.width, db2.height); dc.getContext('2d').drawImage(db2, 0, 0); ph.depth = dc; ph.depthBlob = it.depth; if (ph.P.depth) rethumb(ph); } }
+      if (it.depth) { try { ph.depth = await decodeTo(it.depth, PREV); ph.depthBlob = it.depth; if (ph.P.depth || ph.P.lidar) rethumb(ph); } catch {} } }
     if (S.dispo) updDispo();
     if (all.length) { $('#galThumb').src = S.photos[0].thumb; if (S.screen === 'gallery') renderGallery(); }
   } catch {}
@@ -2348,7 +2367,7 @@ function filterGallery() {
   $('#masonry').innerHTML = cols.map(c => `<div class="mcol">${c.map(item).join('')}</div>`).join('');
   list.forEach(p => p.fresh = false);
   $('#gEmpty').hidden = list.length > 0;
-  $$('.gitem').forEach(b => { const ph = S.photos.find(p => p.id === +b.dataset.id); if (ph.kind === 'arch' && !S.sel) { longPress(b, () => photoActs(ph, b)); b.onclick = () => viewImage(ph.src, ph); return; }
+  $$('.gitem').forEach(b => { const ph = S.photos.find(p => p.id === +b.dataset.id); if (ph.kind === 'arch' && !S.sel) { longPress(b, () => photoActs(ph, b)); b.onclick = async () => { await ensureFull(ph); viewImage(ph.src, ph); }; return; }
     if (S.sel) { b.onclick = () => { S.sel.has(ph.id) ? S.sel.delete(ph.id) : S.sel.add(ph.id); b.classList.toggle('sel'); updSel(); buzz(4); }; return; }
     longPress(b, () => photoActs(ph, b)); b.onclick = () => openEditor(ph, b.querySelector('img')); });
 }
@@ -2511,7 +2530,7 @@ function endDispo() {
   ROLLS.unshift({ id, name: 'Jednorázovka ' + d.film, meta: `${d.shots.length} ${d.shots.length < 5 ? 'snímky' : 'snímků'} · ${d.dev}`, film: d.film, dev: d.dev, glow: ['#e6493a', '#efa73b'], lock: true, shots: d.shots });
   saveRolls(); toast(`Role je zamčená, vyvolá se v ${d.dev}`);
 }
-async function dbPutShot(sh) { try { if (!sh.blob) sh.blob = await new Promise(r => sh.src.toBlob(r, 'image/jpeg', .93)); const db = await idb();
+async function dbPutShot(sh) { try { if (!sh.blob) sh.blob = await new Promise(r => sh.src.toBlob(r, 'image/jpeg', .93)); if (sh.blob && Math.max(sh.src.width, sh.src.height) > PREV) sh.src = shrink(sh.src, PREV); const db = await idb();
   db.transaction('photos', 'readwrite').objectStore('photos').put({ id: sh.id, kind: 'dispo', tags: [], date: +sh.date, P: sh.P, blob: sh.blob, roll: sh.roll }); } catch {} }
 function developAsk(roll) { // před vyvoláním se zeptá na název role
   openActs(`<h4>Vyvolat roli</h4><p class="actnote">Jak se má role jmenovat? Název bude na archu.</p><div class="rsave"><input id="dvName" value="${roll.name}" maxlength="28" autocomplete="off"><button class="go" id="dvGo">Vyvolat</button></div>`, root => {
@@ -2596,6 +2615,7 @@ function openEditor(ph, fromImg) {
   go('editor');
   setTab(S.tab, true);
   requestAnimationFrame(() => { layoutEditor(); if (fromImg) sharedFly(fromImg, $('#eWrap')); });
+  wantFull(ph);
 }
 function sharedFly(img, target) {
   const phone = $('#phone'), pr = phone.getBoundingClientRect(), sc = pr.width / phone.offsetWidth;
@@ -2767,12 +2787,13 @@ async function exportCanvas(c, name, type = 'image/jpeg') {
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); toast('Fotka stažená');
 }
 /* uvolnění plátna hned (iOS má strop na paměť všech pláten – jinak getContext('2d') vrátí null a export spadne) */
-function freeCanvas(c) { if (c && c.getContext && c !== util.e.c) { c.width = 0; c.height = 0; } }
+function freeCanvas(c) { if (c && c.getContext && !(util.e && c === util.e.c)) { c.width = 0; c.height = 0; } }
 /* pomocný engine po exportu zmenšit a pustit velkou texturu; při ztraceném kontextu založit nový */
 function utilReset() { try { if (!util.e || util.e.dead || util.e.gl.isContextLost()) { util.e = new Engine(mk(300, 300)); return; } util.e.size(300, 300); util.e.setSource(mk(2, 2)); } catch {} }
 const withTimeout = (pr, ms, what) => Promise.race([pr, new Promise((_, rej) => setTimeout(() => rej(new Error(what + ' – vypršel čas')), ms))]);
 async function renderFull(ph, P, st = () => {}, MAXS = 4096) {
   if (!util.e || util.e.dead || util.e.gl.isContextLost()) utilReset();
+  if (P.dx && P.dx.other) { await ensureFull(ph); await ensureFull(S.photos.find(p => p.id === P.dx.other)); }
   let src = srcOf(ph, P), tmp = null; st(0, 'Načítám originál');
   if (src === ph.src && ph.blob) { try { const bm = await withTimeout(createImageBitmap(ph.blob), 20000, 'Načtení originálu'), k = Math.min(1, MAXS / Math.max(bm.width, bm.height)), c = mk(Math.round(bm.width * k), Math.round(bm.height * k)), g = c.getContext('2d'); if (g) { g.drawImage(bm, 0, 0, c.width, c.height); src = tmp = c; } else freeCanvas(c); bm.close && bm.close(); } catch {} } // export z originálu (když nejde, zůstane fotka z paměti)
   st(1, 'Vyvolávám film'); await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
@@ -3831,7 +3852,7 @@ const PHNAME = { mesto: 'noční ulice', zapad: 'západ', les: 'les', plaz: 'pl�
 function openPc() {
   if (!S.photos.length) return;
   if (!S.cur || !S.photos.includes(S.cur)) { S.cur = S.photos.find(p => p.kind === 'mesto') || S.photos[0]; S.P = JSON.parse(JSON.stringify(S.cur.P)); S.cur._last = JSON.parse(JSON.stringify(S.P)); edE.setSource(S.cur.src); }
-  pcE.setSource(srcOf(S.cur, S.P));
+  pcE.setSource(srcOf(S.cur, S.P)); wantFull(S.cur);
   $('#pcFilms').innerHTML = filmsOrdered().map(f => `<button class="pcfilm ${f.code === S.P.film ? 'on' : ''}" data-c="${f.code}"><canvas width="88" height="88"></canvas><span><b>${f.code}</b><small>${f.sub}</small></span></button>`).join('');
   const P = JSON.parse(JSON.stringify(S.P)); P.crop = DEF().crop; P.gtype = null;
   $$('.pcfilm[data-c]').forEach(b => { P.film = b.dataset.c; b.querySelector('canvas').getContext('2d').drawImage(utilRender(srcOf(S.cur, S.P), P, 88, 88, {}), 0, 0);
@@ -4086,7 +4107,7 @@ function boot() {
 }
 /* Novinky po aktualizaci: jednou po nové verzi, nový uživatel je nevidí (jen se označí jako přečtené) */
 const NEWS = [
-  { v: '0.18', items: ['<b>Export se už nezasekne.</b> Když telefonu dojde paměť, Qamera fotku vyvolá v menším rozlišení, a kdyby ani to nešlo, řekne to a nabídne Zkusit znovu.'] },
+  { v: '0.18', items: ['<b>Qamera šetří paměť telefonu.</b> Galerie drží jen náhledy, fotka v plné kvalitě se načte až při úpravě – i se stovkami fotek běží appka svižně a nepadá.', '<b>Export se už nezasekne.</b> Když telefonu dojde paměť, Qamera fotku vyvolá v menším rozlišení, a kdyby ani to nešlo, řekne to a nabídne Zkusit znovu.'] },
 ];
 const NEWS_OLD = (() => { try { return Object.keys(localStorage).some(k => k.startsWith('qamera.')); } catch { return false; } })(); // stav před startem: už appku používal?
 function showNews() {
