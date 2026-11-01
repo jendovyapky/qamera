@@ -347,6 +347,12 @@ a{color:var(--amber)}
 .fhead{position:relative}
 .favbtn{position:absolute;right:18px;top:4px;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;color:#6d655c}
 .favbtn.on{color:#ff5b6e}
+.tunebtn{position:absolute;right:62px;top:4px;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;color:#6d655c}
+.tunebtn.set{color:var(--amber)}.tunebtn.on{color:var(--amber);box-shadow:inset 0 0 0 1.5px var(--amber)}.tunebtn.on .px,.tunebtn.set .px{filter:drop-shadow(0 0 6px rgba(245,197,66,.55))}
+.ftune{display:flex;flex-direction:column;gap:2px;padding:2px 0 6px}
+.ftune .srow{grid-template-columns:96px 1fr 34px}
+.ftune .ftdef{align-self:center;margin-top:6px}
+#filmSheet.tune .fdesc,#filmSheet.tune .flegend,#filmSheet.tune .fmtrow{display:none}
 .newfilm{position:absolute;left:18px;top:4px;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;color:var(--fg);font-size:22px;box-shadow:inset 0 0 0 1.5px #3d3731}
 .favbtn.on .px{color:#ff5b6e;filter:drop-shadow(0 0 6px rgba(255,80,100,.6))}
 .citem.fav span::before,.fthumb.fav span::before{content:"♥ ";color:#ff5b6e}
@@ -901,8 +907,9 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
           </div>
           <div class="sheet" id="filmSheet">
             <div class="grab"></div>
-            <div class="fhead"><div class="code" id="fCode">P400</div><div class="sub" id="fSub"></div><button class="favbtn" id="favBtn" aria-label="Oblíbený film"></button><button class="newfilm" id="newFilm" aria-label="Nový film z fotky">+</button></div>
+            <div class="fhead"><div class="code" id="fCode">P400</div><div class="sub" id="fSub"></div><button class="favbtn" id="favBtn" aria-label="Oblíbený film"></button><button class="tunebtn" id="tuneBtn" aria-label="Nastavení filmu"></button><button class="newfilm" id="newFilm" aria-label="Nový film z fotky">+</button></div>
             <div class="carousel hs" id="carousel"></div>
+            <div class="ftune" id="fTune" hidden></div>
             <div class="fdesc" id="fDesc"></div>
             <div class="flegend">Číslo v kódu je citlivost ISO: vyšší = víc grainu a lepší do tmy.</div>
             <div class="fmtrow"><div class="seg" id="fmtSeg"><button data-f="full" class="on">3:4</button><button data-f="tall">9:16</button><button data-f="35">35</button><button data-f="half">HALF</button><button data-f="66">6×6</button><button data-f="67">6×7</button></div></div>
@@ -2030,9 +2037,24 @@ let camE, camRaf = 0, camT0 = performance.now(), capturing = null, miniEyes, cam
 function pushK() { const iso = ISO_STOPS[S.isoIdx]; return iso === 'A' ? 0 : clamp(Math.log2(+iso / FILM[S.film].iso), -3, 3); }
 function camParams() {
   const P = S.camRecipe ? Object.assign(DEF(), JSON.parse(JSON.stringify(S.camRecipe))) : DEF(); P.film = S.film; P.exp = S.ev; const k = pushK();
+  const cs = camSetOf(S.film); if (cs) Object.assign(P, cs);
   if (k) { P.con += .16 * k; P.grain *= 1 + .5 * Math.max(k, 0) - .22 * Math.max(-k, 0); P.gsize *= 1 + .15 * Math.max(k, 0); P.sat += .05 * k; P.fade += .07 * Math.max(-k, 0); P.hal *= 1 + .18 * Math.max(k, 0); }
   return P;
 }
+/* nastavení filmu ve foťáku (Síla, Charakter, Halation…) – pamatuje se pro každý film zvlášť, platí pro hledáček i fotky */
+let CAMSET = store.get('camSet', {});
+const CAMK = ['str', 'chr', 'fsoft', 'hal', 'bloom', 'glow', 'grain', 'gsize'];
+function camSetOf(code) { const o = CAMSET[code]; return o && Object.keys(o).length ? o : null; }
+function renderCamTune() { const el = $('#fTune'), f = FILM[S.film], gl0 = f.gl ?? .12, P = Object.assign(DEF(), camSetOf(S.film) || {});
+  const rows = [['str', 'Síla', 0, 100, Math.round(P.str * 100), 100], ['chr', 'Charakter', 0, 150, Math.round((P.chr ?? f.chr ?? .6) * 100), Math.round((f.chr ?? .6) * 100)], ['fsoft', 'Měkkost', 0, 100, Math.round((P.fsoft || 0) * 100), 0],
+    ['hal', 'Halation', 0, 300, Math.round(P.hal * 100), 100], ['bloom', 'Bloom', 0, 150, Math.round(P.bloom * 100), 15], ['glow', 'Glow', 0, 150, Math.round((P.glow ?? gl0) * 100), Math.round(gl0 * 100)], ['grain', 'Grain', 0, 150, Math.round(P.grain * 100), 50], ['gsize', 'Velikost zrna', 50, 300, Math.round(P.gsize * 100), 100]];
+  el.innerHTML = rows.map(([k, l, a, b, v, d]) => `<label class="srow fk"><span>${l}</span><input type="range" data-ck="${k}" min="${a}" max="${b}" value="${v}" data-def="${d}"><output>${v}</output></label>`).join('') + '<button class="pbtn ghost ftdef" id="ftDef">Výchozí</button>';
+  $$('[data-ck]', el).forEach(i => { paintRange(i); i.oninput = () => { const k = i.dataset.ck, o = CAMSET[S.film] || (CAMSET[S.film] = {}); o[k] = +i.value / 100;
+      if (+i.value === +i.dataset.def) delete o[k]; i.nextElementSibling.textContent = i.value; paintRange(i); updTune(); }; i.onchange = () => store.set('camSet', CAMSET);
+    i.ondblclick = () => { i.value = i.dataset.def; i.oninput(); i.onchange(); }; });
+  $('#ftDef').onclick = () => { delete CAMSET[S.film]; store.set('camSet', CAMSET); renderCamTune(); updTune(); buzz(6); }; }
+function updTune() { const b = $('#tuneBtn'); b.innerHTML = iconSVG('sliders'); b.classList.toggle('on', $('#filmSheet').classList.contains('tune')); b.classList.toggle('set', !!camSetOf(S.film)); hydrateIcons(b); }
+function toggleTune(on = !$('#filmSheet').classList.contains('tune')) { $('#filmSheet').classList.toggle('tune', on); $('#fTune').hidden = !on; if (on) renderCamTune(); updTune(); buzz(6); }
 function camIso() { const v = ISO_STOPS[S.isoIdx]; return v === 'A' ? FILM[S.film].iso : +v; }
 let ctlSp = null;
 function setCollapsed(c, instant) { // kriticky tlumená pružina (bez překmitu) → po vysunutí nic neposkočí
@@ -2165,7 +2187,7 @@ function setFilm(code) {
   $('#chipCode').textContent = code; $('#chipCass').innerHTML = cassette(f); $('#cassBtn').innerHTML = cassette(f);
   const kind = /E-6|K-14/.test(f.chem) ? 'diapozitiv' : /ECN/.test(f.chem) ? 'kinofilm' : 'barevný negativ';
   $('#fCode').textContent = code; $('#fSub').innerHTML = `${f.sub} · ${isOwn(f) ? 'vlastní film' : f.ir ? 'infračervený' : kind} · ISO ${f.iso}`; $('#fDesc').textContent = f.desc;
-  updLcd(); updFav();
+  updLcd(); updFav(); if ($('#filmSheet').classList.contains('tune')) renderCamTune(); updTune();
 }
 function updFav() { const b = $('#favBtn'), on = FAV.includes(S.film); b.innerHTML = iconSVG(on ? 'heart' : 'heartO'); b.classList.toggle('on', on); }
 function toggleFav() { const code = S.film; FAV = FAV.includes(code) ? FAV.filter(c => c !== code) : [code, ...FAV]; store.set('fav', FAV); buildCarousel(); $('#carousel')._sync(); updFav(); buzz(8);
@@ -2184,7 +2206,7 @@ function buildCarousel() {
   c._sync = () => { const it = $$('.citem', c).find(i => i.dataset.c === S.film); if (it) c.scrollLeft = it.offsetLeft + it.offsetWidth / 2 - c.clientWidth / 2; upd(); };
   if (c._init) return; c._init = true;
   c.addEventListener('scroll', () => requestAnimationFrame(upd), { passive: true });
-  c.addEventListener('click', e => { const it = e.target.closest('.citem'); if (it) c.scrollTo({ left: it.offsetLeft + it.offsetWidth / 2 - c.clientWidth / 2, behavior: LOWMO ? 'auto' : 'smooth' }); });
+  c.addEventListener('click', e => { const it = e.target.closest('.citem'); if (it && it.dataset.c === S.film && it.classList.contains('on')) { toggleTune(); return; } if (it) c.scrollTo({ left: it.offsetLeft + it.offsetWidth / 2 - c.clientWidth / 2, behavior: LOWMO ? 'auto' : 'smooth' }); });
   hscroll(c);
 }
 function openFilmSheet() { if (S.dispo) { toast('Jednorázovka má pevný film ' + S.dispo.film, { label: 'Ukončit', fn: endDispo }); return; } sheet($('#filmSheet'), true); requestAnimationFrame(() => $('#carousel')._sync()); }
@@ -4161,7 +4183,7 @@ function boot() {
 }
 /* Novinky po aktualizaci: jednou po nové verzi, nový uživatel je nevidí (jen se označí jako přečtené) */
 const NEWS = [
-  { v: '0.18', items: ['<b>RAW a ProRAW.</b> Do Qamery jde importovat DNG z iPhonu (i ProRAW) a RAW z foťáků. Vyvolá se přímo v telefonu a Halation pozná, jak silné světlo ve skutečnosti bylo.', '<b>Realističtější Halation, Bloom a Glow.</b> Záře teď vzniká jen z opravdu přepálených světel (lampy, slunce, odlesky), ne z každé světlé plochy – fotky už nejsou zamlžené.', '<b>Qamera šetří paměť telefonu.</b> Galerie drží jen náhledy, fotka v plné kvalitě se načte až při úpravě – i se stovkami fotek běží appka svižně a nepadá.', '<b>Export se už nezasekne.</b> Když telefonu dojde paměť, Qamera fotku vyvolá v menším rozlišení, a kdyby ani to nešlo, řekne to a nabídne Zkusit znovu.'] },
+  { v: '0.18', items: ['<b>Nastavení filmu ve foťáku.</b> Ťukni na vybraný film (nebo na ikonu posuvníků) a nastav Sílu, Halation, Bloom, Grain a další – hledáček to ukáže hned a Qamera si to pro každý film pamatuje.', '<b>RAW a ProRAW.</b> Do Qamery jde importovat DNG z iPhonu (i ProRAW) a RAW z foťáků. Vyvolá se přímo v telefonu a Halation pozná, jak silné světlo ve skutečnosti bylo.', '<b>Realističtější Halation, Bloom a Glow.</b> Záře teď vzniká jen z opravdu přepálených světel (lampy, slunce, odlesky), ne z každé světlé plochy – fotky už nejsou zamlžené.', '<b>Qamera šetří paměť telefonu.</b> Galerie drží jen náhledy, fotka v plné kvalitě se načte až při úpravě – i se stovkami fotek běží appka svižně a nepadá.', '<b>Export se už nezasekne.</b> Když telefonu dojde paměť, Qamera fotku vyvolá v menším rozlišení, a kdyby ani to nešlo, řekne to a nabídne Zkusit znovu.'] },
 ];
 const NEWS_OLD = (() => { try { return Object.keys(localStorage).some(k => k.startsWith('qamera.')); } catch { return false; } })(); // stav před startem: už appku používal?
 function showNews() {
@@ -4204,7 +4226,7 @@ function boot2(h) {
   $$('#fmtSeg button').forEach(b => b.onclick = () => setFmt(b.dataset.f));
   const cycleFmt = () => setFmt(FMT_ORDER[(FMT_ORDER.indexOf(S.fmt) + 1) % FMT_ORDER.length]);
   $('#fmtBadge').onclick = cycleFmt; $('#lFmtC').onclick = cycleFmt;
-  $('#favBtn').onclick = toggleFav;
+  $('#favBtn').onclick = toggleFav; $('#tuneBtn').onclick = () => toggleTune();
   $('#tMeter').onclick = () => { S.zebra = !S.zebra; $('#tMeter').classList.toggle('on', S.zebra); buzz(4); toast(S.zebra ? 'Expozimetr: žluté pruhy = přepálená světla, modré = utopené stíny' : 'Expozimetr vypnutý'); };
   (() => { const ep = $('#pEv'); let lt = 0; ep.addEventListener('click', () => { const n = performance.now(); if (n - lt < 330) { S.ev = 0; evApi.sync(); updLcd(); buzz(12); hud('ev'); hud(null); } lt = n; }); })();
   $('#scanSave').onclick = saveScan;
