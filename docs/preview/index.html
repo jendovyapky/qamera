@@ -2021,7 +2021,7 @@ const SLOW_MODES = ['STOPY', 'POHYB', 'HEDVÁBÍ'];
 const SCREENS = { camera: '#s-camera', gallery: '#s-gallery', editor: '#s-editor', blob: '#s-blob', about: '#s-about', films: '#s-films', scan: '#s-scan' };
 const stack = [];
 let trans = null;
-function go(to, { back = false, onShown } = {}) {
+function go(to, { back = false, onShown, t0 = 0, v = 0 } = {}) {
   if (trans) { trans.sp.stop(); trans.done(); trans = null; } // rozjetý přechod se nejdřív dokončí, nic nezůstane napůl
   if (INTRO) INTRO.kill();
   if (to === S.screen) { $(SCREENS[to]).hidden = false; onShown && onShown(); return; }
@@ -2033,14 +2033,51 @@ function go(to, { back = false, onShown } = {}) {
   const W = $('#phone').clientWidth;
   const done = () => { if (S.screen !== from) fromEl.hidden = true; [fromEl, toEl].forEach(el => { el.style.transform = el.style.filter = el.style.zIndex = ''; }); onLeave(from); onShown && onShown(); };
   toEl.style.zIndex = back ? 4 : 6; fromEl.style.zIndex = back ? 6 : 4;
-  const sp = spring(0, 1, t => {
+  const sp = spring(t0, 1, t => {
     const top = back ? fromEl : toEl, under = back ? toEl : fromEl, a = back ? 1 - t : t;
     top.style.transform = `translate3d(${(1 - a) * W}px,0,0)`;
     under.style.transform = `translate3d(${-a * W * .22}px,0,0) scale(${1 - a * .04})`; under.style.filter = `brightness(${1 - a * .45})`;
-  }, { k: 210, c: 27, onDone: () => { if (trans && trans.sp === sp) trans = null; done(); } });
+  }, { k: 210, c: 27, v, onDone: () => { if (trans && trans.sp === sp) trans = null; done(); } });
   trans = { sp, done };
 }
 function goBack() { const to = stack.pop() || 'camera'; go(to, { back: true }); }
+/* tah od levého okraje = zpět (galerie → foťák); obrazovka jede za prstem stejně jako přechod zpět */
+function edgeBack(scr) {
+  const el = $(SCREENS[scr]); let st = null;
+  const paint = (s, p) => {
+    const a = 1 - p;
+    el.style.transform = `translate3d(${p * s.W}px,0,0)`;
+    s.under.style.transform = `translate3d(${-a * s.W * .22}px,0,0) scale(${1 - a * .04})`; s.under.style.filter = `brightness(${1 - a * .45})`;
+  };
+  el.addEventListener('touchstart', e => {
+    st = null;
+    if (S.screen !== scr || trans || !isMobile() || e.touches.length !== 1) return;
+    const t = e.touches[0]; if (t.clientX - el.getBoundingClientRect().left > 26) return;
+    st = { x: t.clientX, y: t.clientY, on: false, p: 0, v: 0, lx: t.clientX, lt: performance.now() };
+  }, { passive: true });
+  el.addEventListener('touchmove', e => {
+    if (!st) return;
+    const t = e.touches[0], dx = t.clientX - st.x, dy = t.clientY - st.y;
+    if (!st.on) {
+      if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { st = null; return; }
+      if (dx < 8) return;
+      st.on = true; st.to = stack[stack.length - 1] || 'camera'; st.under = $(SCREENS[st.to]); st.W = $('#phone').clientWidth;
+      closeSheets(); st.under.hidden = false; st.under.style.zIndex = 4; el.style.zIndex = 6;
+    }
+    e.preventDefault();
+    const now = performance.now(); st.v = (t.clientX - st.lx) / Math.max(1, now - st.lt); st.lx = t.clientX; st.lt = now;
+    st.p = Math.max(0, Math.min(1, dx / st.W)); paint(st, st.p);
+  }, { passive: false });
+  const end = () => {
+    const s = st; st = null; if (!s || !s.on) return;
+    if (s.p > .33 || s.v > .45) { stack.pop(); buzz(); go(s.to, { back: true, t0: s.p, v: Math.max(0, s.v) * 1000 / s.W }); return; }
+    spring(s.p, 0, p => paint(s, p), { k: 260, c: 28, v: s.v * 1000 / s.W, onDone: () => {
+      if (S.screen === scr) s.under.hidden = true;
+      [el, s.under].forEach(x => { x.style.transform = x.style.filter = x.style.zIndex = ''; });
+    } });
+  };
+  el.addEventListener('touchend', end); el.addEventListener('touchcancel', end);
+}
 /* ukázková fotka pro Moje filmy: vyfotit, vložit nebo vybrat z galerie – pamatuje si ji */
 let FMS = null;
 function fmSample() { if (FMS) return FMS; const d = store.get('fmSample', null); if (!d) return null; const im = new Image(); im.src = d; im.onload = () => { FMS = cropAr(im, .8); if (S.screen === 'films') renderFilmsMgr(); }; return null; }
@@ -4469,6 +4506,7 @@ function boot2(h) {
   $('#tSun').onclick = openSun; $('#sunCard').onclick = foldSun; updSun(); setInterval(updSun, 30000); addEventListener('resize', () => requestAnimationFrame(updSun));
   $('#mClose').onclick = () => sheet($('#menuSheet'), false);
   $$('[data-back]').forEach(b => b.onclick = () => { if (S.screen === 'editor' && S.cur) rethumb(S.cur); goBack(); });
+  edgeBack('gallery');
   // galerie
   $('#gSearch').oninput = filterGallery; bindColorSearch();
   // editor
