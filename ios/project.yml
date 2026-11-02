@@ -8,15 +8,21 @@ targets:
   Qamera:
     type: application
     platform: iOS
-    sources: [Sources]
+    sources:
+      - path: Sources
+      # Webová Qamera (index.html, docs/preview, luts, icons, vendor) – do ios/Web ji nakopíruje workflow
+      - path: Web
+        type: folder
+        buildPhase: resources
     info:
       path: Info.plist
       properties:
         CFBundleDisplayName: Qamera DEV
-        CFBundleShortVersionString: "0.1.1"
-        CFBundleVersion: "2"
-        UILaunchScreen: {}
-        UIStatusBarHidden: true
+        CFBundleShortVersionString: "0.2.0"
+        CFBundleVersion: "3"
+        UILaunchScreen:
+          UIColorName: LaunchBG
+        UIStatusBarStyle: UIStatusBarStyleLightContent
         UIRequiresFullScreen: true
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         NSCameraUsageDescription: Qamera potřebuje kameru, aby mohla fotit.

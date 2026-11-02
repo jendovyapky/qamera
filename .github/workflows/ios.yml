@@ -4,7 +4,7 @@ name: iOS build
 on:
   push:
     branches: [dev]
-    paths: ['ios/**', '.github/workflows/ios.yml']
+    paths: ['ios/**', 'docs/preview/**', 'luts/**', 'vendor/**', 'icons/**', '.github/workflows/ios.yml']
   workflow_dispatch:
 
 jobs:
@@ -18,6 +18,13 @@ jobs:
         run: |
           sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | grep -v -i beta | sort -V | tail -1)"
           xcodebuild -version
+
+      - name: Webová Qamera do balíčku appky
+        run: |
+          mkdir -p ios/Web/docs
+          cp -R index.html manifest.webmanifest LICENSE luts icons vendor ios/Web/
+          cp -R docs/preview ios/Web/docs/
+          du -sh ios/Web
 
       - name: Projekt (XcodeGen)
         run: |

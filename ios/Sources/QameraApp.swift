@@ -4,11 +4,11 @@ import SwiftUI
 @main
 struct QameraApp: App {
     var body: some Scene {
+        // Celá webová Qamera z balíčku appky; nativní CameraScreen (0.1) zůstává na napojení foťáku
         WindowGroup {
-            CameraScreen()
+            WebAppView()
+                .ignoresSafeArea()
                 .preferredColorScheme(.dark)
-                .statusBarHidden(true)
-                .persistentSystemOverlays(.hidden)
         }
     }
 }
