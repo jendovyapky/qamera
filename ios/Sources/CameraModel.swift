@@ -16,6 +16,7 @@ final class CameraModel: NSObject, ObservableObject {
     private var device: AVCaptureDevice?
     private var devices: [String: AVCaptureDevice] = [:]
     private var observers: [NSKeyValueObservation] = []
+    private var areaObserver: NSObjectProtocol?
     private var inflight: [Int64: PhotoCapture] = [:]
 
     @Published var denied = false
@@ -107,8 +108,16 @@ final class CameraModel: NSObject, ObservableObject {
         session.commitConfiguration()
 
         if (try? d.lockForConfiguration()) != nil {
+            if d.isFocusPointOfInterestSupported { d.focusPointOfInterest = CGPoint(x: 0.5, y: 0.5) }
             if d.isFocusModeSupported(.continuousAutoFocus) { d.focusMode = .continuousAutoFocus }
+            if d.isSmoothAutoFocusSupported { d.isSmoothAutoFocusEnabled = false }
+            d.isSubjectAreaChangeMonitoringEnabled = false
             d.unlockForConfiguration()
+        }
+        if let old = areaObserver { NotificationCenter.default.removeObserver(old) }
+        areaObserver = NotificationCenter.default.addObserver(forName: AVCaptureDevice.subjectAreaDidChangeNotification,
+                                                              object: d, queue: nil) { [weak self] _ in
+            self?.recenterFocus()
         }
         observers = [
             d.observe(\.iso, options: [.initial, .new]) { [weak self] dev, _ in
@@ -164,14 +173,28 @@ final class CameraModel: NSObject, ObservableObject {
         let manual = self.manual
         queue.async {
             guard let d = self.device, (try? d.lockForConfiguration()) != nil else { return }
-            if d.isFocusPointOfInterestSupported, d.isFocusModeSupported(.autoFocus) {
+            // Průběžné ostření na ťuknutý bod (jednorázové .autoFocus zamklo ostrost napořád)
+            if d.isFocusPointOfInterestSupported, d.isFocusModeSupported(.continuousAutoFocus) {
                 d.focusPointOfInterest = p
-                d.focusMode = .autoFocus
+                d.focusMode = .continuousAutoFocus
             }
+            d.isSubjectAreaChangeMonitoringEnabled = true
             if !manual, d.isExposurePointOfInterestSupported {
                 d.exposurePointOfInterest = p
                 d.exposureMode = .continuousAutoExposure
             }
+            d.unlockForConfiguration()
+        }
+    }
+
+    // Po změně scény (pohnutí telefonem) se ostření vrátí doprostřed, jako v Fotoaparátu
+    private func recenterFocus() {
+        queue.async {
+            guard let d = self.device, (try? d.lockForConfiguration()) != nil else { return }
+            if d.isFocusPointOfInterestSupported { d.focusPointOfInterest = CGPoint(x: 0.5, y: 0.5) }
+            if d.isFocusModeSupported(.continuousAutoFocus) { d.focusMode = .continuousAutoFocus }
+            if d.isExposurePointOfInterestSupported { d.exposurePointOfInterest = CGPoint(x: 0.5, y: 0.5) }
+            d.isSubjectAreaChangeMonitoringEnabled = false
             d.unlockForConfiguration()
         }
     }
