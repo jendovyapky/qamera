@@ -16,6 +16,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     private var server: LocalServer?
     private let thump = UIImpactFeedbackGenerator(style: .light)
     private let raw = RawCapture()
+    private var vol: VolumeShutter?
 
     override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
     override var prefersHomeIndicatorAutoHidden: Bool { true }
@@ -62,6 +63,10 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
             view.addInteraction(shutter)
         }
 
+        // Tlačítka hlasitosti = spoušť i s kamerou ve WebKitu (boční Ovládání fotoaparátu jen s vlastní kamerou appky)
+        vol = VolumeShutter(host: view) { [weak self] in self?.js("window.__qShutter && window.__qShutter()") }
+        NotificationCenter.default.addObserver(self, selector: #selector(background),
+                                               name: UIApplication.didEnterBackgroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(foreground),
                                                name: UIApplication.willEnterForegroundNotification, object: nil)
         // Server se rozjede za pár ms; načtení se při chybě zopakuje (didFail)
@@ -74,6 +79,11 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
 
     @objc private func foreground() {
         server?.ensureRunning()
+        vol?.resume()
+    }
+
+    @objc private func background() {
+        vol?.pause()
     }
 
     // Kamera ve webu: povolit bez dalšího dotazu (systémový dotaz na kameru iOS ukáže sám)
@@ -151,6 +161,8 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                     }
                 }
             }
+        case "cam":
+            vol?.set((m["on"] as? Bool) ?? false)
         case "rawDone":
             for f in (m["files"] as? [String]) ?? [] { raw.remove(f) }
         default:

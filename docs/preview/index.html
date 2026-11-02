@@ -1834,7 +1834,7 @@ function playIntro() {
   if (INTRO) INTRO.kill();
   const phone = $('#phone'), cam = $('#s-camera');
   Object.values(SCREENS).forEach(s => { const el = $(s); if (el !== cam) el.hidden = true; });
-  stack.length = 0; S.screen = 'camera'; cam.hidden = false; syncNav();
+  stack.length = 0; S.screen = 'camera'; cam.hidden = false; syncNav(); natCam();
   if (LOWMO) { if (READY) startCam(); return; }
   stopCam();
   const cv = document.createElement('canvas'); cv.className = 'intro'; phone.appendChild(cv);
@@ -2031,7 +2031,7 @@ function go(to, { back = false, onShown, t0 = 0, v = 0 } = {}) {
   closeSheets();
   const fromEl = $(SCREENS[S.screen]), toEl = $(SCREENS[to]);
   if (!back) stack.push(S.screen);
-  const from = S.screen; S.screen = to; toEl.hidden = false;
+  const from = S.screen; S.screen = to; toEl.hidden = false; natCam();
   onEnter(to, from); syncNav();
   const W = $('#phone').clientWidth;
   const done = () => { if (S.screen !== from) fromEl.hidden = true; [fromEl, toEl].forEach(el => { el.style.transform = el.style.filter = el.style.zIndex = ''; }); onLeave(from); onShown && onShown(); };
@@ -2454,6 +2454,9 @@ async function capture() {
 const NRAW = { seq: 0, wait: null };
 const nativeRawOk = () => !!(window.QNATIVE && QNATIVE.raw && S.nraw && CAM.live && CAM.facing !== 'user' && S.fmt !== 'half' && !S.dbl && !S.dispo);
 window.__qRaw = (id, ok, a) => { const w = NRAW.wait; if (!w || w.id !== id) return; NRAW.wait = null; ok ? w.res(a) : w.rej(new Error(a || 'chyba')); };
+// appka hlídá tlačítka hlasitosti jen ve foťáku (jinak hlasitost funguje normálně)
+function natCam() { if (window.QNATIVE && window.webkit) window.webkit.messageHandlers.qamera.postMessage({ kind: 'cam', on: S.screen === 'camera' }); }
+setTimeout(natCam, 600);
 window.__qShutter = () => { if (S.screen === 'camera' && !S.busy) shoot(); }; // boční tlačítko / hlasitost
 async function captureNativeRaw() {
   S.busy = 'raw'; drawShutter(0);
