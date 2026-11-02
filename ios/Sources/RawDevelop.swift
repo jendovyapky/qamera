@@ -4,8 +4,8 @@ import ImageIO
 import UniformTypeIdentifiers
 
 // Nativní vyvolání RAW (Core Image) – stejná matematika jako develop() v docs/preview/raw.js:
-// automatická expozice (geometrický průměr jasu → 0,17, nikdy tmavěji), měkké filmové rameno světel,
-// hodně přepálené světlo do bílé, mapa světel (EV nad bílou / 3, ořezaný senzor ≥ 0,5) pro halation a bloom.
+// expozice podle telefonu doladěná k průměru 0,17 (bez přepálení velkých světlých ploch), měkké filmové rameno
+// světel, hodně přepálené světlo do bílé, mapa světel (jen světla nad 1,2) pro halation a bloom.
 // Rychlejší než wasm ve WebView a zvládne i 48 Mpx ProRAW (zmenší se na 4096 px jako export).
 enum RawDevelop {
     struct Output {
@@ -28,8 +28,8 @@ enum RawDevelop {
         }
         let n = f.nativeSize
         f.scaleFactor = Float(min(1, Double(maxSide) / Double(max(n.width, n.height, 1))))
+        // Expozice podle telefonu (baselineExposure z DNG = co změřil iPhone), jen lineární odezva bez Apple tónové křivky
         f.boostAmount = 0
-        f.baselineExposure = 0
         f.exposure = 0
         if f.isLocalToneMapSupported { f.localToneMapAmount = 0 }
         guard let img = f.outputImage else { throw QError(message: "RAW se nepodařilo vyvolat") }
@@ -44,11 +44,20 @@ enum RawDevelop {
         var sb = [Float](repeating: 0, count: max(1, sw * sh * 4))
         sb.withUnsafeMutableBytes { p in ctx.render(small, toBitmap: p.baseAddress!, rowBytes: sw * 16, bounds: se, format: .RGBAf, colorSpace: lin) }
         var ls = 0.0, ln = 0.0
+        var mx = [Float]()
+        mx.reserveCapacity(sw * sh)
         for i in stride(from: 0, to: sw * sh * 4, by: 4) {
             let y = 0.2126 * Double(sb[i]) + 0.7152 * Double(sb[i + 1]) + 0.0722 * Double(sb[i + 2])
             ls += log2(max(y, 1e-5)); ln += 1
+            mx.append(max(sb[i], sb[i + 1], sb[i + 2]))
         }
-        var ev = max(0, min(4.5, log2(0.17) - ls / max(ln, 1)))
+        mx.sort()
+        // Doladění kolem expozice telefonu: tmavou scénu zesvětlit jen tak, aby se nepřepálila velká světlá plocha
+        // (99,5. percentil pod 0,92 – jinak monitor / okno zbělá a mapa světel z něj udělá mlhu), světlou ztmavit
+        let p995 = Double(mx.isEmpty ? 0 : mx[min(mx.count - 1, mx.count * 995 / 1000)])
+        let evMean = max(-2, min(3, log2(0.17) - ls / max(ln, 1)))
+        let evHi = p995 > 0 ? log2(0.92 / p995) : 3
+        var ev = min(evMean, max(evHi, -0.5))
         if !ev.isFinite { ev = 0 }
         let g = Float(pow(2, ev))
 
@@ -69,7 +78,6 @@ enum RawDevelop {
                 for x in 0..<W {
                     let s = (yy * W + x) * 4
                     let pr = Float(buf[s]), pg = Float(buf[s + 1]), pb = Float(buf[s + 2])
-                    let clip = max(pr, pg, pb) > 0.985
                     var r = max(0, pr * g), gg = max(0, pg * g), b = max(0, pb * g)
                     let m = max(r, gg, b)
                     if m > 0.55 {
@@ -81,7 +89,8 @@ enum RawDevelop {
                     out[o + 1] = lut[min(4096, Int(gg * 4096))]
                     out[o + 2] = lut[min(4096, Int(b * 4096))]
                     let hi = hy * hw + min(hw - 1, Int(Double(x) * hk))
-                    hv[hi] += max(m > 1 ? min(1, log2(m) / 3) : 0, clip ? 0.5 : 0)
+                    // jen skutečně přepálená světla (lampy, slunce), ne obyčejně světlá plocha
+                    hv[hi] += m > 1.2 ? min(1, 0.25 + log2(m / 1.2) / 3) : 0
                     hn[hi] += 1
                 }
             }

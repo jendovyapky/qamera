@@ -160,6 +160,14 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
 
     private func share(_ m: [String: Any]) {
         let id = m["id"] as? Int ?? 0
+        // Jen fotky (export) → rovnou do Fotek, bez nabídky sdílení
+        let files = (m["files"] as? [[String: Any]]) ?? []
+        let photoTypes: Set<String> = ["image/jpeg", "image/png", "image/heic"]
+        if !files.isEmpty, m["url"] as? String == nil,
+           files.allSatisfy({ photoTypes.contains(($0["type"] as? String) ?? "") }) {
+            let datas = files.compactMap { ($0["data"] as? String).flatMap { Data(base64Encoded: $0) } }
+            return saveToPhotos(datas, id: id)
+        }
         var items: [Any] = []
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("share-\(id)", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
@@ -189,6 +197,27 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
             pop.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.maxY - 80, width: 1, height: 1)
         }
         present(vc, animated: true)
+    }
+
+    private func saveToPhotos(_ datas: [Data], id: Int) {
+        PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+            guard status == .authorized || status == .limited else {
+                DispatchQueue.main.async {
+                    self.finish(id, ok: false, abort: false)
+                    self.js("window.toast && toast('Qamera nemá povolené ukládání do Fotek (Nastavení → Qamera)')")
+                }
+                return
+            }
+            PHPhotoLibrary.shared().performChanges({
+                for d in datas { PHAssetCreationRequest.forAsset().addResource(with: .photo, data: d, options: nil) }
+            }) { ok, _ in
+                DispatchQueue.main.async {
+                    if ok { UINotificationFeedbackGenerator().notificationOccurred(.success) }
+                    self.finish(id, ok: ok, abort: false)
+                    self.js("window.toast && toast(\(Self.jsStr(ok ? (datas.count == 1 ? "Uloženo do Fotek" : "Uloženo do Fotek (\(datas.count))") : "Uložení do Fotek se nepovedlo")))")
+                }
+            }
+        }
     }
 
     private func finish(_ id: Int, ok: Bool, abort: Bool) {

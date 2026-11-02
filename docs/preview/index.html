@@ -237,6 +237,8 @@ a{color:var(--amber)}
 .hud s{display:block;width:4px;height:4px;background:#5a534c}
 .hud s.z{background:#a0978c;height:9px}
 .hud s.on{background:var(--amber);box-shadow:0 0 6px var(--amber);height:9px}
+.hud s.run{animation:hudRun 1.1s steps(1) infinite;animation-delay:calc(var(--i) * 90ms)}
+@keyframes hudRun{0%{background:var(--amber);box-shadow:0 0 6px var(--amber);height:9px}30%{background:#5a534c;box-shadow:none;height:4px}}
 .vf canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .gridov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .35s}
 .gridov.on{opacity:1}
@@ -2267,6 +2269,7 @@ function hud(kind) {
   const el = $('#hud'); clearTimeout(el._t);
   if (!kind) { el._t = setTimeout(() => el.hidden = true, 650); return; }
   el.hidden = false;
+  if (kind === 'raw') { const [t, k] = arguments[1] || []; el.innerHTML = `${iconSVG('raw')}<b>${t}</b><i>${Array.from({ length: 12 }, (_, i) => `<s class="${k == null ? 'run' : i < k * 12 ? 'on' : ''}" style="--i:${i}"></s>`).join('')}</i>`; return; }
   if (kind === 'ev') el.innerHTML = `${iconSVG('sun')}<b>EV ${fmtEv(S.ev)}</b><i>${Array.from({ length: 19 }, (_, i) => `<s class="${i === 9 ? 'z' : ''} ${Math.abs((i - 9) / 3 - S.ev) < .01 ? 'on' : ''}"></s>`).join('')}</i>`;
   else el.innerHTML = `${iconSVG('clock')}<b>${S.timeIdx ? tLabel(S.timeIdx) + ' · ' + SLOW_MODES[S.slowMode] : 'AUTO · FOTO'}</b><i>${TIME_STOPS.map((_, i) => `<s class="${i === 0 ? 'z' : ''} ${i === S.timeIdx ? 'on' : ''}"></s>`).join('')}</i>`;
 }
@@ -2455,18 +2458,22 @@ window.__qShutter = () => { if (S.screen === 'camera' && !S.busy) shoot(); }; //
 async function captureNativeRaw() {
   S.busy = 'raw'; drawShutter(0);
   const st = CAM.track && CAM.track.getSettings ? CAM.track.getSettings() : {}, zoom = st.zoom || 1, viewZoom = S.zoom, fmt = S.fmt;
-  liveStop(); // kamera patří na chvíli appce, hledáček zůstane na posledním snímku
+  // kamera patří na chvíli appce: hledáček drží poslední snímek rozmazaný (jako přepnutí objektivu), ne demo
+  CAM.switching = true; const cc = $('#camCanvas'); spring(0, 1, v => cc.style.filter = `blur(${v * 14}px) brightness(${1 - v * .35})`, { k: 260, c: 30 });
+  liveStop(); hud('raw', ['FOTÍM']);
+  const done = () => { S.busy = null; drawShutter(); hud(); };
   let r;
   try { r = await new Promise((res, rej) => { const id = ++NRAW.seq; NRAW.wait = { id, res, rej }; setTimeout(() => { if (NRAW.wait && NRAW.wait.id === id) { NRAW.wait = null; rej(new Error('kamera neodpověděla')); } }, 20000);
       window.webkit.messageHandlers.qamera.postMessage({ kind: 'raw', id, zoom, ultra: !!CAM.ultra, flash: !!S.flash }); }); }
-  catch (e) { S.busy = null; drawShutter(); toast('RAW se nepovedl: ' + e.message); if (S.screen === 'camera') liveOn(); return; }
-  if (S.screen === 'camera') liveOn(); // hledáček zpět hned, vyvolání běží mezitím
+  catch (e) { done(); toast('RAW se nepovedl: ' + e.message); if (S.screen === 'camera') liveOn(); else { CAM.switching = false; cc.style.filter = ''; } return; }
+  if (S.screen === 'camera') liveOn(); else { CAM.switching = false; cc.style.filter = ''; } // hledáček zpět hned, vyvolání běží mezitím
+  hud('raw', ['VYVOLÁVÁM']);
   try {
     const get = async u => u ? (await fetch(u)).blob() : null, files = ['jpg', 'hl', 'depth', 'dng'].map(k => r[k]).filter(Boolean);
     const [bj, bh, bd, bn] = await Promise.all([get(r.jpg), get(r.hl), get(r.depth), get(r.dng)]); window.webkit.messageHandlers.qamera.postMessage({ kind: 'rawDone', files });
     let d;
     if (bj) d = { canvas: await decodeTo(bj, 8192), hl: bh ? await decodeTo(bh, 8192) : null, date: new Date() };
-    else { const m = await import('./raw.js'); d = await m.developRaw(new File([bn], 'qamera.dng', { type: 'image/x-adobe-dng' }), v => drawShutter(clamp(v, 0, 1))); }
+    else { const m = await import('./raw.js'); d = await m.developRaw(new File([bn], 'qamera.dng', { type: 'image/x-adobe-dng' }), v => { drawShutter(clamp(v, 0, 1)); hud('raw', ['VYVOLÁVÁM', clamp(v, 0, 1)]); }); }
     const dep0 = bd ? await decodeTo(bd, 8192) : null;
     // stejný výřez jako hledáček: formát + digitální zoom + optický zoom, který objektiv appky nepokryl
     const ar = FORMATS[fmt].ar, z = viewZoom * (CAM.ultra ? 1 : Math.max(1, zoom / (r.lensZoom || 1)));
@@ -2476,9 +2483,9 @@ async function captureNativeRaw() {
     const blob = await new Promise(res => full.toBlob(res, 'image/jpeg', .95)); if (!blob) throw new Error('Došla paměť na obrázky');
     const src = shrink(full, WORK); if (src !== full) freeCanvas(full);
     const hlBlob = hl ? await new Promise(res => hl.toBlob(res, 'image/png')) : null;
-    S.busy = null; drawShutter();
+    done();
     finishCapture(src, { blob, hl, hlBlob, depth, depthBlob, raw: r.label || 'RAW', date: d.date });
-  } catch (e) { S.busy = null; drawShutter(); toast('RAW se nepodařilo vyvolat: ' + String((e && e.message) || e).slice(0, 80)); }
+  } catch (e) { done(); toast('RAW se nepodařilo vyvolat: ' + String((e && e.message) || e).slice(0, 80)); }
 }
 function boxBlur(a, w, h, r) { // dvouprůchodové rozmazání jednokanálové mapy
   const t = new Float32Array(a.length), o = new Float32Array(a.length), k = 1 / (2 * r + 1);

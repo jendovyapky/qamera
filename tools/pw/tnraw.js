@@ -31,7 +31,7 @@ const fs = require('fs');
   await p.screenshot({ path: 'nraw_cam.png' });
   const n0 = await p.evaluate(() => S.photos.length);
   await p.evaluate(() => __qShutter()); await p.waitForTimeout(250);
-  console.log('busy', await p.evaluate(() => [S.busy, !!CAM.stream]));
+  console.log('busy', await p.evaluate(() => [S.busy, !!CAM.stream, CAM.switching])); await p.screenshot({ path: 'nraw_busy.png' });
   for (let i = 0; i < 60; i++) { await p.waitForTimeout(500); if (await p.evaluate(() => !S.busy)) break; }
   const r = await p.evaluate(n0 => { const ph = S.photos[0]; return { pridano: S.photos.length - n0, raw: ph.raw, tags: ph.tags, src: [ph.src.width, ph.src.height], hl: !!ph.hl, depth: ph.depth && [ph.depth.width, ph.depth.height], dFocus: ph.dFocus, depthBlob: !!ph.depthBlob, blob: ph.blob && ph.blob.size, live: CAM.live && !!CAM.stream, msgs: __msgs }; }, n0);
   console.log(JSON.stringify(r));
