@@ -1,3 +1,4 @@
+import AVKit
 import Photos
 import SwiftUI
 import UIKit
@@ -52,6 +53,14 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
         web.isInspectable = true
         #endif
         view.addSubview(web)
+
+        // Boční tlačítko Ovládání fotoaparátu a tlačítka hlasitosti = spoušť (iOS je pošle, jen když běží kamera)
+        if #available(iOS 17.2, *) {
+            let shutter = AVCaptureEventInteraction { [weak self] event in
+                if event.phase == .ended { self?.js("window.__qShutter && window.__qShutter()") }
+            }
+            view.addInteraction(shutter)
+        }
 
         NotificationCenter.default.addObserver(self, selector: #selector(foreground),
                                                name: UIApplication.willEnterForegroundNotification, object: nil)
@@ -133,14 +142,17 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let r):
-                        self?.js("window.__qRaw && window.__qRaw(\(id), true, \(Self.jsStr("/__cap/" + r.file)), \(Self.jsStr(r.label)), \(r.lensZoom))")
+                        var o: [String: Any] = ["label": r.label, "lensZoom": r.lensZoom, "ev": r.ev]
+                        for (k, f) in r.files { o[k] = "/__cap/" + f }
+                        let json = (try? JSONSerialization.data(withJSONObject: o)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+                        self?.js("window.__qRaw && window.__qRaw(\(id), true, \(json))")
                     case .failure(let e):
                         self?.js("window.__qRaw && window.__qRaw(\(id), false, \(Self.jsStr(e.localizedDescription)))")
                     }
                 }
             }
         case "rawDone":
-            if let f = m["file"] as? String { raw.remove(f) }
+            for f in (m["files"] as? [String]) ?? [] { raw.remove(f) }
         default:
             break
         }
@@ -197,7 +209,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     static let bridgeJS = """
     (() => {
       const post = (m) => window.webkit.messageHandlers.qamera.postMessage(m);
-      window.QNATIVE = { raw: true };
+      window.QNATIVE = { raw: 2 };
       navigator.vibrate = (ms) => { post({ kind: 'vibrate', ms: Array.isArray(ms) ? (ms[0] || 6) : (+ms || 6) }); return true; };
       const pend = new Map(); let seq = 0;
       window.__qShareDone = (id, ok, abort) => {

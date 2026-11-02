@@ -2445,11 +2445,13 @@ async function capture() {
   } };
   capturing = cap;
 }
-/* RAW v appce (iPhone): spoušť na chvíli pustí kameru appce → ProRAW / DNG ~12 Mpx → stejné vyvolání jako import RAW (raw.js, mapa světel).
+/* RAW v appce (iPhone): spoušť na chvíli pustí kameru appce → ProRAW v plném rozlišení, appka ho sama vyvolá (Core Image, stejná
+   matematika jako raw.js) → JPEG ≤ 4096 px + mapa světel + hloubka z LiDARu. Když nativní vyvolání selže, přijde DNG a vyvolá ho raw.js.
    Jen běžný snímek zadní kamerou; half, double, jednorázovka a dlouhý čas fotí dál ze streamu */
 const NRAW = { seq: 0, wait: null };
 const nativeRawOk = () => !!(window.QNATIVE && QNATIVE.raw && S.nraw && CAM.live && CAM.facing !== 'user' && S.fmt !== 'half' && !S.dbl && !S.dispo);
-window.__qRaw = (id, ok, a, label, lensZoom) => { const w = NRAW.wait; if (!w || w.id !== id) return; NRAW.wait = null; ok ? w.res({ url: a, label, lensZoom }) : w.rej(new Error(a || 'chyba')); };
+window.__qRaw = (id, ok, a) => { const w = NRAW.wait; if (!w || w.id !== id) return; NRAW.wait = null; ok ? w.res(a) : w.rej(new Error(a || 'chyba')); };
+window.__qShutter = () => { if (S.screen === 'camera' && !S.busy) shoot(); }; // boční tlačítko / hlasitost
 async function captureNativeRaw() {
   S.busy = 'raw'; drawShutter(0);
   const st = CAM.track && CAM.track.getSettings ? CAM.track.getSettings() : {}, zoom = st.zoom || 1, viewZoom = S.zoom, fmt = S.fmt;
@@ -2460,17 +2462,22 @@ async function captureNativeRaw() {
   catch (e) { S.busy = null; drawShutter(); toast('RAW se nepovedl: ' + e.message); if (S.screen === 'camera') liveOn(); return; }
   if (S.screen === 'camera') liveOn(); // hledáček zpět hned, vyvolání běží mezitím
   try {
-    const blob0 = await (await fetch(r.url)).blob(); window.webkit.messageHandlers.qamera.postMessage({ kind: 'rawDone', file: r.url });
-    const m = await import('./raw.js'), d = await m.developRaw(new File([blob0], 'qamera.dng', { type: 'image/x-adobe-dng' }), v => drawShutter(clamp(v, 0, 1)));
+    const get = async u => u ? (await fetch(u)).blob() : null, files = ['jpg', 'hl', 'depth', 'dng'].map(k => r[k]).filter(Boolean);
+    const [bj, bh, bd, bn] = await Promise.all([get(r.jpg), get(r.hl), get(r.depth), get(r.dng)]); window.webkit.messageHandlers.qamera.postMessage({ kind: 'rawDone', files });
+    let d;
+    if (bj) d = { canvas: await decodeTo(bj, 8192), hl: bh ? await decodeTo(bh, 8192) : null, date: new Date() };
+    else { const m = await import('./raw.js'); d = await m.developRaw(new File([bn], 'qamera.dng', { type: 'image/x-adobe-dng' }), v => drawShutter(clamp(v, 0, 1))); }
+    const dep0 = bd ? await decodeTo(bd, 8192) : null;
     // stejný výřez jako hledáček: formát + digitální zoom + optický zoom, který objektiv appky nepokryl
     const ar = FORMATS[fmt].ar, z = viewZoom * (CAM.ultra ? 1 : Math.max(1, zoom / (r.lensZoom || 1)));
     const full = cropAr(d.canvas, ar, z); freeCanvas(d.canvas);
-    const hl = d.hl ? cropAr(d.hl, ar, z) : null;
+    const hl = d.hl ? cropAr(d.hl, ar, z) : null, depth = dep0 ? cropAr(dep0, ar, z) : null;
+    const depthBlob = depth ? await new Promise(res => depth.toBlob(res, 'image/png')) : null;
     const blob = await new Promise(res => full.toBlob(res, 'image/jpeg', .95)); if (!blob) throw new Error('Došla paměť na obrázky');
     const src = shrink(full, WORK); if (src !== full) freeCanvas(full);
     const hlBlob = hl ? await new Promise(res => hl.toBlob(res, 'image/png')) : null;
     S.busy = null; drawShutter();
-    finishCapture(src, { blob, hl, hlBlob, raw: r.label || 'RAW', date: d.date });
+    finishCapture(src, { blob, hl, hlBlob, depth, depthBlob, raw: r.label || 'RAW', date: d.date });
   } catch (e) { S.busy = null; drawShutter(); toast('RAW se nepodařilo vyvolat: ' + String((e && e.message) || e).slice(0, 80)); }
 }
 function boxBlur(a, w, h, r) { // dvouprůchodové rozmazání jednokanálové mapy
@@ -2505,7 +2512,7 @@ function finishCapture(src0, x) {
   if (S.flash || +fl.style.opacity > 0) spring(+fl.style.opacity || 1, 0, v => fl.style.opacity = v * .9, { k: 60, c: 14 });
   blink();
   const ph0 = addPhoto(x ? withHl(src, x.hl) : src, P, CAM.live ? 'live' : LIVE.facing === 'front' ? 'zapad' : 'mesto', CAM.live ? ['kamera'] : ['noc', 'ulice'], true, uid());
-  if (x) { ph0.blob = x.blob; ph0.raw = x.raw; ph0.tags.push('raw'); if (x.date) ph0.date = x.date; if (x.hl) { ph0.hl = x.hl; ph0.hlBlob = x.hlBlob; rethumb(ph0); } }
+  if (x) { ph0.blob = x.blob; ph0.raw = x.raw; ph0.tags.push('raw'); if (x.date) ph0.date = x.date; if (x.depth) { ph0.depth = x.depth; ph0.depthBlob = x.depthBlob; ph0.dFocus = depthFocus(x.depth); } if (x.hl) { ph0.hl = x.hl; ph0.hlBlob = x.hlBlob; rethumb(ph0); } }
   const ph = keep(ph0);
   if (S.dxReturn) { useDxOther(ph); return; }
   const vf = $('#vf'), gb = $('#galBtn'), phone = $('#phone'), sc = phone.getBoundingClientRect().width / phone.offsetWidth;
@@ -3399,8 +3406,11 @@ async function computeDepth(ph) {
   const pipe = await depthModel(), s = ph.src, k = Math.min(1, 640 / Math.max(s.width, s.height)), c = mk(Math.round(s.width * k), Math.round(s.height * k)); c.getContext('2d').drawImage(s, 0, 0, c.width, c.height);
   const img = await DEPTH.T.RawImage.fromBlob(await new Promise(r => c.toBlob(r, 'image/png'))), out = await pipe(img), dc = out.depth.toCanvas(), d = mk(c.width, c.height);
   d.getContext('2d').drawImage(dc, 0, 0, d.width, d.height); ph.depth = d;
-  const px = d.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, d.width, d.height).data, hs = []; for (let i = 0; i < px.length; i += 16) hs.push(px[i]); hs.sort((a, b) => a - b); ph.dFocus = hs[Math.floor(hs.length * .9)] / 255; // výchozí ostření = nejbližší objekt ph.depthBlob = await new Promise(r => d.toBlob(r, 'image/png')); dbPut(ph); return d;
+  ph.dFocus = depthFocus(d);
+  ph.depthBlob = await new Promise(r => d.toBlob(r, 'image/png')); dbPut(ph); return d;
 }
+// výchozí ostření = nejbližší objekt (90. percentil hloubky, blízko = světlé)
+function depthFocus(d) { const px = d.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, d.width, d.height).data, hs = []; for (let i = 0; i < px.length; i += 16) hs.push(px[i]); hs.sort((a, b) => a - b); return hs[Math.floor(hs.length * .9)] / 255; }
 const MB = b => (b / 1048576).toFixed(1).replace('.', ',');
 function depthText() { if (DEPTH.err) return 'Hloubku se nepodařilo spočítat: ' + DEPTH.err;
   return { dl: DEPTH.tot ? `Stahuju model hloubky · ${MB(DEPTH.got)} / ${MB(DEPTH.tot)} MB (jen poprvé)` : 'Stahuju model hloubky (jen poprvé, asi 25 MB)…', cache: 'Načítám model z telefonu…', init: 'Připravuju model…', run: 'Počítám hloubku fotky…' }[DEPTH.phase] || 'Připravuju…'; }
