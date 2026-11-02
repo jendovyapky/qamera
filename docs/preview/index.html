@@ -873,7 +873,7 @@ body.pcapp .pcwrap{position:fixed;inset:0;width:auto;height:auto;transform:none!
             <svg class="gridov" id="gridOv" aria-hidden="true"></svg>
             <div class="vtools">
               <div class="grp"><button class="ib" id="tGrid" data-ic="grid" aria-label="Mřížka"></button><button class="ib" id="tTimer" data-ic="timer" aria-label="Samospoušť"></button><button class="ib" id="tMeter" data-ic="meter" aria-label="Expozimetr"></button><span class="sunwrap" id="sunWrap"><button class="ib" id="tSun" data-ic="sun" aria-label="Světlo dnes"></button><button class="suncard" id="sunCard" aria-label="Schovat"><span class="px-wrap" data-ic="sun"></span><b id="sunTxt"></b></button></span></div>
-              <div class="grp"><button class="ib" id="liveBtn" data-ic="camera" aria-label="Zapnout skutečnou kameru"></button><button class="ib" id="tFlash" data-ic="flash" aria-label="Blesk"></button><button class="ib" id="tFlip" data-ic="flip" aria-label="Otočit kameru"></button></div>
+              <div class="grp"><button class="ib" id="tRaw" data-ic="raw" aria-label="RAW z foťáku telefonu" hidden></button><button class="ib" id="liveBtn" data-ic="camera" aria-label="Zapnout skutečnou kameru"></button><button class="ib" id="tFlash" data-ic="flash" aria-label="Blesk"></button><button class="ib" id="tFlip" data-ic="flip" aria-label="Otočit kameru"></button></div>
             </div>
             <button class="fmtbadge" id="fmtBadge" aria-label="Přepnout formát">3:4</button>
             <div class="fmtbadge dbl" id="dblBadge" hidden>DOUBLE 1/2</div>
@@ -1163,6 +1163,7 @@ const ICONS = {
   menu:   ['', '', '..########..', '', '', '..########..', '', '', '..########..'],
   back:   ['', '', '', '....#.......', '...##.......', '..#########.', '...##.......', '....#.......'],
   down:   ['', '', '', '', '..#......#..', '...#....#...', '....#..#....', '.....##.....'],
+  raw:    ['', '', '', '.###..#..#.#', '.#.#.#.#.#.#', '.##..###.#.#', '.#.#.#.#.###', '.#.#.#.#.#.#'],
   grid:   ['', '...#...#....', '...#...#....', '.##########.', '...#...#....', '...#...#....', '...#...#....', '.##########.', '...#...#....', '...#...#....'],
   timer:  ['....####....', '', '...######...', '..#......#..', '.#...#....#.', '.#...#....#.', '.#...###..#.', '.#........#.', '..#......#..', '...######...'],
   flash:  ['......####..', '.....####...', '....####....', '...####.....', '..########..', '......###...', '.....###....', '....###.....', '...##.......', '..#.........'],
@@ -2397,6 +2398,7 @@ function drawGrid() {
 function shoot() { // během odpočtu / dlouhé expozice spoušť ruší, jinak ochrana proti dvojitému cvaknutí
   if (S.busy === 'timer') { clearInterval(timerIv); $('#count').hidden = true; S.busy = null; drawShutter(); toast('Samospoušť zrušená'); buzz(8); return; }
   if (S.busy === 'exp') { if (capturing) capturing.cancel = true; return; }
+  if (S.busy === 'raw') return; // RAW z appky se ještě fotí / vyvolává
   const now = performance.now(); if (now - lastShot < 400) return; lastShot = now;
   if (S.timer) { let n = S.timer; const el = $('#count'); el.hidden = false; el.textContent = n; buzz(10); S.busy = 'timer'; drawShutter();
     timerIv = setInterval(() => { n--; if (n <= 0) { clearInterval(timerIv); el.hidden = true; S.busy = null; drawShutter(); capture(); } else { el.textContent = n; buzz(10); } }, 1000);
@@ -2409,6 +2411,7 @@ async function capture() {
   let torch = false;
   if (S.flash) { if (CAM.live && CAM.caps.torch) { torch = await setTorch(true); await new Promise(r => setTimeout(r, 350)); }
     else if (CAM.live && CAM.facing === 'user') { const fl = $('#flash'); fl.style.background = S.flash === 2 ? '#ffb46a' : '#fff'; fl.style.opacity = 1; await new Promise(r => setTimeout(r, 300)); } }
+  if (!slow && nativeRawOk()) { if (torch) setTorch(false); captureNativeRaw(); return; }
   if (!slow) { const src = CAM.live && CAM.video ? videoFrame() : copyCanvas(LIVE.canvas); if (torch) setTorch(false); finishCapture(src); return; }
   /* slow shutter / long exposure: snímky se sčítají ve float přesnosti (průměr = pohyb a hedvábí, maximum = světelné stopy).
      Hedvábí navíc vrací ostrost tam, kde se nic nehýbe (malý rozptyl mezi snímky). Až 15 s → stovky snímků bez pruhování. */
@@ -2442,6 +2445,34 @@ async function capture() {
   } };
   capturing = cap;
 }
+/* RAW v appce (iPhone): spoušť na chvíli pustí kameru appce → ProRAW / DNG ~12 Mpx → stejné vyvolání jako import RAW (raw.js, mapa světel).
+   Jen běžný snímek zadní kamerou; half, double, jednorázovka a dlouhý čas fotí dál ze streamu */
+const NRAW = { seq: 0, wait: null };
+const nativeRawOk = () => !!(window.QNATIVE && QNATIVE.raw && S.nraw && CAM.live && CAM.facing !== 'user' && S.fmt !== 'half' && !S.dbl && !S.dispo);
+window.__qRaw = (id, ok, a, label, lensZoom) => { const w = NRAW.wait; if (!w || w.id !== id) return; NRAW.wait = null; ok ? w.res({ url: a, label, lensZoom }) : w.rej(new Error(a || 'chyba')); };
+async function captureNativeRaw() {
+  S.busy = 'raw'; drawShutter(0);
+  const st = CAM.track && CAM.track.getSettings ? CAM.track.getSettings() : {}, zoom = st.zoom || 1, viewZoom = S.zoom, fmt = S.fmt;
+  liveStop(); // kamera patří na chvíli appce, hledáček zůstane na posledním snímku
+  let r;
+  try { r = await new Promise((res, rej) => { const id = ++NRAW.seq; NRAW.wait = { id, res, rej }; setTimeout(() => { if (NRAW.wait && NRAW.wait.id === id) { NRAW.wait = null; rej(new Error('kamera neodpověděla')); } }, 20000);
+      window.webkit.messageHandlers.qamera.postMessage({ kind: 'raw', id, zoom, ultra: !!CAM.ultra, flash: !!S.flash }); }); }
+  catch (e) { S.busy = null; drawShutter(); toast('RAW se nepovedl: ' + e.message); if (S.screen === 'camera') liveOn(); return; }
+  if (S.screen === 'camera') liveOn(); // hledáček zpět hned, vyvolání běží mezitím
+  try {
+    const blob0 = await (await fetch(r.url)).blob(); window.webkit.messageHandlers.qamera.postMessage({ kind: 'rawDone', file: r.url });
+    const m = await import('./raw.js'), d = await m.developRaw(new File([blob0], 'qamera.dng', { type: 'image/x-adobe-dng' }), v => drawShutter(clamp(v, 0, 1)));
+    // stejný výřez jako hledáček: formát + digitální zoom + optický zoom, který objektiv appky nepokryl
+    const ar = FORMATS[fmt].ar, z = viewZoom * (CAM.ultra ? 1 : Math.max(1, zoom / (r.lensZoom || 1)));
+    const full = cropAr(d.canvas, ar, z); freeCanvas(d.canvas);
+    const hl = d.hl ? cropAr(d.hl, ar, z) : null;
+    const blob = await new Promise(res => full.toBlob(res, 'image/jpeg', .95)); if (!blob) throw new Error('Došla paměť na obrázky');
+    const src = shrink(full, WORK); if (src !== full) freeCanvas(full);
+    const hlBlob = hl ? await new Promise(res => hl.toBlob(res, 'image/png')) : null;
+    S.busy = null; drawShutter();
+    finishCapture(src, { blob, hl, hlBlob, raw: r.label || 'RAW', date: d.date });
+  } catch (e) { S.busy = null; drawShutter(); toast('RAW se nepodařilo vyvolat: ' + String((e && e.message) || e).slice(0, 80)); }
+}
 function boxBlur(a, w, h, r) { // dvouprůchodové rozmazání jednokanálové mapy
   const t = new Float32Array(a.length), o = new Float32Array(a.length), k = 1 / (2 * r + 1);
   for (let y = 0; y < h; y++) { let s = 0; const row = y * w; for (let x = -r; x <= r; x++) s += a[row + clamp(x, 0, w - 1)];
@@ -2456,8 +2487,8 @@ function cropAr(src, ar, zoom = 1) { const sar = src.width / src.height; let w =
   w = Math.round(w / zoom); h = Math.round(h / zoom);
   const c = mk(w, h); c.getContext('2d').drawImage(src, (src.width - w) / 2, (src.height - h) / 2, w, h, 0, 0, w, h); return c; }
 function showGhost(src) { const gi = $('#dxGhost'); if (!src) { gi.hidden = true; return; } gi.src = utilRender(src, camParams(), 400, Math.round(400 / (src.width / src.height)), {}).toDataURL('image/jpeg', .8); gi.hidden = false; }
-function finishCapture(src0) {
-  let src = cropAr(src0, FORMATS[S.fmt].ar, S.zoom); // stejný výřez jako hledáček (formát + digitální zoom)
+function finishCapture(src0, x) {
+  let src = x ? src0 : cropAr(src0, FORMATS[S.fmt].ar, S.zoom); // stejný výřez jako hledáček (formát + digitální zoom); RAW z appky je už oříznutý
   const ir = $('#iris'), blink = () => spring(1, 0, v => ir.style.opacity = v * .85, { k: 160, c: 22 });
   if (S.fmt === 'half') {
     if (!S.halfPending) { S.halfPending = src; updFmt(); blink(); toast('Půlka políčka hotová, vyfoť druhou'); return; }
@@ -2473,7 +2504,9 @@ function finishCapture(src0) {
   const fl = $('#flash');
   if (S.flash || +fl.style.opacity > 0) spring(+fl.style.opacity || 1, 0, v => fl.style.opacity = v * .9, { k: 60, c: 14 });
   blink();
-  const ph = keep(addPhoto(src, P, CAM.live ? 'live' : LIVE.facing === 'front' ? 'zapad' : 'mesto', CAM.live ? ['kamera'] : ['noc', 'ulice'], true, uid()));
+  const ph0 = addPhoto(x ? withHl(src, x.hl) : src, P, CAM.live ? 'live' : LIVE.facing === 'front' ? 'zapad' : 'mesto', CAM.live ? ['kamera'] : ['noc', 'ulice'], true, uid());
+  if (x) { ph0.blob = x.blob; ph0.raw = x.raw; ph0.tags.push('raw'); if (x.date) ph0.date = x.date; if (x.hl) { ph0.hl = x.hl; ph0.hlBlob = x.hlBlob; rethumb(ph0); } }
+  const ph = keep(ph0);
   if (S.dxReturn) { useDxOther(ph); return; }
   const vf = $('#vf'), gb = $('#galBtn'), phone = $('#phone'), sc = phone.getBoundingClientRect().width / phone.offsetWidth;
   const a = vf.getBoundingClientRect(), b = gb.getBoundingClientRect(), pr = phone.getBoundingClientRect();
@@ -4468,6 +4501,8 @@ function boot2(h) {
   $('#galBtn').onclick = () => go('gallery');
   $('#tGrid').onclick = () => { S.grid = S.grid ? 0 : 1; $('#tGrid').classList.toggle('on', !!S.grid); drawGrid(); buzz(4); };
   $('#tTimer').onclick = () => { S.timer = S.timer === 0 ? 3 : S.timer === 3 ? 10 : 0; $('#tTimer').classList.toggle('on', S.timer > 0); buzz(4); toast(S.timer ? `Samospoušť ${S.timer} s` : 'Samospoušť vypnutá'); };
+  if (window.QNATIVE && QNATIVE.raw) { const b = $('#tRaw'); b.hidden = false; S.nraw = store.get('nraw', false); b.classList.toggle('on', S.nraw);
+    b.onclick = () => { S.nraw = !S.nraw; store.set('nraw', S.nraw); b.classList.toggle('on', S.nraw); buzz(4); toast(S.nraw ? 'RAW: spoušť fotí ProRAW foťákem telefonu' : 'RAW vypnutý, fotí se z hledáčku'); }; }
   $('#tFlash').onclick = () => { S.flash = ((S.flash || 0) + 1) % 3; $('#tFlash').classList.toggle('on', S.flash > 0); $('#tFlash').classList.toggle('vint', S.flash === 2); buzz(4);
     const how = CAM.live ? (CAM.caps.torch ? ' (svítilna)' : CAM.facing === 'user' ? ' (displej)' : '') : '';
     toast(!S.flash ? 'Blesk vypnutý' : S.flash === 1 ? 'Blesk: bílý' + how : 'Blesk: vintage – teplé tvrdé světlo jako starý kompakt' + how); };

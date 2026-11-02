@@ -14,6 +14,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     private var web: WKWebView!
     private var server: LocalServer?
     private let thump = UIImpactFeedbackGenerator(style: .light)
+    private let raw = RawCapture()
 
     override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
     override var prefersHomeIndicatorAutoHidden: Bool { true }
@@ -125,6 +126,21 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
             thump.impactOccurred(intensity: min(1, max(0.3, CGFloat((m["ms"] as? Double) ?? 6) / 20)))
         case "share":
             share(m)
+        case "raw":
+            let id = m["id"] as? Int ?? 0
+            raw.capture(zoom: (m["zoom"] as? Double) ?? 1, ultra: (m["ultra"] as? Bool) ?? false,
+                        flash: (m["flash"] as? Bool) ?? false) { [weak self] result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let r):
+                        self?.js("window.__qRaw && window.__qRaw(\(id), true, \(Self.jsStr("/__cap/" + r.file)), \(Self.jsStr(r.label)), \(r.lensZoom))")
+                    case .failure(let e):
+                        self?.js("window.__qRaw && window.__qRaw(\(id), false, \(Self.jsStr(e.localizedDescription)))")
+                    }
+                }
+            }
+        case "rawDone":
+            if let f = m["file"] as? String { raw.remove(f) }
         default:
             break
         }
@@ -164,14 +180,24 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     }
 
     private func finish(_ id: Int, ok: Bool, abort: Bool) {
-        web.evaluateJavaScript("window.__qShareDone && window.__qShareDone(\(id), \(ok), \(abort))")
+        js("window.__qShareDone && window.__qShareDone(\(id), \(ok), \(abort))")
+    }
+
+    private func js(_ s: String) {
+        web.evaluateJavaScript(s, completionHandler: nil)
+    }
+
+    // Bezpečný JS řetězec (JSON)
+    static func jsStr(_ s: String) -> String {
+        guard let d = try? JSONSerialization.data(withJSONObject: [s]), let a = String(data: d, encoding: .utf8) else { return "\"\"" }
+        return String(a.dropFirst().dropLast())
     }
 
     // Shim pro web: sdílení souborů a vibrace přes nativní most
     static let bridgeJS = """
     (() => {
       const post = (m) => window.webkit.messageHandlers.qamera.postMessage(m);
-      window.QNATIVE = true;
+      window.QNATIVE = { raw: true };
       navigator.vibrate = (ms) => { post({ kind: 'vibrate', ms: Array.isArray(ms) ? (ms[0] || 6) : (+ms || 6) }); return true; };
       const pend = new Map(); let seq = 0;
       window.__qShareDone = (id, ok, abort) => {

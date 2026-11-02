@@ -74,13 +74,19 @@ final class LocalServer {
         path = path.removingPercentEncoding ?? path
         if path.hasSuffix("/") { path += "index.html" }
 
-        var url = root.appendingPathComponent(String(path.drop(while: { $0 == "/" }))).standardizedFileURL
+        // /__cap/… = čerstvé DNG z nativní spouště (RawCapture)
+        var base = root
+        if path.hasPrefix("/__cap/") {
+            base = RawCapture.dir.standardizedFileURL
+            path = String(path.dropFirst("/__cap".count))
+        }
+        var url = base.appendingPathComponent(String(path.drop(while: { $0 == "/" }))).standardizedFileURL
         var isDir: ObjCBool = false
         if FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir), isDir.boolValue {
             url.appendPathComponent("index.html")
         }
-        // Nic mimo složku Web
-        guard url.path.hasPrefix(root.path), let body = try? Data(contentsOf: url) else {
+        // Nic mimo povolenou složku
+        guard url.path.hasPrefix(base.path), let body = try? Data(contentsOf: url) else {
             return send(c, status: "404 Not Found", type: "text/plain", body: Data("404".utf8))
         }
         send(c, status: "200 OK", type: Self.mime(url.pathExtension), body: method == "HEAD" ? Data() : body, length: body.count)
