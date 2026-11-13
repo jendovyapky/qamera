@@ -60,10 +60,12 @@ async function png16(u8) {
 /* ---------- vyvolání: automatická expozice, filmové rameno světel, mapa světel ---------- */
 const SRGB = (() => { const t = new Uint8ClampedArray(4097); for (let i = 0; i <= 4096; i++) { const v = i / 4096; t[i] = Math.round(255 * (v <= .0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - .055)); } return t; })();
 async function develop(W, H, get, onStep, baseline = 0) {
-  // expozice: geometrický průměr jasu → střední šedá (jako foťák); nikdy tmavěji než bílý bod senzoru → přepálená bílá zůstane bílá
-  let ls = 0, ln = 0; const step = Math.max(1, Math.floor(Math.sqrt(W * H / 40000))), px = [0, 0, 0];
-  for (let y = 0; y < H; y += step) for (let x = 0; x < W; x += step) { get(x, y, px); const Y = .2126 * px[0] + .7152 * px[1] + .0722 * px[2]; ls += Math.log2(Math.max(Y, 1e-5)); ln++; }
-  const ev = Math.max(0, Math.min(4.5, Math.log2(.17) - ls / ln)), g = Math.pow(2, Number.isFinite(ev) ? ev : baseline);
+  // jako RawDevelop.swift: expozice telefonu (BaselineExposure) + doladění k průměru 0,17, ztmavit max −0,5 EV, zesvětlit jen tak, aby 99,5. percentil zůstal pod 0,92
+  let ls = 0, ln = 0; const step = Math.max(1, Math.floor(Math.sqrt(W * H / 40000))), px = [0, 0, 0], mx = [], g0 = Math.pow(2, baseline || 0);
+  for (let y = 0; y < H; y += step) for (let x = 0; x < W; x += step) { get(x, y, px); const Y = (.2126 * px[0] + .7152 * px[1] + .0722 * px[2]) * g0; ls += Math.log2(Math.max(Y, 1e-5)); ln++; mx.push(Math.max(px[0], px[1], px[2]) * g0); }
+  mx.sort((a, b) => a - b); const p995 = mx[Math.min(mx.length - 1, Math.floor(mx.length * .995))] || 0;
+  const evMean = Math.max(-2, Math.min(3, Math.log2(.17) - ls / Math.max(ln, 1))), evHi = p995 > 0 ? Math.log2(.92 / p995) : 3;
+  let ev = Math.min(evMean, Math.max(evHi, -.5)); if (!Number.isFinite(ev)) ev = 0; ev += baseline || 0; const g = Math.pow(2, ev);
   const c = document.createElement('canvas'); c.width = W; c.height = H; const cg = c.getContext('2d'), id = cg.createImageData(W, H), d = id.data;
   const hk = Math.min(1, HLS / Math.max(W, H)), hw = Math.max(1, Math.round(W * hk)), hh = Math.max(1, Math.round(H * hk)), hv = new Float32Array(hw * hh), hn = new Float32Array(hw * hh);
   for (let y = 0; y < H; y++) { const hy = Math.min(hh - 1, (y * hk) | 0);
@@ -71,7 +73,7 @@ async function develop(W, H, get, onStep, baseline = 0) {
       if (m > .55) { const f = .55 + .45 * (1 - Math.exp(-(m - .55) / .45)), k = f / m, w = clip ? Math.min(1, Math.max(0, (m - 1) / 6)) : 0; // měkké rameno zachová odstín (film v2 ho v shaderu přesně vrátí, unShoulder); do bílé jen ořezaný senzor, jinak by světla zrůžověla
         r = r * k * (1 - w) + f * w; gg = gg * k * (1 - w) + f * w; b = b * k * (1 - w) + f * w; }
       const i = (y * W + x) * 4; d[i] = SRGB[Math.min(4096, (r * 4096) | 0)]; d[i + 1] = SRGB[Math.min(4096, (gg * 4096) | 0)]; d[i + 2] = SRGB[Math.min(4096, (b * 4096) | 0)]; d[i + 3] = 255;
-      const hi = hy * hw + Math.min(hw - 1, (x * hk) | 0); hv[hi] += Math.max(m > 1 ? Math.min(1, Math.log2(m) / 3) : 0, clip ? .5 : 0); hn[hi]++; } // ořezaný senzor = aspoň 1,5 EV nad bílou
+      const hi = hy * hw + Math.min(hw - 1, (x * hk) | 0); hv[hi] += Math.max(m > 1.2 ? Math.min(1, .25 + Math.log2(m / 1.2) / 3) : 0, clip ? .5 : 0); hn[hi]++; } // jako RawDevelop: jen světla nad 1,2; ořezaný senzor = aspoň 1,5 EV nad bílou
     if (y % 256 === 0) { onStep && onStep(.75 + .2 * y / H, 'Vyvolávám'); await sleep(); } }
   cg.putImageData(id, 0, 0);
   const hc = document.createElement('canvas'); hc.width = hw; hc.height = hh; const hg = hc.getContext('2d'), hd = hg.createImageData(hw, hh);
@@ -90,14 +92,19 @@ async function jxlPath(u8, info, raw, onStep) {
   const t = raw, W = t[256][0], H = t[257][0], tw = (t[322] || [W])[0], th = (t[323] || [H])[0], offs = t[324] || t[273], cnt = t[325] || t[279], spp = (t[277] || [3])[0];
   const bl = t[50714] ? t[50714].reduce((a, b) => a + b, 0) / t[50714].length : 0, wl = (t[50717] || [65535])[0], sc = 1 / Math.max(1, wl - bl);
   const ds = Math.max(1, Math.ceil(Math.max(W, H) / MAXS)), w = Math.ceil(W / ds), h = Math.ceil(H / ds), buf = new Float32Array(w * h * 3), nn = new Uint8Array(w * h);
-  const across = Math.ceil(W / tw);
+  const across = Math.ceil(W / tw); let pmax = 0;
   for (let i = 0; i < offs.length; i++) { const img = new JXL.JxlImage(); img.feedBytes(u8.subarray(offs[i], offs[i] + cnt[i])); if (!img.tryInit()) { img.free(); throw new Error('JPEG XL dlaždice se nepovedla'); }
     const p = await png16(img.render().encodeToPng()); img.free(); // encodeToPng výsledek renderu spotřebuje
     const x0 = (i % across) * tw, y0 = Math.floor(i / across) * th, ch = p.ch, k = p.max === 255 ? 257 : 1;
+    for (let q = 0; q < p.px.length; q += 7) if (p.px[q] * k > pmax) pmax = p.px[q] * k;
     for (let y = 0; y < p.H && y0 + y < H; y++) { const Y = ((y0 + y) / ds) | 0; for (let x = 0; x < p.W && x0 + x < W; x++) { const X = ((x0 + x) / ds) | 0, j = Y * w + X, s = (y * p.W + x) * ch;
       for (let c = 0; c < 3; c++) buf[j * 3 + c] += (p.px[s + Math.min(c, ch - 1)] * k - bl) * sc; nn[j]++; } }
     onStep && onStep(.1 + .6 * (i + 1) / offs.length, `Dekóduji ${i + 1} / ${offs.length}`); await sleep(); }
-  const M = camToSrgb(t) || [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+  // 10/12bitové dlaždice (iPhone 17 Pro: BitsPerSample 10, WhiteLevel 65535) dává dekodér bez natažení na 16 bitů → jinak o 6 EV tmavší
+  const bits = (t[258] || [16])[0], top = (1 << bits) - 1;
+  if (bits < 16 && pmax > 0 && pmax <= top) { const f = 65535 / top; for (let j = 0; j < buf.length; j++) buf[j] *= f; }
+  // barevné matice a neutrál jsou u ProRAW v IFD0, ne v podsložce s daty
+  const M = camToSrgb(Object.assign({}, info.ifds[0], t)) || [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
   const get = (x, y, o) => { const j = y * w + x, n = nn[j] || 1, r = buf[j * 3] / n, g = buf[j * 3 + 1] / n, b = buf[j * 3 + 2] / n;
     o[0] = M[0][0] * r + M[0][1] * g + M[0][2] * b; o[1] = M[1][0] * r + M[1][1] * g + M[1][2] * b; o[2] = M[2][0] * r + M[2][1] * g + M[2][2] * b; };
   void spp; const out = await develop(w, h, get, onStep, (info.ifds[0][50730] || t[50730] || [0])[0]);
