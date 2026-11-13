@@ -1,5 +1,5 @@
 // RAW z appky: podvržený nativní most (window.QNATIVE + webkit.messageHandlers) vrátí buď hotový JPEG + mapu světel + hloubku
-// (node tnraw.js jpg), nebo DNG, který web vyvolá sám (node tnraw.js C:\cesta\k\souboru.dng – osobní fotky jen lokálně, nikdy necommitovat)
+// (node tnraw.js jpg), nebo DNG, který web vyvolá sám (node tnraw.js C:\cesta\k\souboru.dng – jen vlastní nebo volně licencované DNG, nikdy necommitovat)
 const { chromium } = require('playwright-core');
 const fs = require('fs');
 (async () => {

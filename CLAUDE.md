@@ -35,7 +35,7 @@ ve stylu **Prequel**, na PC se používá spíš jako **Lightroom**. Celá v **�
   - **Vždy `serviceWorkers: 'block'`** v kontextu, jinak sw.js podstrčí starou verzi a test ukáže staré chování.
   - Screenshoty prohlédnout a důležité poslat Honzovi (je citlivý na zarovnání a přetékání – nic se nesmí „lít“ do sousední ikony).
   - Syntaxi skriptu ověřit: vytáhnout největší `<script>` do `.mjs` a `node --check`.
-  - Honzovy osobní fotky (`C:\Users\PC\Pictures`, DNG z Nikonu) jen na lokální test, **nikdy necommitovat** (repo je veřejné).
+  - **Fotky v `C:\Users\PC\Pictures` (DNG z Nikonu) NEJSOU Honzovy – patří kamarádovi, kterému PC dřív patřilo. Nepoužívat vůbec**, ani na lokální test. Testovat na syntetických obrázcích, na Honzových fotkách, které sám pošle (ProRAW z iPhonu), nebo na veřejných vzorcích s volnou licencí (stažení jen s jeho souhlasem). Nic z toho necommitovat (repo je veřejné).
 - **Na co si dát pozor (už se stalo):**
   - Komentář `//` vložený doprostřed jednořádkového kódu zakomentuje zbytek řádku → rozbitý skript. Komentáře dávat na konec příkazu nebo nad funkci.
   - GLSL konstanty vždy s tečkou (`2.0`), jinak se shader nezkompiluje a obraz je černý.
