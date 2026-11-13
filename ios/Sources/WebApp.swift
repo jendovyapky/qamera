@@ -148,7 +148,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
         case "raw":
             let id = m["id"] as? Int ?? 0
             raw.capture(zoom: (m["zoom"] as? Double) ?? 1, ultra: (m["ultra"] as? Bool) ?? false,
-                        flash: (m["flash"] as? Bool) ?? false) { [weak self] result in
+                        flash: (m["flash"] as? Bool) ?? false, bayer: (m["bayer"] as? Bool) ?? false) { [weak self] result in
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let r):
@@ -250,7 +250,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     static let bridgeJS = """
     (() => {
       const post = (m) => window.webkit.messageHandlers.qamera.postMessage(m);
-      window.QNATIVE = { raw: 2 };
+      window.QNATIVE = { raw: 2, bayer: true };
       navigator.vibrate = (ms) => { post({ kind: 'vibrate', ms: Array.isArray(ms) ? (ms[0] || 6) : (+ms || 6) }); return true; };
       const pend = new Map(); let seq = 0;
       window.__qShareDone = (id, ok, abort) => {

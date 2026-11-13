@@ -2,8 +2,8 @@ import AVFoundation
 import UIKit
 
 // Nativní RAW ze spouště webové Qamery: web pustí svou kameru (getUserMedia), tady se na chvíli spustí
-// AVCaptureSession, vyfotí Apple ProRAW v plném rozlišení (jinak Bayer RAW), u hlavního objektivu
-// s hloubkou z LiDARu, a RawDevelop ho vyvolá do JPEG ≤ 4096 px + mapy světel. Soubory si web stáhne
+// AVCaptureSession, vyfotí Apple ProRAW v plném rozlišení (u hlavního objektivu s hloubkou z LiDARu),
+// nebo „RAW bez úprav“ = Bayer RAW: jeden snímek přímo ze senzoru, bez skládání a odšumění od Applu (jako Halide Process Zero), a RawDevelop ho vyvolá do JPEG ≤ 4096 px + mapy světel. Soubory si web stáhne
 // přes LocalServer (/__cap/…). Když nativní vyvolání selže, pošle se DNG a vyvolá ho raw.js.
 final class RawCapture: NSObject {
     static let dir = FileManager.default.temporaryDirectory.appendingPathComponent("qcap", isDirectory: true)
@@ -26,12 +26,12 @@ final class RawCapture: NSObject {
     }
 
     // zoom = optický zoom webového hledáčku (1 = hlavní objektiv), ultra = ultraširokáč
-    func capture(zoom: Double, ultra: Bool, flash: Bool, done: @escaping (Swift.Result<Result, Error>) -> Void) {
+    func capture(zoom: Double, ultra: Bool, flash: Bool, bayer: Bool = false, done: @escaping (Swift.Result<Result, Error>) -> Void) {
         queue.async {
             // Web právě pustil kameru; WebKit ji uvolní během pár ms
             Thread.sleep(forTimeInterval: 0.15)
             do {
-                try self.run(zoom: zoom, ultra: ultra, flash: flash, done: done)
+                try self.run(zoom: zoom, ultra: ultra, flash: flash, bayer: bayer, done: done)
             } catch {
                 self.stop()
                 done(.failure(error))
@@ -39,7 +39,7 @@ final class RawCapture: NSObject {
         }
     }
 
-    private func candidates(zoom: Double, ultra: Bool) -> [(AVCaptureDevice, Double)] {
+    private func candidates(zoom: Double, ultra: Bool, bayer: Bool) -> [(AVCaptureDevice, Double)] {
         let types: [AVCaptureDevice.DeviceType] = [.builtInUltraWideCamera, .builtInWideAngleCamera, .builtInTelephotoCamera, .builtInLiDARDepthCamera]
         let found = AVCaptureDevice.DiscoverySession(deviceTypes: types, mediaType: .video, position: .back).devices
         guard let wide = found.first(where: { $0.deviceType == .builtInWideAngleCamera }) else { return [] }
@@ -49,12 +49,12 @@ final class RawCapture: NSObject {
         if let t = found.first(where: { $0.deviceType == .builtInTelephotoCamera }), zoom >= factor(t) * 0.95 { return [(t, factor(t))] }
         // Hlavní objektiv: nejdřív s LiDARem (hloubka), když tam RAW nejde, tak samotný
         var list: [(AVCaptureDevice, Double)] = []
-        if let l = found.first(where: { $0.deviceType == .builtInLiDARDepthCamera }) { list.append((l, 1)) }
+        if !bayer, let l = found.first(where: { $0.deviceType == .builtInLiDARDepthCamera }) { list.append((l, 1)) } // Bayer zatím bez hloubky (jistota, že kombinaci zařízení vezme)
         list.append((wide, 1))
         return list
     }
 
-    private func configure(_ device: AVCaptureDevice) throws -> (AVCaptureSession, AVCapturePhotoOutput, OSType) {
+    private func configure(_ device: AVCaptureDevice, bayer: Bool) throws -> (AVCaptureSession, AVCapturePhotoOutput, OSType) {
         let s = AVCaptureSession()
         s.beginConfiguration()
         s.sessionPreset = .photo
@@ -64,27 +64,30 @@ final class RawCapture: NSObject {
         let out = AVCapturePhotoOutput()
         guard s.canAddOutput(out) else { s.commitConfiguration(); throw QError(message: "nejde fotit") }
         s.addOutput(out)
-        if out.isAppleProRAWSupported { out.isAppleProRAWEnabled = true }
-        if out.isDepthDataDeliverySupported { out.isDepthDataDeliveryEnabled = true }
-        // plné rozlišení (48 Mpx) – RawDevelop ho zmenší na 4096 px
-        if let d = device.activeFormat.supportedMaxPhotoDimensions.max(by: { Int($0.width) * Int($0.height) < Int($1.width) * Int($1.height) }) {
-            out.maxPhotoDimensions = d
-        }
+        if !bayer, out.isAppleProRAWSupported { out.isAppleProRAWEnabled = true }
+        if !bayer, out.isDepthDataDeliverySupported { out.isDepthDataDeliveryEnabled = true }
+        // ProRAW v plném rozlišení (48 Mpx) – RawDevelop ho zmenší na 4096 px; Bayer RAW jen v nativním rozlišení
+        // senzoru po sloučení pixelů (~12 Mpx), větší rozměr s Bayer formátem AVFoundation odmítne výjimkou
+        let px = { (d: CMVideoDimensions) in Int(d.width) * Int(d.height) }
+        let dims = device.activeFormat.supportedMaxPhotoDimensions
+        let pick = bayer ? (dims.filter { px($0) <= 13_000_000 }.max(by: { px($0) < px($1) }) ?? dims.min(by: { px($0) < px($1) }))
+                         : dims.max(by: { px($0) < px($1) })
+        if let d = pick { out.maxPhotoDimensions = d }
         out.maxPhotoQualityPrioritization = .quality
         s.commitConfiguration()
         let types = out.availableRawPhotoPixelFormatTypes
-        guard let fmt = types.first(where: { AVCapturePhotoOutput.isAppleProRAWPixelFormat($0) })
-            ?? types.first(where: { AVCapturePhotoOutput.isBayerRAWPixelFormat($0) }) else {
-            throw QError(message: "tenhle objektiv RAW neumí")
+        let bay = types.first(where: { AVCapturePhotoOutput.isBayerRAWPixelFormat($0) })
+        guard let fmt = bayer ? bay : (types.first(where: { AVCapturePhotoOutput.isAppleProRAWPixelFormat($0) }) ?? bay) else {
+            throw QError(message: bayer ? "tenhle objektiv RAW bez úprav neumí" : "tenhle objektiv RAW neumí")
         }
         return (s, out, fmt)
     }
 
-    private func run(zoom: Double, ultra: Bool, flash: Bool, done: @escaping (Swift.Result<Result, Error>) -> Void) throws {
+    private func run(zoom: Double, ultra: Bool, flash: Bool, bayer: Bool, done: @escaping (Swift.Result<Result, Error>) -> Void) throws {
         var picked: (AVCaptureSession, AVCapturePhotoOutput, OSType, AVCaptureDevice, Double)?
         var lastErr: Error = QError(message: "kamera nenalezena")
-        for (d, z) in candidates(zoom: zoom, ultra: ultra) {
-            do { let (s, o, f) = try configure(d); picked = (s, o, f, d, z); break } catch { lastErr = error }
+        for (d, z) in candidates(zoom: zoom, ultra: ultra, bayer: bayer) {
+            do { let (s, o, f) = try configure(d, bayer: bayer); picked = (s, o, f, d, z); break } catch { lastErr = error }
         }
         guard let p = picked else { throw lastErr }
         let (s, out, fmt, device, lensZoom) = p
@@ -116,6 +119,8 @@ final class RawCapture: NSObject {
             : AVCapturePhotoSettings(rawPixelFormatType: fmt)
         settings.maxPhotoDimensions = out.maxPhotoDimensions
         if depth { settings.isDepthDataDeliveryEnabled = true; settings.embedsDepthDataInPhoto = false }
+        // Bayer: jeden snímek, žádné skládání (.speed je u RAW vždycky povolené)
+        if AVCapturePhotoOutput.isBayerRAWPixelFormat(fmt) { settings.photoQualityPrioritization = .speed }
         if flash, out.supportedFlashModes.contains(.on) { settings.flashMode = .on }
         if let c = out.connection(with: .video), c.isVideoRotationAngleSupported(90) { c.videoRotationAngle = 90 }
 
