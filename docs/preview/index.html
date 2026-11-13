@@ -258,6 +258,7 @@ a{color:var(--amber)}
 .vf.narrow .vtools .ib{width:32px;height:32px;border-radius:10px}
 .vf.narrow .vtools .grp{gap:4px}
 .vf.narrow .zoomgrp button{width:38px}
+.zoomgrp.n5 button{width:40px}.vf.narrow .zoomgrp.n5 button{width:34px}
 .stripl{font-family:var(--f-px);font-size:8px;color:var(--dim);letter-spacing:.12em;margin-top:-3px}
 .focus{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;border:1.5px solid var(--amber);border-radius:12px;pointer-events:none;opacity:0;filter:var(--glow)}
 .count{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--f-dot);font-weight:900;font-size:120px;color:var(--amber);filter:var(--glow);pointer-events:none}
@@ -1409,7 +1410,7 @@ function drawLive(t) {
 /* =====================================================================
    Skutečná kamera (getUserMedia). Zapíná se až ťuknutím na DEMO → prohlížeč se zeptá na povolení.
    ===================================================================== */
-const CAM = { live: false, stream: null, video: null, track: null, caps: {}, facing: 'environment', deviceId: null, ultra: false, devices: [], err: '' };
+const CAM = { live: false, stream: null, video: null, track: null, caps: {}, facing: 'environment', deviceId: null, ultra: false, tele: 0, devices: [], err: '' };
 async function liveOn() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('Kamera potřebuje HTTPS a podporovaný prohlížeč'); return false; }
   CAM.switching = true; const cc = $('#camCanvas'); spring(0, 1, v => cc.style.filter = `blur(${v * 14}px) brightness(${1 - v * .35})`, { k: 260, c: 30 });
@@ -1435,7 +1436,7 @@ async function liveOn() {
   }
 }
 function liveStop() { if (CAM.stream) CAM.stream.getTracks().forEach(t => t.stop()); CAM.stream = null; CAM.track = null; }
-function liveOff() { liveStop(); CAM.live = false; CAM.deviceId = null; CAM.ultra = false; LIVE.w = 480; LIVE.h = 640; LIVE.canvas = mk(480, 640); updLive(); }
+function liveOff() { liveStop(); CAM.live = false; CAM.deviceId = null; CAM.ultra = false; CAM.tele = 0; LIVE.w = 480; LIVE.h = 640; LIVE.canvas = mk(480, 640); updLive(); }
 function updLive() { $('#liveBtn').hidden = CAM.live || !store.get('cam', false) && !store.get('camAsked', false); $('#camPill').hidden = CAM.live || store.get('camAsked', false); }
 async function setTorch(on) { if (!CAM.track || !CAM.caps.torch) return false; try { await CAM.track.applyConstraints({ advanced: [{ torch: on }] }); return true; } catch { return false; } }
 function renderCamInfo() {
@@ -2362,7 +2363,7 @@ function zoomStrip() { // proužek nad kolečkem času: digitální zoom 1×–5
   return { sync() { x = -(S.zoom - 1) * PX; apply(); } };
 }
 let zoomApi = null;
-function syncZoomBtns() { $$('#zoomGrp button').forEach(b => b.classList.toggle('on', Math.abs(+b.dataset.z - S.zoom) < .06 || (+b.dataset.z < 1 && CAM.ultra))); }
+function syncZoomBtns() { const eff = S.zoom * (CAM.tele || 1); $$('#zoomGrp button').forEach(b => b.classList.toggle('on', CAM.ultra ? +b.dataset.z < 1 : Math.abs(+b.dataset.z - eff) < .06)); }
 function fmtEv(v) { if (Math.abs(v) < .01) return '±0'; return (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1).replace('.', ','); }
 function updLcd() {
   const iso = ISO_STOPS[S.isoIdx], slow = S.timeIdx > 0, k = pushK();
@@ -2480,7 +2481,7 @@ async function captureNativeRaw() {
   const done = () => { S.busy = null; drawShutter(); hud(); };
   let r;
   try { r = await new Promise((res, rej) => { const id = ++NRAW.seq; NRAW.wait = { id, res, rej }; setTimeout(() => { if (NRAW.wait && NRAW.wait.id === id) { NRAW.wait = null; rej(new Error('kamera neodpověděla')); } }, 20000);
-      window.webkit.messageHandlers.qamera.postMessage({ kind: 'raw', id, zoom, ultra: !!CAM.ultra, flash: !!S.flash, bayer: !!QNATIVE.bayer }); }); }
+      window.webkit.messageHandlers.qamera.postMessage({ kind: 'raw', id, zoom, ultra: !!CAM.ultra, flash: !!S.flash, tele: !!CAM.tele, bayer: !!QNATIVE.bayer }); }); }
   catch (e) { done(); toast('RAW se nepovedl: ' + e.message); if (S.screen === 'camera') liveOn(); else { CAM.switching = false; cc.style.filter = ''; } return; }
   if (S.screen === 'camera') liveOn(); else { CAM.switching = false; cc.style.filter = ''; } // hledáček zpět hned, vyvolání běží mezitím
   hud('raw', ['VYVOLÁVÁM']);
@@ -2557,7 +2558,14 @@ async function setZoom(z) {
       if (ultra) { CAM.deviceId = ultra.deviceId; CAM.ultra = true; await liveOn(); S.zoom = 1; return; }
       toast('Ultraširokáč tenhle prohlížeč nezpřístupnil'); $$('#zoomGrp button').forEach(x => x.classList.toggle('on', x.dataset.z === '1')); return;
     }
-    if (CAM.ultra) { CAM.deviceId = null; CAM.ultra = false; await liveOn(); }
+    // teleobjektiv (QNATIVE.tele = jeho násobek, 17 Pro 4×): hledáček přepne na kameru tele, 8× = 2× výřez z ní (48 Mpx)
+    const T = window.QNATIVE && QNATIVE.tele;
+    if (T && z >= T - .01) {
+      const tele = CAM.devices.find(d => /tele/i.test(d.label) && !/front|přední|user/i.test(d.label));
+      if (tele) { if (!CAM.tele) { CAM.deviceId = tele.deviceId; CAM.ultra = false; CAM.tele = T; await liveOn(); S.zoom = 1; }
+        spring(S.zoom, z / T, v => { S.zoom = v; zoomApi && zoomApi.sync(); }, { k: 160, c: 22 }); return; }
+    }
+    if (CAM.ultra || CAM.tele) { CAM.deviceId = null; CAM.ultra = false; CAM.tele = 0; await liveOn(); S.zoom = 1; }
     if (CAM.caps.zoom && CAM.caps.zoom.max >= z) { try { await CAM.track.applyConstraints({ advanced: [{ zoom: Math.max(CAM.caps.zoom.min, z) }] }); S.zoom = 1; return; } catch {} }
   } else if (z < 1) toast('V DEMO režimu jen ukázka; na telefonu přepne objektiv');
   spring(S.zoom, Math.max(1, z), v => { S.zoom = v; zoomApi && zoomApi.sync(); }, { k: 160, c: 22 });
@@ -4541,10 +4549,12 @@ function boot2(h) {
     const how = CAM.live ? (CAM.caps.torch ? ' (svítilna)' : CAM.facing === 'user' ? ' (displej)' : '') : '';
     toast(!S.flash ? 'Blesk vypnutý' : S.flash === 1 ? 'Blesk: bílý' + how : 'Blesk: vintage – teplé tvrdé světlo jako starý kompakt' + how); };
   $('#tFlip').onclick = async () => { const vf = $('#vf'); spring(0, 1, v => vf.style.transform = `perspective(900px) rotateY(${Math.sin(v * Math.PI) * 12}deg) scale(${1 - Math.sin(v * Math.PI) * .05})`, { k: 120, c: 16 }); buzz(5);
-    if (CAM.live) { CAM.facing = CAM.facing === 'user' ? 'environment' : 'user'; CAM.deviceId = null; CAM.ultra = false; await liveOn(); } else LIVE.facing = LIVE.facing === 'back' ? 'front' : 'back'; };
+    if (CAM.live) { CAM.facing = CAM.facing === 'user' ? 'environment' : 'user'; CAM.deviceId = null; CAM.ultra = false; CAM.tele = 0; await liveOn(); } else LIVE.facing = LIVE.facing === 'back' ? 'front' : 'back'; };
   $('#camPill').innerHTML = iconSVG('camera') + 'Zapnout kameru'; $('#camPill').onclick = async () => { store.set('camAsked', true); updLive(); if (await liveOn()) toast('Živá kamera s filmem ' + S.film); };
   updLive();
   $('#liveBtn').onclick = async () => { if (CAM.live) { liveOff(); toast('DEMO: generovaná scéna'); } else if (await liveOn()) toast('Živá kamera s filmem ' + S.film); };
+  if (window.QNATIVE && QNATIVE.tele > 1) { const zg = $('#zoomGrp'), T = QNATIVE.tele, f = v => String(v).replace('.', ',') + '×'; // tlačítka teleobjektivu (17 Pro: 4× a 8×)
+    zg.insertAdjacentHTML('beforeend', `<button data-z="${T}">${f(T)}</button>` + (QNATIVE.teleCrop ? `<button data-z="${T * 2}">${f(T * 2)}</button>` : '')); zg.classList.toggle('n5', zg.children.length > 4); }
   $$('#zoomGrp button').forEach(b => b.onclick = () => setZoom(+b.dataset.z));
   $('#lMode').onclick = () => { if (!S.timeIdx) { toast('Dlouhá expozice: táhni prstem v hledáčku doprava nebo otoč kolečko času'); return; } S.slowMode = (S.slowMode + 1) % 3; updLcd(); buzz(5);
     toast(['Světelné stopy: světla se sčítají', 'Rozmazání pohybu: průměr snímků', 'Voda / hedvábí: průměr + ostřejší statické části'][S.slowMode]); };

@@ -25,13 +25,26 @@ final class RawCapture: NSObject {
         try? FileManager.default.createDirectory(at: Self.dir, withIntermediateDirectories: true)
     }
 
-    // zoom = optický zoom webového hledáčku (1 = hlavní objektiv), ultra = ultraširokáč
-    func capture(zoom: Double, ultra: Bool, flash: Bool, bayer: Bool = false, done: @escaping (Swift.Result<Result, Error>) -> Void) {
+    // Teleobjektiv pro tlačítka ve webu: násobek proti hlavnímu (17 Pro = 4) a jestli má 48 Mpx (pak i 2× výřez = 8×)
+    static func lensJSON() -> String {
+        let found = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera, .builtInTelephotoCamera], mediaType: .video, position: .back).devices
+        guard let w = found.first(where: { $0.deviceType == .builtInWideAngleCamera }),
+              let t = found.first(where: { $0.deviceType == .builtInTelephotoCamera }) else { return "{}" }
+        let fov = { (d: AVCaptureDevice) in tan(Double(d.activeFormat.videoFieldOfView) * .pi / 360) }
+        let f = fov(w) / max(fov(t), 0.0001)
+        guard f.isFinite, f > 1.5 else { return "{}" }
+        let k = f >= 2.5 ? f.rounded() : (f * 2).rounded() / 2 // 4,17 → 4 (Apple to tak značí)
+        let big = t.formats.flatMap { $0.supportedMaxPhotoDimensions }.contains { Int($0.width) * Int($0.height) >= 40_000_000 }
+        return "{\"tele\":\(k),\"teleCrop\":\(big)}"
+    }
+
+    // zoom = optický zoom webového hledáčku (1 = hlavní objektiv), ultra = ultraširokáč, tele = hledáček je na teleobjektivu
+    func capture(zoom: Double, ultra: Bool, flash: Bool, tele: Bool = false, bayer: Bool = false, done: @escaping (Swift.Result<Result, Error>) -> Void) {
         queue.async {
             // Web právě pustil kameru; WebKit ji uvolní během pár ms
             Thread.sleep(forTimeInterval: 0.15)
             do {
-                try self.run(zoom: zoom, ultra: ultra, flash: flash, bayer: bayer, done: done)
+                try self.run(zoom: zoom, ultra: ultra, flash: flash, tele: tele, bayer: bayer, done: done)
             } catch {
                 self.stop()
                 done(.failure(error))
@@ -39,14 +52,14 @@ final class RawCapture: NSObject {
         }
     }
 
-    private func candidates(zoom: Double, ultra: Bool, bayer: Bool) -> [(AVCaptureDevice, Double)] {
+    private func candidates(zoom: Double, ultra: Bool, tele: Bool, bayer: Bool) -> [(AVCaptureDevice, Double)] {
         let types: [AVCaptureDevice.DeviceType] = [.builtInUltraWideCamera, .builtInWideAngleCamera, .builtInTelephotoCamera, .builtInLiDARDepthCamera]
         let found = AVCaptureDevice.DiscoverySession(deviceTypes: types, mediaType: .video, position: .back).devices
         guard let wide = found.first(where: { $0.deviceType == .builtInWideAngleCamera }) else { return [] }
         let fov = { (d: AVCaptureDevice) in tan(Double(d.activeFormat.videoFieldOfView) * .pi / 360) }
         let factor = { (d: AVCaptureDevice) in fov(wide) / max(fov(d), 0.0001) }
         if ultra, let u = found.first(where: { $0.deviceType == .builtInUltraWideCamera }) { return [(u, factor(u))] }
-        if let t = found.first(where: { $0.deviceType == .builtInTelephotoCamera }), zoom >= factor(t) * 0.95 { return [(t, factor(t))] }
+        if let t = found.first(where: { $0.deviceType == .builtInTelephotoCamera }), tele || zoom >= factor(t) * 0.95 { return [(t, factor(t))] }
         // Hlavní objektiv: nejdřív s LiDARem (hloubka), když tam RAW nejde, tak samotný
         var list: [(AVCaptureDevice, Double)] = []
         if !bayer, let l = found.first(where: { $0.deviceType == .builtInLiDARDepthCamera }) { list.append((l, 1)) } // Bayer zatím bez hloubky (jistota, že kombinaci zařízení vezme)
@@ -83,12 +96,12 @@ final class RawCapture: NSObject {
         return (s, out, fmt)
     }
 
-    private func run(zoom: Double, ultra: Bool, flash: Bool, bayer: Bool, done: @escaping (Swift.Result<Result, Error>) -> Void) throws {
+    private func run(zoom: Double, ultra: Bool, flash: Bool, tele: Bool, bayer: Bool, done: @escaping (Swift.Result<Result, Error>) -> Void) throws {
         var picked: (AVCaptureSession, AVCapturePhotoOutput, OSType, AVCaptureDevice, Double)?
         var lastErr: Error = QError(message: "kamera nenalezena")
         // RAW bez úprav (Bayer); když ho objektiv neumí, záloha ProRAW (s hloubkou), ať RAW vždycky vyfotí
         modes: for mode in bayer ? [true, false] : [false] {
-            for (d, z) in candidates(zoom: zoom, ultra: ultra, bayer: mode) {
+            for (d, z) in candidates(zoom: zoom, ultra: ultra, tele: tele, bayer: mode) {
                 do { let (s, o, f) = try configure(d, bayer: mode); picked = (s, o, f, d, z); break modes } catch { lastErr = error }
             }
         }
