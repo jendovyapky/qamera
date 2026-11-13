@@ -1166,7 +1166,6 @@ const ICONS = {
   back:   ['', '', '', '....#.......', '...##.......', '..#########.', '...##.......', '....#.......'],
   down:   ['', '', '', '', '..#......#..', '...#....#...', '....#..#....', '.....##.....'],
   raw:    ['', '', '', '.###..#..#.#', '.#.#.#.#.#.#', '.##..###.#.#', '.#.#.#.#.###', '.#.#.#.#.#.#'],
-  pro:    ['', '', '', '.###.###.###', '.#.#.#.#.#.#', '.###.##..#.#', '.#...#.#.#.#', '.#...#.#.###'],
   grid:   ['', '...#...#....', '...#...#....', '.##########.', '...#...#....', '...#...#....', '...#...#....', '.##########.', '...#...#....', '...#...#....'],
   timer:  ['....####....', '', '...######...', '..#......#..', '.#...#....#.', '.#...#....#.', '.#...###..#.', '.#........#.', '..#......#..', '...######...'],
   flash:  ['......####..', '.....####...', '....####....', '...####.....', '..########..', '......###...', '.....###....', '....###.....', '...##.......', '..#.........'],
@@ -2481,7 +2480,7 @@ async function captureNativeRaw() {
   const done = () => { S.busy = null; drawShutter(); hud(); };
   let r;
   try { r = await new Promise((res, rej) => { const id = ++NRAW.seq; NRAW.wait = { id, res, rej }; setTimeout(() => { if (NRAW.wait && NRAW.wait.id === id) { NRAW.wait = null; rej(new Error('kamera neodpověděla')); } }, 20000);
-      window.webkit.messageHandlers.qamera.postMessage({ kind: 'raw', id, zoom, ultra: !!CAM.ultra, flash: !!S.flash, bayer: S.nraw === 2 }); }); }
+      window.webkit.messageHandlers.qamera.postMessage({ kind: 'raw', id, zoom, ultra: !!CAM.ultra, flash: !!S.flash, bayer: !!QNATIVE.bayer }); }); }
   catch (e) { done(); toast('RAW se nepovedl: ' + e.message); if (S.screen === 'camera') liveOn(); else { CAM.switching = false; cc.style.filter = ''; } return; }
   if (S.screen === 'camera') liveOn(); else { CAM.switching = false; cc.style.filter = ''; } // hledáček zpět hned, vyvolání běží mezitím
   hud('raw', ['VYVOLÁVÁM']);
@@ -4535,11 +4534,9 @@ function boot2(h) {
   $('#galBtn').onclick = () => go('gallery');
   $('#tGrid').onclick = () => { S.grid = S.grid ? 0 : 1; $('#tGrid').classList.toggle('on', !!S.grid); drawGrid(); buzz(4); };
   $('#tTimer').onclick = () => { S.timer = S.timer === 0 ? 3 : S.timer === 3 ? 10 : 0; $('#tTimer').classList.toggle('on', S.timer > 0); buzz(4); toast(S.timer ? `Samospoušť ${S.timer} s` : 'Samospoušť vypnutá'); };
-  // RAW z appky: vyp → PRO (Apple ProRAW: složené snímky, odšuměné) → RAW (Bayer: jeden snímek přímo ze senzoru, bez Apple úprav, jen když to appka umí)
-  if (window.QNATIVE && QNATIVE.raw) { const b = $('#tRaw'), modes = QNATIVE.bayer ? 3 : 2, show = () => { b.classList.toggle('on', !!S.nraw); b.innerHTML = iconSVG(S.nraw === 1 ? 'pro' : 'raw'); };
-    b.hidden = false; S.nraw = +store.get('nraw', 0) || 0; if (S.nraw >= modes) S.nraw = 1; show();
-    b.onclick = () => { S.nraw = (S.nraw + 1) % modes; store.set('nraw', S.nraw); show(); buzz(4);
-      toast(S.nraw === 1 ? 'ProRAW: složené snímky, čistý obraz' : S.nraw === 2 ? 'RAW: jeden snímek ze senzoru, bez úprav' : 'RAW vypnutý, fotí se z hledáčku'); }; }
+  // RAW z appky: jeden snímek přímo ze senzoru bez Apple úprav (Bayer); co Bayer neumí, vyfotí appka jako ProRAW
+  if (window.QNATIVE && QNATIVE.raw) { const b = $('#tRaw'); b.hidden = false; S.nraw = !!store.get('nraw', false); b.classList.toggle('on', S.nraw);
+    b.onclick = () => { S.nraw = !S.nraw; store.set('nraw', S.nraw); b.classList.toggle('on', S.nraw); buzz(4); toast(S.nraw ? 'RAW: snímek přímo ze senzoru, bez úprav iPhonu' : 'RAW vypnutý, fotí se z hledáčku'); }; }
   $('#tFlash').onclick = () => { S.flash = ((S.flash || 0) + 1) % 3; $('#tFlash').classList.toggle('on', S.flash > 0); $('#tFlash').classList.toggle('vint', S.flash === 2); buzz(4);
     const how = CAM.live ? (CAM.caps.torch ? ' (svítilna)' : CAM.facing === 'user' ? ' (displej)' : '') : '';
     toast(!S.flash ? 'Blesk vypnutý' : S.flash === 1 ? 'Blesk: bílý' + how : 'Blesk: vintage – teplé tvrdé světlo jako starý kompakt' + how); };

@@ -37,15 +37,10 @@ const fs = require('fs');
   console.log(JSON.stringify(r));
   await p.waitForTimeout(800); await p.screenshot({ path: 'nraw_after.png' });
   await p.evaluate(() => { openEditor(S.photos[0]); }); await p.waitForTimeout(2500); await p.screenshot({ path: 'nraw_editor.png' });
-  // RAW bez úprav (Bayer): druhé ťuknutí na RAW → režim 2, ikona RAW, most dostane bayer
-  await p.evaluate(() => go('camera')); await p.waitForTimeout(1200);
-  const st = await p.evaluate(() => { const r = [S.nraw, $('#tRaw svg') && $('#tRaw').innerHTML.length]; $('#tRaw').click(); r.push(S.nraw, $('#tRaw').classList.contains('on')); $('#tRaw').click(); r.push(S.nraw); $('#tRaw').click(); r.push(S.nraw); $('#tRaw').click(); return r; });
-  console.log('rezimy (pro, delka ikony, -> raw, on, -> vyp, -> pro):', st); await p.screenshot({ path: 'nraw_mode.png', clip: { x: 0, y: 0, width: 390, height: 140 } });
-  await p.evaluate(() => liveOn()); await p.waitForTimeout(1500);
-  await p.evaluate(() => __qShutter()); for (let i = 0; i < 60; i++) { await p.waitForTimeout(500); if (await p.evaluate(() => !S.busy)) break; }
-  console.log('bayer msgs', await p.evaluate(() => [S.nraw, __msgs]));
+  // jedno RAW: přepínač zap/vyp, most dostane bayer (QNATIVE.bayer)
+  console.log('prepinac', await p.evaluate(() => { const r = [S.nraw]; $('#tRaw').click(); r.push(S.nraw); $('#tRaw').click(); r.push(S.nraw); return r; }));
   // úklid testovacích fotek
-  await p.evaluate(async () => { for (const ph of S.photos.slice(0, 2)) await dbDel(ph.id); });
+  await p.evaluate(async () => { for (const ph of S.photos.slice(0, 1)) await dbDel(ph.id); });
   console.log('errors', errs);
   await b.close();
 })();

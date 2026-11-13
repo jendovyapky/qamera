@@ -86,8 +86,11 @@ final class RawCapture: NSObject {
     private func run(zoom: Double, ultra: Bool, flash: Bool, bayer: Bool, done: @escaping (Swift.Result<Result, Error>) -> Void) throws {
         var picked: (AVCaptureSession, AVCapturePhotoOutput, OSType, AVCaptureDevice, Double)?
         var lastErr: Error = QError(message: "kamera nenalezena")
-        for (d, z) in candidates(zoom: zoom, ultra: ultra, bayer: bayer) {
-            do { let (s, o, f) = try configure(d, bayer: bayer); picked = (s, o, f, d, z); break } catch { lastErr = error }
+        // RAW bez úprav (Bayer); když ho objektiv neumí, záloha ProRAW (s hloubkou), ať RAW vždycky vyfotí
+        modes: for mode in bayer ? [true, false] : [false] {
+            for (d, z) in candidates(zoom: zoom, ultra: ultra, bayer: mode) {
+                do { let (s, o, f) = try configure(d, bayer: mode); picked = (s, o, f, d, z); break modes } catch { lastErr = error }
+            }
         }
         guard let p = picked else { throw lastErr }
         let (s, out, fmt, device, lensZoom) = p
