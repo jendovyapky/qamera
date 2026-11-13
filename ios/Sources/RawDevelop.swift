@@ -5,7 +5,7 @@ import UniformTypeIdentifiers
 
 // Nativní vyvolání RAW (Core Image) – stejná matematika jako develop() v docs/preview/raw.js:
 // expozice podle telefonu doladěná k průměru 0,17 (bez přepálení velkých světlých ploch), měkké filmové rameno
-// světel, hodně přepálené světlo do bílé, mapa světel (jen světla nad 1,2) pro halation a bloom.
+// světel se zachovaným odstínem (film v2 ho vrátí), mapa světel (jen světla nad 1,2) pro halation a bloom.
 // Rychlejší než wasm ve WebView a zvládne i 48 Mpx ProRAW (zmenší se na 4096 px jako export).
 enum RawDevelop {
     struct Output {
@@ -81,8 +81,9 @@ enum RawDevelop {
                     var r = max(0, pr * g), gg = max(0, pg * g), b = max(0, pb * g)
                     let m = max(r, gg, b)
                     if m > 0.55 {
-                        let fm = 0.55 + 0.45 * (1 - exp(-(m - 0.55) / 0.45)), kk = fm / m, w = min(1, max(0, (m - 1) / 6))
-                        r = r * kk * (1 - w) + fm * w; gg = gg * kk * (1 - w) + fm * w; b = b * kk * (1 - w) + fm * w
+                        // zachová odstín (bez míchání do bílé) – film v2 ve webu rameno přesně vrátí a světla stočí sám
+                        let fm = 0.55 + 0.45 * (1 - exp(-(m - 0.55) / 0.45)), kk = fm / m
+                        r *= kk; gg *= kk; b *= kk
                     }
                     let o = (y * W + x) * 4
                     out[o] = lut[min(4096, Int(r * 4096))]

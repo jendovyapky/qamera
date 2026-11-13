@@ -18,8 +18,8 @@ targets:
       path: Info.plist
       properties:
         CFBundleDisplayName: Qamera DEV
-        CFBundleShortVersionString: "0.4.2"
-        CFBundleVersion: "7"
+        CFBundleShortVersionString: "0.4.3"
+        CFBundleVersion: "8"
         UILaunchScreen:
           UIColorName: LaunchBG
         UIStatusBarStyle: UIStatusBarStyleLightContent

@@ -22,3 +22,10 @@ Upravil: Qamera (jendovyapky), skript tools/bake_luts.py
   i černá filmu zůstávají.
 - Nové LUT: V3-200T (Vision3 200T → 2383), VR200 (Verita 200D → Endura Premier), P800P (Portra 800 push 2
   → Portra Endura), E100C (Ektar 100 → tisk 2383).
+
+2026-11-13 – log LUT (luts/log/, „film v2“ v Qameře)
+- Stejné profily filmů a tisků, ale vstup je lineární scénické světlo v logaritmickém kódování
+  t = (log2(x / 0,18) + 8) / 14 (−8 … +6 EV kolem střední šedé) místo sRGB → film dostane celý rozsah
+  světel z RAW a odezva odpovídá expozici negativu, ne už vyvolané fotce.
+- Bez automatické expozice, sken jako v labu (white/black correction ze spektrafilmu, pevné z profilu),
+  bez komprese gamutu na výstupu, bez zrna a halation (dělá je shader). Mřížka 33³, 8bit PNG.

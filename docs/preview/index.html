@@ -1477,7 +1477,7 @@ uniform vec3 uSh,uHi; uniform float uFCon,uFSat,uFFade, uChar, uFSoft, uIRHue; u
 uniform vec3 uHsl[8]; uniform vec3 uGSh,uGMid,uGHi;
 uniform vec3 uTrMs,uTrSs,uTrMr,uTrSr; uniform float uTr;
 uniform float uSeed, uGlow, uIR, uStyle, uCells, uLevels, uPalN, uZebra;
-uniform vec3 uLF; uniform float uPol, uLat, uHR, uFBlur, uGV;
+uniform vec3 uLF; uniform float uPol, uLat, uHR, uFBlur, uGV, uFV;
 uniform vec3 uPal[6];
 uniform highp sampler3D uLut3; uniform float uLut;
 uniform sampler2D uDepth; uniform float uDOn, uDMode, uDAmt, uFocus, uVFlash; uniform vec2 uPar; uniform int uSampN;
@@ -1498,9 +1498,20 @@ vec2 qToUv(vec2 q){ float cs = cos(uRot), sn = sin(uRot); vec2 ts0 = vec2(textur
 /* zjednodušený vzhled pro rozmazané vrstvy (glow): stejné základní úpravy a film jako fotka, ať záře má barvy upravené fotky */
 float shd1(float v){ return min(v, .62) + .36 * (1. - exp(-max(v - .62, 0.) / .36)); } // měkké rameno: světla se plynule stáčí k bílé, neořežou se
 vec3 shd(vec3 v){ return vec3(shd1(v.r), shd1(v.g), shd1(v.b)); }
+/* film v2 (P.fv 2): LUT ze spektrafilmu s log vstupem ze scénického světla (tools/bake_luts.py --log), −8…+6 EV kolem šedé 0,18.
+   Zdroj je sRGB (vyvolaný RAW nebo JPEG) se staženými světly → vrátit rameno zpět (inverze ramene z raw.js / RawDevelop),
+   ať negativ dostane světla nad bílou a stočí je sám. Kontrast z Úprav v log prostoru kolem šedé, sytost na lineárním světle. */
+const float FLO = -8.0, FHI = 6.0;
+vec3 unShoulder(vec3 x){ float m = max(x.r, max(x.g, x.b)); if (m <= .55) return x; float fm = min(m, .985);
+  float n = .55 - .45 * log(max(1. - (fm - .55) / .45, 1e-4)); return x * (n / m); }
+vec3 filmLog(vec3 lin){ vec3 x = unShoulder(max(lin * exp2(-uExp), 0.)) * exp2(uExp);
+  x = max(mix(vec3(luma(x)), x, 1. + uSat), 0.);
+  vec3 lg = log2(max(x, vec3(1e-6)) / .18) * (1. + uCon * .5);
+  vec3 t = clamp((lg - FLO) / (FHI - FLO), 0., 1.);
+  return texture(uLut3, t * (32./33.) + .5/33.).rgb; }
 vec3 lookOf(vec3 s){ vec3 l = pow(max(s, 0.), vec3(2.2)) * exp2(uExp) * vec3(1.+uTemp*.22, 1.+uTint*.1, 1.-uTemp*.22); vec3 c = pow(l/(1.+l*.06*uStr), vec3(1./2.2));
   c = (c-.5)*(1.+uCon*.55)+.5; c = mix(vec3(luma(c)), c, 1.+uSat); vec3 f = c;
-  if (uLut > .5) f = texture(uLut3, clamp(f,0.,1.)*(32./33.) + .5/33.).rgb; if (uBW.r + uBW.g + uBW.b > .01) f = vec3(dot(clamp(f,0.,1.), uBW)) * uBTone;
+  if (uLut > .5) f = uFV > 1.5 ? filmLog(l) : texture(uLut3, clamp(f,0.,1.)*(32./33.) + .5/33.).rgb; if (uBW.r + uBW.g + uBW.b > .01) f = vec3(dot(clamp(f,0.,1.), uBW)) * uBTone;
   return clamp(mix(c, f, uStr), 0., 1.); }
 void main(){
   float ar0 = uRes.x/uRes.y; vec2 cells = vec2(uCells*ar0, uCells);
@@ -1592,6 +1603,7 @@ void main(){
   if (uBW.r + uBW.g + uBW.b > .01) { // černobílý film: spektrální citlivost emulze (kanálový mix), charakteristická křivka, tón papíru
     float y = clamp(dot(clamp(f, 0., 1.), uBW), 0., 1.); y = (y - .5) * uFCon + .5; y = mix(y, y * y * (3. - 2. * y), clamp(uFCon - .9, 0., .6));
     y = uBToe + clamp(y, 0., 1.) * (1. - uBToe - uFFade * .4); f = vec3(y) * uBTone; fl = y;
+  } else if (uLut > .5 && uFV > 1.5) { f = filmLog(lin); // film v2: negativ → tisk → sken ze spektrafilmu, bez vlastního „charakteru“ navrch
   } else if (uLut > .5) { f = texture(uLut3, clamp(f,0.,1.)*(32./33.) + .5/33.).rgb; // film ze spektrafilmu (3D LUT 33³)
     /* charakter filmu navrch (sytost, kontrast, tón stínů a světel) – samotné LUT jsou si podobné */
     float fq = clamp(luma(f), 0., 1.); f = mix(vec3(fq), f, 1. + (uFSat - 1.) * uChar); f = (f - .5) * (1. + (uFCon - 1.) * uChar) + .5;
@@ -1644,7 +1656,7 @@ void main(){
     if (Lz > .9) c = mix(c, vec3(1.,.77,.24), .85*st); if (Lz < .07) c = mix(c, vec3(.2,.45,1.), .7*st); }
   o = vec4(clamp(c,0.,1.), 1.);
 }`;
-const DEF = () => ({ gv: 2, film: 'P400', str: 1, exp: 0, temp: 0, tint: 0, con: 0, sat: 0, grain: .5, gsize: 1, gtype: null, hal: 1, bloom: .15, glow: null, vig: .25, fade: 0, sharp: 0, style: null, frame: null, dx: null,
+const DEF = () => ({ gv: 2, fv: 2, film: 'P400', str: 1, exp: 0, temp: 0, tint: 0, con: 0, sat: 0, grain: .5, gsize: 1, gtype: null, hal: 1, bloom: .15, glow: null, vig: .25, fade: 0, sharp: 0, style: null, frame: null, dx: null,
   curve: { rgb: [[0, 0], [1, 1]], r: [[0, 0], [1, 1]], g: [[0, 0], [1, 1]], b: [[0, 0], [1, 1]] }, hsl: Array.from({ length: 8 }, () => [0, 0, 0]),
   grade: { sh: [0, 0], mid: [0, 0], hi: [0, 0] }, tr: 0, crop: { ar: 0, s: 1, x: 0, y: 0, rot: 0 } });
 
@@ -1705,12 +1717,12 @@ class Engine {
       const at = (arr, v) => arr[clamp(Math.round(v * 255), 0, 255)];
       for (let i = 0; i < 256; i++) { const v = m[i]; d[i * 4] = at(cr, v) * 255; d[i * 4 + 1] = at(cg, v) * 255; d[i * 4 + 2] = at(cb, v) * 255; d[i * 4 + 3] = 255; }
       gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, this.ctex); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 256, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, d); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); }
-    const lk = f.base || P.film, L = !o.noLut && LUTD[lk]; // LUT filmu (varianta bere LUT základního filmu) (3D textura, každý WebGL kontext má svoji)
+    const fv = (P.fv || 1) > 1 && LUTL[f.base || P.film] ? 2 : 1, lk = (fv > 1 ? 'log:' : '') + (f.base || P.film), L = !o.noLut && (fv > 1 ? LUTL : LUTD)[f.base || P.film]; // LUT filmu (varianta bere LUT základního filmu; film v2 = log LUT) (3D textura, každý WebGL kontext má svoji)
     if (L) { let t = this.luts[lk]; gl.activeTexture(gl.TEXTURE3);
       if (!t) { t = this.luts[lk] = gl.createTexture(); gl.bindTexture(gl.TEXTURE_3D, t); [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER].forEach(k => gl.texParameteri(gl.TEXTURE_3D, k, gl.LINEAR)); [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T, gl.TEXTURE_WRAP_R].forEach(k => gl.texParameteri(gl.TEXTURE_3D, k, gl.CLAMP_TO_EDGE));
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.texImage3D(gl.TEXTURE_3D, 0, gl.RGBA8, LUTN, LUTN, LUTN, 0, gl.RGBA, gl.UNSIGNED_BYTE, L); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); }
       else gl.bindTexture(gl.TEXTURE_3D, t); }
-    gl.uniform1f(u.uLut, L ? 1 : 0);
+    gl.uniform1f(u.uLut, L ? 1 : 0); gl.uniform1f(u.uFV, fv);
     const D = P.depth && o.depth ? o.depth : null; // hloubková mapa fotky
     if (D) { gl.activeTexture(gl.TEXTURE2); if (!this.dtex) { this.dtex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, this.dtex); [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER].forEach(k => gl.texParameteri(gl.TEXTURE_2D, k, gl.LINEAR)); [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(k => gl.texParameteri(gl.TEXTURE_2D, k, gl.CLAMP_TO_EDGE)); }
       gl.bindTexture(gl.TEXTURE_2D, this.dtex); if (this.dSrc !== D) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, D); gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); this.dSrc = D; } }
@@ -1750,15 +1762,16 @@ class Engine {
 }
 const util = { e: null };
 /* filmové LUT upečené ze spektrafilmu (tools/bake_luts.py → luts/KOD.png, řezy podle modré vedle sebe) – CC BY-SA 4.0, Andrea Volpato */
-const LUTN = 33, LUTD = {};
+const LUTN = 33, LUTD = {}, LUTL = {}; // LUTD = sRGB vstup (film v1), LUTL = log vstup (film v2, luts/log)
 async function loadLuts() {
   if (location.protocol === 'file:') return; // z disku se PNG nedá přečíst – zůstane jednoduchý shader
   await Promise.all(FILMS.filter(f => !f.ir && !f.scan && !f.bw && !f.own).map(async f => { try {
-    const res = await fetch(`../../luts/${encodeURIComponent(f.code)}.png`); if (!res.ok) return;
-    const bm = await createImageBitmap(await res.blob(), { colorSpaceConversion: 'none', premultiplyAlpha: 'none' }), n = LUTN, c = mk(bm.width, bm.height), g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(bm, 0, 0);
-    const d = g.getImageData(0, 0, bm.width, bm.height).data, out = new Uint8Array(n * n * n * 4);
-    for (let b = 0; b < n; b++) for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const si = (y * n * n + b * n + x) * 4, di = ((b * n + y) * n + x) * 4; out[di] = d[si]; out[di + 1] = d[si + 1]; out[di + 2] = d[si + 2]; out[di + 3] = 255; }
-    LUTD[f.code] = out; } catch {} }));
+    for (const [dir, dst] of [['', LUTD], ['log/', LUTL]]) {
+      const res = await fetch(`../../luts/${dir}${encodeURIComponent(f.code)}.png`); if (!res.ok) continue;
+      const bm = await createImageBitmap(await res.blob(), { colorSpaceConversion: 'none', premultiplyAlpha: 'none' }), n = LUTN, c = mk(bm.width, bm.height), g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(bm, 0, 0);
+      const d = g.getImageData(0, 0, bm.width, bm.height).data, out = new Uint8Array(n * n * n * 4);
+      for (let b = 0; b < n; b++) for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const si = (y * n * n + b * n + x) * 4, di = ((b * n + y) * n + x) * 4; out[di] = d[si]; out[di + 1] = d[si + 1]; out[di + 2] = d[si + 2]; out[di + 3] = 255; }
+      dst[f.code] = out; } } catch {} }));
   if (!Object.keys(LUTD).length) return;
   S.photos.forEach(rethumb); if (S.screen === 'gallery') renderGallery(); if (S.cur) renderEd(true); if (S.screen === 'editor' && S.tab === 'film' && !S.adv) drawFilmThumbs(); if (typeof buildCarousel === 'function') buildCarousel();
 }
@@ -3741,7 +3754,7 @@ function useDxOther(ph) { const cur = S.cur; S.dxReturn = null; $('#camBanner').
    Recepty: uložený vzhled (film + grain + úpravy), sdílení odkazem a QR
    ===================================================================== */
 /* úpravy uložené před 0.18 nemají gv → záře se jim počítá postaru (vypadají pořád stejně) */
-const oldGv = P => { if (P && P.gv == null) P.gv = 1; return P; };
+const oldGv = P => { if (P && P.gv == null) P.gv = 1; if (P && P.fv == null) P.fv = 1; return P; }; // uložené úpravy si nechají starou záři / starý film
 let RECIPES = store.get('recipes', []); RECIPES.forEach(r => oldGv(r.P));
 /* kopírovat / vložit úpravy mezi fotkami: všechno kromě ořezu a druhé fotky z Double */
 let CLIP = oldGv(store.get('clip', null));

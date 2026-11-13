@@ -8,7 +8,13 @@ Výstup do luts/:
   <KOD>.cube  – (s --cube) stejná LUT pro DaVinci / Premiere / Photoshop (s atribucí CC BY-SA 4.0 v hlavičce)
   films.json  – metadata (kód, profil filmu a tisku)
 
-Vstup LUT = sRGB, výstup = sRGB. Prostorové a náhodné efekty (grain, halation, difúze, ostření)
+--log (film v2, doporučené): vstup = scénické lineární světlo (sRGB primárky) v log tvaru
+  t = (log2(x / 0.18) + 8) / 14, tj. −8 … +6 EV kolem střední šedé; výstup = sRGB po tisku a skenu.
+  Celý rozsah negativu (měkká světla, posun barev při pod/přeexpozici) je v LUT, výchozí výstupní
+  komprese gamutu spektrafilmu zůstává (vzhled podle autora), černý a bílý bod jako sken v labu. Ukládá do luts/log/.
+  Přesnost proti přímému spektrafilmu na fotkách ΔE2000 ~0,2 (33³).
+
+Vstup LUT (bez --log) = sRGB, výstup = sRGB. Prostorové a náhodné efekty (grain, halation, difúze, ostření)
 jsou vypnuté – ty dělá shader Qamery živě. Automatická expozice je vypnutá, aby LUT nezávisela na obsahu.
 Upečené LUT jsou odvozené dílo profilů spektrafilmu → licence CC BY-SA 4.0 (viz luts/SPEKTRAFILM_LICENSE.txt).
 """
@@ -43,6 +49,27 @@ HEADER = ['Qamera film LUT {code} ({film})',
           'https://github.com/andreavolpato/spektrafilm',
           'Licensed CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/',
           'Modified by Qamera (jendovyapky): baked to 3D LUT sRGB->sRGB, spatial effects off (grain, halation, diffusion).']
+
+
+LOG_LO, LOG_HI = -8.0, 6.0  # rozsah log vstupu v EV kolem šedé 0,18 – stejné konstanty jsou v shaderu (FLO, FHI)
+
+
+def log_identity(n):
+    t = identity(n)
+    return .18 * 2 ** (t * (LOG_HI - LOG_LO) + LOG_LO)
+
+
+def bake_log(film, prt, n, simulate, init_params):
+    p = init_params(film, prt or 'kodak_portra_endura')
+    p.io.input_color_space = 'sRGB'; p.io.input_cctf_decoding = False
+    p.io.output_color_space = 'sRGB'; p.io.output_cctf_encoding = True
+    p.io.scan_film = prt is None
+    p.camera.auto_exposure = False
+    p.scanner.white_correction = True; p.scanner.black_correction = True  # sken jako v labu: bílá papíru → 0,98, černá → 0,01 (pevné z profilu, ne z fotky)
+    p.debug.deactivate_spatial_effects = True; p.debug.deactivate_stochastic_effects = True
+    p.film_render.grain.active = False; p.film_render.halation.active = False
+    p.io.output_gamut_compress = dataclasses.replace(p.io.output_gamut_compress, algorithm='off')  # komprese stahovala bílou na 225 a ubírala sytost
+    return np.clip(np.asarray(simulate(log_identity(n), p), dtype=np.float64).reshape(n, n, n, 3), 0, 1)
 
 
 def identity(n):
@@ -97,8 +124,10 @@ def main():
     ap.add_argument('--soften', type=float, default=SOFTEN, help='zjemnění tónové křivky 0–1 (viz soften_tone)')
     ap.add_argument('--only', default='')
     ap.add_argument('--cube', action='store_true', help='uložit i .cube (appka si .cube umí vyrobit sama při exportu)')
-    ap.add_argument('--out', default=os.path.join(os.path.dirname(__file__), '..', 'luts'))
+    ap.add_argument('--log', action='store_true', help='film v2: log vstup ze scénického světla → luts/log/')
+    ap.add_argument('--out', default=None)
     a = ap.parse_args()
+    a.out = a.out or os.path.join(os.path.dirname(__file__), '..', 'luts', *(['log'] if a.log else []))
     if a.spektrafilm: sys.path.insert(0, a.spektrafilm)
     SOFTEN_SET(a.soften)
     from spektrafilm import init_params, simulate
@@ -107,7 +136,8 @@ def main():
     meta = []
     for code, (film, prt) in FILMS.items():
         if a.only and code not in a.only.split(','): continue
-        t = time.time(); lut = bake(code, film, prt, a.size, simulate, init_params); n = a.size
+        t = time.time(); n = a.size
+        lut = bake_log(film, prt, n, simulate, init_params) if a.log else bake(code, film, prt, n, simulate, init_params)
         img = np.zeros((n, n * n, 3), np.uint8)  # y = g, x = r + b*n
         for b in range(n): img[:, b * n:(b + 1) * n] = np.round(lut[b] * 255)
         Image.fromarray(img).save(os.path.join(a.out, f'{code}.png'), optimize=True)
@@ -116,7 +146,7 @@ def main():
             f.write(''.join(f'# {h.format(code=code, film=film)}\n' for h in HEADER))
             f.write(f'TITLE "Qamera {code}"\nLUT_3D_SIZE {n}\nDOMAIN_MIN 0 0 0\nDOMAIN_MAX 1 1 1\n')
             for v in lut.reshape(-1, 3): f.write(f'{v[0]:.6f} {v[1]:.6f} {v[2]:.6f}\n')
-        meta.append({'code': code, 'film': film, 'print': prt, 'size': n, 'soften': SOFTEN})
+        meta.append({'code': code, 'film': film, 'print': prt, 'size': n, **({'input': 'log2(x/0.18) -8..+6 EV'} if a.log else {'soften': SOFTEN})})
         print(f'{code:8s} {film:24s} {time.time() - t:5.1f} s', flush=True)
     path = os.path.join(a.out, 'films.json')
     old = json.load(open(path, encoding='utf-8')) if os.path.exists(path) else []

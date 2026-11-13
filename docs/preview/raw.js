@@ -68,7 +68,7 @@ async function develop(W, H, get, onStep, baseline = 0) {
   const hk = Math.min(1, HLS / Math.max(W, H)), hw = Math.max(1, Math.round(W * hk)), hh = Math.max(1, Math.round(H * hk)), hv = new Float32Array(hw * hh), hn = new Float32Array(hw * hh);
   for (let y = 0; y < H; y++) { const hy = Math.min(hh - 1, (y * hk) | 0);
     for (let x = 0; x < W; x++) { get(x, y, px); const clip = Math.max(px[0], px[1], px[2]) > .985; let r = Math.max(0, px[0] * g), gg = Math.max(0, px[1] * g), b = Math.max(0, px[2] * g); const m = Math.max(r, gg, b);
-      if (m > .55) { const f = .55 + .45 * (1 - Math.exp(-(m - .55) / .45)), k = f / m, w = Math.min(1, Math.max(0, (m - 1) / 6)); // měkké rameno; hodně přepálené světlo jde do bílé jako na filmu
+      if (m > .55) { const f = .55 + .45 * (1 - Math.exp(-(m - .55) / .45)), k = f / m, w = clip ? Math.min(1, Math.max(0, (m - 1) / 6)) : 0; // měkké rameno zachová odstín (film v2 ho v shaderu přesně vrátí, unShoulder); do bílé jen ořezaný senzor, jinak by světla zrůžověla
         r = r * k * (1 - w) + f * w; gg = gg * k * (1 - w) + f * w; b = b * k * (1 - w) + f * w; }
       const i = (y * W + x) * 4; d[i] = SRGB[Math.min(4096, (r * 4096) | 0)]; d[i + 1] = SRGB[Math.min(4096, (gg * 4096) | 0)]; d[i + 2] = SRGB[Math.min(4096, (b * 4096) | 0)]; d[i + 3] = 255;
       const hi = hy * hw + Math.min(hw - 1, (x * hk) | 0); hv[hi] += Math.max(m > 1 ? Math.min(1, Math.log2(m) / 3) : 0, clip ? .5 : 0); hn[hi]++; } // ořezaný senzor = aspoň 1,5 EV nad bílou
