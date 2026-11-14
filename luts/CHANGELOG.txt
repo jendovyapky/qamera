@@ -29,3 +29,10 @@ Upravil: Qamera (jendovyapky), skript tools/bake_luts.py
   světel z RAW a odezva odpovídá expozici negativu, ne už vyvolané fotce.
 - Bez automatické expozice, sken jako v labu (white/black correction ze spektrafilmu, pevné z profilu),
   bez komprese gamutu na výstupu, bez zrna a halation (dělá je shader). Mřížka 33³, 8bit PNG.
+
+2026-11-14 – sken negativu jako v labu (luts/scan/frontier/, luts/scan/noritsu/)
+- Jen negativy. Vstup stejný jako log LUT; místo optického tisku na papír je výstup sken negativu:
+  spektrafilm (scan_film) dá surový negativ, převod na pozitiv je vlastní (Qamera) – hustota po kanálech,
+  srovnání oranžové masky a gam vrstev podle šedé škály (šedá neutrální), barevná matice skeneru napasovaná na
+  barevnou tabulku (ColorChecker při −1/0/+1 EV), S křivka a barevnost skeneru. Vzhled Frontier / Noritsu je
+  odhad podle typických skenů, ne měřený profil skeneru.

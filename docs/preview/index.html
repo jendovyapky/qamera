@@ -1727,7 +1727,9 @@ class Engine {
       const at = (arr, v) => arr[clamp(Math.round(v * 255), 0, 255)];
       for (let i = 0; i < 256; i++) { const v = m[i]; d[i * 4] = at(cr, v) * 255; d[i * 4 + 1] = at(cg, v) * 255; d[i * 4 + 2] = at(cb, v) * 255; d[i * 4 + 3] = 255; }
       gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, this.ctex); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 256, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, d); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); }
-    const fv = (P.fv || 1) > 1 && LUTL[f.base || P.film] ? 2 : 1, lk = (fv > 1 ? 'log:' : '') + (f.base || P.film), L = !o.noLut && (fv > 1 ? LUTL : LUTD)[f.base || P.film]; // LUT filmu (varianta bere LUT základního filmu; film v2 = log LUT) (3D textura, každý WebGL kontext má svoji)
+    const fb = f.base || P.film, fv = (P.fv || 1) > 1 && LUTL[fb] ? 2 : 1, sc = fv > 1 && P.scan && LUTSC[P.scan] ? P.scan : null, scL = sc && LUTSC[sc][fb];
+    if (sc && !scL && SCAN_OK.has(fb)) ensureScan(sc); // sken labu: LUT se teprve načítá → zatím tisk
+    const lk = scL ? 'sc:' + sc + ':' + fb : (fv > 1 ? 'log:' : '') + fb, L = !o.noLut && (scL || (fv > 1 ? LUTL : LUTD)[fb]); // LUT filmu (varianta bere LUT základního filmu; film v2 = log LUT) (3D textura, každý WebGL kontext má svoji)
     if (L) { let t = this.luts[lk]; gl.activeTexture(gl.TEXTURE3);
       if (!t) { t = this.luts[lk] = gl.createTexture(); gl.bindTexture(gl.TEXTURE_3D, t); [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER].forEach(k => gl.texParameteri(gl.TEXTURE_3D, k, gl.LINEAR)); [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T, gl.TEXTURE_WRAP_R].forEach(k => gl.texParameteri(gl.TEXTURE_3D, k, gl.CLAMP_TO_EDGE));
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.texImage3D(gl.TEXTURE_3D, 0, gl.RGBA8, LUTN, LUTN, LUTN, 0, gl.RGBA, gl.UNSIGNED_BYTE, L); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); }
@@ -1773,15 +1775,22 @@ class Engine {
 const util = { e: null };
 /* filmové LUT upečené ze spektrafilmu (tools/bake_luts.py → luts/KOD.png, řezy podle modré vedle sebe) – CC BY-SA 4.0, Andrea Volpato */
 const LUTN = 33, LUTD = {}, LUTL = {}; // LUTD = sRGB vstup (film v1), LUTL = log vstup (film v2, luts/log)
+/* Sken negativu v labu místo optického tisku (jen film v2 a negativy): LUT z luts/scan/<skener>/, načtou se až při prvním použití */
+const SCANS = { frontier: 'Frontier', noritsu: 'Noritsu' }, LUTSC = { frontier: {}, noritsu: {} }, SCANLD = {};
+const SCAN_OK = new Set(['P160', 'P400', 'P800', 'E100', 'G200', 'UM400', 'V3-50D', 'V3-250D', 'V3-500T', 'V3-200T', 'VR200', 'P800P', 'E100C', 'C200', '400H', 'SX400']);
+const scanOk = code => { const f = FILM[code]; return !!f && SCAN_OK.has(f.base || code); };
+async function lutPng(url) { const res = await fetch(url); if (!res.ok) return null;
+  const bm = await createImageBitmap(await res.blob(), { colorSpaceConversion: 'none', premultiplyAlpha: 'none' }), n = LUTN, c = mk(bm.width, bm.height), g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(bm, 0, 0);
+  const d = g.getImageData(0, 0, bm.width, bm.height).data, out = new Uint8Array(n * n * n * 4); freeCanvas && freeCanvas(c);
+  for (let b = 0; b < n; b++) for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const si = (y * n * n + b * n + x) * 4, di = ((b * n + y) * n + x) * 4; out[di] = d[si]; out[di + 1] = d[si + 1]; out[di + 2] = d[si + 2]; out[di + 3] = 255; }
+  return out; }
+function ensureScan(sc) { if (SCANLD[sc] || !LUTSC[sc] || location.protocol === 'file:') return SCANLD[sc];
+  return SCANLD[sc] = Promise.all([...SCAN_OK].map(async c => { try { const d = await lutPng(`../../luts/scan/${sc}/${encodeURIComponent(c)}.png`); if (d) LUTSC[sc][c] = d; } catch {} }))
+    .then(() => { S.photos.filter(ph => ph.P && ph.P.scan === sc).forEach(rethumb); if (S.cur) renderEd(true); if (S.screen === 'gallery') renderGallery(); }); }
 async function loadLuts() {
   if (location.protocol === 'file:') return; // z disku se PNG nedá přečíst – zůstane jednoduchý shader
   await Promise.all(FILMS.filter(f => !f.ir && !f.scan && !f.bw && !f.own).map(async f => { try {
-    for (const [dir, dst] of [['', LUTD], ['log/', LUTL]]) {
-      const res = await fetch(`../../luts/${dir}${encodeURIComponent(f.code)}.png`); if (!res.ok) continue;
-      const bm = await createImageBitmap(await res.blob(), { colorSpaceConversion: 'none', premultiplyAlpha: 'none' }), n = LUTN, c = mk(bm.width, bm.height), g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(bm, 0, 0);
-      const d = g.getImageData(0, 0, bm.width, bm.height).data, out = new Uint8Array(n * n * n * 4);
-      for (let b = 0; b < n; b++) for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const si = (y * n * n + b * n + x) * 4, di = ((b * n + y) * n + x) * 4; out[di] = d[si]; out[di + 1] = d[si + 1]; out[di + 2] = d[si + 2]; out[di + 3] = 255; }
-      dst[f.code] = out; } } catch {} }));
+    for (const [dir, dst] of [['', LUTD], ['log/', LUTL]]) { const out = await lutPng(`../../luts/${dir}${encodeURIComponent(f.code)}.png`); if (out) dst[f.code] = out; } } catch {} }));
   if (!Object.keys(LUTD).length) return;
   S.photos.forEach(rethumb); if (S.screen === 'gallery') renderGallery(); if (S.cur) renderEd(true); if (S.screen === 'editor' && S.tab === 'film' && !S.adv) drawFilmThumbs(); if (typeof buildCarousel === 'function') buildCarousel();
 }
@@ -2162,6 +2171,9 @@ function camParams() {
 /* filtry na objektiv (propustnost R,G,B; POL = polarizační), formát negativu (k = úhlopříčka vůči 35 mm → zrno, halation), expozice negativu */
 const LFS = { Y: [1, .93, .38], O: [1, .62, .14], R: [1, .16, .03], G: [.42, 1, .38], '81A': [1, .95, .86], '82A': [.9, .96, 1], '85': [1, .83, .55], '80': [.62, .8, 1], POL: null };
 const FFMT = { half: { l: 'HALF', k: .71 }, '35': { l: '35', k: 1 }, '645': { l: '645', k: 1.63 }, '66': { l: '6×6', k: 1.84 }, '67': { l: '6×7', k: 2.08 }, '45': { l: '4×5', k: 3.8 } };
+const LFD = { '': 'Bez filtru', Y: 'Žlutý: tmavší nebe, výraznější mraky', O: 'Oranžový: silnější nebe, hladší pleť', R: 'Červený: skoro černé nebe, bílé mraky', G: 'Zelený: světlé listí, tmavší pleť',
+  '81A': '81A: jemně oteplí', '82A': '82A: jemně ochladí', '85': '85: výrazně oteplí do oranžova', '80': '80: výrazně ochladí do modra', POL: 'Polarizační: hlubší nebe, méně odlesků' };
+const SCD = { '': 'Tisk: zvětšení na fotopapír', frontier: 'Frontier: teplá pleť, azurové nebe, kontrast', noritsu: 'Noritsu: měkčí, neutrální, kresba ve světlech' };
 const lfList = f => f.bw ? ['Y', 'O', 'R', 'G', 'POL'] : ['81A', '82A', '85', '80', 'POL'];
 /* tovární hodnoty filmu a „tvoje výchozí“ (MYDEF – co si uživatel u filmu nastavuje pořád stejně, Qamera to nabídne) */
 let MYDEF = store.get('myDef', {});
@@ -2172,6 +2184,7 @@ const FROWS = [['str', 'Síla', 0, 100, 100], ['chr', 'Charakter', 0, 150, 100],
 const fOut = (k, v) => k === 'nexp' ? (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v / 10).toFixed(1) : v;
 /* řádky nastavení filmu: hodnota = P[k] (chybí → tovární), výchozí (dvojťuk, Výchozí) = tvoje výchozí */
 function filmCtlHtml(P, code, at, fmt, only) { const f = FILM[code] || FILM.P400, F = factBase(code), B = filmBase(code), segs = [];
+  if (scanOk(code) && (P.fv || 2) > 1) segs.push(`<div class="srow fk segrow"><span>Sken</span><div class="seg" data-${at}seg="scan"><button data-v="">TISK</button>${Object.entries(SCANS).map(([k, l]) => `<button data-v="${k}">${l.toUpperCase()}</button>`).join('')}</div></div>`);
   if (!f.ir) segs.push(`<div class="srow fk segrow"><span>Filtr</span><div class="seg" data-${at}seg="lf"><button data-v="">BEZ</button>${lfList(f).map(x => `<button data-v="${x}">${x}</button>`).join('')}</div></div>`);
   if (fmt) segs.push(`<div class="srow fk segrow"><span>Záře</span><div class="seg" data-${at}seg="gv"><button data-v="1">STARÁ</button><button data-v="2">NOVÁ</button></div></div>`);
   if (fmt) segs.push(`<div class="srow fk segrow"><span>Formát</span><div class="seg" data-${at}seg="ffmt">${['half', '35', '645', '66', '67', '45'].map(x => `<button data-v="${x}">${FFMT[x].l}</button>`).join('')}</div></div>`);
@@ -2179,7 +2192,8 @@ function filmCtlHtml(P, code, at, fmt, only) { const f = FILM[code] || FILM.P400
     return `<label class="srow fk"><span>${l}</span><input type="range" data-${at}="${k}" min="${a}" max="${b}" value="${v}" data-def="${d}" data-sc="${sc}"><output>${fOut(k, v)}</output></label>`; }).join(''); }
 function bindFilmCtl(root, at, get, set, input, done) {
   $$(`[data-${at}seg]`, root).forEach(sg => { const k = sg.dataset[at + 'seg'], cur = () => String(get(k) || (k === 'ffmt' ? '35' : k === 'gv' ? 2 : '')), mark = () => $$('button', sg).forEach(b => b.classList.toggle('on', b.dataset.v === cur()));
-    mark(); $$('button', sg).forEach(b => b.onclick = () => { set(k, k === 'gv' ? +b.dataset.v : b.dataset.v && !(k === 'ffmt' && b.dataset.v === '35') ? b.dataset.v : null); mark(); input(); done(); buzz(4); }); });
+    mark(); $$('button', sg).forEach(b => b.onclick = () => { set(k, k === 'gv' ? +b.dataset.v : b.dataset.v && !(k === 'ffmt' && b.dataset.v === '35') ? b.dataset.v : null); mark(); input(); done(); buzz(4);
+      if (k === 'lf' || k === 'scan') toast((k === 'lf' ? LFD : SCD)[b.dataset.v] || b.textContent); if (k === 'scan' && b.dataset.v) ensureScan(b.dataset.v); }); });
   $$(`input[data-${at}]`, root).forEach(i => { const k = i.dataset[at], sc = +i.dataset.sc; paintRange(i);
     i.oninput = () => { set(k, +i.value / sc); i.nextElementSibling.textContent = fOut(k, +i.value); paintRange(i); input(); }; i.onchange = done;
     i.ondblclick = () => { i.value = i.dataset.def; i.oninput(); done(); }; }); }
@@ -3236,7 +3250,7 @@ function redo() { if (!S.fut.length) return; S.hist.push(JSON.stringify(S.P)); S
 function syncCur() { S.cur.P = JSON.parse(JSON.stringify(S.P)); S.cur._last = JSON.parse(JSON.stringify(S.P)); rethumb(S.cur); setTab(S.tab, true); layoutEditor(); renderEd(true); if (S.view === 'pc') buildPcRight(); }
 function resetSection() { const P = S.P, D = DEF(); let what;
   if (S.adv) { P.curve = D.curve; P.hsl = D.hsl; P.grade = D.grade; what = 'Advanced'; }
-  else if (S.tab === 'film') { P.film = 'NONE'; P.str = 1; ['chr', 'fsoft', 'nexp', 'lf', 'ffmt'].forEach(k => delete P[k]); S.filmOpen = false; what = 'Film'; }
+  else if (S.tab === 'film') { P.film = 'NONE'; P.str = 1; ['chr', 'fsoft', 'nexp', 'lf', 'ffmt', 'scan'].forEach(k => delete P[k]); S.filmOpen = false; what = 'Film'; }
   else if (S.tab === 'adj') { ADJ.forEach(a => { if (a.film) delete P[a.k]; else P[a.k] = D[a.k]; }); P.gtype = null; what = 'Úpravy'; }
   else if (S.tab === 'crop') { P.crop = D.crop; what = 'Ořez'; }
   else { P.dx = null; P.style = null; P.frame = null; P.depth = null; P.lidar = null; S.fxOpen = null; what = 'Efekty'; }
