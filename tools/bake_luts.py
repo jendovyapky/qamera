@@ -45,13 +45,14 @@ FILMS = {
     'VR200':   ('kodak_verita_200d', 'kodak_endura_premier'),
     'P800P':   ('kodak_portra_800_push2', 'kodak_portra_endura'),
     'E100C':   ('kodak_ektar_100', 'kodak_2383'),
-    'P400C':   ('kodak_portra_400', 'kino'),  # film V2: sken negativu s kinovou gradací (jen --log)
+    'P400C':   ('kodak_portra_400', 'kodak_2383'),  # film V2: Portra na kinový tisk (jen --log; skener 'kino' Honza zamítl – moc přebarvené)
     'C200':    ('fujifilm_c200', 'fujifilm_crystal_archive_typeii'),
     '400H':    ('fujifilm_pro_400h', 'fujifilm_crystal_archive_typeii'),
     'SX400':   ('fujifilm_xtra_400', 'fujifilm_crystal_archive_typeii'),
     'PV100':   ('fujifilm_provia_100f', None),
     'VEL':     ('fujifilm_velvia_100', None),
 }
+V2_LOG_ONLY = {'P400C'}
 HEADER = ['Qamera film LUT {code} ({film})',
           'Derived from spektrafilm by Andrea Volpato',
           'https://github.com/andreavolpato/spektrafilm',
@@ -206,8 +207,8 @@ def main():
     meta = []
     for code, (film, prt) in FILMS.items():
         if a.only and code not in a.only.split(','): continue
-        if a.scanner and prt in (None, 'kino'): continue  # diapozitiv se skenuje rovnou jako pozitiv
-        if prt == 'kino' and not a.log: continue  # film V2 má jen log LUT
+        if a.scanner and prt is None: continue  # diapozitiv se skenuje rovnou jako pozitiv
+        if code in V2_LOG_ONLY and (a.scanner or not a.log): continue  # film V2 má jen log LUT
         t = time.time(); n = a.size
         lut = bake_scan(film, n, a.scanner or prt, simulate, init_params) if a.scanner or prt == 'kino' else bake_log(film, prt, n, simulate, init_params) if a.log else bake(code, film, prt, n, simulate, init_params)
         img = np.zeros((n, n * n, 3), np.uint8)  # y = g, x = r + b*n

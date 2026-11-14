@@ -107,7 +107,7 @@
  {
   "code": "P400C",
   "film": "kodak_portra_400",
-  "print": "kino",
+  "print": "kodak_2383",
   "size": 33,
   "input": "log2(x/0.18) -8..+6 EV"
  },
