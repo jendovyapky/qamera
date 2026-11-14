@@ -44,6 +44,9 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
         let ucc = WKUserContentController()
         ucc.add(self, name: "qamera")
         ucc.addUserScript(WKUserScript(source: "window.__qLens = " + RawCapture.lensJSON() + ";", injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        if CameraEngine.crashedBefore() {
+            ucc.addUserScript(WKUserScript(source: "window.__qNcamOff = true;", injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        }
         ucc.addUserScript(WKUserScript(source: Self.bridgeJS, injectionTime: .atDocumentStart, forMainFrameOnly: true))
         cfg.userContentController = ucc
 
@@ -360,7 +363,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     static let bridgeJS = """
     (() => {
       const post = (m) => window.webkit.messageHandlers.qamera.postMessage(m);
-      window.QNATIVE = Object.assign({ raw: 2, bayer: true, clip: 1, ncam: 1 }, window.__qLens || {});
+      window.QNATIVE = Object.assign({ raw: 2, bayer: true, clip: 1, ncam: window.__qNcamOff ? 0 : 1 }, window.__qLens || {});
       navigator.vibrate = (ms) => { post({ kind: 'vibrate', ms: Array.isArray(ms) ? (ms[0] || 6) : (+ms || 6) }); return true; };
       const pend = new Map(); let seq = 0;
       window.__qShareDone = (id, ok, abort) => {

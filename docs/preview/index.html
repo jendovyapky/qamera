@@ -1456,6 +1456,7 @@ function liveStop() { if (CAM.nat) natStop(); if (CAM.stream) CAM.stream.getTrac
    (videoWidth/readyState jako <video>), CAM.track = náhrada MediaStreamTrack (zoom, svítilna) → zbytek foťáku beze změny. */
 const NATCAM = !!(window.QNATIVE && QNATIVE.ncam && window.webkit && window.webkit.messageHandlers);
 const NCAM = { seq: 0, wait: null, ctrl: null, info: null, last: 0 };
+if (window.__qNcamOff) setTimeout(() => toast('Kamera appky minule spadla – foťák jede postaru'), 4500);
 window.__qCam = (id, ok, a) => { const w = NCAM.wait; if (!w || w.id !== id) return; NCAM.wait = null; ok ? w.res(a) : w.rej(new Error(a || 'chyba')); };
 window.__qCamResume = () => { if (S.screen === 'camera' && CAM.live) liveOn(); };
 const natPost = m => { try { window.webkit.messageHandlers.qamera.postMessage(m); } catch {} };

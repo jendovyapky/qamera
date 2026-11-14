@@ -18,8 +18,8 @@ targets:
       path: Info.plist
       properties:
         CFBundleDisplayName: Qamera DEV
-        CFBundleShortVersionString: "0.8"
-        CFBundleVersion: "19"
+        CFBundleShortVersionString: "0.8.1"
+        CFBundleVersion: "20"
         UILaunchScreen:
           UIColorName: LaunchBG
         UIStatusBarStyle: UIStatusBarStyleLightContent
@@ -32,6 +32,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: eu.jendovyapky.qamera.dev
         TARGETED_DEVICE_FAMILY: "1"
         SWIFT_VERSION: "5.0"
+        SWIFT_OBJC_BRIDGING_HEADER: Sources/Qamera-Bridging-Header.h
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGNING_ALLOWED: "NO"
         CODE_SIGNING_REQUIRED: "NO"

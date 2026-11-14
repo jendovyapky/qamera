@@ -24,6 +24,7 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
     private lazy var viewCube: CIFilter = Self.cubeFilter(Self.logCube(n: 48, linearScale: nil))
     private var stillWait: ((CIImage) -> Void)?
     private var lastFrame = 0.0
+    private var sent = 0
     var onFrame: ((Data) -> Void)?   // LocalServer → /__live
     var canSend: () -> Bool = { true }
 
@@ -90,43 +91,60 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
     // MARK: ovládání (z mostu WebApp)
 
     func start(lens: String, zoom: Double, done: @escaping (Swift.Result<[String: Any], Error>) -> Void) {
+        CameraEngine.markStarting()
         q.async {
             self.stopNow()
+            self.sent = 0
             do {
                 guard let (dev, lz) = self.pick(lens) else { throw QError(message: "kamera nenalezena") }
                 guard let (fmt, log) = self.format(dev) else { throw QError(message: "kamera neumí video") }
                 let s = AVCaptureSession()
-                s.beginConfiguration()
-                s.automaticallyConfiguresCaptureDeviceForWideColor = false
-                s.sessionPreset = .inputPriority
-                let input = try AVCaptureDeviceInput(device: dev)
-                guard s.canAddInput(input) else { s.commitConfiguration(); throw QError(message: "kamera je obsazená") }
-                s.addInput(input)
-                let out = AVCaptureVideoDataOutput()
-                out.alwaysDiscardsLateVideoFrames = true
-                out.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: log ? kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange : kCVPixelFormatType_32BGRA]
-                out.setSampleBufferDelegate(self, queue: self.vq)
-                guard s.canAddOutput(out) else { s.commitConfiguration(); throw QError(message: "nejde číst obraz") }
-                s.addOutput(out)
-                try dev.lockForConfiguration()
-                dev.activeFormat = fmt
-                if log { dev.activeColorSpace = .appleLog } else if fmt.supportedColorSpaces.contains(.sRGB) { dev.activeColorSpace = .sRGB }
-                dev.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 30)
-                dev.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: 30)
-                if dev.isFocusModeSupported(.continuousAutoFocus) { dev.focusMode = .continuousAutoFocus }
-                if dev.isExposureModeSupported(.continuousAutoExposure) { dev.exposureMode = .continuousAutoExposure }
-                dev.videoZoomFactor = max(1, min(dev.activeFormat.videoMaxZoomFactor, zoom))
-                dev.unlockForConfiguration()
-                if let c = out.connection(with: .video) {
-                    if c.isVideoRotationAngleSupported(90) { c.videoRotationAngle = 90 }
-                    if c.isVideoMirroringSupported { c.automaticallyAdjustsVideoMirroring = false; c.isVideoMirrored = false } // přední zrcadlí web sám
-                    if c.isVideoStabilizationSupported { c.preferredVideoStabilizationMode = .standard }
+                var cfgErr: Error?
+                // celé nastavení v QCatch: špatná kombinace (formát, pixely, fps) = výjimka ObjC → chyba v hledáčku místo pádu appky
+                let exc = QCatch.run {
+                    do {
+                        s.beginConfiguration()
+                        defer { s.commitConfiguration() }
+                        s.automaticallyConfiguresCaptureDeviceForWideColor = false
+                        s.sessionPreset = .inputPriority
+                        let input = try AVCaptureDeviceInput(device: dev)
+                        guard s.canAddInput(input) else { throw QError(message: "kamera je obsazená") }
+                        s.addInput(input)
+                        let out = AVCaptureVideoDataOutput()
+                        out.alwaysDiscardsLateVideoFrames = true
+                        out.setSampleBufferDelegate(self, queue: self.vq)
+                        guard s.canAddOutput(out) else { throw QError(message: "nejde číst obraz") }
+                        s.addOutput(out)
+                        try dev.lockForConfiguration()
+                        dev.activeFormat = fmt
+                        if log { dev.activeColorSpace = .appleLog } else if fmt.supportedColorSpaces.contains(.sRGB) { dev.activeColorSpace = .sRGB }
+                        if fmt.videoSupportedFrameRateRanges.contains(where: { $0.minFrameRate <= 30 && $0.maxFrameRate >= 30 }) {
+                            dev.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 30)
+                            dev.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: 30)
+                        }
+                        if dev.isFocusModeSupported(.continuousAutoFocus) { dev.focusMode = .continuousAutoFocus }
+                        if dev.isExposureModeSupported(.continuousAutoExposure) { dev.exposureMode = .continuousAutoExposure }
+                        dev.videoZoomFactor = max(1, min(dev.activeFormat.videoMaxZoomFactor, zoom))
+                        dev.unlockForConfiguration()
+                        // pixely až po nastavení formátu (10 bit jen u formátu, který ho má) a jen z nabídky výstupu
+                        let avail = out.availableVideoPixelFormatTypes
+                        let want: [OSType] = log ? [kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange, kCVPixelFormatType_420YpCbCr10BiPlanarFullRange]
+                                                 : [kCVPixelFormatType_32BGRA]
+                        if let pf = want.first(where: { avail.contains($0) }) {
+                            out.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: pf]
+                        }
+                        if let c = out.connection(with: .video) {
+                            if c.isVideoRotationAngleSupported(90) { c.videoRotationAngle = 90 }
+                            if c.isVideoMirroringSupported { c.automaticallyAdjustsVideoMirroring = false; c.isVideoMirrored = false } // přední zrcadlí web sám
+                        }
+                    } catch { cfgErr = error }
                 }
-                s.commitConfiguration()
+                if let exc { throw QError(message: exc) }
+                if let cfgErr { throw cfgErr }
                 self.session = s; self.device = dev; self.log = log; self.lens = lens; self.lensZoom = lz
                 let dm = CMVideoFormatDescriptionGetDimensions(fmt.formatDescription)
                 self.size = CGSize(width: Int(min(dm.width, dm.height)), height: Int(max(dm.width, dm.height)))
-                s.startRunning()
+                if let e2 = QCatch.run({ s.startRunning() }) { throw QError(message: e2) }
                 guard s.isRunning else { throw QError(message: "kamera se nespustila") }
                 done(.success(["log": log, "lens": lens, "lensZoom": lz, "w": Int(self.size.width), "h": Int(self.size.height),
                                "maxZoom": Double(min(dev.activeFormat.videoMaxZoomFactor, 10)), "torch": dev.hasTorch,
@@ -136,7 +154,7 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
     }
 
     // Synchronně: RawCapture / ClipCapture si hned potom otevřou vlastní session
-    func stop() { q.sync { self.stopNow() } }
+    func stop() { q.sync { self.stopNow() }; CameraEngine.markOk() }
     private func stopNow() {
         session?.stopRunning(); session = nil; device = nil
     }
@@ -170,23 +188,43 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
         guard let pb = CMSampleBufferGetImageBuffer(sb) else { return }
         let img = CIImage(cvPixelBuffer: pb, options: [.colorSpace: NSNull()])
         if let w = stillWait { stillWait = nil; w(img) }
+        sent += 1
+        if sent == 90 { CameraEngine.markOk() } // ~3 s snímků bez pádu = kamera appky v pořádku
         let now = CACurrentMediaTime()
         guard onFrame != nil, canSend(), now - lastFrame > 1 / 31 else { return }
         lastFrame = now
+        var pkt: Data?
+        if QCatch.run({ pkt = self.packet(img) }) != nil { return }
+        guard let pkt else { return }
+        onFrame?(pkt)
+    }
+
+    // pojistka proti pádu: když appka spadne během startu kamery, příští spuštění jede postaru (kamera z WebKitu) – do dalšího buildu
+    static let buildKey = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+    static func markStarting() { UserDefaults.standard.set(buildKey, forKey: "ncamPending") }
+    static func markOk() { UserDefaults.standard.removeObject(forKey: "ncamPending") }
+    // volá se jednou při startu appky: vrátí true, když kamera appky v tomhle buildu dřív spadla
+    static func crashedBefore() -> Bool {
+        let d = UserDefaults.standard
+        if d.string(forKey: "ncamPending") == buildKey { d.removeObject(forKey: "ncamPending"); d.set(buildKey, forKey: "ncamOff") }
+        return d.string(forKey: "ncamOff") == buildKey
+    }
+
+    private func packet(_ img: CIImage) -> Data? {
         let e = img.extent, k = min(1, 1280 / max(e.width, e.height))
         var v = img.transformed(by: CGAffineTransform(scaleX: k, y: k))
         if log { viewCube.setValue(v, forKey: kCIInputImageKey); v = viewCube.outputImage ?? v }
         let W = Int((e.width * k).rounded(.down)), H = Int((e.height * k).rounded(.down))
-        guard W > 0, H > 0 else { return }
+        guard W > 0, H > 0 else { return nil }
         var px = [UInt8](repeating: 255, count: W * H * 4)
         px.withUnsafeMutableBytes { p in ctx.render(v, toBitmap: p.baseAddress!, rowBytes: W * 4, bounds: CGRect(x: 0, y: 0, width: W, height: H), format: .RGBA8, colorSpace: nil) }
-        guard let jpg = Self.jpeg(&px, w: W, h: H, q: 0.82) else { return }
+        guard let jpg = Self.jpeg(&px, w: W, h: H, q: 0.82) else { return nil }
         let meta: [String: Any] = ["w": W, "h": H, "log": log, "lens": lens]
         let mj = (try? JSONSerialization.data(withJSONObject: meta)) ?? Data("{}".utf8)
         var pkt = Data()
         var n = UInt32(2 + mj.count + jpg.count).bigEndian, m = UInt16(mj.count).bigEndian
         pkt.append(Data(bytes: &n, count: 4)); pkt.append(Data(bytes: &m, count: 2)); pkt.append(mj); pkt.append(jpg)
-        onFrame?(pkt)
+        return pkt
     }
 
     static func jpeg(_ px: inout [UInt8], w: Int, h: Int, q: Double) -> Data? {
