@@ -16,6 +16,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     private var server: LocalServer?
     private let thump = UIImpactFeedbackGenerator(style: .light)
     private let raw = RawCapture()
+    private let clip = ClipCapture()
     private var vol: VolumeShutter?
 
     override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
@@ -162,6 +163,32 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                     }
                 }
             }
+        case "clip":
+            let id = m["id"] as? Int ?? 0
+            var o = ClipCapture.Opts()
+            o.seconds = min(10, max(1, (m["sec"] as? Double) ?? 5))
+            o.zoom = (m["zoom"] as? Double) ?? 1
+            o.ultra = (m["ultra"] as? Bool) ?? false
+            o.tele = (m["tele"] as? Bool) ?? false
+            o.film = (m["film"] as? String) ?? "NONE"
+            o.str = (m["str"] as? Double) ?? 1
+            o.grain = (m["grain"] as? Double) ?? 0.5
+            clip.capture(o, recording: { [weak self] in
+                DispatchQueue.main.async { self?.js("window.__qClipRec && window.__qClipRec(\(id))") }
+            }, progress: { [weak self] p in
+                DispatchQueue.main.async { self?.js("window.__qClipProg && window.__qClipProg(\(id), \(p))") }
+            }) { [weak self] result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let r):
+                        let o: [String: Any] = ["mp4": "/__cap/" + r.mp4, "jpg": "/__cap/" + r.jpg, "log": r.log, "lensZoom": r.lensZoom]
+                        let json = (try? JSONSerialization.data(withJSONObject: o)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+                        self?.js("window.__qClip && window.__qClip(\(id), true, \(json))")
+                    case .failure(let e):
+                        self?.js("window.__qClip && window.__qClip(\(id), false, \(Self.jsStr(e.localizedDescription)))")
+                    }
+                }
+            }
         case "cam":
             vol?.set((m["on"] as? Bool) ?? false)
         case "rawDone":
@@ -180,6 +207,10 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
            files.allSatisfy({ photoTypes.contains(($0["type"] as? String) ?? "") }) {
             let datas = files.compactMap { ($0["data"] as? String).flatMap { Data(base64Encoded: $0) } }
             return saveToPhotos(datas, id: id)
+        }
+        if files.count == 1, m["url"] as? String == nil, (files[0]["type"] as? String ?? "").hasPrefix("video/"),
+           let b64 = files[0]["data"] as? String, let data = Data(base64Encoded: b64) {
+            return saveVideoToPhotos(data, name: files[0]["name"] as? String ?? "qamera.mp4", id: id)
         }
         var items: [Any] = []
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("share-\(id)", isDirectory: true)
@@ -233,6 +264,31 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
         }
     }
 
+    private func saveVideoToPhotos(_ data: Data, name: String, id: Int) {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("v-\(id)-" + name)
+        guard (try? data.write(to: url)) != nil else { return finish(id, ok: false, abort: false) }
+        PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+            guard status == .authorized || status == .limited else {
+                try? FileManager.default.removeItem(at: url)
+                DispatchQueue.main.async {
+                    self.finish(id, ok: false, abort: false)
+                    self.js("window.toast && toast('Qamera nemá povolené ukládání do Fotek (Nastavení → Qamera)')")
+                }
+                return
+            }
+            PHPhotoLibrary.shared().performChanges({
+                PHAssetCreationRequest.forAsset().addResource(with: .video, fileURL: url, options: nil)
+            }) { ok, _ in
+                try? FileManager.default.removeItem(at: url)
+                DispatchQueue.main.async {
+                    if ok { UINotificationFeedbackGenerator().notificationOccurred(.success) }
+                    self.finish(id, ok: ok, abort: false)
+                    self.js("window.toast && toast(\(Self.jsStr(ok ? "Klip uložen do Fotek" : "Uložení do Fotek se nepovedlo")))")
+                }
+            }
+        }
+    }
+
     private func finish(_ id: Int, ok: Bool, abort: Bool) {
         js("window.__qShareDone && window.__qShareDone(\(id), \(ok), \(abort))")
     }
@@ -251,7 +307,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     static let bridgeJS = """
     (() => {
       const post = (m) => window.webkit.messageHandlers.qamera.postMessage(m);
-      window.QNATIVE = Object.assign({ raw: 2, bayer: true }, window.__qLens || {});
+      window.QNATIVE = Object.assign({ raw: 2, bayer: true, clip: 1 }, window.__qLens || {});
       navigator.vibrate = (ms) => { post({ kind: 'vibrate', ms: Array.isArray(ms) ? (ms[0] || 6) : (+ms || 6) }); return true; };
       const pend = new Map(); let seq = 0;
       window.__qShareDone = (id, ok, abort) => {

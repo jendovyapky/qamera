@@ -1,5 +1,5 @@
 /* Qamera service worker – appka funguje i offline. Po větší změně zvýšit VERSION, ať se telefonům stáhne nová verze. */
-const VERSION = 'qamera-0.18.23';
+const VERSION = 'qamera-0.18.24';
 const SHELL = ['./', './docs/preview/', './docs/preview/index.html', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/apple-touch-icon.png', './luts/films.json'];
 
 self.addEventListener('install', e => {

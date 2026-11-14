@@ -109,6 +109,8 @@ final class LocalServer {
         case "webmanifest": return "application/manifest+json"
         case "wasm": return "application/wasm"
         case "png": return "image/png"
+        case "mp4", "m4v": return "video/mp4"
+        case "mov": return "video/quicktime"
         case "jpg", "jpeg": return "image/jpeg"
         case "webp": return "image/webp"
         case "svg": return "image/svg+xml"
