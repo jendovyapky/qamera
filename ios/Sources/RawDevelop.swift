@@ -74,7 +74,7 @@ enum RawDevelop {
         var mx = [Float]()
         mx.reserveCapacity(sw * sh)
         for i in stride(from: 0, to: sw * sh * 4, by: 4) {
-            if logInput { fromLog(&sb[i], &sb[i + 1], &sb[i + 2]) }
+            if logInput { var r = sb[i], g = sb[i + 1], b = sb[i + 2]; fromLog(&r, &g, &b); sb[i] = r; sb[i + 1] = g; sb[i + 2] = b }
             let y = 0.2126 * Double(sb[i]) + 0.7152 * Double(sb[i + 1]) + 0.0722 * Double(sb[i + 2])
             ls += log2(max(y, 1e-5)); ln += 1
             mx.append(max(sb[i], sb[i + 1], sb[i + 2]))
