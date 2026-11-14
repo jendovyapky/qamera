@@ -41,6 +41,7 @@ const { chromium } = require('playwright-core');
   console.log('ultra', await p.evaluate(() => [CAM.nat, CAM.live, CAM.deviceId, CAM.ultra]));
   await p.screenshot({ path: 'ncam_after.png' });
   console.log('msgs', await p.evaluate(() => __msgs.join(' ')));
+  console.log('ctl', await p.evaluate(() => { const f0 = S.film; __qCtl('film', 2); const f1 = S.film; __qCtl('ev', -1); return [f0, f1, filmsOrdered()[2].code, S.ev, $('#pEv').textContent, +liveMean().toFixed(4)]; }));
   console.log('chyby', errs);
   await b.close();
 })();

@@ -1494,7 +1494,7 @@ async function natLiveOn() {
   try {
     const info = await new Promise((res, rej) => { const id = ++NCAM.seq; NCAM.wait = { id, res, rej };
       setTimeout(() => { if (NCAM.wait && NCAM.wait.id === id) { NCAM.wait = null; rej(new Error('kamera neodpověděla')); } }, 8000);
-      natPost({ kind: 'ncam', op: 'start', id, lens, zoom: 1 }); });
+      natCtl(true); natPost({ kind: 'ncam', op: 'start', id, lens, zoom: 1 }); });
     NCAM.info = info; CAM.nat = true; CAM.nlog = !!info.log;
     const nv = CAM.nv || (CAM.nv = document.createElement('canvas')); CAM.video = nv;
     CAM.track = natTrack(info); CAM.caps = CAM.track.getCapabilities(); CAM.stream = null;
@@ -1511,6 +1511,18 @@ async function natLiveOn() {
     CAM.err = 'Kameru appky se nepodařilo spustit (' + e.message + ').'; toast(CAM.err); CAM.live = false; CAM.switching = false; cc.style.filter = ''; updLive(); renderCamInfo(); return false;
   }
 }
+// boční tlačítko Ovládání fotoaparátu: přejetí = film (pořadí jako karusel), v nabídce i EV; změny z webu se posílají zpět
+let natCtlLast = '';
+function natCtl(full) {
+  if (!(window.QNATIVE && QNATIVE.ncam && window.webkit)) return;
+  const films = filmsOrdered().map(f => f.code), film = films.indexOf(S.film), key = film + '|' + S.ev;
+  if (!full && key === natCtlLast) return; natCtlLast = key;
+  natPost(Object.assign({ kind: 'ncam', op: 'ctl', film, ev: S.ev }, full ? { films } : {}));
+}
+window.__qCtl = (k, v) => {
+  if (k === 'film') { const code = filmsOrdered().map(f => f.code)[v]; if (code && FILM[code] && code !== S.film) { setFilm(code); const c = $('#carousel'); if (c && c._sync) c._sync(); buzz(4); } }
+  else if (k === 'ev') { S.ev = Math.round(clamp(+v, -3, 3) * 3) / 3; if (evApi) evApi.sync(); updLcd(); hud('ev'); clearTimeout(window.__qEvT); window.__qEvT = setTimeout(() => hud(null), 900); }
+};
 function natStop() { if (NCAM.ctrl) NCAM.ctrl.abort(); NCAM.ctrl = null; natPost({ kind: 'ncam', op: 'stop' }); CAM.nat = false; }
 // ťuknutí do hledáčku = ostření a expozice na to místo (x, y 0…1 v obraze)
 function natFocus(x, y) { if (CAM.nat && CAM.live) natPost({ kind: 'ncam', op: 'focus', x: clamp(x, 0, 1), y: clamp(y, 0, 1) }); }
@@ -2501,6 +2513,7 @@ function updLcd() {
   $('#lMeter').style.left = (50 + S.ev / 3 * 50) + '%';
   $('#lModeV').textContent = slow ? SLOW_MODES[S.slowMode] : 'FOTO';
   drawShutter(); $('#pTime').hidden = !(S.collapsed && slow); $('#pTime').textContent = tLabel(S.timeIdx);
+  if (CAM.nat) natCtl(false);
 }
 function setFilm(code) {
   S.film = code; store.set('film', code); const f = FILM[code];
@@ -2601,16 +2614,24 @@ window.__qRaw = (id, ok, a) => { const w = NRAW.wait; if (!w || w.id !== id) ret
 function natCam() { if (window.QNATIVE && window.webkit) window.webkit.messageHandlers.qamera.postMessage({ kind: 'cam', on: S.screen === 'camera' }); }
 setTimeout(natCam, 600);
 window.__qShutter = () => { if (S.screen === 'camera' && !S.busy) shoot(); }; // boční tlačítko / hlasitost
+function liveMean() {
+  if (!(CAM.nat && CAM.nlog && LIVE.canvas)) return null;
+  const n = 48, c = mk(n, Math.round(n * LIVE.canvas.height / LIVE.canvas.width)), g = c.getContext('2d', { willReadFrequently: true });
+  g.drawImage(LIVE.canvas, 0, 0, c.width, c.height); const d = g.getImageData(0, 0, c.width, c.height).data;
+  const lin = v => { v /= 255; v = v <= .04045 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); return v > .55 ? .55 - .45 * Math.log(Math.max(1e-4, 1 - (v - .55) / .45)) : v; };
+  let s = 0, k = 0; for (let i = 0; i < d.length; i += 4) { s += Math.log2(Math.max(1e-5, .2126 * lin(d[i]) + .7152 * lin(d[i + 1]) + .0722 * lin(d[i + 2]))); k++; }
+  return k ? Math.pow(2, s / k) : null;
+}
 async function captureNativeRaw(mode) {
   const still = mode === 'still'; S.busy = 'raw'; drawShutter(0);
-  const st = CAM.track && CAM.track.getSettings ? CAM.track.getSettings() : {}, zoom = st.zoom || 1, viewZoom = S.zoom, fmt = S.fmt, cc = $('#camCanvas');
+  const st = CAM.track && CAM.track.getSettings ? CAM.track.getSettings() : {}, zoom = st.zoom || 1, viewZoom = S.zoom, fmt = S.fmt, cc = $('#camCanvas'), mean = still ? null : liveMean();
   if (still) { const ir = $('#iris'); spring(1, 0, v => ir.style.opacity = v * .85, { k: 160, c: 22 }); hud('raw', ['FOTÍM']); } // snímek z běžící kamery appky (už přiblížený), hledáček jede dál
   // RAW: kamera patří na chvíli jiné session: hledáček drží poslední snímek rozmazaný (jako přepnutí objektivu), ne demo
   else { CAM.switching = true; spring(0, 1, v => cc.style.filter = `blur(${v * 14}px) brightness(${1 - v * .35})`, { k: 260, c: 30 }); liveStop(); hud('raw', ['FOTÍM']); }
   const done = () => { S.busy = null; drawShutter(); hud(); };
   let r;
   try { r = await new Promise((res, rej) => { const id = ++NRAW.seq; NRAW.wait = { id, res, rej }; setTimeout(() => { if (NRAW.wait && NRAW.wait.id === id) { NRAW.wait = null; rej(new Error('kamera neodpověděla')); } }, 20000);
-      window.webkit.messageHandlers.qamera.postMessage(still ? { kind: 'still', id } : { kind: 'raw', id, zoom, ultra: !!CAM.ultra, flash: !!S.flash, tele: !!CAM.tele, bayer: !!QNATIVE.bayer }); }); }
+      window.webkit.messageHandlers.qamera.postMessage(still ? { kind: 'still', id } : Object.assign({ kind: 'raw', id, zoom, ultra: !!CAM.ultra, flash: !!S.flash, tele: !!CAM.tele, bayer: !!QNATIVE.bayer }, mean ? { mean } : {})); }); }
   catch (e) { done(); toast((still ? 'Fotka se nepovedla: ' : 'RAW se nepovedl: ') + e.message); if (still) return; if (S.screen === 'camera') liveOn(); else { CAM.switching = false; cc.style.filter = ''; } return; }
   if (still) {} else if (S.screen === 'camera') liveOn(); else { CAM.switching = false; cc.style.filter = ''; } // hledáček zpět hned, vyvolání běží mezitím
   hud('raw', ['VYVOLÁVÁM']);

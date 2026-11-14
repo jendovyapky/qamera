@@ -24,7 +24,7 @@ enum RawDevelop {
         return UInt8((255 * (v <= 0.0031308 ? v * 12.92 : 1.055 * pow(v, 1 / 2.4) - 0.055)).rounded())
     }
 
-    static func develop(_ data: Data, maxSide: Int = 4096, hlMax: Int = 512) throws -> Output {
+    static func develop(_ data: Data, maxSide: Int = 4096, hlMax: Int = 512, targetMean: Double? = nil) throws -> Output {
         guard let f = CIRAWFilter(imageData: data, identifierHint: UTType("com.adobe.raw-image")?.identifier) else {
             throw QError(message: "RAW se nepodařilo otevřít")
         }
@@ -37,7 +37,7 @@ enum RawDevelop {
         if f.isColorNoiseReductionSupported { f.colorNoiseReductionAmount = 1 }
         if f.isLuminanceNoiseReductionSupported { f.luminanceNoiseReductionAmount = max(f.luminanceNoiseReductionAmount, 0.5) }
         guard let img = f.outputImage else { throw QError(message: "RAW se nepodařilo vyvolat") }
-        return try develop(image: img, maxSide: maxSide, hlMax: hlMax, fixedEV: nil)
+        return try develop(image: img, maxSide: maxSide, hlMax: hlMax, fixedEV: nil, targetMean: targetMean)
     }
 
     // Vyvolání z lineárního obrazu (RAW, nebo snímek z Apple Logu z CameraEngine): fixedEV = bez měření expozice
@@ -56,7 +56,7 @@ enum RawDevelop {
         b = max(0, m[6] * r0 + m[7] * g0 + m[8] * b0)
     }
 
-    static func develop(image img0: CIImage, maxSide: Int = 4096, hlMax: Int = 512, fixedEV: Double?, logInput: Bool = false) throws -> Output {
+    static func develop(image img0: CIImage, maxSide: Int = 4096, hlMax: Int = 512, fixedEV: Double?, logInput: Bool = false, targetMean: Double? = nil) throws -> Output {
         var img = img0
         let e0 = img.extent, ks = min(1, CGFloat(maxSide) / max(e0.width, e0.height, 1))
         if ks < 1 { img = img.transformed(by: CGAffineTransform(scaleX: ks, y: ks)) }
@@ -86,6 +86,8 @@ enum RawDevelop {
         let evMean = max(-2, min(1, log2(0.17) - ls / max(ln, 1)))
         let evHi = p995 > 0 ? log2(2.0 / p995) : 4
         var ev = max(evMean - 0.5, min(evMean, evHi))
+        // hledáček = fotka: geometrický průměr jasu jako v hledáčku těsně před spouští (web ho změří na zdroji hledáčku, stejná měřítka)
+        if let tm = targetMean, tm > 0 { ev = max(-4, min(6, log2(tm) - ls / max(ln, 1))) }
         if let fe = fixedEV { ev = fe }
         if !ev.isFinite { ev = 0 }
         let g = Float(pow(2, ev))

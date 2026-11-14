@@ -26,6 +26,19 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
     private var lastFrame = 0.0
     private var sent = 0
     var onFrame: ((Data) -> Void)?   // LocalServer → /__live
+    var currentISO: Float { device?.iso ?? 0 }
+    // boční tlačítko Ovládání fotoaparátu (iOS 18+): posun = film / EV
+    private var ctlFilms: [String] = []
+    private var ctlFilm = 0
+    private var ctlEv = 0.0
+    private var ctlObjs: [AnyObject] = []
+    var onCtl: ((String, Any) -> Void)?
+    func setCtl(films: [String]?, film: Int?, ev: Double?) {
+        if let films { ctlFilms = films }
+        if let film { ctlFilm = film }
+        if let ev { ctlEv = ev }
+        if #available(iOS 18.0, *) { DispatchQueue.main.async { self.syncCtl() } }
+    }
     var canSend: () -> Bool = { true }
 
     // MARK: převod Apple Log → stejný formát jako vyvolaný RAW
@@ -133,6 +146,7 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
                         if let pf = want.first(where: { avail.contains($0) }) {
                             out.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: pf]
                         }
+                        if #available(iOS 18.0, *) { self.addControls(s) }
                         if let c = out.connection(with: .video) {
                             if c.isVideoRotationAngleSupported(90) { c.videoRotationAngle = 90 }
                             if c.isVideoMirroringSupported { c.automaticallyAdjustsVideoMirroring = false; c.isVideoMirrored = false } // přední zrcadlí web sám
@@ -263,4 +277,43 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
             }
         }
     }
+}
+
+// MARK: boční tlačítko (iOS 18+): přejetí = film, ve výběru ovládání i EV
+@available(iOS 18.0, *)
+extension CameraEngine: AVCaptureSessionControlsDelegate {
+    fileprivate static let evStops: [Float] = (-9...9).map { Float($0) / 3 }
+    func addControls(_ s: AVCaptureSession) {
+        guard s.supportsControls else { return }
+        for c in s.controls { s.removeControl(c) }
+        s.setControlsDelegate(self, queue: .main)
+        var objs: [AnyObject] = []
+        if !ctlFilms.isEmpty {
+            let p = AVCaptureIndexPicker("Film", symbolName: "film", localizedIndexTitles: ctlFilms)
+            p.selectedIndex = min(max(0, ctlFilm), ctlFilms.count - 1)
+            p.setActionQueue(.main) { [weak self] i in
+                guard let self, i != self.ctlFilm else { return }
+                self.ctlFilm = i; self.onCtl?("film", i)
+            }
+            if s.canAddControl(p) { s.addControl(p); objs.append(p) }
+        }
+        let e = AVCaptureSlider("EV", symbolName: "plusminus.circle", values: Self.evStops)
+        e.value = Float((ctlEv * 3).rounded() / 3)
+        e.setActionQueue(.main) { [weak self] v in
+            guard let self, abs(Double(v) - self.ctlEv) > 0.01 else { return }
+            self.ctlEv = Double(v); self.onCtl?("ev", Double(v))
+        }
+        if s.canAddControl(e) { s.addControl(e); objs.append(e) }
+        ctlObjs = objs
+    }
+    func syncCtl() {
+        for o in ctlObjs {
+            if let p = o as? AVCaptureIndexPicker, ctlFilm >= 0, ctlFilm < p.localizedIndexTitles.count, p.selectedIndex != ctlFilm { p.selectedIndex = ctlFilm }
+            if let e = o as? AVCaptureSlider, abs(Double(e.value) - ctlEv) > 0.01 { e.value = Float(ctlEv) }
+        }
+    }
+    func sessionControlsDidBecomeActive(_ session: AVCaptureSession) {}
+    func sessionControlsWillEnterFullscreenAppearance(_ session: AVCaptureSession) {}
+    func sessionControlsWillExitFullscreenAppearance(_ session: AVCaptureSession) {}
+    func sessionControlsDidBecomeInactive(_ session: AVCaptureSession) {}
 }

@@ -39,8 +39,10 @@ final class RawCapture: NSObject {
     }
 
     // zoom = optický zoom webového hledáčku (1 = hlavní objektiv), ultra = ultraširokáč, tele = hledáček je na teleobjektivu
-    func capture(zoom: Double, ultra: Bool, flash: Bool, tele: Bool = false, bayer: Bool = false, done: @escaping (Swift.Result<Result, Error>) -> Void) {
+    var targetMean: Double?
+    func capture(zoom: Double, ultra: Bool, flash: Bool, tele: Bool = false, bayer: Bool = false, mean: Double? = nil, done: @escaping (Swift.Result<Result, Error>) -> Void) {
         queue.async {
+            self.targetMean = mean
             // Web právě pustil kameru; WebKit ji uvolní během pár ms
             Thread.sleep(forTimeInterval: 0.15)
             do {
@@ -153,7 +155,7 @@ final class RawCapture: NSObject {
                             try png.write(to: Self.dir.appendingPathComponent(id + "-d.png")); res.files["depth"] = id + "-d.png"
                         }
                         do {
-                            let o = try RawDevelop.develop(shot.raw)
+                            let o = try RawDevelop.develop(shot.raw, targetMean: self.targetMean)
                             try o.jpg.write(to: Self.dir.appendingPathComponent(id + ".jpg")); res.files["jpg"] = id + ".jpg"
                             if let hl = o.hl { try hl.write(to: Self.dir.appendingPathComponent(id + "-hl.png")); res.files["hl"] = id + "-hl.png" }
                             res.ev = o.ev
