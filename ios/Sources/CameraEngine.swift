@@ -32,11 +32,17 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
     /* 3D LUT z kódů Apple Logu (Rec.2020): linearScale nil = hledáček (lineární Rec.709 → rameno nad 0,55 se zachovaným odstínem → sRGB,
        přesně jako RawDevelop / raw.js), jinak lineární světlo / linearScale (pro vyvolání fotky) */
     static func logCube(n: Int, linearScale: Double?) -> (Int, Data) {
-        let M = [1.6605, -0.5876, -0.0728, -0.1246, 1.1329, -0.0083, -0.0182, -0.1006, 1.1187]
+        let M: [Double] = [1.6605, -0.5876, -0.0728, -0.1246, 1.1329, -0.0083, -0.0182, -0.1006, 1.1187]
         var out = [Float](repeating: 0, count: n * n * n * 4)
         for bi in 0..<n { for gi in 0..<n { for ri in 0..<n {
-            let a = [ri, gi, bi].map { ClipDevelop.appleLogToLinear(Double($0) / Double(n - 1)) }
-            var l = [M[0] * a[0] + M[1] * a[1] + M[2] * a[2], M[3] * a[0] + M[4] * a[1] + M[5] * a[2], M[6] * a[0] + M[7] * a[1] + M[8] * a[2]].map { max($0, 0) }
+            let d = Double(n - 1)
+            let r0: Double = ClipDevelop.appleLogToLinear(Double(ri) / d)
+            let g0: Double = ClipDevelop.appleLogToLinear(Double(gi) / d)
+            let b0: Double = ClipDevelop.appleLogToLinear(Double(bi) / d)
+            var r1: Double = M[0] * r0; r1 += M[1] * g0; r1 += M[2] * b0
+            var g1: Double = M[3] * r0; g1 += M[4] * g0; g1 += M[5] * b0
+            var b1: Double = M[6] * r0; b1 += M[7] * g0; b1 += M[8] * b0
+            var l: [Double] = [max(r1, 0), max(g1, 0), max(b1, 0)]
             if let s = linearScale { l = l.map { min($0 / s, 1) } } else {
                 let m = l.max() ?? 0
                 if m > 0.55 { let f = 0.55 + 0.45 * (1 - exp(-(m - 0.55) / 0.45)); l = l.map { $0 * f / m } }
