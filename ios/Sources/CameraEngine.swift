@@ -250,17 +250,9 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
             // vyvolání mimo frontu kamery, ať hledáček běží dál
             DispatchQueue.global(qos: .userInitiated).async {
                 do {
-                    let lin: CIImage
-                    if log {
-                        let f = Self.cubeFilter(Self.logCube(n: 64, linearScale: 16))
-                        f.setValue(src, forKey: kCIInputImageKey)
-                        lin = (f.outputImage ?? src).applyingFilter("CIColorMatrix", parameters: [
-                            "inputRVector": CIVector(x: 16, y: 0, z: 0, w: 0), "inputGVector": CIVector(x: 0, y: 16, z: 0, w: 0),
-                            "inputBVector": CIVector(x: 0, y: 0, z: 16, w: 0)])
-                    } else {
-                        lin = src.applyingFilter("CISRGBToneCurveToLinear")
-                    }
-                    let o = try RawDevelop.develop(image: lin, fixedEV: 0)
+                    // log se převede na světlo až v RawDevelop ve float (přes CIColorCube se stíny ztrácely v 8 bitech = černé díry a barevné fleky)
+                    let o = log ? try RawDevelop.develop(image: src, fixedEV: 0, logInput: true)
+                                : try RawDevelop.develop(image: src.applyingFilter("CISRGBToneCurveToLinear"), fixedEV: 0)
                     let id = UUID().uuidString
                     try? FileManager.default.createDirectory(at: RawCapture.dir, withIntermediateDirectories: true)
                     var res = RawCapture.Result(label: log ? "LOG" : "VIDEO", lensZoom: lz, ev: o.ev)

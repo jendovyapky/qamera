@@ -17,6 +17,8 @@ enum RawDevelop {
     private static let lin = CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!
     private static let srgb = CGColorSpace(name: CGColorSpace.sRGB)!
     private static let ctx = CIContext(options: [.workingColorSpace: lin, .cacheIntermediates: false])
+    // bez správy barev, plovoucí mezivýsledky (kódy logu projdou beze změny)
+    private static let rawCtx = CIContext(options: [.workingColorSpace: NSNull(), .outputColorSpace: NSNull(), .workingFormat: CIFormat.RGBAh, .cacheIntermediates: false])
     private static let srgbLUT: [UInt8] = (0...4096).map { i in
         let v = Double(i) / 4096
         return UInt8((255 * (v <= 0.0031308 ? v * 12.92 : 1.055 * pow(v, 1 / 2.4) - 0.055)).rounded())
@@ -32,12 +34,29 @@ enum RawDevelop {
         f.boostAmount = 0
         f.exposure = 0
         if f.isLocalToneMapSupported { f.localToneMapAmount = 0 }
+        if f.isColorNoiseReductionSupported { f.colorNoiseReductionAmount = 1 }
+        if f.isLuminanceNoiseReductionSupported { f.luminanceNoiseReductionAmount = max(f.luminanceNoiseReductionAmount, 0.5) }
         guard let img = f.outputImage else { throw QError(message: "RAW se nepodařilo vyvolat") }
         return try develop(image: img, maxSide: maxSide, hlMax: hlMax, fixedEV: nil)
     }
 
     // Vyvolání z lineárního obrazu (RAW, nebo snímek z Apple Logu z CameraEngine): fixedEV = bez měření expozice
-    static func develop(image img0: CIImage, maxSide: Int = 4096, hlMax: Int = 512, fixedEV: Double?) throws -> Output {
+    // Apple Log (Rec.2020) → lineární Rec.709: tabulka 4096 bodů + matice, počítá se ve float po pixelech
+    private static let logTab: [Float] = (0...4096).map { Float(ClipDevelop.appleLogToLinear(Double($0) / 4096)) }
+    private static let m2020: [Float] = [1.6605, -0.5876, -0.0728, -0.1246, 1.1329, -0.0083, -0.0182, -0.1006, 1.1187]
+    @inline(__always) private static func fromLog(_ r: inout Float, _ g: inout Float, _ b: inout Float) {
+        let t = logTab
+        @inline(__always) func L(_ v: Float) -> Float {
+            let x = min(4096, max(0, v * 4096)), i = min(4095, Int(x)), f = x - Float(i)
+            return t[i] + (t[i + 1] - t[i]) * f
+        }
+        let r0 = L(r), g0 = L(g), b0 = L(b), m = m2020
+        r = max(0, m[0] * r0 + m[1] * g0 + m[2] * b0)
+        g = max(0, m[3] * r0 + m[4] * g0 + m[5] * b0)
+        b = max(0, m[6] * r0 + m[7] * g0 + m[8] * b0)
+    }
+
+    static func develop(image img0: CIImage, maxSide: Int = 4096, hlMax: Int = 512, fixedEV: Double?, logInput: Bool = false) throws -> Output {
         var img = img0
         let e0 = img.extent, ks = min(1, CGFloat(maxSide) / max(e0.width, e0.height, 1))
         if ks < 1 { img = img.transformed(by: CGAffineTransform(scaleX: ks, y: ks)) }
@@ -50,11 +69,12 @@ enum RawDevelop {
         let small = img.transformed(by: CGAffineTransform(scaleX: k, y: k)).cropped(to: CGRect(x: ext.minX * k, y: ext.minY * k, width: ext.width * k, height: ext.height * k).integral)
         let se = small.extent.integral, sw = Int(se.width), sh = Int(se.height)
         var sb = [Float](repeating: 0, count: max(1, sw * sh * 4))
-        sb.withUnsafeMutableBytes { p in ctx.render(small, toBitmap: p.baseAddress!, rowBytes: sw * 16, bounds: se, format: .RGBAf, colorSpace: lin) }
+        sb.withUnsafeMutableBytes { p in (logInput ? rawCtx : ctx).render(small, toBitmap: p.baseAddress!, rowBytes: sw * 16, bounds: se, format: .RGBAf, colorSpace: logInput ? nil : lin) }
         var ls = 0.0, ln = 0.0
         var mx = [Float]()
         mx.reserveCapacity(sw * sh)
         for i in stride(from: 0, to: sw * sh * 4, by: 4) {
+            if logInput { fromLog(&sb[i], &sb[i + 1], &sb[i + 2]) }
             let y = 0.2126 * Double(sb[i]) + 0.7152 * Double(sb[i + 1]) + 0.0722 * Double(sb[i + 2])
             ls += log2(max(y, 1e-5)); ln += 1
             mx.append(max(sb[i], sb[i + 1], sb[i + 2]))
@@ -63,7 +83,7 @@ enum RawDevelop {
         // Doladění k průměru 0,17 (= jako iPhone měří hledáček i Apple Log); světla chrání jen o max 0,5 EV
         // (99,5. percentil do 2,0 = rozsah, který film v2 ve webu vrátí z ramene). Dřív strop 0,92 ztmavil protisvětlo až o 3,5 EV oproti hledáčku.
         let p995 = Double(mx.isEmpty ? 0 : mx[min(mx.count - 1, mx.count * 995 / 1000)])
-        let evMean = max(-2, min(4, log2(0.17) - ls / max(ln, 1)))
+        let evMean = max(-2, min(1, log2(0.17) - ls / max(ln, 1)))
         let evHi = p995 > 0 ? log2(2.0 / p995) : 4
         var ev = max(evMean - 0.5, min(evMean, evHi))
         if let fe = fixedEV { ev = fe }
@@ -81,12 +101,13 @@ enum RawDevelop {
         for y0 in stride(from: 0, to: H, by: band) {
             let bh = min(band, H - y0)
             let r = CGRect(x: ext.minX, y: ext.maxY - CGFloat(y0 + bh), width: CGFloat(W), height: CGFloat(bh))
-            buf.withUnsafeMutableBytes { p in ctx.render(img, toBitmap: p.baseAddress!, rowBytes: W * 8, bounds: r, format: .RGBAh, colorSpace: lin) }
+            buf.withUnsafeMutableBytes { p in (logInput ? rawCtx : ctx).render(img, toBitmap: p.baseAddress!, rowBytes: W * 8, bounds: r, format: .RGBAh, colorSpace: logInput ? nil : lin) }
             for yy in 0..<bh {
                 let y = y0 + yy, hy = min(hh - 1, Int(Double(y) * hk))
                 for x in 0..<W {
                     let s = (yy * W + x) * 4
-                    let pr = Float(buf[s]), pg = Float(buf[s + 1]), pb = Float(buf[s + 2])
+                    var pr = Float(buf[s]), pg = Float(buf[s + 1]), pb = Float(buf[s + 2])
+                    if logInput { fromLog(&pr, &pg, &pb) }
                     var r = max(0, pr * g), gg = max(0, pg * g), b = max(0, pb * g)
                     let m = max(r, gg, b)
                     if m > 0.55 {
