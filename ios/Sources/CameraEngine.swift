@@ -23,6 +23,16 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
     private let ctx = CIContext(options: [.workingColorSpace: NSNull(), .outputColorSpace: NSNull(), .cacheIntermediates: false])
     private lazy var viewCube: CIFilter = Self.cubeFilter(Self.logCube(n: 48, linearScale: nil))
     private var stillWait: ((CIImage) -> Void)?
+    private var videoOut: AVCaptureVideoDataOutput?
+    // klip ze stejné session (hledáček běží dál): snímky v logu jdou rovnou do AVAssetWriter; jen na frontě vq
+    private final class Rec {
+        let writer: AVAssetWriter, input: AVAssetWriterInput, url: URL, dur: Double
+        var t0: CMTime?
+        var started: (() -> Void)?
+        var done: ((URL?, String?) -> Void)?
+        init(writer: AVAssetWriter, input: AVAssetWriterInput, url: URL, dur: Double) { self.writer = writer; self.input = input; self.url = url; self.dur = dur }
+    }
+    private var rec: Rec?
     private static let dbgCtx = CIContext(options: [.workingColorSpace: NSNull(), .outputColorSpace: NSNull()])
     private var lastFrame = 0.0
     private var sent = 0
@@ -157,6 +167,7 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
                 if let exc { throw QError(message: exc) }
                 if let cfgErr { throw cfgErr }
                 self.session = s; self.device = dev; self.log = log; self.lens = lens; self.lensZoom = lz
+                self.videoOut = s.outputs.compactMap { $0 as? AVCaptureVideoDataOutput }.first
                 let dm = CMVideoFormatDescriptionGetDimensions(fmt.formatDescription)
                 self.size = CGSize(width: Int(min(dm.width, dm.height)), height: Int(max(dm.width, dm.height)))
                 if let e2 = QCatch.run({ s.startRunning() }) { throw QError(message: e2) }
@@ -171,7 +182,54 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
     // Synchronně: RawCapture / ClipCapture si hned potom otevřou vlastní session
     func stop() { q.sync { self.stopNow() }; CameraEngine.markOk() }
     private func stopNow() {
-        session?.stopRunning(); session = nil; device = nil
+        vq.sync { if let r = self.rec { self.rec = nil; r.writer.cancelWriting(); r.done?(nil, "kamera se zastavila") } }
+        session?.stopRunning(); session = nil; device = nil; videoOut = nil
+    }
+
+    // Klip z běžící kamery: HEVC 1080p z těch samých snímků, které vidí hledáček. started = první zapsaný snímek.
+    // done se nikdy nevolá na hlavním vlákně → volající nesmí hned volat stop() (ten čeká na frontu kamery), jen přes main.async
+    func record(seconds: Double, started: @escaping () -> Void, done: @escaping (Swift.Result<(URL, Bool, Double), Error>) -> Void) {
+        q.async {
+            guard self.session?.isRunning == true, let out = self.videoOut else { return done(.failure(QError(message: "kamera neběží"))) }
+            try? FileManager.default.createDirectory(at: RawCapture.dir, withIntermediateDirectories: true)
+            let url = RawCapture.dir.appendingPathComponent(UUID().uuidString + "-src.mov")
+            let log = self.log, lz = self.lensZoom, size = self.size
+            var made: Rec?
+            var err: String?
+            let exc = QCatch.run {
+                var st: [String: Any] = out.recommendedVideoSettings(forVideoCodecType: .hevc, assetWriterOutputFileType: .mov)
+                    ?? [AVVideoCodecKey: AVVideoCodecType.hevc]
+                let k = min(1, 1080 / max(1, min(size.width, size.height)))
+                st[AVVideoWidthKey] = Int((size.width * k / 2).rounded()) * 2
+                st[AVVideoHeightKey] = Int((size.height * k / 2).rounded()) * 2
+                guard let w = try? AVAssetWriter(outputURL: url, fileType: .mov) else { err = "nejde zapisovat"; return }
+                guard w.canApply(outputSettings: st, forMediaType: .video) else { err = "nastavení klipu nejde použít"; return }
+                let i = AVAssetWriterInput(mediaType: .video, outputSettings: st)
+                i.expectsMediaDataInRealTime = true
+                guard w.canAdd(i) else { err = "klip nejde přidat"; return }
+                w.add(i)
+                guard w.startWriting() else { err = w.error?.localizedDescription ?? "zápis nezačal"; return }
+                made = Rec(writer: w, input: i, url: url, dur: seconds)
+            }
+            guard exc == nil, err == nil, let r = made else { return done(.failure(QError(message: exc ?? err ?? "klip nejde natočit"))) }
+            r.started = started
+            r.done = { u, e in
+                if let u { done(.success((u, log, lz))) } else { done(.failure(QError(message: e ?? "klip se nenatočil"))) }
+            }
+            self.vq.sync { self.rec = r }
+            // pojistka: kdyby snímky přestaly chodit
+            self.q.asyncAfter(deadline: .now() + seconds + 4) { self.vq.async { if self.rec === r { self.finishRec(r) } } }
+        }
+    }
+    // jen na frontě vq
+    private func finishRec(_ r: Rec) {
+        rec = nil
+        guard r.t0 != nil, r.writer.status == .writing else {
+            let e = r.writer.error?.localizedDescription ?? "kamera neposlala snímky"
+            r.writer.cancelWriting(); r.done?(nil, e); return
+        }
+        _ = QCatch.run { r.input.markAsFinished() }
+        r.writer.finishWriting { r.done?(r.writer.status == .completed ? r.url : nil, r.writer.error?.localizedDescription) }
     }
 
     var isOn: Bool { q.sync { session != nil } }
@@ -203,6 +261,12 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
         guard let pb = CMSampleBufferGetImageBuffer(sb) else { return }
         let img = CIImage(cvPixelBuffer: pb, options: [.colorSpace: NSNull()])
         if let w = stillWait { stillWait = nil; w(img) }
+        if let r = rec {
+            let ts = CMSampleBufferGetPresentationTimeStamp(sb)
+            if r.t0 == nil { r.t0 = ts; r.writer.startSession(atSourceTime: ts); r.started?(); r.started = nil }
+            if r.writer.status == .writing, r.input.isReadyForMoreMediaData { _ = QCatch.run { _ = r.input.append(sb) } }
+            if r.writer.status != .writing || CMTimeGetSeconds(CMTimeSubtract(ts, r.t0 ?? ts)) >= r.dur { finishRec(r) }
+        }
         sent += 1
         if sent == 90 { CameraEngine.markOk() } // ~3 s snímků bez pádu = kamera appky v pořádku
         let now = CACurrentMediaTime()

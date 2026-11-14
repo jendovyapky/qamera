@@ -89,7 +89,8 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
 
     @objc private func foreground() {
         server?.restart()
-        if camWasOn { camWasOn = false; js("window.__qCamResume && window.__qCamResume()") }
+        camWasOn = false
+        js("window.__qCamResume && window.__qCamResume()")
         vol?.resume()
     }
 
@@ -220,7 +221,6 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                 }
             }
         case "clip":
-            CameraEngine.shared.stop()
             let id = m["id"] as? Int ?? 0
             var o = ClipCapture.Opts()
             o.seconds = min(10, max(1, (m["sec"] as? Double) ?? 5))
@@ -233,15 +233,18 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
             o.hal = (m["hal"] as? Double) ?? 0.5
             o.apl = (m["apl"] as? Double) ?? 0.5
             o.vig = (m["vig"] as? Double) ?? 0
-            clip.capture(o, recording: { [weak self] in
+            let opts = o
+            let recording: () -> Void = { [weak self] in
                 DispatchQueue.main.async { self?.js("window.__qClipRec && window.__qClipRec(\(id))") }
-            }, progress: { [weak self] p in
+            }
+            let progress: (Double) -> Void = { [weak self] p in
                 DispatchQueue.main.async { self?.js("window.__qClipProg && window.__qClipProg(\(id), \(p))") }
-            }) { [weak self] result in
+            }
+            let finish: (Swift.Result<ClipCapture.Result, Error>, Bool) -> Void = { [weak self] result, same in
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let r):
-                        let o: [String: Any] = ["mp4": "/__cap/" + r.mp4, "jpg": "/__cap/" + r.jpg, "log": r.log, "lensZoom": r.lensZoom]
+                        let o: [String: Any] = ["mp4": "/__cap/" + r.mp4, "jpg": "/__cap/" + r.jpg, "log": r.log, "lensZoom": r.lensZoom, "same": same]
                         let json = (try? JSONSerialization.data(withJSONObject: o)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
                         self?.js("window.__qClip && window.__qClip(\(id), true, \(json))")
                     case .failure(let e):
@@ -249,6 +252,39 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                     }
                 }
             }
+            // postaru: kamera appky se zastaví a klip si otevře vlastní session (hledáček po dobu klipu stojí)
+            let old: () -> Void = { [weak self] in
+                CameraEngine.shared.stop()
+                self?.server?.liveClose()
+                self?.clip.capture(opts, recording: recording, progress: progress) { r in finish(r, false) }
+            }
+            // kamera appky běží: klip ze stejné session, hledáček jede dál; když to nejde, postaru
+            if (m["same"] as? Bool) == true, CameraEngine.shared.isOn {
+                CameraEngine.shared.record(seconds: opts.seconds, started: recording) { rr in
+                    switch rr {
+                    case .failure:
+                        DispatchQueue.main.async { old() }
+                    case .success(let v):
+                        let (url, log, lz) = v
+                        DispatchQueue.global(qos: .userInitiated).async {
+                            do {
+                                var res = ClipCapture.Result()
+                                res.log = log
+                                res.lensZoom = lz
+                                let cid = UUID().uuidString
+                                try ClipDevelop.process(src: url, dst: RawCapture.dir.appendingPathComponent(cid + ".mp4"), thumb: RawCapture.dir.appendingPathComponent(cid + ".jpg"),
+                                                        log: log, film: opts.film, str: opts.str, grain: opts.grain, hal: opts.hal, vig: opts.vig, apl: opts.apl, progress: progress)
+                                try? FileManager.default.removeItem(at: url)
+                                res.mp4 = cid + ".mp4"; res.jpg = cid + ".jpg"
+                                finish(.success(res), true)
+                            } catch {
+                                try? FileManager.default.removeItem(at: url)
+                                finish(.failure(error), true)
+                            }
+                        }
+                    }
+                }
+            } else { old() }
         case "cam":
             vol?.set((m["on"] as? Bool) ?? false)
         case "server": // web nedostal soubor ze serveru (Load failed) → nový listener
@@ -369,7 +405,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     static let bridgeJS = """
     (() => {
       const post = (m) => window.webkit.messageHandlers.qamera.postMessage(m);
-      window.QNATIVE = Object.assign({ raw: 2, bayer: true, clip: 1, ncam: window.__qNcamOff ? 0 : 1 }, window.__qLens || {});
+      window.QNATIVE = Object.assign({ raw: 2, bayer: true, clip: 1, crec: 1, ncam: window.__qNcamOff ? 0 : 1 }, window.__qLens || {});
       navigator.vibrate = (ms) => { post({ kind: 'vibrate', ms: Array.isArray(ms) ? (ms[0] || 6) : (+ms || 6) }); return true; };
       const pend = new Map(); let seq = 0;
       window.__qShareDone = (id, ok, abort) => {

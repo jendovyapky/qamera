@@ -1459,7 +1459,10 @@ const NATCAM = !!(window.QNATIVE && QNATIVE.ncam && window.webkit && window.webk
 const NCAM = { seq: 0, wait: null, ctrl: null, info: null, last: 0 };
 if (window.__qNcamOff) setTimeout(() => toast('Kamera appky minule spadla – foťák jede postaru'), 4500);
 window.__qCam = (id, ok, a) => { const w = NCAM.wait; if (!w || w.id !== id) return; NCAM.wait = null; ok ? w.res(a) : w.rej(new Error(a || 'chyba')); };
-window.__qCamResume = () => { if (S.screen === 'camera' && CAM.live) liveOn(); };
+/* oživení hledáčku kamery appky (návrat z pozadí, přerušení kamery, spadlé spojení): nejvýš jednou za 5 s a nikdy přes rozjetý start */
+function natRevive() { const now = performance.now(); if (!NATCAM || S.screen !== 'camera' || !CAM.live || CAM.switching || S.busy || document.hidden || now - (NCAM.wd || 0) < 5000) return; NCAM.wd = now; liveOn(); }
+window.__qCamResume = () => setTimeout(natRevive, 250);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && CAM.nat) setTimeout(() => { if (performance.now() - NCAM.last > 1200) natRevive(); }, 700); });
 const natPost = m => { try { window.webkit.messageHandlers.qamera.postMessage(m); } catch {} };
 function natTrack(info) { const st = { zoom: 1 };
   return { label: info.label || 'Kamera appky', getCapabilities: () => ({ zoom: { min: 1, max: info.maxZoom || 1 }, torch: !!info.torch }),
@@ -1468,7 +1471,7 @@ function natTrack(info) { const st = { zoom: 1 };
     stop() {} }; }
 function natStream() {
   return new Promise((res, rej) => {
-    const ac = new AbortController(); NCAM.ctrl = ac; let first = true, got = false, decoding = false, pend = null;
+    const ac = new AbortController(); NCAM.ctrl = ac; let first = true, got = false, decoding = false, pend = null, tries = 0;
     const nv = CAM.nv, td = new TextDecoder();
     const show = async jpg => { if (decoding) { pend = jpg; return; } decoding = true;
       try { let j = jpg; while (j && !ac.signal.aborted) { pend = null; const bm = await createImageBitmap(new Blob([j], { type: 'image/jpeg' }));
@@ -1483,7 +1486,7 @@ function natStream() {
           const ml = (buf[4] << 8) | buf[5]; let meta = null; try { meta = JSON.parse(td.decode(buf.subarray(6, 6 + ml))); } catch {}
           const jpg = buf.slice(6 + ml, 4 + n); buf = buf.subarray(4 + n); if (meta) CAM.nlog = !!meta.log; got = true; show(jpg); } }
       throw new Error('stream skončil'); })
-      .catch(e => { if (ac.signal.aborted) return; if (first && !got) { rej(e); return; } setTimeout(() => { if (!ac.signal.aborted && CAM.nat) open(); }, 300); }); // spojení spadlo (uspání, nový server) → znovu
+      .catch(e => { if (ac.signal.aborted) return; if (first && !got && ++tries > 14) { rej(e); return; } setTimeout(() => { if (!ac.signal.aborted && CAM.nat) open(); }, 300); }); // spojení spadlo (uspání, nový server) → znovu
     open(); setTimeout(() => { if (first) { ac.abort(); rej(new Error('kamera neposílá obraz')); } }, 6000);
   });
 }
@@ -2442,6 +2445,7 @@ function startCam() {
   const loop = (now) => {
     camRaf = requestAnimationFrame(loop);
     const t = (now - camT0) / 1000, fresh = drawLive(t) !== false;
+    if (CAM.nat && CAM.live && NCAM.last && performance.now() - NCAM.last > 2500) natRevive(); // snímky z kamery appky nechodí → znovu spustit
     if (capturing) capturing.step(now);
     const vf = $('#vf'), dpr = Math.min(2, devicePixelRatio || 1);
     camE.size(Math.round(vf.clientWidth * dpr), Math.round(vf.clientHeight * dpr));
@@ -2694,12 +2698,13 @@ async function captureNativeClip() {
   S.busy = 'clip'; drawShutter(0);
   const st = CAM.track && CAM.track.getSettings ? CAM.track.getSettings() : {}, zoom = (st.zoom || 1) * (CAM.ultra ? 1 : S.zoom);
   const P = camParams(), f = FILM[P.film] || {}, film = f.base || P.film, vm = f.vm || { str: 1, grain: 1 };
-  const cc = $('#camCanvas'); CAM.switching = true; spring(0, 1, v => cc.style.filter = `blur(${v * 14}px) brightness(${1 - v * .35})`, { k: 260, c: 30 });
-  liveStop(); hud('raw', ['PŘIPRAVUJU', null, 'clip']);
-  const done = () => { clearInterval(NCLIP.iv); S.busy = null; drawShutter(); hud(); if (S.screen === 'camera') liveOn(); else { CAM.switching = false; cc.style.filter = ''; } };
+  const cc = $('#camCanvas'), same = !!(CAM.nat && CAM.nlog && QNATIVE.crec); // kamera appky v logu: klip se točí ze stejné běžící kamery, hledáček jede dál
+  if (!same) { CAM.switching = true; spring(0, 1, v => cc.style.filter = `blur(${v * 14}px) brightness(${1 - v * .35})`, { k: 260, c: 30 }); liveStop(); }
+  hud('raw', ['PŘIPRAVUJU', null, 'clip']);
   let r;
+  const done = () => { clearInterval(NCLIP.iv); S.busy = null; drawShutter(); hud(); if (same && (!r || r.same)) return; if (S.screen === 'camera') { NCAM.wd = performance.now(); liveOn(); } else { CAM.switching = false; cc.style.filter = ''; } };
   try { r = await new Promise((res, rej) => { const id = ++NCLIP.seq; NCLIP.wait = { id, res, rej }; setTimeout(() => { if (NCLIP.wait && NCLIP.wait.id === id) { NCLIP.wait = null; rej(new Error('kamera neodpověděla')); } }, 90000);
-      window.webkit.messageHandlers.qamera.postMessage({ kind: 'clip', id, sec: NCLIP.sec, zoom, ultra: !!CAM.ultra, tele: !!CAM.tele, film, str: clamp(P.str * (vm.str || 1), 0, 1), grain: clamp(P.grain * (vm.grain || 1), 0, 2), hal: clamp(P.hal * (f.hal ?? .5) * P.str, 0, 2), apl: CAM.nat && CAM.nlog ? 0 : APLK }); }); }
+      window.webkit.messageHandlers.qamera.postMessage({ kind: 'clip', id, sec: NCLIP.sec, zoom, ultra: !!CAM.ultra, tele: !!CAM.tele, film, str: clamp(P.str * (vm.str || 1), 0, 1), grain: clamp(P.grain * (vm.grain || 1), 0, 2), hal: clamp(P.hal * (f.hal ?? .5) * P.str, 0, 2), apl: CAM.nat && CAM.nlog ? 0 : APLK, same }); }); }
   catch (e) { done(); toast('Klip se nepovedl: ' + e.message); return; }
   done();
   try {
