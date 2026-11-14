@@ -1490,7 +1490,7 @@ uniform vec3 uSh,uHi; uniform float uFCon,uFSat,uFFade, uChar, uFSoft, uIRHue; u
 uniform vec3 uHsl[8]; uniform vec3 uGSh,uGMid,uGHi;
 uniform vec3 uTrMs,uTrSs,uTrMr,uTrSr; uniform float uTr;
 uniform float uSeed, uGlow, uIR, uStyle, uCells, uLevels, uPalN, uZebra;
-uniform vec3 uLF; uniform float uPol, uLat, uHR, uFBlur, uGV, uFV, uNeg, uEst, uHV;
+uniform vec3 uLF; uniform float uPol, uLat, uHR, uFBlur, uGV, uFV, uNeg, uApl, uEst, uHV;
 uniform vec3 uPal[6];
 uniform highp sampler3D uLut3; uniform float uLut;
 uniform sampler2D uDepth; uniform float uDOn, uDMode, uDAmt, uFocus, uVFlash; uniform vec2 uPar; uniform int uSampN;
@@ -1527,7 +1527,16 @@ float gLgT = 0., gLgD = 0.; /* log expozice negativu v EV kolem šedé (zrno pod
 vec3 skinWarm(vec3 c){ vec3 h = rgb2hsv(clamp(c, 0., 1.)); float d = abs(h.x - .065); d = min(d, 1. - d);
   float w = max(0., 1. - d / .055) * smoothstep(.1, .28, h.y) * (1. - smoothstep(.7, .95, h.y)) * smoothstep(.08, .3, h.z);
   if (w <= 0.) return c; h.x = fract(mix(h.x, .058, .35 * w)); h.y = clamp(h.y * (1. + .1 * w), 0., 1.); h.z *= 1. - .035 * w; return hsv2rgb(h); }
-vec3 filmLog(vec3 lin){ vec3 x = shTone(unShoulder(max(lin * exp2(-uExp), 0.)) * exp2(uExp));
+/* obraz z kamery iPhonu (hledáček, snímek ze streamu) je už zpracovaný Applem: hluboké stíny stažené do černé, horní střed
+   zesvětlený, barvy ~1,5× sytější než scéna. Zpětný převod naměřený na Honzových párech Apple fotka × Apple Log stejné scény
+   (párování kvantilů jasu, 14. 11. 2026): q1 % +1,7…2,5 EV, q9 % +0,5…1,1, střed 0, horní střed −0,2; sytost × 0,5–0,75
+   → do filmu jde přibližně totéž světlo jako u RAW / Apple Logu (světla nad 0,55 vrací už unShoulder) */
+vec3 aplInv(vec3 x){ float L = max(luma(x), 1e-5), lg = log2(L);
+  float s = lg < -5. ? mix(.5, .6, smoothstep(-7., -5., lg)) : mix(.6, .75, smoothstep(-4.5, -2., lg));
+  x = max(vec3(L) + (x - vec3(L)) * s, 0.);
+  float ev = min(2.4, 2.2 * exp2(-(lg + 7.6) / 1.8)) * (1. - smoothstep(-4.6, -2.7, lg)) - .22 * exp(-pow((lg + 1.8) / .8, 2.)) + 1.2 * smoothstep(-.3, 1., lg); // světla: Apple je stlačí pod bílou (q97 % +1,3…2 EV)
+  return x * exp2(ev); }
+vec3 filmLog(vec3 lin){ vec3 x = unShoulder(max(lin * exp2(-uExp), 0.)); if (uApl > .5) x = aplInv(x); x = shTone(x * exp2(uExp));
   x = max(mix(vec3(luma(x)), x, 1. + uSat), 0.);
   vec3 lg = log2(max(x, vec3(1e-6)) / .18) * (1. + uCon * .5);
   gLgT = dot(lg, vec3(.3, .5, .2)); vec3 t = clamp((lg - FLO) / (FHI - FLO), 0., 1.);
@@ -1772,7 +1781,7 @@ class Engine {
     const fk = (FFMT[P.ffmt] || FFMT['35']).k, nx = P.nexp || 0, latG = 1 + .3 * Math.max(-nx, 0) - .1 * Math.max(nx, 0); // větší negativ = jemnější zrno; podexpozice = víc zrna
     gl.uniform1f(u.uGrain, P.grain * vm.grain * G.a * (.6 + .4 * isoK) * k * latG / Math.sqrt(fk)); gl.uniform1f(u.uGFreq, 560 / (P.gsize * vm.gsize) * G.f / (.72 + .38 * isoK) * fk);
     const lt = LFS[P.lf], lw = f.bw || [.2126, .7152, .0722], ln = lt ? lt[0] * lw[0] + lt[1] * lw[1] + lt[2] * lw[2] : 1;
-    gl.uniform3fv(u.uLF, lt ? lt.map(x => x / ln) : [1, 1, 1]); gl.uniform1f(u.uPol, P.lf === 'POL' ? 1 : 0); gl.uniform1f(u.uLat, nx); gl.uniform1f(u.uHR, 1 / fk); gl.uniform1f(u.uGV, P.gv || 2); gl.uniform1f(u.uEst, !this.hasE && (P.hv || 1) >= 2 ? 1 : 0); gl.uniform1f(u.uHV, P.hv || 1); gl.uniform1f(u.uFBlur, P.ffmt === 'half' ? .55 : 0); // hv 2: odhad světel z 8bit obrazu (hledáček, JPEG) je slabší – bílý monitor / papír není lampa
+    gl.uniform3fv(u.uLF, lt ? lt.map(x => x / ln) : [1, 1, 1]); gl.uniform1f(u.uPol, P.lf === 'POL' ? 1 : 0); gl.uniform1f(u.uLat, nx); gl.uniform1f(u.uHR, 1 / fk); gl.uniform1f(u.uGV, P.gv || 2); gl.uniform1f(u.uEst, !this.hasE && (P.hv || 1) >= 2 ? 1 : 0); gl.uniform1f(u.uApl, P.apl ? 1 : 0); gl.uniform1f(u.uHV, P.hv || 1); gl.uniform1f(u.uFBlur, P.ffmt === 'half' ? .55 : 0); // hv 2: odhad světel z 8bit obrazu (hledáček, JPEG) je slabší – bílý monitor / papír není lampa
     gl.uniform1f(u.uSeed, o.seed != null ? o.seed : 7); gl.uniform1f(u.uGSharp, G.sh); gl.uniform1f(u.uGChroma, G.ch); gl.uniform1f(u.uGClump, G.cl); gl.uniform1f(u.uGMot, G.mot);
     gl.uniform1f(u.uVig, P.vig * k); gl.uniform1f(u.uFade, P.fade); gl.uniform1f(u.uSharp, P.sharp); gl.uniform1f(u.uShad, P.shad || 0); gl.uniform1f(u.uHil, P.hil || 0);
     gl.uniform1f(u.uChar, P.chr ?? f.chr ?? .6); gl.uniform3fv(u.uBW, f.bw || [0, 0, 0]); gl.uniform3fv(u.uBTone, f.tone || [1, 1, 1]); gl.uniform1f(u.uBToe, f.toe || 0);
@@ -2180,10 +2189,12 @@ function closeSheets() { ['#filmSheet', '#menuSheet', '#dxSheet'].forEach(s => {
 let camE, camRaf = 0, camT0 = performance.now(), capturing = null, miniEyes, camN = 0, isoApi = null, timApi = null, timerIv = 0, lastShot = 0;
 /* push/pull: ISO nad citlivostí filmu = tlačený film (víc kontrastu a grainu), pod ní = pull (měkčí) */
 function pushK() { const iso = ISO_STOPS[S.isoIdx]; return iso === 'A' ? 0 : clamp(Math.log2(+iso / FILM[S.film].iso), -3, 3); }
+const APLCAM = !!window.QNATIVE || /iPhone|iPad/.test(navigator.userAgent);
 function camParams() {
   const P = S.camRecipe ? Object.assign(DEF(), JSON.parse(JSON.stringify(S.camRecipe))) : DEF(); P.film = S.film; P.exp = S.ev; const k = pushK();
   if (!S.camRecipe) applyMyDef(P); const cs = camSetOf(S.film); if (cs) Object.assign(P, cs);
   P.ffmt = S.fmt === 'half' ? 'half' : S.fmt === '66' ? '66' : S.fmt === '67' ? '67' : '35'; // formát foťáku = velikost políčka filmu (zrno, halation)
+  if (CAM.live && APLCAM) P.apl = 1; // obraz z kamery iPhonu = zpracovaný Applem (zpětný převod v shaderu)
   if (k) { P.con += .16 * k; P.grain *= 1 + .5 * Math.max(k, 0) - .22 * Math.max(-k, 0); P.gsize *= 1 + .15 * Math.max(k, 0); P.sat += .05 * k; P.fade += .07 * Math.max(-k, 0); P.hal *= 1 + .18 * Math.max(k, 0); }
   return P;
 }
@@ -2530,7 +2541,7 @@ async function captureNativeRaw() {
   if (S.screen === 'camera') liveOn(); else { CAM.switching = false; cc.style.filter = ''; } // hledáček zpět hned, vyvolání běží mezitím
   hud('raw', ['VYVOLÁVÁM']);
   try {
-    const get = async u => u ? (await fetch(u)).blob() : null, files = ['jpg', 'hl', 'depth', 'dng'].map(k => r[k]).filter(Boolean);
+    const get = capGet, files = ['jpg', 'hl', 'depth', 'dng'].map(k => r[k]).filter(Boolean);
     const [bj, bh, bd, bn] = await Promise.all([get(r.jpg), get(r.hl), get(r.depth), get(r.dng)]); window.webkit.messageHandlers.qamera.postMessage({ kind: 'rawDone', files });
     let d;
     if (bj) d = { canvas: await decodeTo(bj, 8192), hl: bh ? await decodeTo(bh, 8192) : null, date: new Date() };
@@ -2558,6 +2569,11 @@ window.__qClipRec = id => { const w = NCLIP.wait; if (!w || w.id !== id) return;
   clearInterval(NCLIP.iv); NCLIP.iv = setInterval(() => { const k = clamp((performance.now() - w.t0) / (NCLIP.sec * 1000), 0, 1); drawShutter(k); hud('raw', [`NATÁČÍM ${Math.min(NCLIP.sec, Math.floor(k * NCLIP.sec) + 1)}/${NCLIP.sec}`, k, 'clip']);
     if (k >= 1) { clearInterval(NCLIP.iv); hud('raw', ['VYVOLÁVÁM', 0, 'clip']); } }, 100); };
 window.__qClipProg = (id, p) => { const w = NCLIP.wait; if (!w || w.id !== id) return; clearInterval(NCLIP.iv); drawShutter(clamp(p, 0, 1)); hud('raw', ['VYVOLÁVÁM', clamp(p, 0, 1), 'clip']); };
+/* soubor z nativní spouště přes LocalServer appky; když iOS mezitím (uspání, zamčení) zrušil naslouchání serveru,
+   fetch spadne s „Load failed“ → požádat appku o nový server a zkusit znovu (až 4×) */
+async function capGet(u) { if (!u) return null;
+  for (let i = 0; ; i++) { try { const r = await fetch(u); if (!r.ok) throw new Error('soubor ' + r.status); return await r.blob(); }
+    catch (e) { if (i >= 3) throw e; try { window.webkit.messageHandlers.qamera.postMessage({ kind: 'server' }); } catch {} await new Promise(r => setTimeout(r, 400 + i * 500)); } } }
 async function captureNativeClip() {
   S.busy = 'clip'; drawShutter(0);
   const st = CAM.track && CAM.track.getSettings ? CAM.track.getSettings() : {}, zoom = (st.zoom || 1) * (CAM.ultra ? 1 : S.zoom);
@@ -2571,7 +2587,7 @@ async function captureNativeClip() {
   catch (e) { done(); toast('Klip se nepovedl: ' + e.message); return; }
   done();
   try {
-    const get = async u => u ? (await fetch(u)).blob() : null, [bv, bj] = await Promise.all([get(r.mp4), get(r.jpg)]);
+    const [bv, bj] = await Promise.all([capGet(r.mp4), capGet(r.jpg)]);
     window.webkit.messageHandlers.qamera.postMessage({ kind: 'rawDone', files: [r.mp4, r.jpg].filter(Boolean) });
     if (!bv || !bv.size) throw new Error('prázdný soubor');
     const src = bj ? await decodeTo(bj, PREV) : mk(360, 640);
@@ -2622,7 +2638,7 @@ function finishCapture(src0, x) {
     if (!S.dblFirst) { S.dblFirst = src; showGhost(src); updFmt(); blink(); toast('První expozice hotová, vyfoť druhou přes ni'); return; }
     const a = S.dblFirst, c = mk(a.width, a.height), g = c.getContext('2d'); g.drawImage(a, 0, 0); g.globalCompositeOperation = 'screen'; g.drawImage(src, 0, 0, a.width, a.height); src = c; S.dblFirst = null; showGhost(null); updFmt();
   }
-  const P = camParams(); if (S.flash === 2) P.vflash = .85;
+  const P = camParams(); if (S.flash === 2) P.vflash = .85; if (x) delete P.apl; // RAW = lineární světlo, bez zpětného převodu
   if (S.dispo) { const sh = { id: uid(), src, P, date: new Date(), roll: 'active' }; S.dispo.shots.push(sh); dbPutShot(sh); blink(); updDispo(); return; }
   const fl = $('#flash');
   if (S.flash || +fl.style.opacity > 0) spring(+fl.style.opacity || 1, 0, v => fl.style.opacity = v * .9, { k: 60, c: 14 });

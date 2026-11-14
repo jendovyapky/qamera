@@ -60,12 +60,13 @@ async function png16(u8) {
 /* ---------- vyvolání: automatická expozice, filmové rameno světel, mapa světel ---------- */
 const SRGB = (() => { const t = new Uint8ClampedArray(4097); for (let i = 0; i <= 4096; i++) { const v = i / 4096; t[i] = Math.round(255 * (v <= .0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - .055)); } return t; })();
 async function develop(W, H, get, onStep, baseline = 0) {
-  // jako RawDevelop.swift: expozice telefonu (BaselineExposure) + doladění k průměru 0,17, ztmavit max −0,5 EV, zesvětlit jen tak, aby 99,5. percentil zůstal pod 0,92
+  /* jako RawDevelop.swift: expozice telefonu (BaselineExposure) + doladění k průměru 0,17 (= jako změří iPhone pro hledáček i Apple Log).
+     Světla chrání jen o max 0,5 EV (99,5. percentil do 2,0 = rozsah, který film v2 vrátí z ramene) – dřív strop 0,92 ztmavil protisvětlo až o 3,5 EV oproti hledáčku */
   let ls = 0, ln = 0; const step = Math.max(1, Math.floor(Math.sqrt(W * H / 40000))), px = [0, 0, 0], mx = [], g0 = Math.pow(2, baseline || 0);
   for (let y = 0; y < H; y += step) for (let x = 0; x < W; x += step) { get(x, y, px); const Y = (.2126 * px[0] + .7152 * px[1] + .0722 * px[2]) * g0; ls += Math.log2(Math.max(Y, 1e-5)); ln++; mx.push(Math.max(px[0], px[1], px[2]) * g0); }
   mx.sort((a, b) => a - b); const p995 = mx[Math.min(mx.length - 1, Math.floor(mx.length * .995))] || 0;
-  const evMean = Math.max(-2, Math.min(3, Math.log2(.17) - ls / Math.max(ln, 1))), evHi = p995 > 0 ? Math.log2(.92 / p995) : 3;
-  let ev = Math.min(evMean, Math.max(evHi, -.5)); if (!Number.isFinite(ev)) ev = 0; ev += baseline || 0; const g = Math.pow(2, ev);
+  const evMean = Math.max(-2, Math.min(4, Math.log2(.17) - ls / Math.max(ln, 1))), evHi = p995 > 0 ? Math.log2(2 / p995) : 4;
+  let ev = Math.max(evMean - .5, Math.min(evMean, evHi)); if (!Number.isFinite(ev)) ev = 0; ev += baseline || 0; const g = Math.pow(2, ev);
   const c = document.createElement('canvas'); c.width = W; c.height = H; const cg = c.getContext('2d'), id = cg.createImageData(W, H), d = id.data;
   const hk = Math.min(1, HLS / Math.max(W, H)), hw = Math.max(1, Math.round(W * hk)), hh = Math.max(1, Math.round(H * hk)), hv = new Float32Array(hw * hh), hn = new Float32Array(hw * hh);
   for (let y = 0; y < H; y++) { const hy = Math.min(hh - 1, (y * hk) | 0);
@@ -73,7 +74,7 @@ async function develop(W, H, get, onStep, baseline = 0) {
       if (m > .55) { const f = .55 + .45 * (1 - Math.exp(-(m - .55) / .45)), k = f / m, w = clip ? Math.min(1, Math.max(0, (m - 1) / 6)) : 0; // měkké rameno zachová odstín (film v2 ho v shaderu přesně vrátí, unShoulder); do bílé jen ořezaný senzor, jinak by světla zrůžověla
         r = r * k * (1 - w) + f * w; gg = gg * k * (1 - w) + f * w; b = b * k * (1 - w) + f * w; }
       const i = (y * W + x) * 4; d[i] = SRGB[Math.min(4096, (r * 4096) | 0)]; d[i + 1] = SRGB[Math.min(4096, (gg * 4096) | 0)]; d[i + 2] = SRGB[Math.min(4096, (b * 4096) | 0)]; d[i + 3] = 255;
-      const hi = hy * hw + Math.min(hw - 1, (x * hk) | 0); hv[hi] += Math.max(m > 1.2 ? Math.min(1, .25 + Math.log2(m / 1.2) / 3) : 0, clip ? .5 : 0); hn[hi]++; } // jako RawDevelop: jen světla nad 1,2; ořezaný senzor = aspoň 1,5 EV nad bílou
+      const hi = hy * hw + Math.min(hw - 1, (x * hk) | 0); hv[hi] += Math.max(m > 2 ? Math.min(1, .25 + Math.log2(m / 2) / 3) : 0, clip ? .5 : 0); hn[hi]++; } // jako RawDevelop: jen světla nad 2,0 (~3,5 EV nad šedou: lampy, slunce, odlesky – ne nebe); ořezaný senzor = aspoň 1,5 EV nad bílou
     if (y % 256 === 0) { onStep && onStep(.75 + .2 * y / H, 'Vyvolávám'); await sleep(); } }
   cg.putImageData(id, 0, 0);
   const hc = document.createElement('canvas'); hc.width = hw; hc.height = hh; const hg = hc.getContext('2d'), hd = hg.createImageData(hw, hh);

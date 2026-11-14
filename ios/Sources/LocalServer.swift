@@ -20,6 +20,15 @@ final class LocalServer {
         queue.async { self.listen() }
     }
 
+    // Po uspání iOS socket naslouchání potichu zruší (stav zůstane .ready, nové spojení ale neprojde) → vždy nový listener
+    func restart() {
+        queue.async {
+            self.listener?.cancel()
+            self.listener = nil
+            self.queue.asyncAfter(deadline: .now() + 0.1) { if self.listener == nil { self.listen() } }
+        }
+    }
+
     // Po návratu z pozadí může být naslouchání zrušené → znovu
     func ensureRunning() {
         queue.async {
@@ -37,8 +46,10 @@ final class LocalServer {
         guard let l = try? NWListener(using: params) else { return }
         l.newConnectionHandler = { [weak self] c in self?.handle(c) }
         l.stateUpdateHandler = { [weak self] st in
-            if case .failed = st {
+            switch st {
+            case .failed, .waiting:
                 self?.queue.asyncAfter(deadline: .now() + 0.3) { self?.ensureRunning() }
+            default: break
             }
         }
         l.start(queue: queue)

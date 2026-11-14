@@ -80,7 +80,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     }
 
     @objc private func foreground() {
-        server?.ensureRunning()
+        server?.restart()
         vol?.resume()
     }
 
@@ -193,6 +193,8 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
             }
         case "cam":
             vol?.set((m["on"] as? Bool) ?? false)
+        case "server": // web nedostal soubor ze serveru (Load failed) → nový listener
+            server?.restart()
         case "rawDone":
             for f in (m["files"] as? [String]) ?? [] { raw.remove(f) }
         default:

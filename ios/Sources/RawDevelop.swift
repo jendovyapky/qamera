@@ -52,12 +52,12 @@ enum RawDevelop {
             mx.append(max(sb[i], sb[i + 1], sb[i + 2]))
         }
         mx.sort()
-        // Doladění kolem expozice telefonu: tmavou scénu zesvětlit jen tak, aby se nepřepálila velká světlá plocha
-        // (99,5. percentil pod 0,92 – jinak monitor / okno zbělá a mapa světel z něj udělá mlhu), světlou ztmavit
+        // Doladění k průměru 0,17 (= jako iPhone měří hledáček i Apple Log); světla chrání jen o max 0,5 EV
+        // (99,5. percentil do 2,0 = rozsah, který film v2 ve webu vrátí z ramene). Dřív strop 0,92 ztmavil protisvětlo až o 3,5 EV oproti hledáčku.
         let p995 = Double(mx.isEmpty ? 0 : mx[min(mx.count - 1, mx.count * 995 / 1000)])
-        let evMean = max(-2, min(3, log2(0.17) - ls / max(ln, 1)))
-        let evHi = p995 > 0 ? log2(0.92 / p995) : 3
-        var ev = min(evMean, max(evHi, -0.5))
+        let evMean = max(-2, min(4, log2(0.17) - ls / max(ln, 1)))
+        let evHi = p995 > 0 ? log2(2.0 / p995) : 4
+        var ev = max(evMean - 0.5, min(evMean, evHi))
         if !ev.isFinite { ev = 0 }
         let g = Float(pow(2, ev))
 
@@ -90,8 +90,8 @@ enum RawDevelop {
                     out[o + 1] = lut[min(4096, Int(gg * 4096))]
                     out[o + 2] = lut[min(4096, Int(b * 4096))]
                     let hi = hy * hw + min(hw - 1, Int(Double(x) * hk))
-                    // jen skutečně přepálená světla (lampy, slunce), ne obyčejně světlá plocha
-                    hv[hi] += m > 1.2 ? min(1, 0.25 + log2(m / 1.2) / 3) : 0
+                    // jen skutečně přepálená světla (lampy, slunce, odlesky: nad 2,0 ≈ 3,5 EV nad šedou), ne nebe ani bílá zeď
+                    hv[hi] += m > 2.0 ? min(1, 0.25 + log2(m / 2.0) / 3) : 0
                     hn[hi] += 1
                 }
             }
