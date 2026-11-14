@@ -24,7 +24,7 @@ enum RawDevelop {
         return UInt8((255 * (v <= 0.0031308 ? v * 12.92 : 1.055 * pow(v, 1 / 2.4) - 0.055)).rounded())
     }
 
-    static func develop(_ data: Data, maxSide: Int = 4096, hlMax: Int = 512, targetMean: Double? = nil) throws -> Output {
+    static func develop(_ data: Data, maxSide: Int = 4096, hlMax: Int = 512, targetMean: Double? = nil, denoise: Bool = true) throws -> Output {
         guard let f = CIRAWFilter(imageData: data, identifierHint: UTType("com.adobe.raw-image")?.identifier) else {
             throw QError(message: "RAW se nepodařilo otevřít")
         }
@@ -34,8 +34,11 @@ enum RawDevelop {
         f.boostAmount = 0
         f.exposure = 0
         if f.isLocalToneMapSupported { f.localToneMapAmount = 0 }
-        if f.isColorNoiseReductionSupported { f.colorNoiseReductionAmount = 1 }
-        if f.isLuminanceNoiseReductionSupported { f.luminanceNoiseReductionAmount = max(f.luminanceNoiseReductionAmount, 0.5) }
+        // odšumění navíc jen pro jeden snímek ze senzoru (Bayer); ProRAW je už odšuměný Applem – další odšumění ho jen rozmaže do fleků
+        if denoise {
+            if f.isColorNoiseReductionSupported { f.colorNoiseReductionAmount = 1 }
+            if f.isLuminanceNoiseReductionSupported { f.luminanceNoiseReductionAmount = max(f.luminanceNoiseReductionAmount, 0.5) }
+        }
         guard let img = f.outputImage else { throw QError(message: "RAW se nepodařilo vyvolat") }
         return try develop(image: img, maxSide: maxSide, hlMax: hlMax, fixedEV: nil, targetMean: targetMean)
     }

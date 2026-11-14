@@ -157,7 +157,7 @@ final class RawCapture: NSObject {
                         let st = Ladeni.stamp()
                         Ladeni.save("raw-\(st).dng", shot.raw)
                         do {
-                            let o = try RawDevelop.develop(shot.raw, targetMean: self.targetMean)
+                            let o = try RawDevelop.develop(shot.raw, targetMean: self.targetMean, denoise: res.label != "ProRAW")
                             Ladeni.json("raw-\(st).json", ["mean": self.targetMean ?? -1, "ev": o.ev, "label": res.label, "lensZoom": res.lensZoom])
                             try o.jpg.write(to: Self.dir.appendingPathComponent(id + ".jpg")); res.files["jpg"] = id + ".jpg"
                             if let hl = o.hl { try hl.write(to: Self.dir.appendingPathComponent(id + "-hl.png")); res.files["hl"] = id + "-hl.png" }

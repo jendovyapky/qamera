@@ -1777,7 +1777,7 @@ void main(){
     if (Lz > .9) c = mix(c, vec3(1.,.77,.24), .85*st); if (Lz < .07) c = mix(c, vec3(.2,.45,1.), .7*st); }
   o = vec4(clamp(c,0.,1.), 1.);
 }`;
-const DEF = () => ({ gv: 2, fv: 3, hv: 2, film: 'P400', str: 1, exp: 0, temp: 0, tint: 0, con: 0, hil: 0, shad: 0, sat: 0, grain: .5, gsize: 1, gtype: null, hal: 1, bloom: .15, glow: null, vig: .25, fade: 0, sharp: 0, style: null, frame: null, dx: null,
+const DEF = () => ({ gv: 2, fv: 3, hv: 2, grv: 2, film: 'P400', str: 1, exp: 0, temp: 0, tint: 0, con: 0, hil: 0, shad: 0, sat: 0, grain: .5, gsize: 1, gtype: null, hal: 1, bloom: .15, glow: null, vig: .25, fade: 0, sharp: 0, style: null, frame: null, dx: null,
   curve: { rgb: [[0, 0], [1, 1]], r: [[0, 0], [1, 1]], g: [[0, 0], [1, 1]], b: [[0, 0], [1, 1]] }, hsl: Array.from({ length: 8 }, () => [0, 0, 0]),
   grade: { sh: [0, 0], mid: [0, 0], hi: [0, 0] }, tr: 0, crop: { ar: 0, s: 1, x: 0, y: 0, rot: 0 } });
 
@@ -1862,7 +1862,8 @@ class Engine {
     const k = P.film === 'NONE' ? 0 : clamp(P.str * vm.str, 0, 1); // síla filmu řídí celý filmový vzhled – při 0 % je fotka původní (zůstanou jen Úpravy)
     gl.uniform1f(u.uStr, k); gl.uniform1f(u.uFSoft, (P.fsoft ?? f.fsoft ?? 0) * k); gl.uniform1f(u.uHal, P.hal * f.hal * k); gl.uniform1f(u.uBloom, P.bloom * vm.bloom * k);
     const fk = (FFMT[P.ffmt] || FFMT['35']).k, nx = P.nexp || 0, latG = 1 + .3 * Math.max(-nx, 0) - .1 * Math.max(nx, 0); // větší negativ = jemnější zrno; podexpozice = víc zrna
-    gl.uniform1f(u.uGrain, P.grain * vm.grain * G.a * (.6 + .4 * isoK) * k * latG / Math.sqrt(fk)); gl.uniform1f(u.uGFreq, 560 / (P.gsize * vm.gsize) * G.f / (.72 + .38 * isoK) * fk);
+    const g2 = (P.grv || 1) >= 2, gNeg = fv > 1 && v2 && (v2 !== 3 || (P.fv || 1) >= 3); // grv 2: klidnější zrno (jen nové úpravy)
+    gl.uniform1f(u.uGrain, P.grain * vm.grain * G.a * (g2 ? (.74 + .16 * isoK) * (gNeg ? .7 : .85) : .6 + .4 * isoK) * k * latG / Math.sqrt(fk)); gl.uniform1f(u.uGFreq, 560 / (P.gsize * vm.gsize) * G.f / (g2 ? .86 + .24 * isoK : .72 + .38 * isoK) * fk);
     const lt = LFS[P.lf], lw = f.bw || [.2126, .7152, .0722], ln = lt ? lt[0] * lw[0] + lt[1] * lw[1] + lt[2] * lw[2] : 1;
     gl.uniform3fv(u.uLF, lt ? lt.map(x => x / ln) : [1, 1, 1]); gl.uniform1f(u.uPol, P.lf === 'POL' ? 1 : 0); gl.uniform1f(u.uLat, nx); gl.uniform1f(u.uHR, 1 / fk); gl.uniform1f(u.uGV, P.gv || 2); gl.uniform1f(u.uEst, !this.hasE && (P.hv || 1) >= 2 ? 1 : 0); gl.uniform1f(u.uApl, clamp(+P.apl || 0, -1, 1)); gl.uniform1f(u.uHV, P.hv || 1); gl.uniform1f(u.uFBlur, P.ffmt === 'half' ? .55 : 0); // hv 2: odhad světel z 8bit obrazu (hledáček, JPEG) je slabší – bílý monitor / papír není lampa
     gl.uniform1f(u.uSeed, o.seed != null ? o.seed : 7); gl.uniform1f(u.uGSharp, G.sh); gl.uniform1f(u.uGChroma, G.ch); gl.uniform1f(u.uGClump, G.cl); gl.uniform1f(u.uGMot, G.mot);
@@ -2277,7 +2278,7 @@ function camParams() {
   const P = S.camRecipe ? Object.assign(DEF(), JSON.parse(JSON.stringify(S.camRecipe))) : DEF(); P.film = S.film; P.exp = S.ev; const k = pushK();
   if (!S.camRecipe) applyMyDef(P); const cs = camSetOf(S.film); if (cs) Object.assign(P, cs);
   P.ffmt = S.fmt === 'half' ? 'half' : S.fmt === '66' ? '66' : S.fmt === '67' ? '67' : '35'; // formát foťáku = velikost políčka filmu (zrno, halation)
-  if (CAM.live && CAM.nat && CAM.nlog) P.apl = -APLK; // kamera appky v logu = světlo scény jako RAW → napůl k vzhledu iPhonu (stejně jako RAW fotka a klip)
+  if (CAM.live && CAM.nat && CAM.nlog) delete P.apl; // kamera appky v logu = světlo scény → rovnou film (poctivá simulace, žádné přibarvení navrch)
   else if (CAM.live && APLCAM) P.apl = APLK; // obraz z kamery iPhonu = zpracovaný Applem → napůl zpět ke scéně (shader aplInv)
   if (k) { P.con += .16 * k; P.grain *= 1 + .5 * Math.max(k, 0) - .22 * Math.max(-k, 0); P.gsize *= 1 + .15 * Math.max(k, 0); P.sat += .05 * k; P.fade += .07 * Math.max(-k, 0); P.hal *= 1 + .18 * Math.max(k, 0); }
   return P;
@@ -2622,9 +2623,28 @@ function liveMean() {
   let s = 0, k = 0; for (let i = 0; i < d.length; i += 4) { s += Math.log2(Math.max(1e-5, .2126 * lin(d[i]) + .7152 * lin(d[i + 1]) + .0722 * lin(d[i + 2]))); k++; }
   return k ? Math.pow(2, s / k) : null;
 }
+/* RAW z appky je celý senzor (4:3), hledáček je video (16:9) = užší záběr → stejný výřez jako hledáček (va = poměr stran videa) */
+function cropLikeView(src, ar, z, va) { const W = src.width, H = src.height, sa = W / H; let vw = W, vh = H;
+  if (va) { if ((sa > 1) !== (va > 1)) va = 1 / va; if (va < sa) vw = H * va; else vh = W / va; }
+  let w = vw, h = vh; if (vw / vh > ar) w = vh * ar; else h = vw / ar; w = Math.round(w / z); h = Math.round(h / z);
+  const c = mk(w, h); c.getContext('2d').drawImage(src, (W - w) / 2, (H - h) / 2, w, h, 0, 0, w, h); return c; }
+/* RAW se fotí z jiné session než hledáček (jiné měření expozice a bílé) → fotka se srovná na poslední snímek hledáčku:
+   zisk po kanálech z kvantilů 40–75 % (střední tóny; stíny mají v RAW a videu jinou úroveň černé). Jen pár čísel, žádná křivka */
+const shLin = v => { v /= 255; v = v <= .04045 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); return v > .55 ? .55 - .45 * Math.log(Math.max(1e-4, 1 - (v - .55) / .45)) : v; };
+const shEnc = v => { v = v > .55 ? .55 + .45 * (1 - Math.exp(-(v - .55) / .45)) : Math.max(v, 0); return 255 * (v <= .0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - .055); };
+function viewRef(ar, z) { if (!(CAM.nat && CAM.nlog && LIVE.canvas)) return null; const c = cropAr(LIVE.canvas, ar, z), s = mk(64, Math.max(8, Math.round(64 * c.height / c.width)));
+  s.getContext('2d').drawImage(c, 0, 0, s.width, s.height); freeCanvas(c); return s; }
+function chanQ(src) { const s = mk(64, Math.max(8, Math.round(64 * src.height / src.width))), g = s.getContext('2d', { willReadFrequently: true }); g.drawImage(src, 0, 0, s.width, s.height);
+  const d = g.getImageData(0, 0, s.width, s.height).data, n = d.length / 4; freeCanvas(s);
+  return [0, 1, 2].map(k => { const a = new Float32Array(n); for (let i = 0; i < n; i++) a[i] = Math.log2(Math.max(1e-4, shLin(d[i * 4 + k]))); a.sort(); return [.4, .5, .6, .75].map(q => a[Math.min(n - 1, Math.round(q * (n - 1)))]); }); }
+function matchGains(ref, shot) { const a = chanQ(ref), b = chanQ(shot), e = [0, 1, 2].map(k => a[k].reduce((s, v, i) => s + v - b[k][i], 0) / a[k].length);
+  const eg = clamp(e[1], -2, 2); return [0, 1, 2].map(k => Math.pow(2, eg + clamp(e[k] - e[1], -.6, .6))); }
+function applyGains(c, gn) { if (gn.every(v => Math.abs(v - 1) < .03)) return; const lut = gn.map(k => { const t = new Uint8ClampedArray(256); for (let i = 0; i < 256; i++) t[i] = Math.round(shEnc(shLin(i) * k)); return t; });
+  const g = c.getContext('2d', { willReadFrequently: true }), H = c.height, band = 512;
+  for (let y = 0; y < H; y += band) { const im = g.getImageData(0, y, c.width, Math.min(band, H - y)), d = im.data; for (let i = 0; i < d.length; i += 4) { d[i] = lut[0][d[i]]; d[i + 1] = lut[1][d[i + 1]]; d[i + 2] = lut[2][d[i + 2]]; } g.putImageData(im, 0, y); } }
 async function captureNativeRaw(mode) {
   const still = mode === 'still'; S.busy = 'raw'; drawShutter(0);
-  const st = CAM.track && CAM.track.getSettings ? CAM.track.getSettings() : {}, zoom = st.zoom || 1, viewZoom = S.zoom, fmt = S.fmt, cc = $('#camCanvas'), mean = still ? null : liveMean();
+  const st = CAM.track && CAM.track.getSettings ? CAM.track.getSettings() : {}, zoom = st.zoom || 1, viewZoom = S.zoom, fmt = S.fmt, cc = $('#camCanvas'), mean = still ? null : liveMean(), nat = !!(CAM.nat && CAM.nlog), va = !still && nat && LIVE.canvas ? LIVE.canvas.width / LIVE.canvas.height : 0, ref = still ? null : viewRef(FORMATS[S.fmt].ar, S.zoom);
   if (still) { const ir = $('#iris'); spring(1, 0, v => ir.style.opacity = v * .85, { k: 160, c: 22 }); hud('raw', ['FOTÍM']); } // snímek z běžící kamery appky (už přiblížený), hledáček jede dál
   // RAW: kamera patří na chvíli jiné session: hledáček drží poslední snímek rozmazaný (jako přepnutí objektivu), ne demo
   else { CAM.switching = true; spring(0, 1, v => cc.style.filter = `blur(${v * 14}px) brightness(${1 - v * .35})`, { k: 260, c: 30 }); liveStop(); hud('raw', ['FOTÍM']); }
@@ -2644,14 +2664,15 @@ async function captureNativeRaw(mode) {
     const dep0 = bd ? await decodeTo(bd, 8192) : null;
     // stejný výřez jako hledáček: formát + digitální zoom + optický zoom, který objektiv appky nepokryl
     const ar = FORMATS[fmt].ar, z = viewZoom * (still || CAM.ultra ? 1 : Math.max(1, zoom / (r.lensZoom || 1)));
-    const full = cropAr(d.canvas, ar, z); freeCanvas(d.canvas);
-    const hl = d.hl ? cropAr(d.hl, ar, z) : null, depth = dep0 ? cropAr(dep0, ar, z) : null;
+    const full = cropLikeView(d.canvas, ar, z, va); freeCanvas(d.canvas);
+    if (ref) { try { applyGains(full, matchGains(ref, full)); } catch (e) {} freeCanvas(ref); }
+    const hl = d.hl ? cropLikeView(d.hl, ar, z, va) : null, depth = dep0 ? cropLikeView(dep0, ar, z, va) : null;
     const depthBlob = depth ? await new Promise(res => depth.toBlob(res, 'image/png')) : null;
     const blob = await new Promise(res => full.toBlob(res, 'image/jpeg', .95)); if (!blob) throw new Error('Došla paměť na obrázky');
     const src = shrink(full, WORK); if (src !== full) freeCanvas(full);
     const hlBlob = hl ? await new Promise(res => hl.toBlob(res, 'image/png')) : null;
     done();
-    finishCapture(src, { blob, hl, hlBlob, depth, depthBlob, raw: r.label || 'RAW', date: d.date });
+    finishCapture(src, { blob, hl, hlBlob, depth, depthBlob, raw: r.label || 'RAW', date: d.date, nat });
   } catch (e) { done(); toast('RAW se nepodařilo vyvolat: ' + String((e && e.message) || e).slice(0, 80)); }
 }
 /* KLIP v appce (iPhone): 5 s videa v Apple Logu (15 Pro a novější, jinak běžné video), appka na něj nativně nanese film
@@ -2678,7 +2699,7 @@ async function captureNativeClip() {
   const done = () => { clearInterval(NCLIP.iv); S.busy = null; drawShutter(); hud(); if (S.screen === 'camera') liveOn(); else { CAM.switching = false; cc.style.filter = ''; } };
   let r;
   try { r = await new Promise((res, rej) => { const id = ++NCLIP.seq; NCLIP.wait = { id, res, rej }; setTimeout(() => { if (NCLIP.wait && NCLIP.wait.id === id) { NCLIP.wait = null; rej(new Error('kamera neodpověděla')); } }, 90000);
-      window.webkit.messageHandlers.qamera.postMessage({ kind: 'clip', id, sec: NCLIP.sec, zoom, ultra: !!CAM.ultra, tele: !!CAM.tele, film, str: clamp(P.str * (vm.str || 1), 0, 1), grain: clamp(P.grain * (vm.grain || 1), 0, 2), hal: clamp(P.hal * (f.hal ?? .5) * P.str, 0, 2), apl: APLK }); }); }
+      window.webkit.messageHandlers.qamera.postMessage({ kind: 'clip', id, sec: NCLIP.sec, zoom, ultra: !!CAM.ultra, tele: !!CAM.tele, film, str: clamp(P.str * (vm.str || 1), 0, 1), grain: clamp(P.grain * (vm.grain || 1), 0, 2), hal: clamp(P.hal * (f.hal ?? .5) * P.str, 0, 2), apl: CAM.nat && CAM.nlog ? 0 : APLK }); }); }
   catch (e) { done(); toast('Klip se nepovedl: ' + e.message); return; }
   done();
   try {
@@ -2733,7 +2754,7 @@ function finishCapture(src0, x) {
     if (!S.dblFirst) { S.dblFirst = src; showGhost(src); updFmt(); blink(); toast('První expozice hotová, vyfoť druhou přes ni'); return; }
     const a = S.dblFirst, c = mk(a.width, a.height), g = c.getContext('2d'); g.drawImage(a, 0, 0); g.globalCompositeOperation = 'screen'; g.drawImage(src, 0, 0, a.width, a.height); src = c; S.dblFirst = null; showGhost(null); updFmt();
   }
-  const P = camParams(); if (S.flash === 2) P.vflash = .85; if (x) P.apl = -APLK; // RAW = lineární světlo → napůl k vzhledu iPhonu (stejný cíl jako hledáček)
+  const P = camParams(); if (S.flash === 2) P.vflash = .85; if (x) { if (x.nat) delete P.apl; else P.apl = -APLK; } // RAW vedle kamery z WebKitu: napůl k vzhledu iPhonu; s kamerou appky je hledáček i RAW světlo scény → bez převodu
   if (S.dispo) { const sh = { id: uid(), src, P, date: new Date(), roll: 'active' }; S.dispo.shots.push(sh); dbPutShot(sh); blink(); updDispo(); return; }
   const fl = $('#flash');
   if (S.flash || +fl.style.opacity > 0) spring(+fl.style.opacity || 1, 0, v => fl.style.opacity = v * .9, { k: 60, c: 14 });
@@ -3973,7 +3994,7 @@ function useDxOther(ph) { const cur = S.cur; S.dxReturn = null; $('#camBanner').
    Recepty: uložený vzhled (film + grain + úpravy), sdílení odkazem a QR
    ===================================================================== */
 /* úpravy uložené před 0.18 nemají gv → záře se jim počítá postaru (vypadají pořád stejně) */
-const oldGv = P => { if (P && P.gv == null) P.gv = 1; if (P && P.fv == null) P.fv = 1; if (P && P.hv == null) P.hv = 1; if (P && P.film === 'G200C') P.film = 'G200'; return P; }; // uložené úpravy si nechají starou záři / starý film
+const oldGv = P => { if (P && P.gv == null) P.gv = 1; if (P && P.fv == null) P.fv = 1; if (P && P.hv == null) P.hv = 1; if (P && P.grv == null) P.grv = 1; if (P && P.film === 'G200C') P.film = 'G200'; return P; }; // uložené úpravy si nechají starou záři / starý film
 let RECIPES = store.get('recipes', []); RECIPES.forEach(r => oldGv(r.P));
 /* kopírovat / vložit úpravy mezi fotkami: všechno kromě ořezu a druhé fotky z Double */
 let CLIP = oldGv(store.get('clip', null));

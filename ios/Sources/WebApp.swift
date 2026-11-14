@@ -204,7 +204,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
             let isoNow = CameraEngine.shared.currentISO
             CameraEngine.shared.stop() // RAW si zatím otevírá vlastní session (krok 2: ze stejné)
             let id = m["id"] as? Int ?? 0
-            let bayer = ((m["bayer"] as? Bool) ?? false) && !(isoNow > 1000)
+            let bayer = ((m["bayer"] as? Bool) ?? false) && !(isoNow > 320)
             raw.capture(zoom: (m["zoom"] as? Double) ?? 1, ultra: (m["ultra"] as? Bool) ?? false,
                         flash: (m["flash"] as? Bool) ?? false, tele: (m["tele"] as? Bool) ?? false, bayer: bayer, mean: m["mean"] as? Double) { [weak self] result in
                 DispatchQueue.main.async {
