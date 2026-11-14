@@ -111,12 +111,7 @@ final class LocalServer {
     private func live(_ c: NWConnection) {
         liveConn?.cancel()
         liveConn = c; liveBusy = true
-        let head = "HTTP/1.1 200 OK
-Content-Type: application/octet-stream
-Cache-Control: no-cache
-Connection: close
-
-"
+        let head = "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nCache-Control: no-cache\r\nConnection: close\r\n\r\n"
         c.send(content: Data(head.utf8), completion: .contentProcessed { [weak self] err in
             self?.queue.async { guard let self, self.liveConn === c else { return }; if err != nil { self.liveConn = nil }; self.liveBusy = false } })
         c.stateUpdateHandler = { [weak self] st in
