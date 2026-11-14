@@ -1258,7 +1258,6 @@ const FILMS = [
   { code: 'P800P', sub: 'portrait 800 push', chem: 'barevný negativ · ISO 800 → 3200', desc: 'Portra 800 tlačená o dvě clony (styl). Víc kontrastu a sytosti, hrubší zrno, noční ulice.', iso: 3200, g: 'push', sh: [.02, .01, .045], hi: [1.08, .99, .88], con: 1.14, sat: 1.12, fade: .02, hal: .55, c: ['#e9e3d6', '#c44b2e', '#2a2a2a'] },
   { code: 'E100C', sub: 'ektar cine', chem: 'barevný negativ · tisk na kinofilm', desc: 'Ektar vyvolaný a tištěný na kino tiskový film (styl 2383). Sytý, kontrastní, filmové stíny.', iso: 100, g: 'fine', sh: [-.01, .01, .04], hi: [1.06, .99, .92], con: 1.12, sat: 1.15, fade: .0, hal: .3, c: ['#f1e9dc', '#e2362b', '#1d3b5c'] },
   { code: 'P400C', v2: 1, sub: 'portrait cine', chem: 'barevný negativ · tisk na kinofilm', desc: 'Portra 400 vytištěná na kino tiskový film (styl 2383). Tlumené barvy, hutné stíny, filmová videa.', iso: 400, g: 'classic', sh: [-.01, .01, .04], hi: [1.06, .99, .92], con: 1.08, sat: 1.05, fade: .0, hal: .35, c: ['#e9e3d6', '#1f5c63', '#e8823a'] },
-  { code: 'G200C', v2: 1, sub: 'gold cine', chem: 'barevný negativ · tisk na kinofilm', desc: 'Gold 200 vytištěný na kino tiskový film (styl 2383). Zlaté teplé světlo, hutné stíny.', iso: 200, g: 'classic', sh: [.02, .012, -.01], hi: [1.09, 1.03, .84], con: 1.06, sat: 1.12, fade: .0, hal: .35, c: ['#f2c230', '#1f5c63', '#3a2a14'] },
   { code: 'P160C', v2: 1, sub: 'portrait 160 cine', chem: 'barevný negativ · tisk na kinofilm', desc: 'Portra 160 vytištěná na kino tiskový film (styl 2383). Jemné zrno, měkká pleť, tlumené barvy.', iso: 160, g: 'fine', sh: [.0, .012, .022], hi: [1.03, 1.0, .95], con: .94, sat: .9, fade: .0, hal: .25, c: ['#e9e3d6', '#1f5c63', '#c44b2e'] },
   /* černobílé: bw = spektrální citlivost (váhy R,G,B), tone = tón papíru, toe = černá papíru */
   { code: 'BW400', sub: 'classic 400', chem: 'černobílý · ISO 400', desc: 'Univerzální černobílý film ve stylu Ilford HP5 Plus. Měkký, široká latitude, výrazné zrno.', iso: 400, g: 'mono', bw: [.34, .5, .16], tone: [1, 1, 1], toe: .03, sh: [0, 0, 0], hi: [1, 1, 1], con: 1.0, sat: 0, fade: .03, hal: .12, c: ['#1a1a1a', '#e9e9e9', '#8a8a8a'] },
@@ -3798,7 +3797,7 @@ function useDxOther(ph) { const cur = S.cur; S.dxReturn = null; $('#camBanner').
    Recepty: uložený vzhled (film + grain + úpravy), sdílení odkazem a QR
    ===================================================================== */
 /* úpravy uložené před 0.18 nemají gv → záře se jim počítá postaru (vypadají pořád stejně) */
-const oldGv = P => { if (P && P.gv == null) P.gv = 1; if (P && P.fv == null) P.fv = 1; return P; }; // uložené úpravy si nechají starou záři / starý film
+const oldGv = P => { if (P && P.gv == null) P.gv = 1; if (P && P.fv == null) P.fv = 1; if (P && P.film === 'G200C') P.film = 'G200'; return P; }; // uložené úpravy si nechají starou záři / starý film
 let RECIPES = store.get('recipes', []); RECIPES.forEach(r => oldGv(r.P));
 /* kopírovat / vložit úpravy mezi fotkami: všechno kromě ořezu a druhé fotky z Double */
 let CLIP = oldGv(store.get('clip', null));

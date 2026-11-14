@@ -40,3 +40,4 @@ Upravil: Qamera (jendovyapky), skript tools/bake_luts.py
 2026-11-14  luts/log/P400C.png: kodak_portra_400 negative (scan_film) converted by Qamera's own scanner model 'kino' (per-channel density fit, ColorChecker dye matrix, logistic print curve with cyan shadows / warm highlights, saturation 1.12, hue shifts: blue -10 deg, yellow-green +8 deg). Grain/halation off. Log input -8..+6 EV around 0.18.
 2026-11-14  luts/log/P400C.png rebaked: kodak_portra_400 negative printed on kodak_2383 (same method as the other log LUTs, no custom grading); the 'kino' scanner version above was withdrawn.
 2026-11-14  luts/log/G200C.png (kodak_gold_200 -> kodak_2383) and luts/log/P160C.png (kodak_portra_160 -> kodak_2383): log LUTs, same method as the other log LUTs.
+2026-11-14  luts/log/G200C.png removed (not used).
