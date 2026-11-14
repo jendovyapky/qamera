@@ -45,14 +45,16 @@ FILMS = {
     'VR200':   ('kodak_verita_200d', 'kodak_endura_premier'),
     'P800P':   ('kodak_portra_800_push2', 'kodak_portra_endura'),
     'E100C':   ('kodak_ektar_100', 'kodak_2383'),
-    'P400C':   ('kodak_portra_400', 'kodak_2383'),  # film V2: Portra na kinový tisk (jen --log; skener 'kino' Honza zamítl – moc přebarvené)
+    'P400C':   ('kodak_portra_400', 'kodak_2383'),
+    'G200C':   ('kodak_gold_200', 'kodak_2383'),
+    'P160C':   ('kodak_portra_160', 'kodak_2383'),  # film V2: Portra na kinový tisk (jen --log; skener 'kino' Honza zamítl – moc přebarvené)
     'C200':    ('fujifilm_c200', 'fujifilm_crystal_archive_typeii'),
     '400H':    ('fujifilm_pro_400h', 'fujifilm_crystal_archive_typeii'),
     'SX400':   ('fujifilm_xtra_400', 'fujifilm_crystal_archive_typeii'),
     'PV100':   ('fujifilm_provia_100f', None),
     'VEL':     ('fujifilm_velvia_100', None),
 }
-V2_LOG_ONLY = {'P400C'}
+V2_LOG_ONLY = {'P400C', 'G200C', 'P160C'}
 HEADER = ['Qamera film LUT {code} ({film})',
           'Derived from spektrafilm by Andrea Volpato',
           'https://github.com/andreavolpato/spektrafilm',
