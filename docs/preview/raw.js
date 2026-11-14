@@ -66,7 +66,8 @@ async function develop(W, H, get, onStep, baseline = 0) {
   for (let y = 0; y < H; y += step) for (let x = 0; x < W; x += step) { get(x, y, px); const Y = (.2126 * px[0] + .7152 * px[1] + .0722 * px[2]) * g0; ls += Math.log2(Math.max(Y, 1e-5)); ln++; mx.push(Math.max(px[0], px[1], px[2]) * g0); }
   mx.sort((a, b) => a - b); const p995 = mx[Math.min(mx.length - 1, Math.floor(mx.length * .995))] || 0;
   const evMean = Math.max(-2, Math.min(1, Math.log2(.17) - ls / Math.max(ln, 1))), evHi = p995 > 0 ? Math.log2(2 / p995) : 4;
-  let ev = Math.max(evMean - .5, Math.min(evMean, evHi)); if (!Number.isFinite(ev)) ev = 0; ev += baseline || 0; const g = Math.pow(2, ev);
+  let ev = Math.max(evMean - .5, Math.min(evMean, evHi)); const tm = globalThis.__qRawMean; if (tm > 0) ev = Math.max(-4, Math.min(6, Math.log2(tm) - ls / Math.max(ln, 1))); // jas hledáčku (jako RawDevelop targetMean)
+  if (!Number.isFinite(ev)) ev = 0; ev += baseline || 0; const g = Math.pow(2, ev);
   const c = document.createElement('canvas'); c.width = W; c.height = H; const cg = c.getContext('2d'), id = cg.createImageData(W, H), d = id.data;
   const hk = Math.min(1, HLS / Math.max(W, H)), hw = Math.max(1, Math.round(W * hk)), hh = Math.max(1, Math.round(H * hk)), hv = new Float32Array(hw * hh), hn = new Float32Array(hw * hh);
   for (let y = 0; y < H; y++) { const hy = Math.min(hh - 1, (y * hk) | 0);
