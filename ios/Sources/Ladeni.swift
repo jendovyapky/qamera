@@ -1,4 +1,5 @@
 import Foundation
+import Photos
 
 // Ladění (jen Qamera DEV): ke každé fotce se uloží i to, co appka dostala z kamery (DNG ze senzoru / snímek v Apple Logu)
 // + parametry vyvolání. Složka je vidět v appce Soubory → Na mém iPhonu → Qamera DEV → Ladeni. Drží se posledních 12 souborů.
@@ -20,6 +21,20 @@ enum Ladeni {
     static func url(_ name: String) -> URL {
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent(name)
+    }
+    // Originál z kamery i do Fotek (Honza posílá vždy složku z Fotek, do Souborů nechodí). Parametry vyvolání jsou v názvu souboru,
+    // protože JSON do Fotek uložit nejde: qamera-raw-<čas>-m<jas hledáčku>-ev<expozice>-<ProRAW|RAW>.dng / qamera-log-<čas>-ev…-iso….tiff
+    static func toPhotos(_ file: String, as name: String) {
+        let src = dir.appendingPathComponent(file)
+        guard FileManager.default.fileExists(atPath: src.path) else { return }
+        PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+            guard status == .authorized || status == .limited else { return }
+            PHPhotoLibrary.shared().performChanges({
+                let o = PHAssetResourceCreationOptions()
+                o.originalFilename = name
+                PHAssetCreationRequest.forAsset().addResource(with: .photo, fileURL: src, options: o)
+            }, completionHandler: nil)
+        }
     }
     static func prune() {
         let fm = FileManager.default

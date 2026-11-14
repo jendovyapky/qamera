@@ -159,6 +159,7 @@ final class RawCapture: NSObject {
                         do {
                             let o = try RawDevelop.develop(shot.raw, targetMean: self.targetMean, denoise: res.label != "ProRAW")
                             Ladeni.json("raw-\(st).json", ["mean": self.targetMean ?? -1, "ev": o.ev, "label": res.label, "lensZoom": res.lensZoom])
+                            Ladeni.toPhotos("raw-\(st).dng", as: "qamera-raw-\(st)-m\(String(format: "%.4f", self.targetMean ?? -1))-ev\(String(format: "%.2f", Double(o.ev)))-\(res.label).dng")
                             try o.jpg.write(to: Self.dir.appendingPathComponent(id + ".jpg")); res.files["jpg"] = id + ".jpg"
                             if let hl = o.hl { try hl.write(to: Self.dir.appendingPathComponent(id + "-hl.png")); res.files["hl"] = id + "-hl.png" }
                             res.ev = o.ev

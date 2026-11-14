@@ -275,6 +275,7 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
                     try? FileManager.default.createDirectory(at: RawCapture.dir, withIntermediateDirectories: true)
                     var res = RawCapture.Result(label: log ? "LOG" : "VIDEO", lensZoom: lz, ev: o.ev)
                     Ladeni.json("log-\(st).json", ["log": log, "ev": o.ev, "lensZoom": lz, "iso": Double(self.currentISO)])
+                    if log { Ladeni.toPhotos("log-\(st).tiff", as: "qamera-log-\(st)-ev\(String(format: "%.2f", Double(o.ev)))-iso\(Int(self.currentISO)).tiff") }
                     try o.jpg.write(to: RawCapture.dir.appendingPathComponent(id + ".jpg")); res.files["jpg"] = id + ".jpg"
                     if let hl = o.hl { try hl.write(to: RawCapture.dir.appendingPathComponent(id + "-hl.png")); res.files["hl"] = id + "-hl.png" }
                     done(.success(res))
