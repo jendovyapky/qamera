@@ -23,6 +23,7 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
     private let ctx = CIContext(options: [.workingColorSpace: NSNull(), .outputColorSpace: NSNull(), .cacheIntermediates: false])
     private lazy var viewCube: CIFilter = Self.cubeFilter(Self.logCube(n: 48, linearScale: nil))
     private var stillWait: ((CIImage) -> Void)?
+    private static let dbgCtx = CIContext(options: [.workingColorSpace: NSNull(), .outputColorSpace: NSNull()])
     private var lastFrame = 0.0
     private var sent = 0
     var onFrame: ((Data) -> Void)?   // LocalServer → /__live
@@ -264,12 +265,16 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
             // vyvolání mimo frontu kamery, ať hledáček běží dál
             DispatchQueue.global(qos: .userInitiated).async {
                 do {
+                    // ladění: snímek z kamery tak, jak přišel (16bit TIFF, kódy Apple Logu bez převodu barev)
+                    let st = Ladeni.stamp()
+                    if log { try? Self.dbgCtx.writeTIFFRepresentation(of: src, to: Ladeni.url("log-\(st).tiff"), format: .RGBA16, colorSpace: CGColorSpace(name: CGColorSpace.itur_2020)!) }
                     // log se převede na světlo až v RawDevelop ve float (přes CIColorCube se stíny ztrácely v 8 bitech = černé díry a barevné fleky)
                     let o = log ? try RawDevelop.develop(image: src, fixedEV: 0, logInput: true)
                                 : try RawDevelop.develop(image: src.applyingFilter("CISRGBToneCurveToLinear"), fixedEV: 0)
                     let id = UUID().uuidString
                     try? FileManager.default.createDirectory(at: RawCapture.dir, withIntermediateDirectories: true)
                     var res = RawCapture.Result(label: log ? "LOG" : "VIDEO", lensZoom: lz, ev: o.ev)
+                    Ladeni.json("log-\(st).json", ["log": log, "ev": o.ev, "lensZoom": lz, "iso": Double(self.currentISO)])
                     try o.jpg.write(to: RawCapture.dir.appendingPathComponent(id + ".jpg")); res.files["jpg"] = id + ".jpg"
                     if let hl = o.hl { try hl.write(to: RawCapture.dir.appendingPathComponent(id + "-hl.png")); res.files["hl"] = id + "-hl.png" }
                     done(.success(res))

@@ -154,8 +154,11 @@ final class RawCapture: NSObject {
                         if let dep = shot.depth, let png = RawDevelop.depthPNG(dep, orientation: shot.orientation) {
                             try png.write(to: Self.dir.appendingPathComponent(id + "-d.png")); res.files["depth"] = id + "-d.png"
                         }
+                        let st = Ladeni.stamp()
+                        Ladeni.save("raw-\(st).dng", shot.raw)
                         do {
                             let o = try RawDevelop.develop(shot.raw, targetMean: self.targetMean)
+                            Ladeni.json("raw-\(st).json", ["mean": self.targetMean ?? -1, "ev": o.ev, "label": res.label, "lensZoom": res.lensZoom])
                             try o.jpg.write(to: Self.dir.appendingPathComponent(id + ".jpg")); res.files["jpg"] = id + ".jpg"
                             if let hl = o.hl { try hl.write(to: Self.dir.appendingPathComponent(id + "-hl.png")); res.files["hl"] = id + "-hl.png" }
                             res.ev = o.ev
