@@ -2705,7 +2705,7 @@ async function captureNativeClip() {
   let r;
   const done = () => { clearInterval(NCLIP.iv); S.busy = null; drawShutter(); hud(); if (same && (!r || r.same)) return; if (S.screen === 'camera') { NCAM.wd = performance.now(); liveOn(); } else { CAM.switching = false; cc.style.filter = ''; } };
   try { r = await new Promise((res, rej) => { const id = ++NCLIP.seq; NCLIP.wait = { id, res, rej }; setTimeout(() => { if (NCLIP.wait && NCLIP.wait.id === id) { NCLIP.wait = null; rej(new Error('kamera neodpověděla')); } }, 90000);
-      window.webkit.messageHandlers.qamera.postMessage({ kind: 'clip', id, sec: NCLIP.sec, zoom, ultra: !!CAM.ultra, tele: !!CAM.tele, film, str: clamp(P.str * (vm.str || 1), 0, 1), grain: clamp(P.grain * (vm.grain || 1), 0, 2), hal: clamp(P.hal * (f.hal ?? .5) * P.str, 0, 2), apl: CAM.nat && CAM.nlog ? 0 : APLK, same }); }); }
+      window.webkit.messageHandlers.qamera.postMessage({ kind: 'clip', id, sec: NCLIP.sec, zoom, ultra: !!CAM.ultra, tele: !!CAM.tele, film, str: clamp(P.str * (vm.str || 1), 0, 1), grain: clamp(P.grain * (vm.grain || 1), 0, 2), hal: clamp(P.hal * (f.hal ?? .5) * P.str, 0, 2), apl: CAM.nat && CAM.nlog ? 0 : APLK, vig: clamp(P.vig * P.str, 0, 1), same }); }); }
   catch (e) { done(); toast('Klip se nepovedl: ' + e.message); return; }
   done();
   try {
