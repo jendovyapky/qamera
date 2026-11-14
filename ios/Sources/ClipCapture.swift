@@ -265,6 +265,19 @@ enum ClipDevelop {
                 "inputBVector": CIVector(x: m, y: m, z: m + c, w: 0), "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 0),
                 "inputBiasVector": CIVector(x: -(3 * m + c) / 2, y: -(3 * m + c) / 2, z: -(3 * m + c) / 2, w: 0)])
         }
+        /* Zrno jako ve fotce (grv 3, kalibrované na spektrafilm): každá barevná vrstva negativu šumí zvlášť (σ 0,232 / 0,152 / 0,208 EV
+           na pixel 8,2 µm, vrstvy se míchají jen z desetiny), jemné – jeden pixel klipu průměruje víc zrn (4250 zrn na delší stranu políčka).
+           1 EV ≈ 0,0855 kódu Apple Logu; CIRandomGenerator = nezávislé kanály 0…1 (σ 0,2887), rozostření 0,5 px ubere σ na 0,564 */
+        let gk = grain / 0.5 * max(str, 0.15) * (log ? 0.0855 : 0.052) * min(1, Double(max(w, h)) / 4250) / (0.2887 * 0.564)
+        func negGrain(_ frame: Int) -> CIImage {
+            let off = CGAffineTransform(translationX: CGFloat((frame * 977 + 331) % 8192), y: CGFloat((frame * 613 + 173) % 8192))
+            let n = noiseBase.transformed(by: off).applyingGaussianBlur(sigma: 0.5).cropped(to: ext)
+            let r = CGFloat(0.232 * gk), g = CGFloat(0.152 * gk), b = CGFloat(0.208 * gk), x: CGFloat = 0.1
+            return n.applyingFilter("CIColorMatrix", parameters: [
+                "inputRVector": CIVector(x: r, y: r * x, z: r * x, w: 0), "inputGVector": CIVector(x: g * x, y: g, z: g * x, w: 0),
+                "inputBVector": CIVector(x: b * x, y: b * x, z: b, w: 0), "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 0),
+                "inputBiasVector": CIVector(x: -r * (1 + 2 * x) / 2, y: -g * (1 + 2 * x) / 2, z: -b * (1 + 2 * x) / 2, w: 0)])
+        }
         /* halation = červenooranžová záře kolem opravdu přepálených světel (v logu nad ~1 EV nad bílou), jen kolem, ne přes světlo samo */
         let t0h: CGFloat = log ? 0.70 : 0.93, t1h: CGFloat = log ? 0.86 : 1.0, hk = CGFloat(0.45 * hal)
         let q: CGFloat = 0.25, hh = CGFloat(h) * q
@@ -301,10 +314,7 @@ enum ClipDevelop {
             let src = CIImage(cvPixelBuffer: pb, options: [.colorSpace: NSNull()])
             var img = src
             if sd > 0.0005 {
-                let g1 = grainLayer(frame, scale: 2.2, blur: 0.8, amp: sd / 0.075, salt: 1)
-                let g2 = grainLayer(frame, scale: 5.0, blur: 1.8, amp: sd / 0.05 * 0.45, salt: 2)
-                img = g1.applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: img])
-                img = g2.applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: img]).cropped(to: ext)
+                img = negGrain(frame).applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: img]).cropped(to: ext)
             }
             cubeF.setValue(img, forKey: kCIInputImageKey)
             img = (cubeF.outputImage ?? img).cropped(to: ext)

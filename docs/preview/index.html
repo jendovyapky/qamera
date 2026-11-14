@@ -1569,7 +1569,7 @@ in vec2 vUv; out vec4 o;
 uniform sampler2D uTex, uCurve, uHL;
 uniform vec2 uCover, uOff, uRes; uniform float uZoom, uRot, uTime, uBypass, uStatic;
 uniform float uExp,uTemp,uTint,uCon,uSat,uStr,uHal,uBloom,uVig,uFade,uSharp,uShad,uHil;
-uniform float uGrain,uGFreq,uGSharp,uGChroma,uGClump,uGMot;
+uniform float uGrain,uGFreq,uGSharp,uGChroma,uGClump,uGMot,uGN; uniform vec3 uGE;
 uniform vec3 uSh,uHi; uniform float uFCon,uFSat,uFFade, uChar, uFSoft, uIRHue; uniform vec3 uBW, uBTone; uniform float uBToe;
 uniform vec3 uHsl[8]; uniform vec3 uGSh,uGMid,uGHi;
 uniform vec3 uTrMs,uTrSs,uTrMr,uTrSr; uniform float uTr;
@@ -1587,6 +1587,15 @@ float hash(vec2 p){ ivec2 q = ivec2(floor(p)) + 65536; return float(pcg(uint(q.x
 float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f);
   return mix(mix(hash(i),hash(i+vec2(1,0)),f.x), mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x), f.y)*2.-1.; }
 const mat2 R1 = mat2(.8,-.6,.6,.8), R2 = mat2(-.47,-.88,.88,-.47), R3 = mat2(.31,.95,-.95,.31);
+/* Zrno v negativu (grv 3, filmy s log LUT): šum se přičte k log expozici PŘED tabulkou filmu → křivka filmu a tisk ho zesílí i obarví
+   stejně jako obraz (ve světlech a stínech sám zeslábne). Kalibrováno na spektrafilm (částice po vrstvách, šedá škála, pixel 8,2 µm):
+   σ ≈ 0,19 / 0,125 / 0,20 EV pro R / G / B vrstvu, vrstvy skoro nezávislé, zrno jemné (sousední pixely skenu korelují 0,4).
+   uGN = zrn na výšku obrazu (nejvýš rozlišení výstupu), uGE = σ v EV po kanálech (už zmenšená, když jeden pixel průměruje víc zrn) */
+vec3 cellN(vec2 i){ ivec2 q = ivec2(i) + 65536; uint h = pcg(uint(q.x) + pcg(uint(q.y) + pcg(uint(uSeed) + 977u))); uint h2 = pcg(h), h3 = pcg(h2);
+  return (vec3(float(h), float(h2), float(h3)) * (1./4294967295.) - .5) * 3.4641; }
+vec3 negGrain(){ float t = uStatic > .5 ? 0. : floor(uTime*24.); vec2 p = vUv*vec2(uRes.x/uRes.y, 1.)*uGN + vec2(mod(t*37., 911.), mod(t*91., 673.)); vec2 i = floor(p), f = fract(p);
+  vec3 n = mix(mix(cellN(i), cellN(i+vec2(1,0)), f.x), mix(cellN(i+vec2(0,1)), cellN(i+vec2(1,1)), f.x), f.y) * 1.5;
+  return vec3(n.r + n.g*.12 + n.b*.1, n.g + n.r*.10 + n.b*.12, n.b + n.g*.1 + n.r*.1) * uGE; }
 float grainN(vec2 p){ return vnoise(R1*p)*.5 + vnoise(R2*p*1.37+vec2(5.2,1.3))*.32 + vnoise(R3*p*2.71+vec2(9.7,3.1))*.18; }
 vec3 rgb2hsv(vec3 c){ vec4 K=vec4(0.,-1./3.,2./3.,-1.); vec4 p=mix(vec4(c.bg,K.wz),vec4(c.gb,K.xy),step(c.b,c.g)); vec4 q=mix(vec4(p.xyw,c.r),vec4(c.r,p.yzx),step(p.x,c.r)); float d=q.x-min(q.w,q.y); return vec3(abs(q.z+(q.w-q.y)/(6.*d+1e-10)),d/(q.x+1e-10),q.x); }
 vec3 hsv2rgb(vec3 c){ vec3 p=abs(fract(c.xxx+vec3(1.,2./3.,1./3.))*6.-3.); return c.z*mix(vec3(1.),clamp(p-1.,0.,1.),c.y); }
@@ -1625,7 +1634,7 @@ vec3 aplFwd(vec3 x, float k){ float lx = log2(max(luma(x), 1e-5)), lg = lx; lg =
   x *= exp2(-aplEv(lg) * k); float L = max(luma(x), 1e-5); return max(vec3(L) + (x - vec3(L)) / mix(1., aplSat(lg), k), 0.); }
 vec3 filmLog(vec3 lin){ vec3 x = unShoulder(max(lin * exp2(-uExp), 0.)); if (uApl > 0.) x = aplInv(x, uApl); else if (uApl < 0.) x = aplFwd(x, -uApl); x = shTone(x * exp2(uExp));
   x = max(mix(vec3(luma(x)), x, 1. + uSat), 0.);
-  vec3 lg = log2(max(x, vec3(1e-6)) / .18) * (1. + uCon * .5);
+  vec3 lg = log2(max(x, vec3(1e-6)) / .18) * (1. + uCon * .5); if (uGE.g > 0.) { float gm = dot(lg, vec3(.3, .5, .2)); lg += negGrain() * (1. + .75 * smoothstep(-1.3, -3.6, gm)) * (1. - .8 * smoothstep(3., 5., gm)); }
   gLgT = dot(lg, vec3(.3, .5, .2)); vec3 t = clamp((lg - FLO) / (FHI - FLO), 0., 1.);
   vec3 o = texture(uLut3, t * (32./33.) + .5/33.).rgb; return uNeg > .5 ? skinWarm(o) : o; }
 vec3 lookOf(vec3 s){ vec3 l = pow(max(s, 0.), vec3(2.2)) * exp2(uExp) * vec3(1.+uTemp*.22, 1.+uTint*.1, 1.-uTemp*.22); vec3 c = pow(l/(1.+l*.06*uStr), vec3(1./2.2));
@@ -1781,7 +1790,7 @@ void main(){
     if (Lz > .9) c = mix(c, vec3(1.,.77,.24), .85*st); if (Lz < .07) c = mix(c, vec3(.2,.45,1.), .7*st); }
   o = vec4(clamp(c,0.,1.), 1.);
 }`;
-const DEF = () => ({ gv: 2, fv: 3, hv: 2, grv: 2, film: 'P400', str: 1, exp: 0, temp: 0, tint: 0, con: 0, hil: 0, shad: 0, sat: 0, grain: .5, gsize: 1, gtype: null, hal: 1, bloom: .15, glow: null, vig: .25, fade: 0, sharp: 0, style: null, frame: null, dx: null,
+const DEF = () => ({ gv: 2, fv: 3, hv: 2, grv: 3, film: 'P400', str: 1, exp: 0, temp: 0, tint: 0, con: 0, hil: 0, shad: 0, sat: 0, grain: .5, gsize: 1, gtype: null, hal: 1, bloom: .15, glow: null, vig: .25, fade: 0, sharp: 0, style: null, frame: null, dx: null,
   curve: { rgb: [[0, 0], [1, 1]], r: [[0, 0], [1, 1]], g: [[0, 0], [1, 1]], b: [[0, 0], [1, 1]] }, hsl: Array.from({ length: 8 }, () => [0, 0, 0]),
   grade: { sh: [0, 0], mid: [0, 0], hi: [0, 0] }, tr: 0, crop: { ar: 0, s: 1, x: 0, y: 0, rot: 0 } });
 
@@ -1867,7 +1876,11 @@ class Engine {
     gl.uniform1f(u.uStr, k); gl.uniform1f(u.uFSoft, (P.fsoft ?? f.fsoft ?? 0) * k); gl.uniform1f(u.uHal, P.hal * f.hal * k); gl.uniform1f(u.uBloom, P.bloom * vm.bloom * k);
     const fk = (FFMT[P.ffmt] || FFMT['35']).k, nx = P.nexp || 0, latG = 1 + .3 * Math.max(-nx, 0) - .1 * Math.max(nx, 0); // větší negativ = jemnější zrno; podexpozice = víc zrna
     const g2 = (P.grv || 1) >= 2, gNeg = fv > 1 && v2 && (v2 !== 3 || (P.fv || 1) >= 3); // grv 2: klidnější zrno (jen nové úpravy)
-    gl.uniform1f(u.uGrain, P.grain * vm.grain * G.a * (g2 ? (.74 + .16 * isoK) * (gNeg ? .7 : .85) : .6 + .4 * isoK) * k * latG / Math.sqrt(fk)); gl.uniform1f(u.uGFreq, 560 / (P.gsize * vm.gsize) * G.f / (g2 ? .86 + .24 * isoK : .72 + .38 * isoK) * fk);
+    // grv 3: zrno v negativu před tabulkou filmu (jen filmy s log LUT); 35mm políčko = 4250 zrn na delší stranu (pixel 8,2 µm, na kterém je změřená σ), větší formát / menší zrno = víc
+    const g3 = (P.grv || 1) >= 3 && fv > 1 && !!L && !f.bw, gW = this.c.width, gH = this.c.height;
+    const gNf = o.gn || 4250 * gH / Math.max(gW, gH) * fk / (P.gsize * vm.gsize) / (.84 + .16 * isoK) / (o.zoom || 1), gNe = Math.min(gNf, gH), gA = g3 ? P.grain / .5 * vm.grain * (.84 + .16 * isoK) * k * latG * gNe / gNf : 0;
+    gl.uniform3f(u.uGE, .232 * gA, .152 * gA, .208 * gA); gl.uniform1f(u.uGN, gNe);
+    gl.uniform1f(u.uGrain, g3 ? 0 : P.grain * vm.grain * G.a * (g2 ? (.74 + .16 * isoK) * (gNeg ? .7 : .85) : .6 + .4 * isoK) * k * latG / Math.sqrt(fk)); gl.uniform1f(u.uGFreq, 560 / (P.gsize * vm.gsize) * G.f / (g2 ? .86 + .24 * isoK : .72 + .38 * isoK) * fk);
     const lt = LFS[P.lf], lw = f.bw || [.2126, .7152, .0722], ln = lt ? lt[0] * lw[0] + lt[1] * lw[1] + lt[2] * lw[2] : 1;
     gl.uniform3fv(u.uLF, lt ? lt.map(x => x / ln) : [1, 1, 1]); gl.uniform1f(u.uPol, P.lf === 'POL' ? 1 : 0); gl.uniform1f(u.uLat, nx); gl.uniform1f(u.uHR, 1 / fk); gl.uniform1f(u.uGV, P.gv || 2); gl.uniform1f(u.uEst, !this.hasE && (P.hv || 1) >= 2 ? 1 : 0); gl.uniform1f(u.uApl, clamp(+P.apl || 0, -1, 1)); gl.uniform1f(u.uHV, P.hv || 1); gl.uniform1f(u.uFBlur, P.ffmt === 'half' ? .55 : 0); // hv 2: odhad světel z 8bit obrazu (hledáček, JPEG) je slabší – bílý monitor / papír není lampa
     gl.uniform1f(u.uSeed, o.seed != null ? o.seed : 7); gl.uniform1f(u.uGSharp, G.sh); gl.uniform1f(u.uGChroma, G.ch); gl.uniform1f(u.uGClump, G.cl); gl.uniform1f(u.uGMot, G.mot);
