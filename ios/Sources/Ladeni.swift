@@ -36,9 +36,28 @@ enum Ladeni {
             }, completionHandler: nil)
         }
     }
+    // Deník appky: co kamera a web dělaly (start kamery, formát, ISO a čas, expozice vyvolání, chyby, návraty z pozadí).
+    // Soubor Ladeni/qamera-log.txt (max ~300 kB, starší půlka se zahodí) – Honza ho pošle se složkou Ladeni.
+    private static let logQ = DispatchQueue(label: "qamera.log")
+    private static let logURL = dir.appendingPathComponent("qamera-log.txt")
+    private static let logFmt: DateFormatter = { let f = DateFormatter(); f.dateFormat = "MM-dd HH:mm:ss.SSS"; return f }()
+    private static let build = (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?") + "/" + (Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?")
+    static func log(_ s: String) {
+        let t = Date()
+        logQ.async {
+            let fm = FileManager.default
+            try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+            let line = Data("\(logFmt.string(from: t)) [\(build)] \(s.prefix(600))\n".utf8)
+            if let sz = (try? fm.attributesOfItem(atPath: logURL.path))?[.size] as? Int, sz > 300_000, let d = try? Data(contentsOf: logURL) {
+                try? d.suffix(150_000).write(to: logURL)
+            }
+            if let h = try? FileHandle(forWritingTo: logURL) { h.seekToEndOfFile(); h.write(line); try? h.close() } else { try? line.write(to: logURL) }
+        }
+    }
     static func prune() {
         let fm = FileManager.default
-        guard let all = try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.contentModificationDateKey]) else { return }
+        guard let all0 = try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.contentModificationDateKey]) else { return }
+        let all = all0.filter { $0.lastPathComponent != "qamera-log.txt" }
         let sorted = all.sorted { a, b in
             let da = (try? a.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
             let db = (try? b.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast

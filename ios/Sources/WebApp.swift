@@ -88,6 +88,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     }
 
     @objc private func foreground() {
+        Ladeni.log("návrat do popředí")
         server?.restart()
         camWasOn = false
         js("window.__qCamResume && window.__qCamResume()")
@@ -95,6 +96,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     }
 
     @objc private func background() {
+        Ladeni.log("do pozadí, kamera běžela=\(CameraEngine.shared.isOn)")
         vol?.pause()
         if CameraEngine.shared.isOn { CameraEngine.shared.stop(); camWasOn = true }
         server?.liveClose()
@@ -154,6 +156,12 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     // Zprávy z JS
     func userContentController(_ ucc: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let m = message.body as? [String: Any], let kind = m["kind"] as? String else { return }
+        if kind == "log" { Ladeni.log("web: " + ((m["t"] as? String) ?? "")); return }
+        if kind != "vibrate", !(kind == "ncam" && ["ctl", "zoom", "focus"].contains((m["op"] as? String) ?? "")) {
+            let skip: Set<String> = ["kind", "op", "films", "files", "data", "datas", "items"]
+            let args: [String] = m.filter { !skip.contains($0.key) }.map { $0.key + "=" + String(describing: $0.value) }.sorted()
+            Ladeni.log("most " + kind + " " + ((m["op"] as? String) ?? "") + " " + String(args.joined(separator: " ").prefix(300)))
+        }
         switch kind {
         case "vibrate":
             thump.impactOccurred(intensity: min(1, max(0.3, CGFloat((m["ms"] as? Double) ?? 6) / 20)))
@@ -172,6 +180,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                             let json = (try? JSONSerialization.data(withJSONObject: o)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
                             self?.js("window.__qCam && window.__qCam(\(id), true, \(json))")
                         case .failure(let e):
+                        Ladeni.log("CHYBA \(kind): \(e.localizedDescription)")
                             self?.js("window.__qCam && window.__qCam(\(id), false, \(Self.jsStr(e.localizedDescription)))")
                         }
                     }
@@ -196,6 +205,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                         let json = (try? JSONSerialization.data(withJSONObject: o)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
                         self?.js("window.__qRaw && window.__qRaw(\(id), true, \(json))")
                     case .failure(let e):
+                        Ladeni.log("CHYBA \(kind): \(e.localizedDescription)")
                         self?.js("window.__qRaw && window.__qRaw(\(id), false, \(Self.jsStr(e.localizedDescription)))")
                     }
                 }
@@ -216,6 +226,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                         let json = (try? JSONSerialization.data(withJSONObject: o)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
                         self?.js("window.__qRaw && window.__qRaw(\(id), true, \(json))")
                     case .failure(let e):
+                        Ladeni.log("CHYBA \(kind): \(e.localizedDescription)")
                         self?.js("window.__qRaw && window.__qRaw(\(id), false, \(Self.jsStr(e.localizedDescription)))")
                     }
                 }
@@ -248,6 +259,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                         let json = (try? JSONSerialization.data(withJSONObject: o)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
                         self?.js("window.__qClip && window.__qClip(\(id), true, \(json))")
                     case .failure(let e):
+                        Ladeni.log("CHYBA \(kind): \(e.localizedDescription)")
                         self?.js("window.__qClip && window.__qClip(\(id), false, \(Self.jsStr(e.localizedDescription)))")
                     }
                 }

@@ -36,6 +36,8 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
     private static let dbgCtx = CIContext(options: [.workingColorSpace: NSNull(), .outputColorSpace: NSNull()])
     private var lastFrame = 0.0
     private var sent = 0
+    private var framesOut = 0
+    private var pktMs = 0.0
     var onFrame: ((Data) -> Void)?   // LocalServer → /__live
     var currentISO: Float { device?.iso ?? 0 }
     // boční tlačítko Ovládání fotoaparátu (iOS 18+): posun = film / EV
@@ -172,10 +174,11 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
                 self.size = CGSize(width: Int(min(dm.width, dm.height)), height: Int(max(dm.width, dm.height)))
                 if let e2 = QCatch.run({ s.startRunning() }) { throw QError(message: e2) }
                 guard s.isRunning else { throw QError(message: "kamera se nespustila") }
+                Ladeni.log("kamera start \(lens) \(dev.localizedName) \(dm.width)x\(dm.height) log=\(log) lensZoom=\(String(format: "%.2f", lz)) pix=\(self.videoOut?.videoSettings?[kCVPixelBufferPixelFormatTypeKey as String] ?? "?")")
                 done(.success(["log": log, "lens": lens, "lensZoom": lz, "w": Int(self.size.width), "h": Int(self.size.height),
                                "maxZoom": Double(min(dev.activeFormat.videoMaxZoomFactor, 10)), "torch": dev.hasTorch,
                                "label": dev.localizedName]))
-            } catch { self.stopNow(); done(.failure(error)) }
+            } catch { Ladeni.log("kamera start CHYBA \(lens): \(error.localizedDescription)"); self.stopNow(); done(.failure(error)) }
         }
     }
 
@@ -211,7 +214,8 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
                 guard w.startWriting() else { err = w.error?.localizedDescription ?? "zápis nezačal"; return }
                 made = Rec(writer: w, input: i, url: url, dur: seconds)
             }
-            guard exc == nil, err == nil, let r = made else { return done(.failure(QError(message: exc ?? err ?? "klip nejde natočit"))) }
+            guard exc == nil, err == nil, let r = made else { Ladeni.log("klip ze session NEJDE: \(exc ?? err ?? "?")"); return done(.failure(QError(message: exc ?? err ?? "klip nejde natočit"))) }
+            Ladeni.log("klip ze session start \(Int(size.width))x\(Int(size.height)) → \(r.input.outputSettings?[AVVideoWidthKey] ?? "?")x\(r.input.outputSettings?[AVVideoHeightKey] ?? "?")")
             r.started = started
             r.done = { u, e in
                 if let u { done(.success((u, log, lz))) } else { done(.failure(QError(message: e ?? "klip se nenatočil"))) }
@@ -229,7 +233,7 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
             r.writer.cancelWriting(); r.done?(nil, e); return
         }
         _ = QCatch.run { r.input.markAsFinished() }
-        r.writer.finishWriting { r.done?(r.writer.status == .completed ? r.url : nil, r.writer.error?.localizedDescription) }
+        r.writer.finishWriting { Ladeni.log("klip ze session konec stav=\(r.writer.status.rawValue) \(r.writer.error?.localizedDescription ?? "ok")"); r.done?(r.writer.status == .completed ? r.url : nil, r.writer.error?.localizedDescription) }
     }
 
     var isOn: Bool { q.sync { session != nil } }
@@ -268,6 +272,9 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
             if r.writer.status != .writing || CMTimeGetSeconds(CMTimeSubtract(ts, r.t0 ?? ts)) >= r.dur { finishRec(r) }
         }
         sent += 1
+        if sent % 300 == 1, let d = device { // jednou za ~10 s: v jakém světle kamera jede
+            Ladeni.log("snímky \(sent) iso=\(Int(d.iso)) čas=1/\(Int((1 / max(d.exposureDuration.seconds, 0.0001)).rounded())) zoom=\(String(format: "%.2f", Double(d.videoZoomFactor))) posláno=\(framesOut) převod=\(String(format: "%.1f", pktMs)) ms")
+        }
         if sent == 90 { CameraEngine.markOk() } // ~3 s snímků bez pádu = kamera appky v pořádku
         let now = CACurrentMediaTime()
         guard onFrame != nil, canSend(), now - lastFrame > 1 / 31 else { return }
@@ -275,6 +282,8 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
         var pkt: Data?
         if QCatch.run({ pkt = self.packet(img) }) != nil { return }
         guard let pkt else { return }
+        pktMs = pktMs * 0.9 + (CACurrentMediaTime() - now) * 100
+        framesOut += 1
         onFrame?(pkt)
     }
 
@@ -342,8 +351,9 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
                     if log { Ladeni.toPhotos("log-\(st).tiff", as: "qamera-log-\(st)-ev\(String(format: "%.2f", Double(o.ev)))-iso\(Int(self.currentISO)).tiff") }
                     try o.jpg.write(to: RawCapture.dir.appendingPathComponent(id + ".jpg")); res.files["jpg"] = id + ".jpg"
                     if let hl = o.hl { try hl.write(to: RawCapture.dir.appendingPathComponent(id + "-hl.png")); res.files["hl"] = id + "-hl.png" }
+                    Ladeni.log("fotka z logu ev=\(String(format: "%.2f", Double(o.ev))) iso=\(Int(self.currentISO)) jpg=\(o.jpg.count / 1024) kB")
                     done(.success(res))
-                } catch { done(.failure(error)) }
+                } catch { Ladeni.log("fotka z logu CHYBA: \(error.localizedDescription)"); done(.failure(error)) }
             }
         }
     }

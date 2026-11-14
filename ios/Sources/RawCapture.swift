@@ -129,6 +129,7 @@ final class RawCapture: NSObject {
         var base = Result()
         base.label = AVCapturePhotoOutput.isAppleProRAWPixelFormat(fmt) ? "ProRAW" : "RAW"
         base.lensZoom = lensZoom
+        Ladeni.log("RAW \(base.label) \(device.localizedName) iso=\(Int(device.iso)) čas=1/\(Int((1 / max(device.exposureDuration.seconds, 0.0001)).rounded())) usazení=\(String(format: "%.2f", Date().timeIntervalSince(t0))) s")
         let res = base
         let depth = out.isDepthDataDeliveryEnabled
         // Hloubka chodí jen se zpracovanou fotkou → RAW + malé HEIC navíc
@@ -158,6 +159,7 @@ final class RawCapture: NSObject {
                         Ladeni.save("raw-\(st).dng", shot.raw)
                         do {
                             let o = try RawDevelop.develop(shot.raw, targetMean: self.targetMean, denoise: res.label != "ProRAW")
+                            Ladeni.log("RAW vyvoláno \(res.label) ev=\(String(format: "%.2f", Double(o.ev))) cíl=\(String(format: "%.4f", self.targetMean ?? -1)) jpg=\(o.jpg.count / 1024) kB dng=\(shot.raw.count / 1024) kB")
                             Ladeni.json("raw-\(st).json", ["mean": self.targetMean ?? -1, "ev": o.ev, "label": res.label, "lensZoom": res.lensZoom])
                             Ladeni.toPhotos("raw-\(st).dng", as: "qamera-raw-\(st)-m\(String(format: "%.4f", self.targetMean ?? -1))-ev\(String(format: "%.2f", Double(o.ev)))-\(res.label).dng")
                             try o.jpg.write(to: Self.dir.appendingPathComponent(id + ".jpg")); res.files["jpg"] = id + ".jpg"

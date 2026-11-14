@@ -1145,7 +1145,8 @@ function spring(from, to, onUpdate, { k = 180, c = 24, v = 0, onDone } = {}) {
 }
 function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 let toastT = 0;
-function toast(msg, act) {
+const qlog = (...a) => { try { if (window.QNATIVE && window.webkit) window.webkit.messageHandlers.qamera.postMessage({ kind: 'log', t: a.map(x => typeof x === 'string' ? x : JSON.stringify(x)).join(' ').slice(0, 500) }); } catch {} };
+function toast(msg, act) { qlog('toast', String(msg));
   const t = $('#toast'); t.classList.toggle('act', !!act); t.textContent = msg;
   if (act) { const b = document.createElement('button'); b.textContent = act.label; b.onclick = () => { t.classList.remove('show'); act.fn(); }; t.appendChild(b); }
   t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), act ? 4500 : 2400);
@@ -1289,7 +1290,7 @@ const FILM = Object.fromEntries(FILMS.map(f => [f.code, f]));
 FILM.NONE = { code: 'NONE', sub: 'bez filmu', chem: '', desc: 'Původní fotka bez filmu.', iso: 400, g: 'classic', sh: [0, 0, 0], hi: [1, 1, 1], con: 1, sat: 1, fade: 0, hal: 1, gl: 0, chr: 0, c: ['#333', '#999', '#eee'] };
 let FAV = store.get('fav', []);
 let HIDDEN = store.get('hiddenFilms', []);
-const filmsOrdered = () => { const vis = FILMS.filter(f => !HIDDEN.includes(f.code) || f.code === S.film || (S.P && f.code === S.P.film)); return [...vis.filter(f => FAV.includes(f.code)), ...vis.filter(f => !FAV.includes(f.code))]; };
+const filmsOrdered = () => { const vis = FILMS.filter(f => !HIDDEN.includes(f.code) || f.code === S.film || (S.P && f.code === S.P.film)); const fav = f => FAV.includes(f.code); return [...vis.filter(fav), ...vis.filter(f => !fav(f) && f.v2), ...vis.filter(f => !fav(f) && !f.v2)]; };
 function addFilm(f) { if (FILM[f.code]) return; FILMS.unshift(f); FILM[f.code] = f; }
 /* Typy grainu: f = hustota zrn, sh = ostrost/„krystaličnost“, ch = barevnost (oblaka barviv), cl = shlukování, a = síla, mot = skvrnitost (prošlý film) */
 const GRAINS = {
@@ -1460,7 +1461,7 @@ const NCAM = { seq: 0, wait: null, ctrl: null, info: null, last: 0 };
 if (window.__qNcamOff) setTimeout(() => toast('Kamera appky minule spadla – foťák jede postaru'), 4500);
 window.__qCam = (id, ok, a) => { const w = NCAM.wait; if (!w || w.id !== id) return; NCAM.wait = null; ok ? w.res(a) : w.rej(new Error(a || 'chyba')); };
 /* oživení hledáčku kamery appky (návrat z pozadí, přerušení kamery, spadlé spojení): nejvýš jednou za 5 s a nikdy přes rozjetý start */
-function natRevive() { const now = performance.now(); if (!NATCAM || S.screen !== 'camera' || !CAM.live || CAM.switching || S.busy || document.hidden || now - (NCAM.wd || 0) < 5000) return; NCAM.wd = now; liveOn(); }
+function natRevive() { const now = performance.now(); if (!NATCAM || S.screen !== 'camera' || !CAM.live || CAM.switching || S.busy || document.hidden || now - (NCAM.wd || 0) < 5000) return; NCAM.wd = now; qlog('oživení hledáčku, bez snímku', Math.round(now - NCAM.last), 'ms'); liveOn(); }
 window.__qCamResume = () => setTimeout(natRevive, 250);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && CAM.nat) setTimeout(() => { if (performance.now() - NCAM.last > 1200) natRevive(); }, 700); });
 const natPost = m => { try { window.webkit.messageHandlers.qamera.postMessage(m); } catch {} };
@@ -1508,7 +1509,7 @@ async function natLiveOn() {
     LIVE.w = nw; LIVE.h = nh; LIVE.canvas = (nw === LIVE.canvas.width && nh === LIVE.canvas.height) ? LIVE.canvas : mk(nw, nh);
     CAM.live = true; CAM.switching = false; drawLive(0);
     spring(1, 0, x => cc.style.filter = x > .01 ? `blur(${x * 14}px) brightness(${1 - x * .35})` : '', { k: 140, c: 22 });
-    CAM.err = ''; store.set('cam', true); updLive(); renderCamInfo(); return true;
+    CAM.err = ''; store.set('cam', true); updLive(); renderCamInfo(); qlog('hledáček jede', nw + 'x' + nh, 'log', CAM.nlog, lens); return true;
   } catch (e) {
     CAM.nat = false; if (NCAM.ctrl) NCAM.ctrl.abort(); natPost({ kind: 'ncam', op: 'stop' });
     CAM.err = 'Kameru appky se nepodařilo spustit (' + e.message + ').'; toast(CAM.err); CAM.live = false; CAM.switching = false; cc.style.filter = ''; updLive(); renderCamInfo(); return false;
@@ -2669,7 +2670,7 @@ async function captureNativeRaw(mode) {
     // stejný výřez jako hledáček: formát + digitální zoom + optický zoom, který objektiv appky nepokryl
     const ar = FORMATS[fmt].ar, z = viewZoom * (still || CAM.ultra ? 1 : Math.max(1, zoom / (r.lensZoom || 1)));
     const full = cropLikeView(d.canvas, ar, z, va); freeCanvas(d.canvas);
-    if (ref) { try { applyGains(full, matchGains(ref, full)); } catch (e) {} freeCanvas(ref); }
+    if (ref) { try { const gn = matchGains(ref, full); qlog('RAW srovnání na hledáček', gn.map(v => +v.toFixed(3)), 'výřez', full.width + 'x' + full.height, 'film', S.film); applyGains(full, gn); } catch (e) { qlog('srovnání CHYBA', String(e.message || e)); } freeCanvas(ref); }
     const hl = d.hl ? cropLikeView(d.hl, ar, z, va) : null, depth = dep0 ? cropLikeView(dep0, ar, z, va) : null;
     const depthBlob = depth ? await new Promise(res => depth.toBlob(res, 'image/png')) : null;
     const blob = await new Promise(res => full.toBlob(res, 'image/jpeg', .95)); if (!blob) throw new Error('Došla paměť na obrázky');
@@ -4639,7 +4640,8 @@ function setView(v) {
   if (v === 'pc') { if (INTRO) INTRO.kill(); stopCam(); openPc(); } else { if (S.screen === 'editor' && S.cur) { edE.setSource(srcOf(S.cur, S.P)); layoutEditor(); } if (S.screen === 'camera') startCam(); }
   fit(); syncNav();
 }
-addEventListener('error', e => { try { toast('Chyba: ' + String(e.message || e).slice(0, 90)); } catch {} });
+addEventListener('error', e => { qlog('JS chyba', String(e.message || e), (e.filename || '').split('/').pop() + ':' + e.lineno); try { toast('Chyba: ' + String(e.message || e).slice(0, 90)); } catch {} });
+addEventListener('unhandledrejection', e => qlog('JS promise', String((e.reason && e.reason.message) || e.reason)));
 addEventListener('unhandledrejection', e => { try { const m = e.reason && e.reason.message; if (m) toast('Chyba: ' + m.slice(0, 90)); } catch {} });
 const PCAPP = () => !matchMedia('(max-width:700px),(pointer:coarse)').matches && /^(|pc)$/.test(location.hash.slice(1));
 const isMobile = () => matchMedia('(max-width:700px),(pointer:coarse)').matches; // telefon i na šířku zůstane v mobilním rozložení
