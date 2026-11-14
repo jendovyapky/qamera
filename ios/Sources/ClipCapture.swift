@@ -243,7 +243,7 @@ enum ClipDevelop {
                 "inputBiasVector": CIVector(x: -(3 * m + c) / 2, y: -(3 * m + c) / 2, z: -(3 * m + c) / 2, w: 0)])
         }
         /* halation = červenooranžová záře kolem opravdu přepálených světel (v logu nad ~1 EV nad bílou), jen kolem, ne přes světlo samo */
-        let t0h: CGFloat = log ? 0.70 : 0.93, t1h: CGFloat = log ? 0.86 : 1.0, hk = CGFloat(0.9 * hal)
+        let t0h: CGFloat = log ? 0.70 : 0.93, t1h: CGFloat = log ? 0.86 : 1.0, hk = CGFloat(0.45 * hal)
         let q: CGFloat = 0.25, hh = CGFloat(h) * q
         // vinětace stejně jako v hledáčku: c *= mix(1, smoothstep(.95, .2, |q|·1,15), vig), q = střed ±0,5 přepočtený na kratší stranu
         var vigImg: CIImage?

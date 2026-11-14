@@ -1490,7 +1490,7 @@ uniform vec3 uSh,uHi; uniform float uFCon,uFSat,uFFade, uChar, uFSoft, uIRHue; u
 uniform vec3 uHsl[8]; uniform vec3 uGSh,uGMid,uGHi;
 uniform vec3 uTrMs,uTrSs,uTrMr,uTrSr; uniform float uTr;
 uniform float uSeed, uGlow, uIR, uStyle, uCells, uLevels, uPalN, uZebra;
-uniform vec3 uLF; uniform float uPol, uLat, uHR, uFBlur, uGV, uFV, uNeg, uEst;
+uniform vec3 uLF; uniform float uPol, uLat, uHR, uFBlur, uGV, uFV, uNeg, uEst, uHV;
 uniform vec3 uPal[6];
 uniform highp sampler3D uLut3; uniform float uLut;
 uniform sampler2D uDepth; uniform float uDOn, uDMode, uDAmt, uFocus, uVFlash; uniform vec2 uPar; uniform int uSampN;
@@ -1585,12 +1585,15 @@ void main(){
     for (int i = 0; i < 10; i++) { float a = float(i) * .6283 + jr; vec2 d = vec2(cos(a), sin(a)) * ak, e = vec2(cos(a + .314), sin(a + .314)) * ak;
       hr += textureLod(uHL, uv + d * .007 * uHR, L1).a * .55 + textureLod(uHL, uv + e * .017 * uHR, L2).a * .35 + textureLod(uHL, uv + d * .036 * uHR, L3).a * .16; } // poloměr jako skutečná halation (podložka filmu): malý
     hr /= 10.; float self = textureLod(uHL, uv, 0.).a;
-    float hl = max(hr - self, 0.) * HALK * uEst; // záře kolem přepáleného světla; samotné světlo se nepřebarví
+    float hl = max(hr - self, 0.) * HALK;
+    if (uHV > 1.5) { hl *= .5; /* hv 2: halation jako skutečný film (slabá, jen kolem silných světel) */
+      if (uEst > .5) { float cov = textureLod(uHL, uv, L3 + 1.5).a; hl *= 1. - smoothstep(.04, .22, cov); } } /* odhad z 8bit obrazu: velká bílá plocha (monitor, papír, nebe) není lampa → bez záře, malá jasná místa ano */
+    // záře kolem přepáleného světla; samotné světlo se nepřebarví
     vec3 hcol = vec3(1., .2, .04) * exp2(uExp);
     if (dHal) { float dl = textureLod(uDepth, uv, 3.5).r, far = smoothstep(uFocus, uFocus - .3, dl); hl *= far; lin += hcol * hl * (1. + uDAmt * 5.); } // halation jen u vzdálených světel
     lin += hcol * hl * HALG * uHal / (1. + luma(lin) * 5.); } // červený lem je vidět hlavně na tmavém okolí, světlé plochy nepřebarví
   if (uGV > 1.5) { vec3 h1 = textureLod(uHL, uv, 2.).rgb, h2 = textureLod(uHL, uv, 3.5).rgb, h3 = textureLod(uHL, uv, 5.).rgb; // bloom jen z přepálených světel
-    vec3 bl = (h1 * .5 + h2 * .8 + h3 * 1.) * uBloom * BLOOMG * exp2(uExp); lin += bl * uEst / (1. + lin); } // na už světlých místech přidává méně
+    vec3 bl = (h1 * .5 + h2 * .8 + h3 * 1.) * uBloom * BLOOMG * exp2(uExp); lin += bl * (uEst > .5 ? .4 : 1.) / (1. + lin); } // na už světlých místech přidává méně
   else { /* záře do 0.17 (beze změny): práh z jasu fotky, bloom z mipmap fotky */
     vec3 b1 = pow(textureLod(uTex,uv,3.).rgb, vec3(2.2)), b2 = pow(textureLod(uTex,uv,5.).rgb, vec3(2.2)), b3 = pow(textureLod(uTex,uv,6.5).rgb, vec3(2.2));
     if (uHal > .001 || dHal) { vec2 tsz = vec2(textureSize(uTex,0)), ak = vec2(tsz.y / tsz.x, 1.); float hr = 0.;
@@ -1769,7 +1772,7 @@ class Engine {
     const fk = (FFMT[P.ffmt] || FFMT['35']).k, nx = P.nexp || 0, latG = 1 + .3 * Math.max(-nx, 0) - .1 * Math.max(nx, 0); // větší negativ = jemnější zrno; podexpozice = víc zrna
     gl.uniform1f(u.uGrain, P.grain * vm.grain * G.a * (.6 + .4 * isoK) * k * latG / Math.sqrt(fk)); gl.uniform1f(u.uGFreq, 560 / (P.gsize * vm.gsize) * G.f / (.72 + .38 * isoK) * fk);
     const lt = LFS[P.lf], lw = f.bw || [.2126, .7152, .0722], ln = lt ? lt[0] * lw[0] + lt[1] * lw[1] + lt[2] * lw[2] : 1;
-    gl.uniform3fv(u.uLF, lt ? lt.map(x => x / ln) : [1, 1, 1]); gl.uniform1f(u.uPol, P.lf === 'POL' ? 1 : 0); gl.uniform1f(u.uLat, nx); gl.uniform1f(u.uHR, 1 / fk); gl.uniform1f(u.uGV, P.gv || 2); gl.uniform1f(u.uEst, !this.hasE && (P.hv || 1) >= 2 ? .4 : 1); gl.uniform1f(u.uFBlur, P.ffmt === 'half' ? .55 : 0); // hv 2: odhad světel z 8bit obrazu (hledáček, JPEG) je slabší – bílý monitor / papír není lampa
+    gl.uniform3fv(u.uLF, lt ? lt.map(x => x / ln) : [1, 1, 1]); gl.uniform1f(u.uPol, P.lf === 'POL' ? 1 : 0); gl.uniform1f(u.uLat, nx); gl.uniform1f(u.uHR, 1 / fk); gl.uniform1f(u.uGV, P.gv || 2); gl.uniform1f(u.uEst, !this.hasE && (P.hv || 1) >= 2 ? 1 : 0); gl.uniform1f(u.uHV, P.hv || 1); gl.uniform1f(u.uFBlur, P.ffmt === 'half' ? .55 : 0); // hv 2: odhad světel z 8bit obrazu (hledáček, JPEG) je slabší – bílý monitor / papír není lampa
     gl.uniform1f(u.uSeed, o.seed != null ? o.seed : 7); gl.uniform1f(u.uGSharp, G.sh); gl.uniform1f(u.uGChroma, G.ch); gl.uniform1f(u.uGClump, G.cl); gl.uniform1f(u.uGMot, G.mot);
     gl.uniform1f(u.uVig, P.vig * k); gl.uniform1f(u.uFade, P.fade); gl.uniform1f(u.uSharp, P.sharp); gl.uniform1f(u.uShad, P.shad || 0); gl.uniform1f(u.uHil, P.hil || 0);
     gl.uniform1f(u.uChar, P.chr ?? f.chr ?? .6); gl.uniform3fv(u.uBW, f.bw || [0, 0, 0]); gl.uniform3fv(u.uBTone, f.tone || [1, 1, 1]); gl.uniform1f(u.uBToe, f.toe || 0);
