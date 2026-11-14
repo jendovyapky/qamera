@@ -1200,6 +1200,8 @@ const ICONS = {
   dice:   ['..########..', '.#........#.', '#.##....##.#', '#.##....##.#', '#....##....#', '#....##....#', '#.##....##.#', '#.##....##.#', '.#........#.', '..########..'],
   eye:    ['', '', '...######...', '..#......#..', '.#...##...#.', '#...####...#', '.#...##...#.', '..#......#..', '...######...'],
   sharp:  ['', '.....#......', '....###.....', '...#####....', '..#######...', '.#########..', '...#####....', '...#####....', '...#####....'],
+  hil:    ['', '...######...', '..########..', '.##########.', '.##########.', '.#........#.', '.#........#.', '..#......#..', '...######...'],
+  shad:   ['', '....####....', '..###.......', '.###........', '.##.........', '.##.........', '.##.........', '.###........', '..###.......', '....####....'],
   sun:    ['', '.....#......', '..#..#..#...', '...#####....', '..#######...', '###.###.###.', '..#######...', '...#####....', '..#..#..#...', '.....#......'],
   chev:   ['', '', '', '.....##.....', '....####....', '...##..##...', '..##....##..', '.##......##.'],
   heart:  ['.###...###..', '#####.#####.', '###########.', '###########.', '.#########..', '..#######...', '...#####....', '....###.....', '.....#......'],
@@ -1472,7 +1474,7 @@ precision highp float;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uTex, uCurve, uHL;
 uniform vec2 uCover, uOff, uRes; uniform float uZoom, uRot, uTime, uBypass, uStatic;
-uniform float uExp,uTemp,uTint,uCon,uSat,uStr,uHal,uBloom,uVig,uFade,uSharp;
+uniform float uExp,uTemp,uTint,uCon,uSat,uStr,uHal,uBloom,uVig,uFade,uSharp,uShad,uHil;
 uniform float uGrain,uGFreq,uGSharp,uGChroma,uGClump,uGMot;
 uniform vec3 uSh,uHi; uniform float uFCon,uFSat,uFFade, uChar, uFSoft, uIRHue; uniform vec3 uBW, uBTone; uniform float uBToe;
 uniform vec3 uHsl[8]; uniform vec3 uGSh,uGMid,uGHi;
@@ -1505,7 +1507,12 @@ vec3 shd(vec3 v){ return vec3(shd1(v.r), shd1(v.g), shd1(v.b)); }
 const float FLO = -8.0, FHI = 6.0;
 vec3 unShoulder(vec3 x){ float m = max(x.r, max(x.g, x.b)); if (m <= .55) return x; float fm = min(m, .985);
   float n = .55 - .45 * log(max(1. - (fm - .55) / .45, 1e-4)); return x * (n / m); }
-vec3 filmLog(vec3 lin){ vec3 x = unShoulder(max(lin * exp2(-uExp), 0.)) * exp2(uExp);
+/* Světla / Stíny: zesvětlení nebo ztmavení podle jasu v EV kolem střední šedé (odstín zůstává);
+   světla −100 % stáhnou nejsvětlejší místa až o 1,8 EV (u RAW se vrátí kresba v obloze), stíny +100 % zvednou hluboké stíny o 1,6 EV */
+float gShL = 0.; // jas okolí v EV kolem šedé (nastaví main z mipmapy)
+vec3 shTone(vec3 x){ if (uShad == 0. && uHil == 0.) return x; float lg = mix(log2(max(luma(x), 1e-5) / .18), gShL, .7);
+  float ws = 1. - smoothstep(-4.5, .3, lg), wh = smoothstep(0., 3.2, lg); return x * exp2(uShad * ws * 1.6 + uHil * wh * 1.8); }
+vec3 filmLog(vec3 lin){ vec3 x = shTone(unShoulder(max(lin * exp2(-uExp), 0.)) * exp2(uExp));
   x = max(mix(vec3(luma(x)), x, 1. + uSat), 0.);
   vec3 lg = log2(max(x, vec3(1e-6)) / .18) * (1. + uCon * .5);
   vec3 t = clamp((lg - FLO) / (FHI - FLO), 0., 1.);
@@ -1535,7 +1542,9 @@ void main(){
   if (uFBlur > 0.) col = mix(col, textureLod(uTex, uv, max(0., log2(float(textureSize(uTex,0).y) * .0007))).rgb, uFBlur); // half-frame: menší políčko = měkčí kresba
   col = mix(col, (col-uTrMs)/max(uTrSs,vec3(.03))*uTrSr+uTrMr, uTr);
   vec3 lin = pow(max(col,0.), vec3(2.2)) * exp2(uExp);
+  if (uShad != 0. || uHil != 0.) { vec3 bc = pow(max(textureLod(uTex, uv, max(0., log2(float(textureSize(uTex,0).y) * .012))).rgb, 0.), vec3(2.2)); if (uFV > 1.5) bc = unShoulder(bc); gShL = log2(max(luma(bc * exp2(uExp)), 1e-5) / .18); }
   lin *= vec3(1.+uTemp*.22, 1.+uTint*.1, 1.-uTemp*.22);
+  if (uFV < 1.5) lin = shTone(lin); // film v2 to dělá až po vrácení ramene (filmLog)
   lin *= uLF; // filtr na objektivu: propustnost po kanálech (srovnaná na citlivost filmu → šedá zůstane stejně světlá)
   if (uPol > 0.) { float sk = smoothstep(.04, .3, (lin.b - max(lin.r, lin.g)) / (lin.b + .02)); lin *= mix(vec3(1.), vec3(.48, .56, .78), sk * uPol); // polarizační: hlubší nebe,
     float pl = luma(lin); lin = max(mix(vec3(pl), lin, 1. + .2 * uPol), 0.); lin *= 1. - .12 * uPol * smoothstep(.5, 1.3, pl); }                    // bez odlesků (sytější barvy, méně lesku)
@@ -1657,7 +1666,7 @@ void main(){
     if (Lz > .9) c = mix(c, vec3(1.,.77,.24), .85*st); if (Lz < .07) c = mix(c, vec3(.2,.45,1.), .7*st); }
   o = vec4(clamp(c,0.,1.), 1.);
 }`;
-const DEF = () => ({ gv: 2, fv: 2, film: 'P400', str: 1, exp: 0, temp: 0, tint: 0, con: 0, sat: 0, grain: .5, gsize: 1, gtype: null, hal: 1, bloom: .15, glow: null, vig: .25, fade: 0, sharp: 0, style: null, frame: null, dx: null,
+const DEF = () => ({ gv: 2, fv: 2, film: 'P400', str: 1, exp: 0, temp: 0, tint: 0, con: 0, hil: 0, shad: 0, sat: 0, grain: .5, gsize: 1, gtype: null, hal: 1, bloom: .15, glow: null, vig: .25, fade: 0, sharp: 0, style: null, frame: null, dx: null,
   curve: { rgb: [[0, 0], [1, 1]], r: [[0, 0], [1, 1]], g: [[0, 0], [1, 1]], b: [[0, 0], [1, 1]] }, hsl: Array.from({ length: 8 }, () => [0, 0, 0]),
   grade: { sh: [0, 0], mid: [0, 0], hi: [0, 0] }, tr: 0, crop: { ar: 0, s: 1, x: 0, y: 0, rot: 0 } });
 
@@ -1744,7 +1753,7 @@ class Engine {
     const lt = LFS[P.lf], lw = f.bw || [.2126, .7152, .0722], ln = lt ? lt[0] * lw[0] + lt[1] * lw[1] + lt[2] * lw[2] : 1;
     gl.uniform3fv(u.uLF, lt ? lt.map(x => x / ln) : [1, 1, 1]); gl.uniform1f(u.uPol, P.lf === 'POL' ? 1 : 0); gl.uniform1f(u.uLat, nx); gl.uniform1f(u.uHR, 1 / fk); gl.uniform1f(u.uGV, P.gv || 2); gl.uniform1f(u.uFBlur, P.ffmt === 'half' ? .55 : 0);
     gl.uniform1f(u.uSeed, o.seed != null ? o.seed : 7); gl.uniform1f(u.uGSharp, G.sh); gl.uniform1f(u.uGChroma, G.ch); gl.uniform1f(u.uGClump, G.cl); gl.uniform1f(u.uGMot, G.mot);
-    gl.uniform1f(u.uVig, P.vig * k); gl.uniform1f(u.uFade, P.fade); gl.uniform1f(u.uSharp, P.sharp);
+    gl.uniform1f(u.uVig, P.vig * k); gl.uniform1f(u.uFade, P.fade); gl.uniform1f(u.uSharp, P.sharp); gl.uniform1f(u.uShad, P.shad || 0); gl.uniform1f(u.uHil, P.hil || 0);
     gl.uniform1f(u.uChar, P.chr ?? f.chr ?? .6); gl.uniform3fv(u.uBW, f.bw || [0, 0, 0]); gl.uniform3fv(u.uBTone, f.tone || [1, 1, 1]); gl.uniform1f(u.uBToe, f.toe || 0);
     gl.uniform3fv(u.uSh, f.sh); gl.uniform3fv(u.uHi, f.hi); gl.uniform1f(u.uFCon, f.con); gl.uniform1f(u.uFSat, f.sat); gl.uniform1f(u.uFFade, f.fade);
     gl.uniform3fv(u.uHsl, P.hsl.flat());
@@ -2059,7 +2068,7 @@ function go(to, { back = false, onShown, t0 = 0, v = 0 } = {}) {
 }
 function goBack() { const to = stack.pop() || 'camera'; go(to, { back: true }); }
 /* tah od levého okraje = zpět (galerie → foťák); obrazovka jede za prstem stejně jako přechod zpět */
-function edgeBack(scr) {
+function edgeBack(scr, before) {
   const el = $(SCREENS[scr]); let st = null;
   const paint = (s, p) => {
     const a = 1 - p;
@@ -2069,6 +2078,7 @@ function edgeBack(scr) {
   el.addEventListener('touchstart', e => {
     st = null;
     if (S.screen !== scr || trans || !isMobile() || e.touches.length !== 1) return;
+    if (scr === 'editor' && (S.tab === 'crop' || e.target.closest('.srow'))) return; // ořez a posuvníky mají vlastní tahy
     const t = e.touches[0]; if (t.clientX - el.getBoundingClientRect().left > 26) return;
     st = { x: t.clientX, y: t.clientY, on: false, p: 0, v: 0, lx: t.clientX, lt: performance.now() };
   }, { passive: true });
@@ -2079,7 +2089,7 @@ function edgeBack(scr) {
       if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { st = null; return; }
       if (dx < 8) return;
       st.on = true; st.to = stack[stack.length - 1] || 'camera'; st.under = $(SCREENS[st.to]); st.W = $('#phone').clientWidth;
-      closeSheets(); st.under.hidden = false; st.under.style.zIndex = 4; el.style.zIndex = 6;
+      closeSheets(); if (scr === 'editor') setBefore(false); st.under.hidden = false; st.under.style.zIndex = 4; el.style.zIndex = 6;
     }
     e.preventDefault();
     const now = performance.now(); st.v = (t.clientX - st.lx) / Math.max(1, now - st.lt); st.lx = t.clientX; st.lt = now;
@@ -2087,7 +2097,7 @@ function edgeBack(scr) {
   }, { passive: false });
   const end = () => {
     const s = st; st = null; if (!s || !s.on) return;
-    if (s.p > .33 || s.v > .45) { stack.pop(); buzz(); go(s.to, { back: true, t0: s.p, v: Math.max(0, s.v) * 1000 / s.W }); return; }
+    if (s.p > .33 || s.v > .45) { before && before(); stack.pop(); buzz(); go(s.to, { back: true, t0: s.p, v: Math.max(0, s.v) * 1000 / s.W }); return; }
     spring(s.p, 0, p => paint(s, p), { k: 260, c: 28, v: s.v * 1000 / s.W, onDone: () => {
       if (S.screen === scr) s.under.hidden = true;
       [el, s.under].forEach(x => { x.style.transform = x.style.filter = x.style.zIndex = ''; });
@@ -3266,6 +3276,8 @@ const ADJ = [
   { k: 'temp', l: 'Teplota', ic: 'temp', min: -1, max: 1, step: .01, f: pct },
   { k: 'tint', l: 'Odstín', ic: 'magic', min: -1, max: 1, step: .01, f: pct },
   { k: 'con', l: 'Kontrast', ic: 'info', min: -1, max: 1, step: .01, f: pct },
+  { k: 'hil', l: 'Světla', ic: 'hil', min: -1, max: 1, step: .01, f: pct },
+  { k: 'shad', l: 'Stíny', ic: 'shad', min: -1, max: 1, step: .01, f: pct },
   { k: 'sat', l: 'Saturace', ic: 'blob', min: -1, max: 1, step: .01, f: pct },
   { k: 'grain', l: 'Grain', ic: 'grain', min: 0, max: 1.5, step: .01, f: v => Math.round(v * 100), def: .5 },
   { k: 'hal', l: 'Halation', ic: 'halo', min: 0, max: 3, step: .02, f: v => Math.round(v * 100), def: 1 },
@@ -3550,14 +3562,15 @@ function fitCrop() { const c = S.P.crop, rot = Math.abs(c.rot) * Math.PI / 180, 
   const lx = Math.max(0, .5 - .5 * cv[0] * need / c.s), ly = Math.max(0, .5 - .5 * cv[1] * need / c.s); c.x = clamp(c.x, -lx, lx); c.y = clamp(c.y, -ly, ly); }
 function setBefore(on) { if (before === on) return; before = on; $('#beforeBadge').classList.toggle('show', on); renderEd(true); if (on) buzz(8); }
 function cropGestures() {
-  const el = $('#ePhoto'), pts = new Map(); let base = null, holdT = 0;
+  const el = $('#ePhoto'), pts = new Map(); let base = null, holdT = 0, hold0 = null;
   const startBase = () => { const arr = [...pts.values()]; const c = S.P.crop; base = { s: c.s, x: c.x, y: c.y, cx: (arr[0].x + (arr[1] || arr[0]).x) / 2, cy: (arr[0].y + (arr[1] || arr[0]).y) / 2, d: arr[1] ? Math.hypot(arr[0].x - arr[1].x, arr[0].y - arr[1].y) : 0 }; };
   el.addEventListener('pointerdown', e => {
     if (e.target.closest('button')) return;
     el.setPointerCapture(e.pointerId);
-    if (S.tab !== 'crop' || S.adv) { holdT = setTimeout(() => setBefore(true), 160); return; }
+    if (S.tab !== 'crop' || S.adv) { hold0 = [e.clientX, e.clientY]; holdT = setTimeout(() => setBefore(true), 160); return; }
     pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); startBase(); });
   el.addEventListener('pointermove', e => {
+    if (holdT && hold0 && Math.hypot(e.clientX - hold0[0], e.clientY - hold0[1]) > 10) { clearTimeout(holdT); holdT = 0; setBefore(false); }
     if (S.tab !== 'crop' || S.adv || !pts.has(e.pointerId)) return; pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
     const arr = [...pts.values()], c = S.P.crop, w = $('#eWrap').clientWidth, h = $('#eWrap').clientHeight;
     const cx = (arr[0].x + (arr[1] || arr[0]).x) / 2, cy = (arr[0].y + (arr[1] || arr[0]).y) / 2;
@@ -4223,7 +4236,7 @@ function buildPcRight() {
     <div class="pcsec"><h4>Film <span style="color:var(--amber)">${f.sub}</span><button class="resetbtn" id="pcReset" style="height:22px">${iconSVG('reset')}Vše</button></h4>${rangeRow('str', 'Síla filmu', 0, 1, P)}${rangeRow('hal', 'Halation', 0, 3, P)}${rangeRow('bloom', 'Bloom', 0, 1.5, P)}${rangeRow('glow', 'Glow', 0, 1.5, P)}</div>
     <div class="pcsec" id="pcFLab"><h4>Negativ <span>filtr · formát · expozice</span></h4>${filmCtlHtml(P, P.film, 'pk', true, ['nexp'])}</div>
     <div class="pcsec"><h4>Grain <span>${GRAINS[gtypeOf(P)].l}</span></h4><div class="gt" id="pcGt">${grainPills()}</div>${rangeRow('grain', 'Síla', 0, 1.5, P)}${rangeRow('gsize', 'Velikost', .5, 3, P)}</div>
-    <div class="pcsec"><h4>Základ</h4>${rangeRow('exp', 'Expozice', -3, 3, P)}${rangeRow('temp', 'Teplota', -1, 1, P)}${rangeRow('tint', 'Odstín', -1, 1, P)}${rangeRow('con', 'Kontrast', -1, 1, P)}${rangeRow('sat', 'Saturace', -1, 1, P)}</div>
+    <div class="pcsec"><h4>Základ</h4>${rangeRow('exp', 'Expozice', -3, 3, P)}${rangeRow('temp', 'Teplota', -1, 1, P)}${rangeRow('tint', 'Odstín', -1, 1, P)}${rangeRow('con', 'Kontrast', -1, 1, P)}${rangeRow('hil', 'Světla', -1, 1, P)}${rangeRow('shad', 'Stíny', -1, 1, P)}${rangeRow('sat', 'Saturace', -1, 1, P)}</div>
     <div class="pcsec"><h4>Tónová křivka <span>RGB</span></h4><canvas class="curve" id="pcCurve" width="580" height="360"></canvas></div>
     <div class="pcsec"><h4>Efekty</h4>${rangeRow('vig', 'Vignette', 0, 1, P)}${rangeRow('fade', 'Fade', 0, 1, P)}${rangeRow('sharp', 'Ostrost', 0, 1.5, P)}${rangeRow('vflash', 'Flash', 0, 1, P)}</div>
     <div class="pcsec"><h4>Ořez <span>C = upravit tažením</span></h4><div class="seg" id="pcAr">${[['ORIG', 0], ['1:1', 1], ['4:5', .8], ['3:2', 1.5], ['16:9', 16 / 9], ['9:16', 9 / 16]].map(([l, v]) => `<button data-a="${v}" class="${P.crop.ar === v ? 'on' : ''}">${l}</button>`).join('')}</div>
@@ -4585,7 +4598,7 @@ function boot2(h) {
   $('#tSun').onclick = openSun; $('#sunCard').onclick = foldSun; updSun(); setInterval(updSun, 30000); addEventListener('resize', () => requestAnimationFrame(updSun));
   $('#mClose').onclick = () => sheet($('#menuSheet'), false);
   $$('[data-back]').forEach(b => b.onclick = () => { if (S.screen === 'editor' && S.cur) rethumb(S.cur); goBack(); });
-  edgeBack('gallery');
+  edgeBack('gallery'); edgeBack('editor', () => { if (S.cur) rethumb(S.cur); });
   // galerie
   $('#gSearch').oninput = filterGallery; bindColorSearch();
   // editor
