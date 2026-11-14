@@ -105,6 +105,13 @@
   "input": "log2(x/0.18) -8..+6 EV"
  },
  {
+  "code": "P400C",
+  "film": "kodak_portra_400",
+  "print": "kino",
+  "size": 33,
+  "input": "log2(x/0.18) -8..+6 EV"
+ },
+ {
   "code": "C200",
   "film": "fujifilm_c200",
   "print": "fujifilm_crystal_archive_typeii",

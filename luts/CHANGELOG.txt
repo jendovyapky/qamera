@@ -36,3 +36,5 @@ Upravil: Qamera (jendovyapky), skript tools/bake_luts.py
   srovnání oranžové masky a gam vrstev podle šedé škály (šedá neutrální), barevná matice skeneru napasovaná na
   barevnou tabulku (ColorChecker při −1/0/+1 EV), S křivka a barevnost skeneru. Vzhled Frontier / Noritsu je
   odhad podle typických skenů, ne měřený profil skeneru.
+
+2026-11-14  luts/log/P400C.png: kodak_portra_400 negative (scan_film) converted by Qamera's own scanner model 'kino' (per-channel density fit, ColorChecker dye matrix, logistic print curve with cyan shadows / warm highlights, saturation 1.12, hue shifts: blue -10 deg, yellow-green +8 deg). Grain/halation off. Log input -8..+6 EV around 0.18.

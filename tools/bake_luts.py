@@ -45,6 +45,7 @@ FILMS = {
     'VR200':   ('kodak_verita_200d', 'kodak_endura_premier'),
     'P800P':   ('kodak_portra_800_push2', 'kodak_portra_endura'),
     'E100C':   ('kodak_ektar_100', 'kodak_2383'),
+    'P400C':   ('kodak_portra_400', 'kino'),  # film V2: sken negativu s kinovou gradací (jen --log)
     'C200':    ('fujifilm_c200', 'fujifilm_crystal_archive_typeii'),
     '400H':    ('fujifilm_pro_400h', 'fujifilm_crystal_archive_typeii'),
     'SX400':   ('fujifilm_xtra_400', 'fujifilm_crystal_archive_typeii'),
@@ -81,6 +82,8 @@ def bake_log(film, prt, n, simulate, init_params):
 
 SCANNERS = {  # kontrast g (sklon S křivky), maximum, sytost, tóny v EV na kanál (R, G, B) ve stínech / středu / světlech
     'frontier': dict(g=1.18, top=.94, sat=1.04, sh=(-.10, .03, .02), mid=(.05, .02, -.05), hi=(-.02, .03, -.01)),
+    # kino = gradace jako film na kinovém tisku / filmová videa: kontrast, azurové stíny, teplá světla, nebe do tyrkysové, zeleň méně žlutá
+    'kino':     dict(g=1.36, top=.97, sat=1.12, sh=(-.14, .0, .10), mid=(.03, -.04, .0), hi=(.10, .03, -.12), hue=[(215, 40, -10, 1.0), (75, 35, 8, .9), (130, 40, 6, .95)]),
     'noritsu':  dict(g=1.02, top=.96, sat=1.0, sh=(.02, -.02, .04), mid=(.04, -.01, -.01), hi=(-.02, 0., 0.)),
 }
 
@@ -124,7 +127,18 @@ def bake_scan(film, n, scanner, simulate, init_params):
     l = y @ [.2126, .7152, .0722]
     y = np.clip(l[..., None] + (y - l[..., None]) * s['sat'], 0, 1)
     y = np.where(y <= .0031308, y * 12.92, 1.055 * np.power(y, 1 / 2.4) - .055)
-    return np.clip(y, 0, 1).reshape(n, n, n, 3)
+    return hue_adj(np.clip(y, 0, 1), s.get('hue', [])).reshape(n, n, n, 3)
+
+
+def hue_adj(e, hs):  # posun odstínu a sytosti po barvách (střed °, šířka °, posun °, násobek sytosti) na sRGB
+    if not hs: return e
+    import colour
+    hsv = colour.RGB_to_HSV(e); h = hsv[..., 0] * 360
+    for c, wd, sh, sm in hs:
+        d = (h - c + 180) % 360 - 180; w = np.clip(1 - np.abs(d) / wd, 0, 1) ** 1.5 * np.clip(hsv[..., 1] / .15, 0, 1)
+        h = h + sh * w; hsv[..., 1] = np.clip(hsv[..., 1] * (1 + (sm - 1) * w), 0, 1)
+    hsv[..., 0] = (h % 360) / 360
+    return np.clip(colour.HSV_to_RGB(hsv), 0, 1)
 
 
 def identity(n):
@@ -192,9 +206,10 @@ def main():
     meta = []
     for code, (film, prt) in FILMS.items():
         if a.only and code not in a.only.split(','): continue
-        if a.scanner and prt is None: continue  # diapozitiv se skenuje rovnou jako pozitiv
+        if a.scanner and prt in (None, 'kino'): continue  # diapozitiv se skenuje rovnou jako pozitiv
+        if prt == 'kino' and not a.log: continue  # film V2 má jen log LUT
         t = time.time(); n = a.size
-        lut = bake_scan(film, n, a.scanner, simulate, init_params) if a.scanner else bake_log(film, prt, n, simulate, init_params) if a.log else bake(code, film, prt, n, simulate, init_params)
+        lut = bake_scan(film, n, a.scanner or prt, simulate, init_params) if a.scanner or prt == 'kino' else bake_log(film, prt, n, simulate, init_params) if a.log else bake(code, film, prt, n, simulate, init_params)
         img = np.zeros((n, n * n, 3), np.uint8)  # y = g, x = r + b*n
         for b in range(n): img[:, b * n:(b + 1) * n] = np.round(lut[b] * 255)
         Image.fromarray(img).save(os.path.join(a.out, f'{code}.png'), optimize=True)
