@@ -14,7 +14,7 @@ final class ClipCapture: NSObject, AVCaptureFileOutputRecordingDelegate {
     struct Opts {
         var seconds = 5.0
         var zoom = 1.0, ultra = false, tele = false
-        var film = "NONE", str = 1.0, grain = 0.5, hal = 0.5, vig = 0.0
+        var film = "NONE", str = 1.0, grain = 0.5, hal = 0.5, vig = 0.0, apl = 0.5
     }
 
     struct Result {
@@ -105,7 +105,7 @@ final class ClipCapture: NSObject, AVCaptureFileOutputRecordingDelegate {
                 res.log = log
                 res.lensZoom = lensZoom
                 let mp4 = RawCapture.dir.appendingPathComponent(id + ".mp4"), jpg = RawCapture.dir.appendingPathComponent(id + ".jpg")
-                try ClipDevelop.process(src: url, dst: mp4, thumb: jpg, log: log, film: o.film, str: o.str, grain: o.grain, hal: o.hal, vig: o.vig, progress: progress)
+                try ClipDevelop.process(src: url, dst: mp4, thumb: jpg, log: log, film: o.film, str: o.str, grain: o.grain, hal: o.hal, vig: o.vig, apl: o.apl, progress: progress)
                 try? FileManager.default.removeItem(at: url)
                 res.mp4 = id + ".mp4"; res.jpg = id + ".jpg"
                 done(.success(res))
@@ -169,7 +169,29 @@ enum ClipDevelop {
     }
 
     // Tabulka 64³ RGBA float: vstup = kódové hodnoty videa (log nebo sRGB), výstup = sRGB po filmu
-    static func cube(film: String, log: Bool, str: Double) -> Data {
+    /* stejný převod jako aplInv / aplFwd ve webu (index.html): Apple Log = scéna → napůl k vzhledu iPhonu (jako RAW fotka a hledáček);
+       běžné video bez logu je už zpracované Applem → napůl zpět ke scéně */
+    static func aplEv(_ lg: Double) -> Double {
+        let ss = { (a: Double, b: Double, x: Double) -> Double in let t = min(max((x - a) / (b - a), 0), 1); return t * t * (3 - 2 * t) }
+        return min(2.4, 2.2 * pow(2, -(lg + 7.6) / 1.8)) * (1 - ss(-4.6, -2.7, lg)) - 0.22 * exp(-pow((lg + 1.8) / 0.8, 2)) + 1.2 * ss(-0.3, 1, lg)
+    }
+    static func aplSat(_ lg: Double) -> Double {
+        let ss = { (a: Double, b: Double, x: Double) -> Double in let t = min(max((x - a) / (b - a), 0), 1); return t * t * (3 - 2 * t) }
+        return lg < -5 ? 0.5 + 0.1 * ss(-7, -5, lg) : 0.6 + 0.15 * ss(-4.5, -2, lg)
+    }
+    static func luma(_ c: [Double]) -> Double { max(0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2], 1e-5) }
+    static func aplInv(_ c: [Double], _ k: Double) -> [Double] {
+        let L = luma(c), lg = log2(L), s = 1 + (aplSat(lg) - 1) * k, e = pow(2, aplEv(lg) * k)
+        return c.map { max(L + ($0 - L) * s, 0) * e }
+    }
+    static func aplFwd(_ c: [Double], _ k: Double) -> [Double] {
+        let lx = log2(luma(c)); var lg = lx
+        for _ in 0..<3 { lg = lx - aplEv(lg) * k }
+        let x = c.map { $0 * pow(2, -aplEv(lg) * k) }, L = luma(x), s = 1 + (aplSat(lg) - 1) * k
+        return x.map { max(L + ($0 - L) / s, 0) }
+    }
+
+    static func cube(film: String, log: Bool, str: Double, apl: Double = 0.5) -> Data {
         let n = 64, lut = filmLUT(film)
         // Rec.2020 → Rec.709/sRGB (lineárně)
         let M = [1.6605, -0.5876, -0.0728, -0.1246, 1.1329, -0.0083, -0.0182, -0.1006, 1.1187]
@@ -182,6 +204,7 @@ enum ClipDevelop {
                 l = [M[0] * a[0] + M[1] * a[1] + M[2] * a[2], M[3] * a[0] + M[4] * a[1] + M[5] * a[2], M[6] * a[0] + M[7] * a[1] + M[8] * a[2]]
             } else { l = p.map(srgbToLinear) }
             l = l.map { max($0, 0) }
+            if apl > 0 { l = log ? aplFwd(l, apl) : aplInv(l, apl) }
             // bez filmu: lineární → sRGB s měkkým ramenem (log jinak přepálí)
             let plain = l.map { linearToSrgb($0 / (1 + $0 * 0.18)) }
             var c = plain
@@ -196,7 +219,7 @@ enum ClipDevelop {
         return out.withUnsafeBufferPointer { Data(buffer: $0) }
     }
 
-    static func process(src: URL, dst: URL, thumb: URL, log: Bool, film: String, str: Double, grain: Double, hal: Double, vig: Double,
+    static func process(src: URL, dst: URL, thumb: URL, log: Bool, film: String, str: Double, grain: Double, hal: Double, vig: Double, apl: Double = 0.5,
                         progress: (Double) -> Void) throws {
         let asset = AVURLAsset(url: src)
         guard let track = asset.tracks(withMediaType: .video).first else { throw QError(message: "klip je prázdný") }
@@ -226,7 +249,7 @@ enum ClipDevelop {
         let ctx = CIContext(options: [.workingColorSpace: NSNull(), .outputColorSpace: NSNull(), .workingFormat: CIFormat.RGBAh])
         let cubeF = CIFilter(name: "CIColorCube")!
         cubeF.setValue(64, forKey: "inputCubeDimension")
-        cubeF.setValue(cube(film: film, log: log, str: str), forKey: "inputCubeData")
+        cubeF.setValue(cube(film: film, log: log, str: str, apl: apl), forKey: "inputCubeData")
         let ext = CGRect(x: 0, y: 0, width: w, height: h)
         /* zrno = šum v hustotě negativu: přidává se do logu PŘED filmem, takže ho křivka filmu sama zeslabí ve světlech
            (rameno) i ve stínech (pata) a nejvíc je vidět ve středních tónech – jako skutečné zrno. Dvě velikosti zrn

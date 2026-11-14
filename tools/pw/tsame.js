@@ -15,7 +15,7 @@ const { chromium } = require('playwright-core'); const fs = require('fs'), path 
     const W = raw.width, H = raw.height, o = mk(W * 2, H * 2), g = o.getContext('2d');
     const P = Object.assign(camParams(), { film }); P.exp = 0;
     const row = (src, y, apl) => { g.drawImage(src, 0, y, W, H); if (!util.e || util.e.dead) utilReset(); g.drawImage(utilRender(src, Object.assign({}, P, { apl }), W, H, { seed: 5 }), W, y, W, H); };
-    row(ap, 0, 1); row(raw, H, 0); // Apple obraz se zpětným převodem jako hledáček (P.apl)
+    row(ap, 0, .5); row(raw, H, -.5); // Apple obraz se zpětným převodem jako hledáček (P.apl)
     g.font = 'bold 22px sans-serif'; g.fillStyle = '#ff0'; [['APPLE JPEG (jako hledáček)', 0, 0], ['+ ' + film, W, 0], ['RAW', 0, H], ['+ ' + film, W, H]].forEach(([t, x, y]) => g.fillText(t, x + 12, y + 30));
     return o.toDataURL('image/jpeg', .9);
   }, film);
