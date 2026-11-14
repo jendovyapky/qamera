@@ -173,6 +173,8 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
             o.film = (m["film"] as? String) ?? "NONE"
             o.str = (m["str"] as? Double) ?? 1
             o.grain = (m["grain"] as? Double) ?? 0.5
+            o.hal = (m["hal"] as? Double) ?? 0.5
+            o.vig = (m["vig"] as? Double) ?? 0
             clip.capture(o, recording: { [weak self] in
                 DispatchQueue.main.async { self?.js("window.__qClipRec && window.__qClipRec(\(id))") }
             }, progress: { [weak self] p in

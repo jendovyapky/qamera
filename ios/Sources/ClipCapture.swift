@@ -14,7 +14,7 @@ final class ClipCapture: NSObject, AVCaptureFileOutputRecordingDelegate {
     struct Opts {
         var seconds = 5.0
         var zoom = 1.0, ultra = false, tele = false
-        var film = "NONE", str = 1.0, grain = 0.5
+        var film = "NONE", str = 1.0, grain = 0.5, hal = 0.5, vig = 0.0
     }
 
     struct Result {
@@ -105,7 +105,7 @@ final class ClipCapture: NSObject, AVCaptureFileOutputRecordingDelegate {
                 res.log = log
                 res.lensZoom = lensZoom
                 let mp4 = RawCapture.dir.appendingPathComponent(id + ".mp4"), jpg = RawCapture.dir.appendingPathComponent(id + ".jpg")
-                try ClipDevelop.process(src: url, dst: mp4, thumb: jpg, log: log, film: o.film, str: o.str, grain: o.grain, progress: progress)
+                try ClipDevelop.process(src: url, dst: mp4, thumb: jpg, log: log, film: o.film, str: o.str, grain: o.grain, hal: o.hal, vig: o.vig, progress: progress)
                 try? FileManager.default.removeItem(at: url)
                 res.mp4 = id + ".mp4"; res.jpg = id + ".jpg"
                 done(.success(res))
@@ -196,7 +196,7 @@ enum ClipDevelop {
         return out.withUnsafeBufferPointer { Data(buffer: $0) }
     }
 
-    static func process(src: URL, dst: URL, thumb: URL, log: Bool, film: String, str: Double, grain: Double,
+    static func process(src: URL, dst: URL, thumb: URL, log: Bool, film: String, str: Double, grain: Double, hal: Double, vig: Double,
                         progress: (Double) -> Void) throws {
         let asset = AVURLAsset(url: src)
         guard let track = asset.tracks(withMediaType: .video).first else { throw QError(message: "klip je prázdný") }
@@ -228,9 +228,43 @@ enum ClipDevelop {
         cubeF.setValue(64, forKey: "inputCubeDimension")
         cubeF.setValue(cube(film: film, log: log, str: str), forKey: "inputCubeData")
         let ext = CGRect(x: 0, y: 0, width: w, height: h)
-        // zrno: šum ze CIRandomGenerator, jednobarevný, mírně zvětšený a rozmazaný (shluky), každý snímek jinde
-        let amp = 0.10 * grain * str
+        /* zrno = šum v hustotě negativu: přidává se do logu PŘED filmem, takže ho křivka filmu sama zeslabí ve světlech
+           (rameno) i ve stínech (pata) a nejvíc je vidět ve středních tónech – jako skutečné zrno. Dvě velikosti zrn
+           (shluky), převážně jednobarevné s trochou barevných mračen barviv, každý snímek jinde */
+        let sd = (log ? 0.026 : 0.016) * grain * max(str, 0.15) // σ v kódech logu (1 EV ≈ 0,085)
         let noiseBase = CIFilter(name: "CIRandomGenerator")!.outputImage!
+        func grainLayer(_ frame: Int, scale: CGFloat, blur: Double, amp: Double, salt: Int) -> CIImage {
+            let off = CGAffineTransform(translationX: CGFloat((frame * 977 + salt * 331) % 8192), y: CGFloat((frame * 613 + salt * 173) % 8192))
+            let n = noiseBase.transformed(by: off).transformed(by: CGAffineTransform(scaleX: scale, y: scale)).applyingGaussianBlur(sigma: blur).cropped(to: ext)
+            let m = CGFloat(amp * 0.27), c = CGFloat(amp * 0.19) // mono + barevná složka
+            return n.applyingFilter("CIColorMatrix", parameters: [
+                "inputRVector": CIVector(x: m + c, y: m, z: m, w: 0), "inputGVector": CIVector(x: m, y: m + c, z: m, w: 0),
+                "inputBVector": CIVector(x: m, y: m, z: m + c, w: 0), "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 0),
+                "inputBiasVector": CIVector(x: -(3 * m + c) / 2, y: -(3 * m + c) / 2, z: -(3 * m + c) / 2, w: 0)])
+        }
+        /* halation = červenooranžová záře kolem opravdu přepálených světel (v logu nad ~1 EV nad bílou), jen kolem, ne přes světlo samo */
+        let t0h: CGFloat = log ? 0.70 : 0.93, t1h: CGFloat = log ? 0.86 : 1.0, hk = CGFloat(0.9 * hal)
+        let q: CGFloat = 0.25, hh = CGFloat(h) * q
+        // vinětace stejně jako v hledáčku: c *= mix(1, smoothstep(.95, .2, |q|·1,15), vig), q = střed ±0,5 přepočtený na kratší stranu
+        var vigImg: CIImage?
+        if vig > 0.005 {
+            let vw = 180, vh = max(1, Int((Double(vw) * Double(h) / Double(w)).rounded()))
+            var px = [UInt8](repeating: 255, count: vw * vh * 4)
+            let ar = Double(w) / Double(h)
+            for y in 0..<vh { for x in 0..<vw {
+                var qx = (Double(x) + 0.5) / Double(vw) - 0.5, qy = (Double(y) + 0.5) / Double(vh) - 0.5
+                if ar > 1 { qx *= ar } else { qy /= ar }
+                let d = (qx * qx + qy * qy).squareRoot() * 1.15
+                let t = min(max((d - 0.95) / (0.2 - 0.95), 0), 1), ss = t * t * (3 - 2 * t)
+                let v = UInt8(min(255, max(0, (1 + (ss - 1) * vig) * 255)))
+                let i = (y * vw + x) * 4; px[i] = v; px[i + 1] = v; px[i + 2] = v
+            } }
+            if let prov = CGDataProvider(data: Data(px) as CFData),
+               let cg = CGImage(width: vw, height: vh, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: vw * 4, space: CGColorSpaceCreateDeviceRGB(),
+                                bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.noneSkipLast.rawValue), provider: prov, decode: nil, shouldInterpolate: true, intent: .defaultIntent) {
+                vigImg = CIImage(cgImage: cg, options: [.colorSpace: NSNull()]).transformed(by: CGAffineTransform(scaleX: CGFloat(w) / CGFloat(vw), y: CGFloat(h) / CGFloat(vh))).clampedToExtent().cropped(to: ext)
+            }
+        }
 
         guard reader.startReading() else { throw reader.error ?? QError(message: "klip nejde přečíst") }
         writer.startWriting()
@@ -241,20 +275,37 @@ enum ClipDevelop {
             guard let pb = CMSampleBufferGetImageBuffer(sb) else { continue }
             let pts = CMSampleBufferGetPresentationTimeStamp(sb)
             if t0 == nil { t0 = pts }
-            var img = CIImage(cvPixelBuffer: pb, options: [.colorSpace: NSNull()])
-            cubeF.setValue(img, forKey: kCIInputImageKey)
-            img = cubeF.outputImage ?? img
-            if amp > 0.001 {
-                let off = CGAffineTransform(translationX: CGFloat((frame * 977) % 4096), y: CGFloat((frame * 613) % 4096))
-                let n = noiseBase.transformed(by: off).transformed(by: CGAffineTransform(scaleX: 1.6, y: 1.6))
-                    .applyingGaussianBlur(sigma: 0.55).cropped(to: ext)
-                let a = CGFloat(amp)
-                let mono = n.applyingFilter("CIColorMatrix", parameters: [
-                    "inputRVector": CIVector(x: a / 3, y: a / 3, z: a / 3, w: 0), "inputGVector": CIVector(x: a / 3, y: a / 3, z: a / 3, w: 0),
-                    "inputBVector": CIVector(x: a / 3, y: a / 3, z: a / 3, w: 0), "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 0),
-                    "inputBiasVector": CIVector(x: -a / 2, y: -a / 2, z: -a / 2, w: 1)])
-                img = mono.applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: img]).cropped(to: ext)
+            let src = CIImage(cvPixelBuffer: pb, options: [.colorSpace: NSNull()])
+            var img = src
+            if sd > 0.0005 {
+                let g1 = grainLayer(frame, scale: 2.2, blur: 0.8, amp: sd / 0.075, salt: 1)
+                let g2 = grainLayer(frame, scale: 5.0, blur: 1.8, amp: sd / 0.05 * 0.45, salt: 2)
+                img = g1.applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: img])
+                img = g2.applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: img]).cropped(to: ext)
             }
+            cubeF.setValue(img, forKey: kCIInputImageKey)
+            img = (cubeF.outputImage ?? img).cropped(to: ext)
+            if hk > 0.01 {
+                let k = 1 / (t1h - t0h)
+                let mask = src.applyingFilter("CIMaximumComponent").applyingFilter("CIColorMatrix", parameters: [
+                    "inputRVector": CIVector(x: k, y: 0, z: 0, w: 0), "inputGVector": CIVector(x: 0, y: k, z: 0, w: 0),
+                    "inputBVector": CIVector(x: 0, y: 0, z: k, w: 0), "inputBiasVector": CIVector(x: -t0h * k, y: -t0h * k, z: -t0h * k, w: 0)])
+                    .applyingFilter("CIColorClamp").transformed(by: CGAffineTransform(scaleX: q, y: q))
+                let me = mask.clampedToExtent()
+                let b1 = me.applyingGaussianBlur(sigma: Double(hh * 0.008)), b2 = me.applyingGaussianBlur(sigma: Double(hh * 0.022))
+                let blur = b1.applyingFilter("CIColorMatrix", parameters: ["inputRVector": CIVector(x: 0.6, y: 0, z: 0, w: 0), "inputGVector": CIVector(x: 0, y: 0.6, z: 0, w: 0), "inputBVector": CIVector(x: 0, y: 0, z: 0.6, w: 0)])
+                    .applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: b2.applyingFilter("CIColorMatrix", parameters: ["inputRVector": CIVector(x: 0.4, y: 0, z: 0, w: 0), "inputGVector": CIVector(x: 0, y: 0.4, z: 0, w: 0), "inputBVector": CIVector(x: 0, y: 0, z: 0.4, w: 0)])])
+                // záře kolem minus světlo samo (oříznuté na ≥ 0), obarvit a zvětšit zpět
+                let neg = me.applyingFilter("CIColorMatrix", parameters: ["inputRVector": CIVector(x: -1, y: 0, z: 0, w: 0), "inputGVector": CIVector(x: 0, y: -1, z: 0, w: 0), "inputBVector": CIVector(x: 0, y: 0, z: -1, w: 0), "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 0)])
+                let ring = neg.applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: blur]) // blur − mask, záporné ořízne CIColorClamp
+                let tint = ring.applyingFilter("CIColorClamp").applyingFilter("CIColorMatrix", parameters: [
+                    "inputRVector": CIVector(x: hk, y: 0, z: 0, w: 0), "inputGVector": CIVector(x: hk * 0.22, y: 0, z: 0, w: 0),
+                    "inputBVector": CIVector(x: hk * 0.05, y: 0, z: 0, w: 0), "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 0),
+                    "inputBiasVector": CIVector(x: 0, y: 0, z: 0, w: 0)])
+                    .transformed(by: CGAffineTransform(scaleX: 1 / q, y: 1 / q)).cropped(to: ext)
+                img = tint.applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: img]).cropped(to: ext)
+            }
+            if let v = vigImg { img = img.applyingFilter("CIMultiplyCompositing", parameters: [kCIInputBackgroundImageKey: v]).cropped(to: ext) }
             while !wi.isReadyForMoreMediaData { Thread.sleep(forTimeInterval: 0.005) }
             guard let pool = ad.pixelBufferPool else { break }
             var outPB: CVPixelBuffer?

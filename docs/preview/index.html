@@ -1490,7 +1490,7 @@ uniform vec3 uSh,uHi; uniform float uFCon,uFSat,uFFade, uChar, uFSoft, uIRHue; u
 uniform vec3 uHsl[8]; uniform vec3 uGSh,uGMid,uGHi;
 uniform vec3 uTrMs,uTrSs,uTrMr,uTrSr; uniform float uTr;
 uniform float uSeed, uGlow, uIR, uStyle, uCells, uLevels, uPalN, uZebra;
-uniform vec3 uLF; uniform float uPol, uLat, uHR, uFBlur, uGV, uFV, uNeg;
+uniform vec3 uLF; uniform float uPol, uLat, uHR, uFBlur, uGV, uFV, uNeg, uEst;
 uniform vec3 uPal[6];
 uniform highp sampler3D uLut3; uniform float uLut;
 uniform sampler2D uDepth; uniform float uDOn, uDMode, uDAmt, uFocus, uVFlash; uniform vec2 uPar; uniform int uSampN;
@@ -1585,12 +1585,12 @@ void main(){
     for (int i = 0; i < 10; i++) { float a = float(i) * .6283 + jr; vec2 d = vec2(cos(a), sin(a)) * ak, e = vec2(cos(a + .314), sin(a + .314)) * ak;
       hr += textureLod(uHL, uv + d * .007 * uHR, L1).a * .55 + textureLod(uHL, uv + e * .017 * uHR, L2).a * .35 + textureLod(uHL, uv + d * .036 * uHR, L3).a * .16; } // poloměr jako skutečná halation (podložka filmu): malý
     hr /= 10.; float self = textureLod(uHL, uv, 0.).a;
-    float hl = max(hr - self, 0.) * HALK; // záře kolem přepáleného světla; samotné světlo se nepřebarví
+    float hl = max(hr - self, 0.) * HALK * uEst; // záře kolem přepáleného světla; samotné světlo se nepřebarví
     vec3 hcol = vec3(1., .2, .04) * exp2(uExp);
     if (dHal) { float dl = textureLod(uDepth, uv, 3.5).r, far = smoothstep(uFocus, uFocus - .3, dl); hl *= far; lin += hcol * hl * (1. + uDAmt * 5.); } // halation jen u vzdálených světel
     lin += hcol * hl * HALG * uHal / (1. + luma(lin) * 5.); } // červený lem je vidět hlavně na tmavém okolí, světlé plochy nepřebarví
   if (uGV > 1.5) { vec3 h1 = textureLod(uHL, uv, 2.).rgb, h2 = textureLod(uHL, uv, 3.5).rgb, h3 = textureLod(uHL, uv, 5.).rgb; // bloom jen z přepálených světel
-    vec3 bl = (h1 * .5 + h2 * .8 + h3 * 1.) * uBloom * BLOOMG * exp2(uExp); lin += bl / (1. + lin); } // na už světlých místech přidává méně
+    vec3 bl = (h1 * .5 + h2 * .8 + h3 * 1.) * uBloom * BLOOMG * exp2(uExp); lin += bl * uEst / (1. + lin); } // na už světlých místech přidává méně
   else { /* záře do 0.17 (beze změny): práh z jasu fotky, bloom z mipmap fotky */
     vec3 b1 = pow(textureLod(uTex,uv,3.).rgb, vec3(2.2)), b2 = pow(textureLod(uTex,uv,5.).rgb, vec3(2.2)), b3 = pow(textureLod(uTex,uv,6.5).rgb, vec3(2.2));
     if (uHal > .001 || dHal) { vec2 tsz = vec2(textureSize(uTex,0)), ak = vec2(tsz.y / tsz.x, 1.); float hr = 0.;
@@ -1682,7 +1682,7 @@ void main(){
     if (Lz > .9) c = mix(c, vec3(1.,.77,.24), .85*st); if (Lz < .07) c = mix(c, vec3(.2,.45,1.), .7*st); }
   o = vec4(clamp(c,0.,1.), 1.);
 }`;
-const DEF = () => ({ gv: 2, fv: 3, film: 'P400', str: 1, exp: 0, temp: 0, tint: 0, con: 0, hil: 0, shad: 0, sat: 0, grain: .5, gsize: 1, gtype: null, hal: 1, bloom: .15, glow: null, vig: .25, fade: 0, sharp: 0, style: null, frame: null, dx: null,
+const DEF = () => ({ gv: 2, fv: 3, hv: 2, film: 'P400', str: 1, exp: 0, temp: 0, tint: 0, con: 0, hil: 0, shad: 0, sat: 0, grain: .5, gsize: 1, gtype: null, hal: 1, bloom: .15, glow: null, vig: .25, fade: 0, sharp: 0, style: null, frame: null, dx: null,
   curve: { rgb: [[0, 0], [1, 1]], r: [[0, 0], [1, 1]], g: [[0, 0], [1, 1]], b: [[0, 0], [1, 1]] }, hsl: Array.from({ length: 8 }, () => [0, 0, 0]),
   grade: { sh: [0, 0], mid: [0, 0], hi: [0, 0] }, tr: 0, crop: { ar: 0, s: 1, x: 0, y: 0, rot: 0 } });
 
@@ -1731,7 +1731,7 @@ class Engine {
     gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, this.htex);
     if (w !== this.hw || h !== this.hh) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); this.hw = w; this.hh = h; gl.bindFramebuffer(gl.FRAMEBUFFER, this.hfb); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.htex, 0); }
     gl.bindTexture(gl.TEXTURE_2D, null); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.tex);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.hfb); gl.viewport(0, 0, w, h); gl.useProgram(this.hp); gl.uniform2f(this.hu.ts, 1 / w, 1 / h); gl.uniform1f(this.hu.l, Math.max(0, Math.log2(sw / w / 4))); gl.uniform1f(this.hu.he, hl ? 1 : 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.hfb); gl.viewport(0, 0, w, h); gl.useProgram(this.hp); gl.uniform2f(this.hu.ts, 1 / w, 1 / h); gl.uniform1f(this.hu.l, Math.max(0, Math.log2(sw / w / 4))); gl.uniform1f(this.hu.he, hl ? 1 : 0); this.hasE = !!hl;
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.useProgram(this.p);
     gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, this.htex); gl.generateMipmap(gl.TEXTURE_2D); gl.activeTexture(gl.TEXTURE0); }
   size(w, h) { if (this.c.width !== w || this.c.height !== h) { this.c.width = w; this.c.height = h; return true; } return false; }
@@ -1769,7 +1769,7 @@ class Engine {
     const fk = (FFMT[P.ffmt] || FFMT['35']).k, nx = P.nexp || 0, latG = 1 + .3 * Math.max(-nx, 0) - .1 * Math.max(nx, 0); // větší negativ = jemnější zrno; podexpozice = víc zrna
     gl.uniform1f(u.uGrain, P.grain * vm.grain * G.a * (.6 + .4 * isoK) * k * latG / Math.sqrt(fk)); gl.uniform1f(u.uGFreq, 560 / (P.gsize * vm.gsize) * G.f / (.72 + .38 * isoK) * fk);
     const lt = LFS[P.lf], lw = f.bw || [.2126, .7152, .0722], ln = lt ? lt[0] * lw[0] + lt[1] * lw[1] + lt[2] * lw[2] : 1;
-    gl.uniform3fv(u.uLF, lt ? lt.map(x => x / ln) : [1, 1, 1]); gl.uniform1f(u.uPol, P.lf === 'POL' ? 1 : 0); gl.uniform1f(u.uLat, nx); gl.uniform1f(u.uHR, 1 / fk); gl.uniform1f(u.uGV, P.gv || 2); gl.uniform1f(u.uFBlur, P.ffmt === 'half' ? .55 : 0);
+    gl.uniform3fv(u.uLF, lt ? lt.map(x => x / ln) : [1, 1, 1]); gl.uniform1f(u.uPol, P.lf === 'POL' ? 1 : 0); gl.uniform1f(u.uLat, nx); gl.uniform1f(u.uHR, 1 / fk); gl.uniform1f(u.uGV, P.gv || 2); gl.uniform1f(u.uEst, !this.hasE && (P.hv || 1) >= 2 ? .4 : 1); gl.uniform1f(u.uFBlur, P.ffmt === 'half' ? .55 : 0); // hv 2: odhad světel z 8bit obrazu (hledáček, JPEG) je slabší – bílý monitor / papír není lampa
     gl.uniform1f(u.uSeed, o.seed != null ? o.seed : 7); gl.uniform1f(u.uGSharp, G.sh); gl.uniform1f(u.uGChroma, G.ch); gl.uniform1f(u.uGClump, G.cl); gl.uniform1f(u.uGMot, G.mot);
     gl.uniform1f(u.uVig, P.vig * k); gl.uniform1f(u.uFade, P.fade); gl.uniform1f(u.uSharp, P.sharp); gl.uniform1f(u.uShad, P.shad || 0); gl.uniform1f(u.uHil, P.hil || 0);
     gl.uniform1f(u.uChar, P.chr ?? f.chr ?? .6); gl.uniform3fv(u.uBW, f.bw || [0, 0, 0]); gl.uniform3fv(u.uBTone, f.tone || [1, 1, 1]); gl.uniform1f(u.uBToe, f.toe || 0);
@@ -2564,7 +2564,7 @@ async function captureNativeClip() {
   const done = () => { clearInterval(NCLIP.iv); S.busy = null; drawShutter(); hud(); if (S.screen === 'camera') liveOn(); else { CAM.switching = false; cc.style.filter = ''; } };
   let r;
   try { r = await new Promise((res, rej) => { const id = ++NCLIP.seq; NCLIP.wait = { id, res, rej }; setTimeout(() => { if (NCLIP.wait && NCLIP.wait.id === id) { NCLIP.wait = null; rej(new Error('kamera neodpověděla')); } }, 90000);
-      window.webkit.messageHandlers.qamera.postMessage({ kind: 'clip', id, sec: NCLIP.sec, zoom, ultra: !!CAM.ultra, tele: !!CAM.tele, film, str: clamp(P.str * (vm.str || 1), 0, 1), grain: clamp(P.grain * (vm.grain || 1), 0, 2) }); }); }
+      window.webkit.messageHandlers.qamera.postMessage({ kind: 'clip', id, sec: NCLIP.sec, zoom, ultra: !!CAM.ultra, tele: !!CAM.tele, film, str: clamp(P.str * (vm.str || 1), 0, 1), grain: clamp(P.grain * (vm.grain || 1), 0, 2), hal: clamp(P.hal * (f.hal ?? .5) * P.str, 0, 2) }); }); }
   catch (e) { done(); toast('Klip se nepovedl: ' + e.message); return; }
   done();
   try {
@@ -3859,7 +3859,7 @@ function useDxOther(ph) { const cur = S.cur; S.dxReturn = null; $('#camBanner').
    Recepty: uložený vzhled (film + grain + úpravy), sdílení odkazem a QR
    ===================================================================== */
 /* úpravy uložené před 0.18 nemají gv → záře se jim počítá postaru (vypadají pořád stejně) */
-const oldGv = P => { if (P && P.gv == null) P.gv = 1; if (P && P.fv == null) P.fv = 1; if (P && P.film === 'G200C') P.film = 'G200'; return P; }; // uložené úpravy si nechají starou záři / starý film
+const oldGv = P => { if (P && P.gv == null) P.gv = 1; if (P && P.fv == null) P.fv = 1; if (P && P.hv == null) P.hv = 1; if (P && P.film === 'G200C') P.film = 'G200'; return P; }; // uložené úpravy si nechají starou záři / starý film
 let RECIPES = store.get('recipes', []); RECIPES.forEach(r => oldGv(r.P));
 /* kopírovat / vložit úpravy mezi fotkami: všechno kromě ořezu a druhé fotky z Double */
 let CLIP = oldGv(store.get('clip', null));
