@@ -3,6 +3,7 @@ import CoreImage
 import ImageIO
 import UIKit
 import UniformTypeIdentifiers
+import VideoToolbox
 
 // Vlastní kamera appky (krok 1): hledáček ze snímků v Apple Logu místo getUserMedia ve WebKitu.
 // Obraz z WebKitu je už zpracovaný Applem (lokální tone mapping po částech, sytost) → hledáček nikdy neseděl s RAW fotkou ani klipem.
@@ -39,7 +40,8 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
     private var framesOut = 0
     private var pktMs = 0.0
     var onFrame: ((Data) -> Void)?   // LocalServer → /__live
-    var currentISO: Float { device?.iso ?? 0 }
+    private var lastISO: Float = 0
+    var currentISO: Float { device?.iso ?? lastISO }
     // boční tlačítko Ovládání fotoaparátu (iOS 18+): posun = film / EV
     private var ctlFilms: [String] = []
     private var ctlFilm = 0
@@ -200,12 +202,17 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
             var made: Rec?
             var err: String?
             let exc = QCatch.run {
-                var st: [String: Any] = out.recommendedVideoSettings(forVideoCodecType: .hevc, assetWriterOutputFileType: .mov)
-                    ?? [AVVideoCodecKey: AVVideoCodecType.hevc]
+                _ = out
                 let k = min(1, 1080 / max(1, min(size.width, size.height)))
-                st[AVVideoWidthKey] = Int((size.width * k / 2).rounded()) * 2
-                st[AVVideoHeightKey] = Int((size.height * k / 2).rounded()) * 2
+                var st: [String: Any] = [AVVideoCodecKey: AVVideoCodecType.hevc,
+                                         AVVideoWidthKey: Int((size.width * k / 2).rounded()) * 2,
+                                         AVVideoHeightKey: Int((size.height * k / 2).rounded()) * 2]
                 guard let w = try? AVAssetWriter(outputURL: url, fileType: .mov) else { err = "nejde zapisovat"; return }
+                // 10 bitů (log potřebuje jemné stupně); když to kodér odmítne, výchozí profil
+                let main10: [String: Any] = [AVVideoAverageBitRateKey: 24_000_000, AVVideoProfileLevelKey: kVTProfileLevel_HEVC_Main10_AutoLevel as String]
+                var st10 = st
+                st10[AVVideoCompressionPropertiesKey] = main10
+                if w.canApply(outputSettings: st10, forMediaType: .video) { st = st10 }
                 guard w.canApply(outputSettings: st, forMediaType: .video) else { err = "nastavení klipu nejde použít"; return }
                 let i = AVAssetWriterInput(mediaType: .video, outputSettings: st)
                 i.expectsMediaDataInRealTime = true
@@ -272,6 +279,7 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
             if r.writer.status != .writing || CMTimeGetSeconds(CMTimeSubtract(ts, r.t0 ?? ts)) >= r.dur { finishRec(r) }
         }
         sent += 1
+        if sent % 10 == 0, let d = device { lastISO = d.iso }
         if sent % 300 == 1, let d = device { // jednou za ~10 s: v jakém světle kamera jede
             Ladeni.log("snímky \(sent) iso=\(Int(d.iso)) čas=1/\(Int((1 / max(d.exposureDuration.seconds, 0.0001)).rounded())) zoom=\(String(format: "%.2f", Double(d.videoZoomFactor))) posláno=\(framesOut) převod=\(String(format: "%.1f", pktMs)) ms")
         }
@@ -299,7 +307,7 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
     }
 
     private func packet(_ img: CIImage) -> Data? {
-        let e = img.extent, k = min(1, 1080 / max(e.width, e.height))
+        let e = img.extent, k = min(1, 1600 / max(e.width, e.height))
         var v = img.transformed(by: CGAffineTransform(scaleX: k, y: k))
         if log { viewCube.setValue(v, forKey: kCIInputImageKey); v = viewCube.outputImage ?? v }
         let W = Int((e.width * k).rounded(.down)), H = Int((e.height * k).rounded(.down))
