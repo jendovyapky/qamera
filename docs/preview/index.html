@@ -1290,7 +1290,10 @@ const FILM = Object.fromEntries(FILMS.map(f => [f.code, f]));
 FILM.NONE = { code: 'NONE', sub: 'bez filmu', chem: '', desc: 'Původní fotka bez filmu.', iso: 400, g: 'classic', sh: [0, 0, 0], hi: [1, 1, 1], con: 1, sat: 1, fade: 0, hal: 1, gl: 0, chr: 0, c: ['#333', '#999', '#eee'] };
 let FAV = store.get('fav', []);
 let HIDDEN = store.get('hiddenFilms', []);
-const filmsOrdered = () => { const vis = FILMS.filter(f => !HIDDEN.includes(f.code) || f.code === S.film || (S.P && f.code === S.P.film)); const fav = f => FAV.includes(f.code); return [...vis.filter(fav), ...vis.filter(f => !fav(f) && f.v2), ...vis.filter(f => !fav(f) && !f.v2)]; };
+/* DEV (dev.qamera.pages.dev a appka): ve výběru jen filmy ze spektrafilmu. Černobílé a infra jsou vlastní odhad (ne měřený profil) → schované,
+   dokud nebudou předělané; fotky, které je už mají, se vykreslí dál a film u nich ve výběru zůstane */
+const OWNF = new Set(['BW400', 'TX400', 'TM100', 'D3200', 'AC100', 'PAN50', 'FOMA', 'ORTHO', 'IR', 'IRC', 'IRR', 'IRG', 'IR400']), DEVHIDE = !!(window.QDEV || window.QNATIVE);
+const filmsOrdered = () => { const vis = FILMS.filter(f => (!HIDDEN.includes(f.code) && !(DEVHIDE && OWNF.has(f.code))) || f.code === S.film || (S.P && f.code === S.P.film)); const fav = f => FAV.includes(f.code); return [...vis.filter(fav), ...vis.filter(f => !fav(f) && f.v2), ...vis.filter(f => !fav(f) && !f.v2)]; };
 function addFilm(f) { if (FILM[f.code]) return; FILMS.unshift(f); FILM[f.code] = f; }
 /* Typy grainu: f = hustota zrn, sh = ostrost/„krystaličnost“, ch = barevnost (oblaka barviv), cl = shlukování, a = síla, mot = skvrnitost (prošlý film) */
 const GRAINS = {
@@ -2250,7 +2253,7 @@ function setFmSample(src) { FMS = cropAr(src, .8); const c = mk(400, 500); c.get
 async function fmFromFile(f) { if (!f) return; try { const url = URL.createObjectURL(f), img = new Image(); img.src = url; await img.decode(); const k = Math.min(1, 900 / Math.max(img.naturalWidth, img.naturalHeight)), c = mk(Math.round(img.naturalWidth * k), Math.round(img.naturalHeight * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); setFmSample(c); } catch { toast('Fotku se nepodařilo načíst'); } }
 function renderFilmsMgr() { // všechny filmy na tvojí fotce: podrž = před/po, srdíčko = oblíbený, oko = skrýt z výběru
   const ph = S.photos.find(p => p.kind !== 'arch') || S.photos[0], src = fmSample() || srcOf(ph, ph.P);
-  $('#fmg').innerHTML = `<p class="note">Ukázka na tvojí fotce (změníš ji dole). Podrž náhled = původní fotka. Skryté filmy nebudou ve výběru ve foťáku ani v editoru.</p>` + FILMS.map(f => `<div class="fcard ${HIDDEN.includes(f.code) ? 'off' : ''}" data-c="${f.code}"><canvas width="240" height="300"></canvas>
+  $('#fmg').innerHTML = `<p class="note">Ukázka na tvojí fotce (změníš ji dole). Podrž náhled = původní fotka. Skryté filmy nebudou ve výběru ve foťáku ani v editoru.</p>` + FILMS.filter(f => !(DEVHIDE && OWNF.has(f.code))).map(f => `<div class="fcard ${HIDDEN.includes(f.code) ? 'off' : ''}" data-c="${f.code}"><canvas width="240" height="300"></canvas>
     <div class="ft"><div><b>${f.code}</b><small>${f.sub}</small></div><div class="fa"><button class="heart ${FAV.includes(f.code) ? 'on' : ''}" aria-label="Oblíbený">${iconSVG(FAV.includes(f.code) ? 'heart' : 'heartO')}</button><button class="vis ${HIDDEN.includes(f.code) ? '' : 'on'}" aria-label="Zobrazit ve výběru">${iconSVG('eye')}</button></div></div></div>`).join('')
     + `<button class="fcard addcard" id="fmAdd"><span class="ab">+</span><div class="ft"><div><b>NOVÝ FILM</b><small>film scan z fotky</small></div></div></button>`;
   const P = fmSample() ? DEF() : JSON.parse(JSON.stringify(ph.P)); P.crop = DEF().crop; P.gtype = null;
