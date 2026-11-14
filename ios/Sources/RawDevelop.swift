@@ -33,6 +33,14 @@ enum RawDevelop {
         f.exposure = 0
         if f.isLocalToneMapSupported { f.localToneMapAmount = 0 }
         guard let img = f.outputImage else { throw QError(message: "RAW se nepodařilo vyvolat") }
+        return try develop(image: img, maxSide: maxSide, hlMax: hlMax, fixedEV: nil)
+    }
+
+    // Vyvolání z lineárního obrazu (RAW, nebo snímek z Apple Logu z CameraEngine): fixedEV = bez měření expozice
+    static func develop(image img0: CIImage, maxSide: Int = 4096, hlMax: Int = 512, fixedEV: Double?) throws -> Output {
+        var img = img0
+        let e0 = img.extent, ks = min(1, CGFloat(maxSide) / max(e0.width, e0.height, 1))
+        if ks < 1 { img = img.transformed(by: CGAffineTransform(scaleX: ks, y: ks)) }
         let ext = img.extent.integral
         let W = Int(ext.width), H = Int(ext.height)
         guard W > 0, H > 0 else { throw QError(message: "prázdný RAW") }
@@ -58,6 +66,7 @@ enum RawDevelop {
         let evMean = max(-2, min(4, log2(0.17) - ls / max(ln, 1)))
         let evHi = p995 > 0 ? log2(2.0 / p995) : 4
         var ev = max(evMean - 0.5, min(evMean, evHi))
+        if let fe = fixedEV { ev = fe }
         if !ev.isFinite { ev = 0 }
         let g = Float(pow(2, ev))
 

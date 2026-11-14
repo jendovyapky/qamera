@@ -85,6 +85,8 @@ final class LocalServer {
         path = path.removingPercentEncoding ?? path
         if path.hasSuffix("/") { path += "index.html" }
 
+        // /__live = snímky hledáčku z CameraEngine (otevřené spojení, snímek za snímkem: u32 délka · u16 délka meta · meta JSON · JPEG)
+        if path == "/__live" { return live(c) }
         // /__cap/… = čerstvé DNG z nativní spouště (RawCapture)
         var base = root
         if path.hasPrefix("/__cap/") {
@@ -102,6 +104,35 @@ final class LocalServer {
         }
         send(c, status: "200 OK", type: Self.mime(url.pathExtension), body: method == "HEAD" ? Data() : body, length: body.count)
     }
+
+    // MARK: hledáček – jeden posluchač (nový nahradí starý), posílá se vždy jen nejnovější snímek, dokud předchozí neodešel
+    private var liveConn: NWConnection?
+    private var liveBusy = false
+    private func live(_ c: NWConnection) {
+        liveConn?.cancel()
+        liveConn = c; liveBusy = true
+        let head = "HTTP/1.1 200 OK
+Content-Type: application/octet-stream
+Cache-Control: no-cache
+Connection: close
+
+"
+        c.send(content: Data(head.utf8), completion: .contentProcessed { [weak self] err in
+            self?.queue.async { guard let self, self.liveConn === c else { return }; if err != nil { self.liveConn = nil }; self.liveBusy = false } })
+        c.stateUpdateHandler = { [weak self] st in
+            switch st { case .failed, .cancelled: self?.queue.async { if self?.liveConn === c { self?.liveConn = nil } } default: break }
+        }
+    }
+    var liveReady: Bool { queue.sync { liveConn != nil && !liveBusy } }
+    func pushFrame(_ d: Data) {
+        queue.async {
+            guard let c = self.liveConn, !self.liveBusy else { return }
+            self.liveBusy = true
+            c.send(content: d, completion: .contentProcessed { [weak self] err in
+                self?.queue.async { guard let self else { return }; if err != nil, self.liveConn === c { self.liveConn = nil; c.cancel() }; self.liveBusy = false } })
+        }
+    }
+    func liveClose() { queue.async { self.liveConn?.cancel(); self.liveConn = nil; self.liveBusy = false } }
 
     private func send(_ c: NWConnection, status: String, type: String, body: Data, length: Int? = nil) {
         let head = "HTTP/1.1 \(status)\r\nContent-Type: \(type)\r\nContent-Length: \(length ?? body.count)\r\n"

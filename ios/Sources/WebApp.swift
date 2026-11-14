@@ -18,6 +18,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     private let raw = RawCapture()
     private let clip = ClipCapture()
     private var vol: VolumeShutter?
+    private var camWasOn = false
 
     override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
     override var prefersHomeIndicatorAutoHidden: Bool { true }
@@ -30,6 +31,10 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
             let s = LocalServer(root: webRoot)
             s.start()
             server = s
+            // vlastní kamera appky: snímky hledáčku jdou rovnou do /__live
+            let cam = CameraEngine.shared
+            cam.onFrame = { [weak s] d in s?.pushFrame(d) }
+            cam.canSend = { [weak s] in s?.liveReady ?? false }
         }
 
         let cfg = WKWebViewConfiguration()
@@ -81,11 +86,14 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
 
     @objc private func foreground() {
         server?.restart()
+        if camWasOn { camWasOn = false; js("window.__qCamResume && window.__qCamResume()") }
         vol?.resume()
     }
 
     @objc private func background() {
         vol?.pause()
+        if CameraEngine.shared.isOn { CameraEngine.shared.stop(); camWasOn = true }
+        server?.liveClose()
     }
 
     // Kamera ve webu: povolit bez dalšího dotazu (systémový dotaz na kameru iOS ukáže sám)
@@ -147,7 +155,46 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
             thump.impactOccurred(intensity: min(1, max(0.3, CGFloat((m["ms"] as? Double) ?? 6) / 20)))
         case "share":
             share(m)
+        case "ncam": // vlastní kamera appky (CameraEngine): start / stop / zoom / torch / focus
+            let op = m["op"] as? String ?? ""
+            let cam = CameraEngine.shared
+            switch op {
+            case "start":
+                let id = m["id"] as? Int ?? 0
+                cam.start(lens: (m["lens"] as? String) ?? "wide", zoom: (m["zoom"] as? Double) ?? 1) { [weak self] r in
+                    DispatchQueue.main.async {
+                        switch r {
+                        case .success(let o):
+                            let json = (try? JSONSerialization.data(withJSONObject: o)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+                            self?.js("window.__qCam && window.__qCam(\(id), true, \(json))")
+                        case .failure(let e):
+                            self?.js("window.__qCam && window.__qCam(\(id), false, \(Self.jsStr(e.localizedDescription)))")
+                        }
+                    }
+                }
+            case "stop": cam.stop(); server?.liveClose()
+            case "zoom": cam.setZoom((m["z"] as? Double) ?? 1)
+            case "torch": cam.torch((m["on"] as? Bool) ?? false)
+            case "focus": cam.focus(x: (m["x"] as? Double) ?? 0.5, y: (m["y"] as? Double) ?? 0.5)
+            default: break
+            }
+        case "still": // fotka bez RAW z běžící kamery appky (log → jako vyvolaný RAW), hledáček se nezastaví
+            let id = m["id"] as? Int ?? 0
+            CameraEngine.shared.still { [weak self] result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let r):
+                        var o: [String: Any] = ["label": r.label, "lensZoom": r.lensZoom, "ev": r.ev]
+                        for (k, f) in r.files { o[k] = "/__cap/" + f }
+                        let json = (try? JSONSerialization.data(withJSONObject: o)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+                        self?.js("window.__qRaw && window.__qRaw(\(id), true, \(json))")
+                    case .failure(let e):
+                        self?.js("window.__qRaw && window.__qRaw(\(id), false, \(Self.jsStr(e.localizedDescription)))")
+                    }
+                }
+            }
         case "raw":
+            CameraEngine.shared.stop() // RAW si zatím otevírá vlastní session (krok 2: ze stejné)
             let id = m["id"] as? Int ?? 0
             raw.capture(zoom: (m["zoom"] as? Double) ?? 1, ultra: (m["ultra"] as? Bool) ?? false,
                         flash: (m["flash"] as? Bool) ?? false, tele: (m["tele"] as? Bool) ?? false, bayer: (m["bayer"] as? Bool) ?? false) { [weak self] result in
@@ -164,6 +211,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                 }
             }
         case "clip":
+            CameraEngine.shared.stop()
             let id = m["id"] as? Int ?? 0
             var o = ClipCapture.Opts()
             o.seconds = min(10, max(1, (m["sec"] as? Double) ?? 5))
@@ -312,7 +360,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     static let bridgeJS = """
     (() => {
       const post = (m) => window.webkit.messageHandlers.qamera.postMessage(m);
-      window.QNATIVE = Object.assign({ raw: 2, bayer: true, clip: 1 }, window.__qLens || {});
+      window.QNATIVE = Object.assign({ raw: 2, bayer: true, clip: 1, ncam: 1 }, window.__qLens || {});
       navigator.vibrate = (ms) => { post({ kind: 'vibrate', ms: Array.isArray(ms) ? (ms[0] || 6) : (+ms || 6) }); return true; };
       const pend = new Map(); let seq = 0;
       window.__qShareDone = (id, ok, abort) => {

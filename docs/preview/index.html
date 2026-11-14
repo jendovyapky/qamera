@@ -1405,6 +1405,7 @@ function drawLive(t) {
   const g = LIVE.canvas.getContext('2d'), w = LIVE.w, h = LIVE.h;
   if (CAM.switching) return; // při přepínání objektivu drží poslední snímek (žádné probliknutí dema)
   if (CAM.live && CAM.video && CAM.video.readyState >= 2) {
+    LIVE.canvas._sh = !!(CAM.nat && CAM.nlog); // snímky z kamery appky v logu = formát vyvolaného RAW
     if (CAM.facing === 'user') { g.save(); g.translate(w, 0); g.scale(-1, 1); g.drawImage(CAM.video, 0, 0, w, h); g.restore(); } else g.drawImage(CAM.video, 0, 0, w, h);
     return;
   }
@@ -1424,6 +1425,7 @@ function drawLive(t) {
    ===================================================================== */
 const CAM = { live: false, stream: null, video: null, track: null, caps: {}, facing: 'environment', deviceId: null, ultra: false, tele: 0, devices: [], err: '' };
 async function liveOn() {
+  if (NATCAM) return natLiveOn();
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('Kamera potřebuje HTTPS a podporovaný prohlížeč'); return false; }
   CAM.switching = true; const cc = $('#camCanvas'); spring(0, 1, v => cc.style.filter = `blur(${v * 14}px) brightness(${1 - v * .35})`, { k: 260, c: 30 });
   liveStop();
@@ -1447,7 +1449,69 @@ async function liveOn() {
     store.set('cam', false); toast(CAM.err); CAM.live = false; CAM.switching = false; $('#camCanvas').style.filter = ''; updLive(); renderCamInfo(); return false;
   }
 }
-function liveStop() { if (CAM.stream) CAM.stream.getTracks().forEach(t => t.stop()); CAM.stream = null; CAM.track = null; }
+function liveStop() { if (CAM.nat) natStop(); if (CAM.stream) CAM.stream.getTracks().forEach(t => t.stop()); CAM.stream = null; CAM.track = null; }
+/* Vlastní kamera appky (iPhone, QNATIVE.ncam): appka drží kameru sama (CameraEngine), snímky v Apple Logu převede jako vyvolaný RAW
+   (lineární světlo → rameno → sRGB) a posílá je přes /__live. Hledáček tak jde stejnou cestou jako RAW fotka i klip (oba ze stejného
+   světla scény) – obraz z WebKitu byl už upravený Applem po částech a s fotkou se nikdy nedal srovnat. CAM.video = plátno se snímky
+   (videoWidth/readyState jako <video>), CAM.track = náhrada MediaStreamTrack (zoom, svítilna) → zbytek foťáku beze změny. */
+const NATCAM = !!(window.QNATIVE && QNATIVE.ncam && window.webkit && window.webkit.messageHandlers);
+const NCAM = { seq: 0, wait: null, ctrl: null, info: null, last: 0 };
+window.__qCam = (id, ok, a) => { const w = NCAM.wait; if (!w || w.id !== id) return; NCAM.wait = null; ok ? w.res(a) : w.rej(new Error(a || 'chyba')); };
+window.__qCamResume = () => { if (S.screen === 'camera' && CAM.live) liveOn(); };
+const natPost = m => { try { window.webkit.messageHandlers.qamera.postMessage(m); } catch {} };
+function natTrack(info) { const st = { zoom: 1 };
+  return { label: info.label || 'Kamera appky', getCapabilities: () => ({ zoom: { min: 1, max: info.maxZoom || 1 }, torch: !!info.torch }),
+    getSettings: () => ({ zoom: st.zoom, width: info.w, height: info.h, facingMode: CAM.facing }),
+    applyConstraints: async c => { const a = (c && c.advanced && c.advanced[0]) || {}; if (a.zoom != null) { st.zoom = a.zoom; natPost({ kind: 'ncam', op: 'zoom', z: a.zoom }); } if (a.torch != null) natPost({ kind: 'ncam', op: 'torch', on: !!a.torch }); },
+    stop() {} }; }
+function natStream() {
+  return new Promise((res, rej) => {
+    const ac = new AbortController(); NCAM.ctrl = ac; let first = true, got = false, decoding = false, pend = null;
+    const nv = CAM.nv, td = new TextDecoder();
+    const show = async jpg => { if (decoding) { pend = jpg; return; } decoding = true;
+      try { let j = jpg; while (j && !ac.signal.aborted) { pend = null; const bm = await createImageBitmap(new Blob([j], { type: 'image/jpeg' }));
+          if (ac.signal.aborted) { bm.close(); break; }
+          if (nv.width !== bm.width || nv.height !== bm.height) { nv.width = bm.width; nv.height = bm.height; }
+          nv.getContext('2d').drawImage(bm, 0, 0); bm.close(); nv.videoWidth = nv.width; nv.videoHeight = nv.height; nv.readyState = 4; NCAM.last = performance.now();
+          if (first) { first = false; res(); } j = pend; } } catch {} decoding = false; };
+    const open = () => fetch('/__live', { signal: ac.signal, cache: 'no-store' }).then(async r => { const rd = r.body.getReader(); let buf = new Uint8Array(0);
+      for (;;) { const { value, done } = await rd.read(); if (done) break;
+        const nb = new Uint8Array(buf.length + value.length); nb.set(buf); nb.set(value, buf.length); buf = nb;
+        while (buf.length >= 6) { const n = ((buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3]) >>> 0; if (buf.length < 4 + n) break;
+          const ml = (buf[4] << 8) | buf[5]; let meta = null; try { meta = JSON.parse(td.decode(buf.subarray(6, 6 + ml))); } catch {}
+          const jpg = buf.slice(6 + ml, 4 + n); buf = buf.slice(4 + n); if (meta) CAM.nlog = !!meta.log; got = true; show(jpg); } }
+      throw new Error('stream skončil'); })
+      .catch(e => { if (ac.signal.aborted) return; if (first && !got) { rej(e); return; } setTimeout(() => { if (!ac.signal.aborted && CAM.nat) open(); }, 300); }); // spojení spadlo (uspání, nový server) → znovu
+    open(); setTimeout(() => { if (first) { ac.abort(); rej(new Error('kamera neposílá obraz')); } }, 6000);
+  });
+}
+async function natLiveOn() {
+  CAM.switching = true; const cc = $('#camCanvas'); spring(0, 1, v => cc.style.filter = `blur(${v * 14}px) brightness(${1 - v * .35})`, { k: 260, c: 30 });
+  liveStop();
+  const lens = CAM.facing === 'user' ? 'front' : (CAM.deviceId && CAM.deviceId !== 'front' ? CAM.deviceId : 'wide');
+  try {
+    const info = await new Promise((res, rej) => { const id = ++NCAM.seq; NCAM.wait = { id, res, rej };
+      setTimeout(() => { if (NCAM.wait && NCAM.wait.id === id) { NCAM.wait = null; rej(new Error('kamera neodpověděla')); } }, 8000);
+      natPost({ kind: 'ncam', op: 'start', id, lens, zoom: 1 }); });
+    NCAM.info = info; CAM.nat = true; CAM.nlog = !!info.log;
+    const nv = CAM.nv || (CAM.nv = document.createElement('canvas')); CAM.video = nv;
+    CAM.track = natTrack(info); CAM.caps = CAM.track.getCapabilities(); CAM.stream = null;
+    CAM.devices = [{ deviceId: 'wide', label: 'Back Camera' }, { deviceId: 'ultra', label: 'Back Ultra Wide Camera' }]
+      .concat(QNATIVE.tele ? [{ deviceId: 'tele', label: 'Back Telephoto Camera' }] : []).concat([{ deviceId: 'front', label: 'Front Camera' }]);
+    await natStream();
+    const k = Math.min(1, 1280 / Math.max(nv.videoWidth, nv.videoHeight)), nw = Math.round(nv.videoWidth * k), nh = Math.round(nv.videoHeight * k);
+    LIVE.w = nw; LIVE.h = nh; LIVE.canvas = (nw === LIVE.canvas.width && nh === LIVE.canvas.height) ? LIVE.canvas : mk(nw, nh);
+    CAM.live = true; CAM.switching = false; drawLive(0);
+    spring(1, 0, x => cc.style.filter = x > .01 ? `blur(${x * 14}px) brightness(${1 - x * .35})` : '', { k: 140, c: 22 });
+    CAM.err = ''; store.set('cam', true); updLive(); renderCamInfo(); return true;
+  } catch (e) {
+    CAM.nat = false; if (NCAM.ctrl) NCAM.ctrl.abort(); natPost({ kind: 'ncam', op: 'stop' });
+    CAM.err = 'Kameru appky se nepodařilo spustit (' + e.message + ').'; toast(CAM.err); CAM.live = false; CAM.switching = false; cc.style.filter = ''; updLive(); renderCamInfo(); return false;
+  }
+}
+function natStop() { if (NCAM.ctrl) NCAM.ctrl.abort(); NCAM.ctrl = null; natPost({ kind: 'ncam', op: 'stop' }); CAM.nat = false; }
+// ťuknutí do hledáčku = ostření a expozice na to místo (x, y 0…1 v obraze)
+function natFocus(x, y) { if (CAM.nat && CAM.live) natPost({ kind: 'ncam', op: 'focus', x: clamp(x, 0, 1), y: clamp(y, 0, 1) }); }
 function liveOff() { liveStop(); CAM.live = false; CAM.deviceId = null; CAM.ultra = false; CAM.tele = 0; LIVE.w = 480; LIVE.h = 640; LIVE.canvas = mk(480, 640); updLive(); }
 function updLive() { $('#liveBtn').hidden = CAM.live || !store.get('cam', false) && !store.get('camAsked', false); $('#camPill').hidden = CAM.live || store.get('camAsked', false); }
 async function setTorch(on) { if (!CAM.track || !CAM.caps.torch) return false; try { await CAM.track.applyConstraints({ advanced: [{ torch: on }] }); return true; } catch { return false; } }
@@ -1468,12 +1532,14 @@ const VS = `#version 300 es
 in vec2 p; out vec2 vUv; void main(){ vUv = p*.5+.5; gl_Position = vec4(p,0.,1.); }`;
 /* mapa světel pro halation / bloom: 4×4 vzorky na pixel, energie = jak moc je místo přepálené (ne jen světlé) */
 const HS = `#version 300 es
-precision highp float; in vec2 vUv; out vec4 o; uniform sampler2D uS, uE; uniform vec2 uTs; uniform float uL, uHasE;
+precision highp float; in vec2 vUv; out vec4 o; uniform sampler2D uS, uE; uniform vec2 uTs; uniform float uL, uHasE, uSh;
 void main(){ vec3 acc = vec3(0.); float ea = 0.;
   for (int y = 0; y < 4; y++) for (int x = 0; x < 4; x++) { vec3 c = textureLod(uS, vUv + (vec2(x, y) - 1.5) * .25 * uTs, uL).rgb;
     float v = max(c.r, max(c.g, c.b)) * .6 + dot(c, vec3(.2126, .7152, .0722)) * .55; // jas, ne jen nejsilnější kanál: sytá červená LED (R na maximu, G a B nízko) není přepálené světlo
     float e = smoothstep(.86, .995, v); e *= e;
     if (uHasE > .5) e = clamp(texture(uE, vUv + (vec2(x, y) - 1.5) * .25 * uTs).r * 1.5, 0., 1.); // RAW: skutečný jas (EV nad bílou), ne jen ořez
+    else if (uSh > .5) { float m = pow(max(c.r, max(c.g, c.b)), 2.2), fm = min(m, .985); float n = m <= .55 ? m : .55 - .45 * log(max(1. - (fm - .55) / .45, 1e-4)); // hledáček z kamery appky (log → rameno jako RAW): jas z inverze ramene
+      e = n > 2. ? clamp((.25 + log2(n / 2.) / 3.) * 1.5, 0., 1.) : 0.; }
     acc += c * e; ea += e; }
   o = vec4(acc / 16., ea / 16.); }`;
 const FS = `#version 300 es
@@ -1731,7 +1797,7 @@ class Engine {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.uniform1i(this.u.uTex, 0); gl.uniform1i(this.u.uCurve, 1); gl.uniform1i(this.u.uDepth, 2); gl.uniform1i(this.u.uLut3, 3); gl.uniform1i(this.u.uHL, 4); this.luts = {};
     const hp = this.hp = gl.createProgram(); gl.attachShader(hp, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(hp, sh(gl.FRAGMENT_SHADER, HS)); gl.bindAttribLocation(hp, loc, 'p'); gl.linkProgram(hp);
-    gl.useProgram(hp); gl.uniform1i(gl.getUniformLocation(hp, 'uS'), 0); gl.uniform1i(gl.getUniformLocation(hp, 'uE'), 5); this.hu = { ts: gl.getUniformLocation(hp, 'uTs'), l: gl.getUniformLocation(hp, 'uL'), he: gl.getUniformLocation(hp, 'uHasE') }; gl.useProgram(pr);
+    gl.useProgram(hp); gl.uniform1i(gl.getUniformLocation(hp, 'uS'), 0); gl.uniform1i(gl.getUniformLocation(hp, 'uE'), 5); this.hu = { ts: gl.getUniformLocation(hp, 'uTs'), l: gl.getUniformLocation(hp, 'uL'), he: gl.getUniformLocation(hp, 'uHasE'), sh: gl.getUniformLocation(hp, 'uSh') }; gl.useProgram(pr);
     this.etex = gl.createTexture(); gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D, this.etex); [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER].forEach(k => gl.texParameteri(gl.TEXTURE_2D, k, gl.LINEAR)); [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(k => gl.texParameteri(gl.TEXTURE_2D, k, gl.CLAMP_TO_EDGE)); gl.activeTexture(gl.TEXTURE0);
     this.htex = gl.createTexture(); gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, this.htex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -1739,14 +1805,14 @@ class Engine {
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     this.curveKey = ''; this.srcAR = 1;
   }
-  setSource(src) { if (this.dead) return; const gl = this.gl; this.srcEl = src; this.st = null; gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src); gl.generateMipmap(gl.TEXTURE_2D); this.srcAR = (src.videoWidth || src.width) / (src.videoHeight || src.height); this.hiPass(src.videoWidth || src.width, src.videoHeight || src.height, src._hl); }
-  hiPass(sw, sh, hl) { const gl = this.gl;
+  setSource(src) { if (this.dead) return; const gl = this.gl; this.srcEl = src; this.st = null; gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src); gl.generateMipmap(gl.TEXTURE_2D); this.srcAR = (src.videoWidth || src.width) / (src.videoHeight || src.height); this.hiPass(src.videoWidth || src.width, src.videoHeight || src.height, src._hl, src._sh); }
+  hiPass(sw, sh, hl, shs) { const gl = this.gl;
     if (hl && this.eSrc !== hl) { gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D, this.etex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, hl); this.eSrc = hl; }
     const k = Math.min(1, 512 / Math.max(sw, sh)), w = Math.max(1, Math.round(sw * k)), h = Math.max(1, Math.round(sh * k)); // mapa světel ≤ 512 px
     gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, this.htex);
     if (w !== this.hw || h !== this.hh) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); this.hw = w; this.hh = h; gl.bindFramebuffer(gl.FRAMEBUFFER, this.hfb); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.htex, 0); }
     gl.bindTexture(gl.TEXTURE_2D, null); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.tex);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.hfb); gl.viewport(0, 0, w, h); gl.useProgram(this.hp); gl.uniform2f(this.hu.ts, 1 / w, 1 / h); gl.uniform1f(this.hu.l, Math.max(0, Math.log2(sw / w / 4))); gl.uniform1f(this.hu.he, hl ? 1 : 0); this.hasE = !!hl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.hfb); gl.viewport(0, 0, w, h); gl.useProgram(this.hp); gl.uniform2f(this.hu.ts, 1 / w, 1 / h); gl.uniform1f(this.hu.l, Math.max(0, Math.log2(sw / w / 4))); gl.uniform1f(this.hu.he, hl ? 1 : 0); gl.uniform1f(this.hu.sh, shs ? 1 : 0); this.hasE = !!hl || !!shs;
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.useProgram(this.p);
     gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, this.htex); gl.generateMipmap(gl.TEXTURE_2D); gl.activeTexture(gl.TEXTURE0); }
   size(w, h) { if (this.c.width !== w || this.c.height !== h) { this.c.width = w; this.c.height = h; return true; } return false; }
@@ -2197,7 +2263,8 @@ function camParams() {
   const P = S.camRecipe ? Object.assign(DEF(), JSON.parse(JSON.stringify(S.camRecipe))) : DEF(); P.film = S.film; P.exp = S.ev; const k = pushK();
   if (!S.camRecipe) applyMyDef(P); const cs = camSetOf(S.film); if (cs) Object.assign(P, cs);
   P.ffmt = S.fmt === 'half' ? 'half' : S.fmt === '66' ? '66' : S.fmt === '67' ? '67' : '35'; // formát foťáku = velikost políčka filmu (zrno, halation)
-  if (CAM.live && APLCAM) P.apl = APLK; // obraz z kamery iPhonu = zpracovaný Applem → napůl zpět ke scéně (shader aplInv)
+  if (CAM.live && CAM.nat && CAM.nlog) P.apl = -APLK; // kamera appky v logu = světlo scény jako RAW → napůl k vzhledu iPhonu (stejně jako RAW fotka a klip)
+  else if (CAM.live && APLCAM) P.apl = APLK; // obraz z kamery iPhonu = zpracovaný Applem → napůl zpět ke scéně (shader aplInv)
   if (k) { P.con += .16 * k; P.grain *= 1 + .5 * Math.max(k, 0) - .22 * Math.max(-k, 0); P.gsize *= 1 + .15 * Math.max(k, 0); P.sat += .05 * k; P.fade += .07 * Math.max(-k, 0); P.hal *= 1 + .18 * Math.max(k, 0); }
   return P;
 }
@@ -2487,6 +2554,7 @@ async function capture() {
     else if (CAM.live && CAM.facing === 'user') { const fl = $('#flash'); fl.style.background = S.flash === 2 ? '#ffb46a' : '#fff'; fl.style.opacity = 1; await new Promise(r => setTimeout(r, 300)); } }
   if (nativeClipOk()) { if (torch) setTorch(false); captureNativeClip(); return; }
   if (!slow && nativeRawOk()) { if (torch) setTorch(false); captureNativeRaw(); return; }
+  if (!slow && nativeStillOk()) { captureNativeRaw('still').then(() => { if (torch) setTorch(false); }); return; }
   if (!slow) { const src = CAM.live && CAM.video ? videoFrame() : copyCanvas(LIVE.canvas); if (torch) setTorch(false); finishCapture(src); return; }
   /* slow shutter / long exposure: snímky se sčítají ve float přesnosti (průměr = pohyb a hedvábí, maximum = světelné stopy).
      Hedvábí navíc vrací ostrost tam, kde se nic nehýbe (malý rozptyl mezi snímky). Až 15 s → stovky snímků bez pruhování. */
@@ -2524,24 +2592,25 @@ async function capture() {
    matematika jako raw.js) → JPEG ≤ 4096 px + mapa světel + hloubka z LiDARu. Když nativní vyvolání selže, přijde DNG a vyvolá ho raw.js.
    Jen běžný snímek zadní kamerou; half, double, jednorázovka a dlouhý čas fotí dál ze streamu */
 const NRAW = { seq: 0, wait: null };
+const nativeStillOk = () => !!(CAM.nat && CAM.nlog && CAM.live && CAM.facing !== 'user' && S.fmt !== 'half' && !S.dbl && !S.dispo);
 const nativeRawOk = () => !!(window.QNATIVE && QNATIVE.raw && S.nraw && CAM.live && CAM.facing !== 'user' && S.fmt !== 'half' && !S.dbl && !S.dispo);
 window.__qRaw = (id, ok, a) => { const w = NRAW.wait; if (!w || w.id !== id) return; NRAW.wait = null; ok ? w.res(a) : w.rej(new Error(a || 'chyba')); };
 // appka hlídá tlačítka hlasitosti jen ve foťáku (jinak hlasitost funguje normálně)
 function natCam() { if (window.QNATIVE && window.webkit) window.webkit.messageHandlers.qamera.postMessage({ kind: 'cam', on: S.screen === 'camera' }); }
 setTimeout(natCam, 600);
 window.__qShutter = () => { if (S.screen === 'camera' && !S.busy) shoot(); }; // boční tlačítko / hlasitost
-async function captureNativeRaw() {
-  S.busy = 'raw'; drawShutter(0);
-  const st = CAM.track && CAM.track.getSettings ? CAM.track.getSettings() : {}, zoom = st.zoom || 1, viewZoom = S.zoom, fmt = S.fmt;
-  // kamera patří na chvíli appce: hledáček drží poslední snímek rozmazaný (jako přepnutí objektivu), ne demo
-  CAM.switching = true; const cc = $('#camCanvas'); spring(0, 1, v => cc.style.filter = `blur(${v * 14}px) brightness(${1 - v * .35})`, { k: 260, c: 30 });
-  liveStop(); hud('raw', ['FOTÍM']);
+async function captureNativeRaw(mode) {
+  const still = mode === 'still'; S.busy = 'raw'; drawShutter(0);
+  const st = CAM.track && CAM.track.getSettings ? CAM.track.getSettings() : {}, zoom = st.zoom || 1, viewZoom = S.zoom, fmt = S.fmt, cc = $('#camCanvas');
+  if (still) { const ir = $('#iris'); spring(1, 0, v => ir.style.opacity = v * .85, { k: 160, c: 22 }); hud('raw', ['FOTÍM']); } // snímek z běžící kamery appky (už přiblížený), hledáček jede dál
+  // RAW: kamera patří na chvíli jiné session: hledáček drží poslední snímek rozmazaný (jako přepnutí objektivu), ne demo
+  else { CAM.switching = true; spring(0, 1, v => cc.style.filter = `blur(${v * 14}px) brightness(${1 - v * .35})`, { k: 260, c: 30 }); liveStop(); hud('raw', ['FOTÍM']); }
   const done = () => { S.busy = null; drawShutter(); hud(); };
   let r;
   try { r = await new Promise((res, rej) => { const id = ++NRAW.seq; NRAW.wait = { id, res, rej }; setTimeout(() => { if (NRAW.wait && NRAW.wait.id === id) { NRAW.wait = null; rej(new Error('kamera neodpověděla')); } }, 20000);
-      window.webkit.messageHandlers.qamera.postMessage({ kind: 'raw', id, zoom, ultra: !!CAM.ultra, flash: !!S.flash, tele: !!CAM.tele, bayer: !!QNATIVE.bayer }); }); }
-  catch (e) { done(); toast('RAW se nepovedl: ' + e.message); if (S.screen === 'camera') liveOn(); else { CAM.switching = false; cc.style.filter = ''; } return; }
-  if (S.screen === 'camera') liveOn(); else { CAM.switching = false; cc.style.filter = ''; } // hledáček zpět hned, vyvolání běží mezitím
+      window.webkit.messageHandlers.qamera.postMessage(still ? { kind: 'still', id } : { kind: 'raw', id, zoom, ultra: !!CAM.ultra, flash: !!S.flash, tele: !!CAM.tele, bayer: !!QNATIVE.bayer }); }); }
+  catch (e) { done(); toast((still ? 'Fotka se nepovedla: ' : 'RAW se nepovedl: ') + e.message); if (still) return; if (S.screen === 'camera') liveOn(); else { CAM.switching = false; cc.style.filter = ''; } return; }
+  if (still) {} else if (S.screen === 'camera') liveOn(); else { CAM.switching = false; cc.style.filter = ''; } // hledáček zpět hned, vyvolání běží mezitím
   hud('raw', ['VYVOLÁVÁM']);
   try {
     const get = capGet, files = ['jpg', 'hl', 'depth', 'dng'].map(k => r[k]).filter(Boolean);
@@ -2551,7 +2620,7 @@ async function captureNativeRaw() {
     else { const m = await import('./raw.js'); d = await m.developRaw(new File([bn], 'qamera.dng', { type: 'image/x-adobe-dng' }), v => { drawShutter(clamp(v, 0, 1)); hud('raw', ['VYVOLÁVÁM', clamp(v, 0, 1)]); }); }
     const dep0 = bd ? await decodeTo(bd, 8192) : null;
     // stejný výřez jako hledáček: formát + digitální zoom + optický zoom, který objektiv appky nepokryl
-    const ar = FORMATS[fmt].ar, z = viewZoom * (CAM.ultra ? 1 : Math.max(1, zoom / (r.lensZoom || 1)));
+    const ar = FORMATS[fmt].ar, z = viewZoom * (still || CAM.ultra ? 1 : Math.max(1, zoom / (r.lensZoom || 1)));
     const full = cropAr(d.canvas, ar, z); freeCanvas(d.canvas);
     const hl = d.hl ? cropAr(d.hl, ar, z) : null, depth = dep0 ? cropAr(dep0, ar, z) : null;
     const depthBlob = depth ? await new Promise(res => depth.toBlob(res, 'image/png')) : null;
@@ -4689,7 +4758,9 @@ function boot2(h) {
       else { const i = clamp(ti0 + Math.round(dx / 40), 0, TIME_STOPS.length - 1); if (i !== S.timeIdx) { const cross = (S.timeIdx === 0) !== (i === 0); S.timeIdx = i; timApi.set(i); updLcd(); buzz(cross ? 14 : 4); } hud('t'); } });
     vf.addEventListener('pointerup', e => { pts.delete(e.pointerId); if (axis === 'x' || axis === 'y') hud(null); if (moved || e.target.closest('button,.pill')) return; const r = vf.getBoundingClientRect(), sc = r.width / vf.offsetWidth, f = $('#focus');
       f.style.left = (e.clientX - r.left) / sc + 'px'; f.style.top = (e.clientY - r.top) / sc + 'px'; spring(1.5, 1, v => { f.style.transform = `scale(${v})`; f.style.opacity = 1; }, { k: 300, c: 18, onDone: () => setTimeout(() => f.style.opacity = 0, 700) });
-      miniEyes.look(((e.clientX - r.left) / r.width - .5) * 2, ((e.clientY - r.top) / r.height - .5)); setTimeout(() => miniEyes.look(0, 0), 1200); buzz(4); });
+      miniEyes.look(((e.clientX - r.left) / r.width - .5) * 2, ((e.clientY - r.top) / r.height - .5)); setTimeout(() => miniEyes.look(0, 0), 1200); buzz(4);
+      if (CAM.nat && CAM.video && CAM.video.videoWidth) { const u = (e.clientX - r.left) / r.width, v = (e.clientY - r.top) / r.height, fa = CAM.video.videoWidth / CAM.video.videoHeight, va = r.width / r.height; // bod v celém snímku (hledáček = výřez podle formátu a zoomu)
+        natFocus(.5 + (u - .5) * (va > fa ? 1 : va / fa) / S.zoom, .5 + (v - .5) * (va > fa ? fa / va : 1) / S.zoom); } });
     vf.addEventListener('wheel', e => { e.preventDefault(); S.zoom = clamp(S.zoom * (1 - e.deltaY * .0015), 1, 5); zoomApi.sync(); syncZoomBtns(); }, { passive: false }); })();
   // menu
   $('#menuGrid').innerHTML = [['gallery', 'Galerie', 'gallery'], ['films', 'Moje filmy', 'film'], ['scan', 'Film scan', 'ref'], ['dbl', 'Double ve foťáku', 'double'], ['dispo', 'Jednorázovka', 'clock'], ['sun', 'Světlo dnes', 'sun'], ['demo', 'DEMO scéna', 'camera'], ['about', 'O appce', 'info']].map(([k, l, ic]) => `<button data-k="${k}">${iconSVG(ic)}${l}</button>`).join('');
