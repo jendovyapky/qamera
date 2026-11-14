@@ -211,14 +211,14 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
     }
 
     private func packet(_ img: CIImage) -> Data? {
-        let e = img.extent, k = min(1, 1280 / max(e.width, e.height))
+        let e = img.extent, k = min(1, 1080 / max(e.width, e.height))
         var v = img.transformed(by: CGAffineTransform(scaleX: k, y: k))
         if log { viewCube.setValue(v, forKey: kCIInputImageKey); v = viewCube.outputImage ?? v }
         let W = Int((e.width * k).rounded(.down)), H = Int((e.height * k).rounded(.down))
         guard W > 0, H > 0 else { return nil }
         var px = [UInt8](repeating: 255, count: W * H * 4)
         px.withUnsafeMutableBytes { p in ctx.render(v, toBitmap: p.baseAddress!, rowBytes: W * 4, bounds: CGRect(x: 0, y: 0, width: W, height: H), format: .RGBA8, colorSpace: nil) }
-        guard let jpg = Self.jpeg(&px, w: W, h: H, q: 0.82) else { return nil }
+        guard let jpg = Self.jpeg(&px, w: W, h: H, q: 0.7) else { return nil }
         let meta: [String: Any] = ["w": W, "h": H, "log": log, "lens": lens]
         let mj = (try? JSONSerialization.data(withJSONObject: meta)) ?? Data("{}".utf8)
         var pkt = Data()

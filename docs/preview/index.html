@@ -1406,6 +1406,7 @@ function drawLive(t) {
   if (CAM.switching) return; // při přepínání objektivu drží poslední snímek (žádné probliknutí dema)
   if (CAM.live && CAM.video && CAM.video.readyState >= 2) {
     LIVE.canvas._sh = !!(CAM.nat && CAM.nlog); // snímky z kamery appky v logu = formát vyvolaného RAW
+    if (CAM.nat) { if (LIVE.natLast === NCAM.last) return false; LIVE.natLast = NCAM.last; }
     if (CAM.facing === 'user') { g.save(); g.translate(w, 0); g.scale(-1, 1); g.drawImage(CAM.video, 0, 0, w, h); g.restore(); } else g.drawImage(CAM.video, 0, 0, w, h);
     return;
   }
@@ -1477,10 +1478,10 @@ function natStream() {
           if (first) { first = false; res(); } j = pend; } } catch {} decoding = false; };
     const open = () => fetch('/__live', { signal: ac.signal, cache: 'no-store' }).then(async r => { const rd = r.body.getReader(); let buf = new Uint8Array(0);
       for (;;) { const { value, done } = await rd.read(); if (done) break;
-        const nb = new Uint8Array(buf.length + value.length); nb.set(buf); nb.set(value, buf.length); buf = nb;
+        if (buf.length) { const nb = new Uint8Array(buf.length + value.length); nb.set(buf); nb.set(value, buf.length); buf = nb; } else buf = value;
         while (buf.length >= 6) { const n = ((buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3]) >>> 0; if (buf.length < 4 + n) break;
           const ml = (buf[4] << 8) | buf[5]; let meta = null; try { meta = JSON.parse(td.decode(buf.subarray(6, 6 + ml))); } catch {}
-          const jpg = buf.slice(6 + ml, 4 + n); buf = buf.slice(4 + n); if (meta) CAM.nlog = !!meta.log; got = true; show(jpg); } }
+          const jpg = buf.slice(6 + ml, 4 + n); buf = buf.subarray(4 + n); if (meta) CAM.nlog = !!meta.log; got = true; show(jpg); } }
       throw new Error('stream skončil'); })
       .catch(e => { if (ac.signal.aborted) return; if (first && !got) { rej(e); return; } setTimeout(() => { if (!ac.signal.aborted && CAM.nat) open(); }, 300); }); // spojení spadlo (uspání, nový server) → znovu
     open(); setTimeout(() => { if (first) { ac.abort(); rej(new Error('kamera neposílá obraz')); } }, 6000);
@@ -2427,11 +2428,11 @@ function startCam() {
   if (camRaf || !READY) return;
   const loop = (now) => {
     camRaf = requestAnimationFrame(loop);
-    const t = (now - camT0) / 1000; drawLive(t);
+    const t = (now - camT0) / 1000, fresh = drawLive(t) !== false;
     if (capturing) capturing.step(now);
     const vf = $('#vf'), dpr = Math.min(2, devicePixelRatio || 1);
     camE.size(Math.round(vf.clientWidth * dpr), Math.round(vf.clientHeight * dpr));
-    const st = camE.st; camE.setSource(LIVE.canvas); if (++camN % 30) camE.st = st; // statistiky pro vlastní filmy jen občas
+    if (fresh) { const st = camE.st; camE.setSource(LIVE.canvas); if (++camN % 30) camE.st = st; } // statistiky pro vlastní filmy jen občas
     camE.render(camParams(), { time: LOWMO ? null : t, zoom: S.zoom, iso: camIso(), zebra: S.zebra });
     tickMascots(now);
   };
