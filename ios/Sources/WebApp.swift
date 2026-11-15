@@ -261,7 +261,9 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let r):
-                        let o: [String: Any] = ["mp4": "/__cap/" + r.mp4, "jpg": "/__cap/" + r.jpg, "log": r.log, "lensZoom": r.lensZoom, "same": same]
+                        var o: [String: Any] = ["mp4": "/__cap/" + r.mp4, "jpg": "/__cap/" + r.jpg, "log": r.log, "lensZoom": r.lensZoom, "same": same]
+                        if !r.src.isEmpty { o["src"] = r.src }
+                        if !r.sjpg.isEmpty { o["sjpg"] = "/__cap/" + r.sjpg }
                         let json = (try? JSONSerialization.data(withJSONObject: o)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
                         self?.js("window.__qClip && window.__qClip(\(id), true, \(json))")
                     case .failure(let e):
@@ -269,6 +271,26 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                         self?.js("window.__qClip && window.__qClip(\(id), false, \(Self.jsStr(e.localizedDescription)))")
                     }
                 }
+            }
+            // změna filmu u hotového klipu: znovu vyvolat uložený originál (kamera se nepoužije)
+            if let cid = m["src"] as? String {
+                let srcURL = ClipStore.url(cid), isLog = (m["log"] as? Bool) ?? true
+                Ladeni.log("klip znovu z originálu \(cid.prefix(8)) film=\(opts.film)")
+                DispatchQueue.global(qos: .userInitiated).async {
+                    do {
+                        guard FileManager.default.fileExists(atPath: srcURL.path) else { throw QError(message: "originál klipu už v telefonu není") }
+                        try? FileManager.default.createDirectory(at: RawCapture.dir, withIntermediateDirectories: true)
+                        var res = ClipCapture.Result()
+                        res.log = isLog
+                        res.src = cid
+                        let rid = UUID().uuidString
+                        try ClipDevelop.process(src: srcURL, dst: RawCapture.dir.appendingPathComponent(rid + ".mp4"), thumb: RawCapture.dir.appendingPathComponent(rid + ".jpg"),
+                                                log: isLog, film: opts.film, str: opts.str, grain: opts.grain, hal: opts.hal, vig: opts.vig, apl: opts.apl, ev: opts.ev, con: opts.con, sat: opts.sat, gn: opts.gn, bloom: opts.bloom, glow: opts.glow, progress: progress)
+                        res.mp4 = rid + ".mp4"; res.jpg = rid + ".jpg"
+                        finish(.success(res), true)
+                    } catch { finish(.failure(error), true) }
+                }
+                break
             }
             // postaru: kamera appky se zastaví a klip si otevře vlastní session (hledáček po dobu klipu stojí)
             let old: () -> Void = { [weak self] in
@@ -290,9 +312,11 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                                 res.log = log
                                 res.lensZoom = lz
                                 let cid = UUID().uuidString
+                                let sj = RawCapture.dir.appendingPathComponent(cid + "-s.jpg")
                                 try ClipDevelop.process(src: url, dst: RawCapture.dir.appendingPathComponent(cid + ".mp4"), thumb: RawCapture.dir.appendingPathComponent(cid + ".jpg"),
-                                                        log: log, film: opts.film, str: opts.str, grain: opts.grain, hal: opts.hal, vig: opts.vig, apl: opts.apl, ev: opts.ev, con: opts.con, sat: opts.sat, gn: opts.gn, bloom: opts.bloom, glow: opts.glow, progress: progress)
-                                try? FileManager.default.removeItem(at: url)
+                                                        log: log, film: opts.film, str: opts.str, grain: opts.grain, hal: opts.hal, vig: opts.vig, apl: opts.apl, ev: opts.ev, con: opts.con, sat: opts.sat, gn: opts.gn, bloom: opts.bloom, glow: opts.glow, srcThumb: sj, progress: progress)
+                                // originál zůstane (ClipStore) → film jde změnit i později
+                                if let kid = ClipStore.keep(url) { res.src = kid; if FileManager.default.fileExists(atPath: sj.path) { res.sjpg = cid + "-s.jpg" } }
                                 res.mp4 = cid + ".mp4"; res.jpg = cid + ".jpg"
                                 finish(.success(res), true)
                             } catch {
@@ -303,6 +327,8 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                     }
                 }
             } else { old() }
+        case "clipDel": // klip smazaný v galerii → smazat i jeho originál
+            if let cid = m["src"] as? String { ClipStore.remove(cid) }
         case "cam":
             vol?.set((m["on"] as? Bool) ?? false)
         case "server": // web nedostal soubor ze serveru (Load failed) → nový listener
@@ -423,7 +449,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     static let bridgeJS = """
     (() => {
       const post = (m) => window.webkit.messageHandlers.qamera.postMessage(m);
-      window.QNATIVE = Object.assign({ raw: 2, bayer: true, clip: 1, crec: 1, ncam: window.__qNcamOff ? 0 : 1 }, window.__qLens || {});
+      window.QNATIVE = Object.assign({ raw: 2, bayer: true, clip: 1, crec: 1, cedit: 1, ncam: window.__qNcamOff ? 0 : 1 }, window.__qLens || {});
       navigator.vibrate = (ms) => { post({ kind: 'vibrate', ms: Array.isArray(ms) ? (ms[0] || 6) : (+ms || 6) }); return true; };
       const pend = new Map(); let seq = 0;
       window.__qShareDone = (id, ok, abort) => {

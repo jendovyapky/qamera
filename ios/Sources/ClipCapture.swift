@@ -22,6 +22,7 @@ final class ClipCapture: NSObject, AVCaptureFileOutputRecordingDelegate {
 
     struct Result {
         var mp4 = "", jpg = ""
+        var src = "", sjpg = "" // uložený originál klipu (ClipStore) a jeho první snímek jako v hledáčku – pro pozdější změnu filmu
         var log = false
         var lensZoom = 1.0
     }
@@ -108,8 +109,11 @@ final class ClipCapture: NSObject, AVCaptureFileOutputRecordingDelegate {
                 res.log = log
                 res.lensZoom = lensZoom
                 let mp4 = RawCapture.dir.appendingPathComponent(id + ".mp4"), jpg = RawCapture.dir.appendingPathComponent(id + ".jpg")
-                try ClipDevelop.process(src: url, dst: mp4, thumb: jpg, log: log, film: o.film, str: o.str, grain: o.grain, hal: o.hal, vig: o.vig, apl: o.apl, ev: o.ev, con: o.con, sat: o.sat, gn: o.gn, bloom: o.bloom, glow: o.glow, progress: progress)
-                try? FileManager.default.removeItem(at: url)
+                let sj = RawCapture.dir.appendingPathComponent(id + "-s.jpg")
+                do {
+                    try ClipDevelop.process(src: url, dst: mp4, thumb: jpg, log: log, film: o.film, str: o.str, grain: o.grain, hal: o.hal, vig: o.vig, apl: o.apl, ev: o.ev, con: o.con, sat: o.sat, gn: o.gn, bloom: o.bloom, glow: o.glow, srcThumb: sj, progress: progress)
+                } catch { try? FileManager.default.removeItem(at: url); throw error }
+                if let cid = ClipStore.keep(url) { res.src = cid; if FileManager.default.fileExists(atPath: sj.path) { res.sjpg = id + "-s.jpg" } }
                 res.mp4 = id + ".mp4"; res.jpg = id + ".jpg"
                 done(.success(res))
             } catch {
@@ -127,6 +131,20 @@ final class ClipCapture: NSObject, AVCaptureFileOutputRecordingDelegate {
         finished?(ok ? url : nil, ok ? nil : error)
         finished = nil
     }
+}
+
+// Originály klipů (Apple Log, HEVC 10 bit 1080p, ~15 MB / 5 s): zůstávají v Documents/Klipy, aby šel film změnit i po natočení.
+// Hotové video je jen výstup – nové vyvolání jde vždy z originálu, nikdy z už vyvolaného klipu. Smaže se spolu s klipem v galerii.
+enum ClipStore {
+    static let dir: URL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Klipy", isDirectory: true)
+    static func url(_ id: String) -> URL { dir.appendingPathComponent(id.filter { $0.isLetter || $0.isNumber || $0 == "-" } + ".mov") }
+    // přesune čerstvý záznam do úložiště; vrátí id, nebo nil (pak se originál neuchová a klip nepůjde upravit)
+    static func keep(_ tmp: URL) -> String? {
+        let id = UUID().uuidString
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        do { try FileManager.default.moveItem(at: tmp, to: url(id)); return id } catch { Ladeni.log("originál klipu se neuložil: \(error.localizedDescription)"); return nil }
+    }
+    static func remove(_ id: String) { try? FileManager.default.removeItem(at: url(id)) }
 }
 
 // Film na klip: Apple Log (Rec.2020) → lineární světlo → log vstup filmu v2 (t = (log2(x/0,18)+8)/14) → LUT filmu.
@@ -225,7 +243,7 @@ enum ClipDevelop {
         return out.withUnsafeBufferPointer { Data(buffer: $0) }
     }
 
-    static func process(src: URL, dst: URL, thumb: URL, log: Bool, film: String, str: Double, grain: Double, hal: Double, vig: Double, apl: Double = 0.5, ev: Double = 0, con: Double = 0, sat: Double = 0, gn: Double = 4250, bloom: Double = 0, glow: Double = 0,
+    static func process(src: URL, dst: URL, thumb: URL, log: Bool, film: String, str: Double, grain: Double, hal: Double, vig: Double, apl: Double = 0.5, ev: Double = 0, con: Double = 0, sat: Double = 0, gn: Double = 4250, bloom: Double = 0, glow: Double = 0, srcThumb: URL? = nil,
                         progress: (Double) -> Void) throws {
         let asset = AVURLAsset(url: src)
         guard let track = asset.tracks(withMediaType: .video).first else { throw QError(message: "klip je prázdný") }
@@ -332,6 +350,12 @@ enum ClipDevelop {
             let pts = CMSampleBufferGetPresentationTimeStamp(sb)
             if t0 == nil { t0 = pts }
             let src = CIImage(cvPixelBuffer: pb, options: [.colorSpace: NSNull()])
+            if frame == 0, let st = srcThumb {
+                // první snímek originálu převedený jako hledáček (log → světlo → rameno → sRGB): web na něm ukáže náhled jiného filmu
+                var sv = src
+                if log { let vf = CameraEngine.cubeFilter(CameraEngine.logCube(n: 48, linearScale: nil)); vf.setValue(src, forKey: kCIInputImageKey); sv = vf.outputImage ?? src }
+                if let j = ctx.jpegRepresentation(of: sv.cropped(to: ext), colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!, options: [:]) { try? j.write(to: st) }
+            }
             var img = src
             if gk > 0.0001 {
                 img = negGrain(frame).applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: img]).cropped(to: ext)
