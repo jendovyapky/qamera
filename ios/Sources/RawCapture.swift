@@ -41,9 +41,11 @@ final class RawCapture: NSObject {
     // zoom = optický zoom webového hledáčku (1 = hlavní objektiv), ultra = ultraširokáč, tele = hledáček je na teleobjektivu
     var targetMean: Double?
     var manual: (Float, Double)?   // ruční ISO a čas z bočního tlačítka (nil = AUTO)
-    func capture(zoom: Double, ultra: Bool, flash: Bool, tele: Bool = false, bayer: Bool = false, mean: Double? = nil, manual: (Float, Double)? = nil, done: @escaping (Swift.Result<Result, Error>) -> Void) {
+    private var front = false
+    func capture(zoom: Double, ultra: Bool, flash: Bool, tele: Bool = false, front: Bool = false, bayer: Bool = false, mean: Double? = nil, manual: (Float, Double)? = nil, done: @escaping (Swift.Result<Result, Error>) -> Void) {
         queue.async {
             self.targetMean = mean
+            self.front = front
             self.manual = manual
             // Web právě pustil kameru; WebKit ji uvolní během pár ms
             Thread.sleep(forTimeInterval: 0.15)
@@ -57,6 +59,7 @@ final class RawCapture: NSObject {
     }
 
     private func candidates(zoom: Double, ultra: Bool, tele: Bool, bayer: Bool) -> [(AVCaptureDevice, Double)] {
+        if front { return AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front).map { [($0, 1)] } ?? [] }
         let types: [AVCaptureDevice.DeviceType] = [.builtInUltraWideCamera, .builtInWideAngleCamera, .builtInTelephotoCamera, .builtInLiDARDepthCamera]
         let found = AVCaptureDevice.DiscoverySession(deviceTypes: types, mediaType: .video, position: .back).devices
         guard let wide = found.first(where: { $0.deviceType == .builtInWideAngleCamera }) else { return [] }
@@ -136,7 +139,7 @@ final class RawCapture: NSObject {
         var base = Result()
         base.label = AVCapturePhotoOutput.isAppleProRAWPixelFormat(fmt) ? "ProRAW" : "RAW"
         base.lensZoom = lensZoom
-        Ladeni.log("RAW \(base.label) \(device.localizedName) iso=\(Int(device.iso)) čas=1/\(Int((1 / max(device.exposureDuration.seconds, 0.0001)).rounded())) usazení=\(String(format: "%.2f", Date().timeIntervalSince(t0))) s")
+        Ladeni.log("RAW \(base.label) \(device.localizedName) \(s.outputs.compactMap { ($0 as? AVCapturePhotoOutput)?.maxPhotoDimensions }.map { "\($0.width)x\($0.height)" }.first ?? "?") iso=\(Int(device.iso)) čas=1/\(Int((1 / max(device.exposureDuration.seconds, 0.0001)).rounded())) usazení=\(String(format: "%.2f", Date().timeIntervalSince(t0))) s")
         let res = base
         let depth = out.isDepthDataDeliveryEnabled
         // Hloubka chodí jen se zpracovanou fotkou → RAW + malé HEIC navíc
@@ -148,7 +151,7 @@ final class RawCapture: NSObject {
         // Bayer: jeden snímek, žádné skládání (.speed je u RAW vždycky povolené)
         if AVCapturePhotoOutput.isBayerRAWPixelFormat(fmt) { settings.photoQualityPrioritization = .speed }
         if flash, out.supportedFlashModes.contains(.on) { settings.flashMode = .on }
-        if let c = out.connection(with: .video), c.isVideoRotationAngleSupported(90) { c.videoRotationAngle = 90 }
+        if let c = out.connection(with: .video) { let a = CameraEngine.portraitAngle(device); if c.isVideoRotationAngleSupported(a) { c.videoRotationAngle = a } }
 
         let del = RawDelegate { [weak self] result in
             guard let self else { return }

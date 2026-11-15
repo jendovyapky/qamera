@@ -24,6 +24,7 @@ jobs:
           mkdir -p ios/Web/docs
           cp -R index.html manifest.webmanifest LICENSE luts icons vendor ios/Web/
           cp -R docs/preview ios/Web/docs/
+          python3 tools/offline.py ios/Web
           du -sh ios/Web
 
       - name: Projekt (XcodeGen)

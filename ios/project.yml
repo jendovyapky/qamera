@@ -18,8 +18,8 @@ targets:
       path: Info.plist
       properties:
         CFBundleDisplayName: Qamera DEV
-        CFBundleShortVersionString: "0.8.18"
-        CFBundleVersion: "36"
+        CFBundleShortVersionString: "0.8.19"
+        CFBundleVersion: "37"
         UILaunchScreen:
           UIColorName: LaunchBG
         UIStatusBarStyle: UIStatusBarStyleLightContent
@@ -28,6 +28,7 @@ targets:
         UIFileSharingEnabled: true
         LSSupportsOpeningDocumentsInPlace: true
         NSCameraUsageDescription: Qamera potřebuje kameru, aby mohla fotit.
+        NSMicrophoneUsageDescription: Qamera nahrává zvuk ke klipům.
         NSPhotoLibraryAddUsageDescription: Qamera ukládá vyfocené snímky do Fotek.
     settings:
       base:

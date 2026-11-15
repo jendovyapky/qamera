@@ -13,6 +13,8 @@ final class VolumeShutter: NSObject {
     private var lastFire = Date.distantPast
     private let fire: () -> Void
     private(set) var on = false
+    private var rec = false
+    func setRecord(_ r: Bool) { guard r != rec else { return }; rec = r; if on { start() } }
 
     init(host: UIView, fire: @escaping () -> Void) {
         self.fire = fire
@@ -33,9 +35,11 @@ final class VolumeShutter: NSObject {
     private func start() {
         let s = AVAudioSession.sharedInstance()
         // ambient + mix = nezastaví hudbu, kterou si člověk pouští
-        try? s.setCategory(.ambient, options: [.mixWithOthers])
+        if rec { try? s.setCategory(.playAndRecord, mode: .videoRecording, options: [.mixWithOthers, .defaultToSpeaker, .allowBluetoothA2DP]) }
+        else { try? s.setCategory(.ambient, options: [.mixWithOthers]) }
         try? s.setActive(true)
         base = s.outputVolume
+        obs?.invalidate()
         // na kraji rozsahu by stisk nic nezměnil → kousek od kraje
         if base >= 0.999 { setVolume(0.9375) } else if base <= 0.001 { setVolume(0.0625) }
         obs = s.observe(\.outputVolume, options: [.new]) { [weak self] _, ch in

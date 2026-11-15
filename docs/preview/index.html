@@ -1532,7 +1532,7 @@ async function natLiveOn(revive) {
     const info = await new Promise((res, rej) => { const id = ++NCAM.seq; NCAM.wait = { id, res, rej };
       setTimeout(() => { if (NCAM.wait && NCAM.wait.id === id) { NCAM.wait = null; rej(new Error('kamera neodpověděla')); } }, 8000);
       natCtl(true); natPost({ kind: 'ncam', op: 'start', id, lens, zoom: 1 }); });
-    NCAM.info = info; CAM.nat = true; CAM.nlog = !!info.log;
+    NCAM.info = info; CAM.nat = true; CAM.nlog = !!info.log; natAudioOn = null; natAudio();
     const nv = CAM.nv || (CAM.nv = document.createElement('canvas')); CAM.video = nv;
     CAM.track = natTrack(info); CAM.caps = CAM.track.getCapabilities(); CAM.stream = null;
     CAM.devices = [{ deviceId: 'wide', label: 'Back Camera' }, { deviceId: 'ultra', label: 'Back Ultra Wide Camera' }]
@@ -1576,7 +1576,8 @@ window.__qCtl = (k, v) => {
   else if (k === 'expo') { const [iso, d] = v || []; if (iso && d) { NCAM.expo = [iso, d]; ctlHud('ISO ' + iso + ' · ' + durTxt(d), 'sun'); qlog('ruční expozice', iso, durTxt(d)); } }
 };
 /* RAW a KLIP jsou dva režimy spouště: když je zapnutý KLIP, spoušť točí a RAW se nepoužije → svítí jen jeden */
-function updModes() { const r = $('#tRaw'), c = $('#tClip'); if (c) c.classList.toggle('on', !!S.nclip); if (r) r.classList.toggle('on', !!S.nraw && !S.nclip); }
+function updModes() { const r = $('#tRaw'), c = $('#tClip'); if (c) c.classList.toggle('on', !!S.nclip); if (r) r.classList.toggle('on', !!S.nraw && !S.nclip); natAudio(); }
+let natAudioOn = null; function natAudio() { const on = !!(S.nclip && CAM.nat && window.QNATIVE && QNATIVE.clip); if (on === natAudioOn) return; natAudioOn = on; natPost({ kind: 'ncam', op: 'audio', on }); } // mikrofon do kamery appky jen v režimu KLIP
 function natStop() { if (NCAM.ctrl) NCAM.ctrl.abort(); NCAM.ctrl = null; natPost({ kind: 'ncam', op: 'stop' }); CAM.nat = false; }
 // ťuknutí do hledáčku = ostření a expozice na to místo (x, y 0…1 v obraze)
 function natFocus(x, y) { if (CAM.nat && CAM.live) natPost({ kind: 'ncam', op: 'focus', x: clamp(x, 0, 1), y: clamp(y, 0, 1) }); }
@@ -2627,7 +2628,8 @@ function drawGrid() {
 function shoot() { // během odpočtu / dlouhé expozice spoušť ruší, jinak ochrana proti dvojitému cvaknutí
   if (S.busy === 'timer') { clearInterval(timerIv); $('#count').hidden = true; S.busy = null; drawShutter(); toast('Samospoušť zrušená'); buzz(8); return; }
   if (S.busy === 'exp') { if (capturing) capturing.cancel = true; return; }
-  if (S.busy === 'raw' || S.busy === 'clip') return; // RAW / klip z appky se ještě fotí / vyvolává
+  if (S.busy === 'clip') { clipStopReq(); return; } // spoušť během natáčení = konec klipu
+  if (S.busy === 'raw') return; // RAW z appky se ještě fotí / vyvolává
   const now = performance.now(); if (now - lastShot < 400) return; lastShot = now;
   if (S.timer) { let n = S.timer; const el = $('#count'); el.hidden = false; el.textContent = n; buzz(10); S.busy = 'timer'; drawShutter();
     timerIv = setInterval(() => { n--; if (n <= 0) { clearInterval(timerIv); el.hidden = true; S.busy = null; drawShutter(); capture(); } else { el.textContent = n; buzz(10); } }, 1000);
@@ -2681,12 +2683,18 @@ async function capture() {
    Jen běžný snímek zadní kamerou; half, double, jednorázovka a dlouhý čas fotí dál ze streamu */
 const NRAW = { seq: 0, wait: null };
 const nativeStillOk = () => !!(CAM.nat && CAM.nlog && CAM.live && CAM.facing !== 'user' && S.fmt !== 'half' && !S.dbl && !S.dispo);
-const nativeRawOk = () => !!(window.QNATIVE && QNATIVE.raw && S.nraw && CAM.live && CAM.facing !== 'user' && S.fmt !== 'half' && !S.dbl && !S.dispo);
+const nativeRawOk = () => !!(window.QNATIVE && QNATIVE.raw && S.nraw && CAM.live && (CAM.facing !== 'user' || (QNATIVE.rawf && CAM.nat)) && S.fmt !== 'half' && !S.dbl && !S.dispo);
 window.__qRaw = (id, ok, a) => { const w = NRAW.wait; if (!w || w.id !== id) return; NRAW.wait = null; ok ? w.res(a) : w.rej(new Error(a || 'chyba')); };
 // appka hlídá tlačítka hlasitosti jen ve foťáku (jinak hlasitost funguje normálně)
-function natCam() { if (window.QNATIVE && window.webkit) window.webkit.messageHandlers.qamera.postMessage({ kind: 'cam', on: S.screen === 'camera' }); }
+function natCam() { if (window.QNATIVE && window.webkit) window.webkit.messageHandlers.qamera.postMessage({ kind: 'cam', on: S.screen === 'camera' });
+  if (S.screen === 'camera' && CAM.nat) NCAM.last = performance.now(); } // mimo foťák appka kameru pozastaví → po návratu hlídač chvíli počká na první snímek
+/* natočení telefonu (appka, akcelerometr): o kolik stupňů po směru hodin otočit snímek na výšku, aby byl rovně; ovládání zůstává na výšku */
+S.orient = 0; window.__qOrient = d => { S.orient = ((+d || 0) % 360 + 360) % 360; };
+const rotOk = () => S.fmt !== 'half' && !S.dbl && !S.dispo;
+function rotCanvas(c, deg) { if (!c || !deg) return c; const sw = deg % 180 !== 0, o = mk(sw ? c.height : c.width, sw ? c.width : c.height), g = o.getContext('2d');
+  g.translate(o.width / 2, o.height / 2); g.rotate(deg * Math.PI / 180); g.drawImage(c, -c.width / 2, -c.height / 2); return o; }
 setTimeout(natCam, 600);
-window.__qShutter = () => { if (S.screen === 'camera' && !S.busy) shoot(); }; // boční tlačítko / hlasitost
+window.__qShutter = () => { if (S.screen === 'camera' && (!S.busy || S.busy === 'clip')) shoot(); }; // boční tlačítko / hlasitost (i konec klipu)
 function liveMean() {
   if (!(CAM.nat && CAM.nlog && LIVE.canvas)) return null;
   const n = 48, c = mk(n, Math.round(n * LIVE.canvas.height / LIVE.canvas.width)), g = c.getContext('2d', { willReadFrequently: true });
@@ -2715,7 +2723,7 @@ function applyGains(c, gn) { if (gn.every(v => Math.abs(v - 1) < .03)) return; c
   const g = c.getContext('2d', { willReadFrequently: true }), H = c.height, band = 512;
   for (let y = 0; y < H; y += band) { const im = g.getImageData(0, y, c.width, Math.min(band, H - y)), d = im.data; for (let i = 0; i < d.length; i += 4) { d[i] = lut[0][d[i]]; d[i + 1] = lut[1][d[i + 1]]; d[i + 2] = lut[2][d[i + 2]]; } g.putImageData(im, 0, y); } }
 async function captureNativeRaw(mode) {
-  const still = mode === 'still'; S.busy = 'raw'; drawShutter(0);
+  const still = mode === 'still', rot = rotOk() ? S.orient : 0, mir = !still && CAM.facing === 'user'; S.busy = 'raw'; drawShutter(0);
   const st = CAM.track && CAM.track.getSettings ? CAM.track.getSettings() : {}, zoom = st.zoom || 1, viewZoom = S.zoom, fmt = S.fmt, cc = $('#camCanvas'), mean = still ? null : liveMean(), nat = !!(CAM.nat && CAM.nlog), va = !still && nat && LIVE.canvas ? LIVE.canvas.width / LIVE.canvas.height : 0, ref = still ? null : viewRef(FORMATS[S.fmt].ar, S.zoom);
   if (still) { const ir = $('#iris'); spring(1, 0, v => ir.style.opacity = v * .85, { k: 160, c: 22 }); hud('raw', ['FOTÍM']); } // snímek z běžící kamery appky (už přiblížený), hledáček jede dál
   // RAW: kamera patří na chvíli jiné session: hledáček drží poslední snímek rozmazaný (jako přepnutí objektivu), ne demo
@@ -2723,7 +2731,7 @@ async function captureNativeRaw(mode) {
   const done = () => { S.busy = null; drawShutter(); hud(); };
   let r;
   try { r = await new Promise((res, rej) => { const id = ++NRAW.seq; NRAW.wait = { id, res, rej }; setTimeout(() => { if (NRAW.wait && NRAW.wait.id === id) { NRAW.wait = null; rej(new Error('kamera neodpověděla')); } }, 20000);
-      window.webkit.messageHandlers.qamera.postMessage(still ? { kind: 'still', id } : Object.assign({ kind: 'raw', id, zoom, ultra: !!CAM.ultra, flash: !!S.flash, tele: !!CAM.tele, bayer: !!QNATIVE.bayer }, mean ? { mean } : {})); }); }
+      window.webkit.messageHandlers.qamera.postMessage(still ? { kind: 'still', id } : Object.assign({ kind: 'raw', id, zoom, ultra: !!CAM.ultra, flash: !!S.flash, tele: !!CAM.tele, front: CAM.facing === 'user', bayer: !!QNATIVE.bayer }, mean ? { mean } : {})); }); }
   catch (e) { done(); toast((still ? 'Fotka se nepovedla: ' : 'RAW se nepovedl: ') + e.message); if (still) return; if (S.screen === 'camera') liveOn(); else { CAM.switching = false; cc.style.filter = ''; } return; }
   if (still) {} else if (S.screen === 'camera') liveOn(); else { CAM.switching = false; cc.style.filter = ''; } // hledáček zpět hned, vyvolání běží mezitím
   hud('raw', ['VYVOLÁVÁM']);
@@ -2736,9 +2744,11 @@ async function captureNativeRaw(mode) {
     const dep0 = bd ? await decodeTo(bd, 8192) : null;
     // stejný výřez jako hledáček: formát + digitální zoom + optický zoom, který objektiv appky nepokryl
     const ar = FORMATS[fmt].ar, z = viewZoom * (still || CAM.ultra ? 1 : Math.max(1, zoom / (r.lensZoom || 1)));
-    const full = cropLikeView(d.canvas, ar, z, va); freeCanvas(d.canvas);
+    const flip = c => { if (!mir || !c) return c; const o = mk(c.width, c.height), g = o.getContext('2d'); g.translate(c.width, 0); g.scale(-1, 1); g.drawImage(c, 0, 0); return o; }; // přední: zrcadlově jako hledáček
+    let full = flip(cropLikeView(d.canvas, ar, z, va)); freeCanvas(d.canvas);
     if (ref) { try { const gn = matchGains(ref, full); qlog('RAW srovnání na hledáček', gn.map(v => +v.toFixed(3)), 'výřez', full.width + 'x' + full.height, 'film', S.film); applyGains(full, gn); } catch (e) { qlog('srovnání CHYBA', String(e.message || e)); } freeCanvas(ref); }
-    const hl = d.hl ? cropLikeView(d.hl, ar, z, va) : null, depth = dep0 ? cropLikeView(dep0, ar, z, va) : null;
+    if (rot) { const f2 = rotCanvas(full, rot); freeCanvas(full); full = f2; } // telefon na šířku → fotka na šířku
+    const hl = d.hl ? rotCanvas(flip(cropLikeView(d.hl, ar, z, va)), rot) : null, depth = dep0 ? rotCanvas(flip(cropLikeView(dep0, ar, z, va)), rot) : null;
     const depthBlob = depth ? await new Promise(res => depth.toBlob(res, 'image/png')) : null;
     const blob = await new Promise(res => full.toBlob(res, 'image/jpeg', .95)); if (!blob) throw new Error('Došla paměť na obrázky');
     const src = shrink(full, WORK); if (src !== full) freeCanvas(full);
@@ -2750,11 +2760,14 @@ async function captureNativeRaw(mode) {
 /* KLIP v appce (iPhone): 5 s videa v Apple Logu (15 Pro a novější, jinak běžné video), appka na něj nativně nanese film
    (log LUT z luts/log = film v2) a zrno → HEVC .mp4 + náhled. V galerii se přehrává, Export = do Fotek. Hledáček mezitím drží
    poslední snímek rozmazaný (kameru má na chvíli appka). Klip je vždy na výšku 9:16, formát hledáčku se nepoužije */
-const NCLIP = { seq: 0, wait: null, sec: 5 };
+const NCLIP = { seq: 0, wait: null, sec: 5, max: 60 };
+const mmss = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+function clipStopReq() { const w = NCLIP.wait; if (!w || !w.t0 || w.stop || performance.now() - w.t0 < 700) return; w.stop = true; buzz(10); natPost({ kind: 'clipStop' }); clearInterval(NCLIP.iv); hud('raw', ['VYVOLÁVÁM', 0, 'clip']); }
 const nativeClipOk = () => !!(window.QNATIVE && QNATIVE.clip && S.nclip && CAM.live && CAM.facing !== 'user' && !S.dbl && !S.dispo);
 window.__qClip = (id, ok, a) => { const w = NCLIP.wait; if (!w || w.id !== id) return; NCLIP.wait = null; ok ? w.res(a) : w.rej(new Error(a || 'chyba')); };
 window.__qClipRec = id => { const w = NCLIP.wait; if (!w || w.id !== id) return; w.t0 = performance.now(); buzz(10);
-  clearInterval(NCLIP.iv); NCLIP.iv = setInterval(() => { const k = clamp((performance.now() - w.t0) / (NCLIP.sec * 1000), 0, 1); drawShutter(k); hud('raw', [`NATÁČÍM ${Math.min(NCLIP.sec, Math.floor(k * NCLIP.sec) + 1)}/${NCLIP.sec}`, k, 'clip']);
+  const len = w.len || NCLIP.sec; clearInterval(NCLIP.iv); NCLIP.iv = setInterval(() => { const t = (performance.now() - w.t0) / 1000, k = clamp(t / len, 0, 1); drawShutter(k);
+    hud('raw', [w.len > NCLIP.sec ? `● ${mmss(t)}` : `NATÁČÍM ${Math.min(len, Math.floor(k * len) + 1)}/${len}`, k, 'clip']);
     if (k >= 1) { clearInterval(NCLIP.iv); hud('raw', ['VYVOLÁVÁM', 0, 'clip']); } }, 100); };
 window.__qClipProg = (id, p) => { const w = NCLIP.wait; if (!w || w.id !== id) return; if (w.prog) return w.prog(clamp(p, 0, 1)); clearInterval(NCLIP.iv); drawShutter(clamp(p, 0, 1)); hud('raw', ['VYVOLÁVÁM', clamp(p, 0, 1), 'clip']); };
 /* soubor z nativní spouště přes LocalServer appky; když iOS mezitím (uspání, zamčení) zrušil naslouchání serveru,
@@ -2783,9 +2796,9 @@ function clipParams(P, iso, apl) { const f = FILM[P.film] || {}, film = f.base |
 const CLIPKEYS = ['str', 'grain', 'gsize', 'hal', 'bloom', 'glow', 'vig', 'exp', 'con', 'sat'];
 /* Změna filmu u hotového klipu (appka má jeho originál v logu, ph.csrc): nové vyvolání jde vždy z originálu, hotové video se jen nahradí */
 async function redevelopClip(ph, film, onProg) {
-  const P2 = Object.assign(DEF(), ph.P.cp || {}, { film }), msg = clipParams(P2, (FILM[film] || {}).iso, 0);
+  const P2 = Object.assign(DEF(), ph.P.cp || {}, { film }), msg = clipParams(P2, (FILM[film] || {}).iso, 0); msg.rot = ph.P.crot || 0;
   let lut = null; try { let st = null; if (ph.cframe && (FILM[film] || {}).scan) { const fr = await decodeTo(ph.cframe, 640); st = stats(fr); freeCanvas(fr); } lut = clipLut(P2, !!ph.P.clog, st); } catch (e) { qlog('tabulka klipu se nepovedla', String(e.message || e)); }
-  const r = await new Promise((res, rej) => { const id = ++NCLIP.seq; NCLIP.wait = { id, res, rej, prog: onProg }; setTimeout(() => { if (NCLIP.wait && NCLIP.wait.id === id) { NCLIP.wait = null; rej(new Error('appka neodpověděla')); } }, 180000);
+  const r = await new Promise((res, rej) => { const id = ++NCLIP.seq; NCLIP.wait = { id, res, rej, prog: onProg }; setTimeout(() => { if (NCLIP.wait && NCLIP.wait.id === id) { NCLIP.wait = null; rej(new Error('appka neodpověděla')); } }, 400000);
     window.webkit.messageHandlers.qamera.postMessage(Object.assign({ kind: 'clip', id, src: ph.csrc, log: !!ph.P.clog, sec: NCLIP.sec, same: true }, msg, lut ? { lut } : {})); });
   const [bv, bj] = await Promise.all([capGet(r.mp4), capGet(r.jpg)]); window.webkit.messageHandlers.qamera.postMessage({ kind: 'rawDone', files: [r.mp4, r.jpg].filter(Boolean) });
   if (!bv || !bv.size) throw new Error('prázdný soubor');
@@ -2794,15 +2807,16 @@ async function redevelopClip(ph, film, onProg) {
 async function captureNativeClip() {
   S.busy = 'clip'; drawShutter(0);
   const st = CAM.track && CAM.track.getSettings ? CAM.track.getSettings() : {}, zoom = (st.zoom || 1) * (CAM.ultra ? 1 : S.zoom);
-  const P = camParams(), cmsg = clipParams(P, camIso(), CAM.nat && CAM.nlog ? 0 : APLK), film = cmsg.film;
+  const P = camParams(), cmsg = clipParams(P, camIso(), CAM.nat && CAM.nlog ? 0 : APLK), film = cmsg.film; cmsg.rot = S.orient || 0;
   const cc = $('#camCanvas'), same = !!(CAM.nat && CAM.nlog && QNATIVE.crec); // kamera appky v logu: klip se točí ze stejné běžící kamery, hledáček jede dál
   if (!same) { CAM.switching = true; spring(0, 1, v => cc.style.filter = `blur(${v * 14}px) brightness(${1 - v * .35})`, { k: 260, c: 30 }); liveStop(); }
   hud('raw', ['PŘIPRAVUJU', null, 'clip']);
   let r;
   const done = () => { clearInterval(NCLIP.iv); S.busy = null; drawShutter(); hud(); if (same && (!r || r.same)) return; if (S.screen === 'camera') { NCAM.wd = performance.now(); liveOn(); } else { CAM.switching = false; cc.style.filter = ''; } };
-  try { r = await new Promise((res, rej) => { const id = ++NCLIP.seq; NCLIP.wait = { id, res, rej }; setTimeout(() => { if (NCLIP.wait && NCLIP.wait.id === id) { NCLIP.wait = null; rej(new Error('kamera neodpověděla')); } }, 90000);
+  const len = same ? NCLIP.max : NCLIP.sec;
+  try { r = await new Promise((res, rej) => { const id = ++NCLIP.seq; NCLIP.wait = { id, res, rej, len }; setTimeout(() => { if (NCLIP.wait && NCLIP.wait.id === id) { NCLIP.wait = null; rej(new Error('kamera neodpověděla')); } }, 400000);
       let lut = null; try { lut = clipLut(P, CAM.nat && CAM.nlog, camE && camE.st); } catch (e) { qlog('tabulka klipu se nepovedla', String(e.message || e)); }
-      window.webkit.messageHandlers.qamera.postMessage(Object.assign({ kind: 'clip', id, sec: NCLIP.sec, zoom, ultra: !!CAM.ultra, tele: !!CAM.tele, same }, cmsg, lut ? { lut } : {})); }); }
+      window.webkit.messageHandlers.qamera.postMessage(Object.assign({ kind: 'clip', id, sec: len, zoom, ultra: !!CAM.ultra, tele: !!CAM.tele, same }, cmsg, lut ? { lut } : {})); }); }
   catch (e) { done(); toast('Klip se nepovedl: ' + e.message); return; }
   done();
   try {
@@ -2810,7 +2824,7 @@ async function captureNativeClip() {
     window.webkit.messageHandlers.qamera.postMessage({ kind: 'rawDone', files: [r.mp4, r.jpg, r.sjpg].filter(Boolean) });
     if (!bv || !bv.size) throw new Error('prázdný soubor');
     const src = bj ? await decodeTo(bj, PREV) : mk(360, 640);
-    const N = Object.assign(DEF(), { film: 'NONE', str: 0, grain: 0, hal: 0, bloom: 0, glow: 0, vig: 0, cf: film, clog: !!r.log, cp: (() => { const c = JSON.parse(JSON.stringify(P)); delete c.film; delete c.apl; delete c.vflash; return c; })() });
+    const N = Object.assign(DEF(), { film: 'NONE', str: 0, grain: 0, hal: 0, bloom: 0, glow: 0, vig: 0, cf: film, clog: !!r.log, crot: cmsg.rot, cp: (() => { const c = JSON.parse(JSON.stringify(P)); delete c.film; delete c.apl; delete c.vflash; return c; })() });
     const ph = addPhoto(src, N, 'klip', ['klip', 'video'].concat(r.log ? ['log'] : []), true, uid()); ph.clip = bv; ph.blob = bj || null; if (r.src) { ph.csrc = r.src; ph.cframe = bs || null; } ph.film = film === 'NONE' ? 'KLIP' : film;
     keep(ph); $('#galThumb').src = ph.thumb; const gb = $('#galBtn'); spring(.85, 1, v => gb.style.transform = `scale(${v})`, { k: 300, c: 12 });
     toast(r.log ? 'Klip hotový · Apple Log + ' + ph.film : 'Klip hotový (bez Apple Logu) · ' + ph.film);
@@ -2821,7 +2835,7 @@ function openClip(ph) {
   const host = document.body.classList.contains('pcapp') && !document.body.classList.contains('pcphone') ? document.body : $('#phone');
   const el = document.createElement('div'); let url = URL.createObjectURL(ph.clip); el.className = 'clipv';
   const canEdit = !!(ph.csrc && window.QNATIVE && QNATIVE.cedit), label = () => `${ph.film}${ph.P.clog ? ' · LOG' : ''} · ${ph.date.toLocaleDateString('cs-CZ')}`;
-  el.innerHTML = `<div class="clipm"><video src="${url}" autoplay loop muted playsinline></video><img class="clipp" alt="" hidden></div>
+  el.innerHTML = `<div class="clipm"><video src="${url}" autoplay loop ${window.QNATIVE ? '' : 'muted'} playsinline></video><img class="clipp" alt="" hidden></div>
     <div class="clipfs hs" hidden></div>
     <div class="clipb"><span>${label()}</span><button class="pbtn ghost" data-a="x">Zavřít</button>${canEdit ? '<button class="pbtn ghost" data-a="u">Film</button>' : ''}<button class="pbtn" data-a="e">Export</button></div>`;
   host.appendChild(el); requestAnimationFrame(() => el.classList.add('on'));
@@ -2867,6 +2881,7 @@ function cropAr(src, ar, zoom = 1) { const sar = src.width / src.height; let w =
 function showGhost(src) { const gi = $('#dxGhost'); if (!src) { gi.hidden = true; return; } gi.src = utilRender(src, camParams(), 400, Math.round(400 / (src.width / src.height)), {}).toDataURL('image/jpeg', .8); gi.hidden = false; }
 function finishCapture(src0, x) {
   let src = x ? src0 : cropAr(src0, FORMATS[S.fmt].ar, S.zoom); // stejný výřez jako hledáček (formát + digitální zoom); RAW z appky je už oříznutý
+  if (!x && S.orient && rotOk()) { const r2 = rotCanvas(src, S.orient); freeCanvas(src); src = r2; } // telefon na šířku (RAW z appky je už otočený)
   const ir = $('#iris'), blink = () => spring(1, 0, v => ir.style.opacity = v * .85, { k: 160, c: 22 });
   if (S.fmt === 'half') {
     if (!S.halfPending) { S.halfPending = src; updFmt(); blink(); toast('Půlka políčka hotová, vyfoť druhou'); return; }
@@ -3786,7 +3801,12 @@ async function depthModel() {
     try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch {} // ať iOS model z cache nemaže
     try { const c = await caches.open('transformers-cache'), ks = await c.keys(); DEPTH.cached = ks.some(k => k.url.includes('depth-anything') && k.url.includes('.onnx')); } catch {}
     DEPTH.phase = DEPTH.cached ? 'cache' : 'dl'; depthUi();
-    const T = DEPTH.T = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.1/dist/transformers.min.js'); T.env.allowLocalModels = false;
+    /* v appce jsou knihovna, wasm i model přibalené (tools/offline.py) → hloubka jde i bez signálu; jinak z CDN a Hugging Face */
+    const CDN = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.1/dist/transformers.min.js';
+    let T = null, loc = false; if (window.QNATIVE) { try { T = await import('/offline/tf/transformers.min.js'); loc = true; } catch {} }
+    if (!T) T = await import(CDN); DEPTH.T = T;
+    if (loc) { T.env.allowLocalModels = true; T.env.localModelPath = '/offline/models/'; T.env.backends.onnx.wasm.wasmPaths = '/offline/tf/'; T.env.useBrowserCache = false; DEPTH.cached = true; DEPTH.phase = 'cache'; depthUi(); }
+    else T.env.allowLocalModels = false;
     const files = {}, progress_callback = e => { if (e.status === 'progress' && e.total && e.file.endsWith('.onnx') && !DEPTH.cached) { files[e.file] = [e.loaded, e.total]; const v = Object.values(files); DEPTH.got = v.reduce((a, x) => a + x[0], 0); DEPTH.tot = v.reduce((a, x) => a + x[1], 0); DEPTH.prog = DEPTH.got / DEPTH.tot; if (DEPTH.prog >= 1 && DEPTH.phase === 'dl') DEPTH.phase = 'init'; depthUi(); }
       if (e.status === 'done' && e.file && e.file.endsWith('.onnx')) { DEPTH.phase = 'init'; depthUi(); } };
     const mk2 = (device, dtype) => T.pipeline('depth-estimation', 'onnx-community/depth-anything-v2-small', { device, dtype, progress_callback });
@@ -4150,7 +4170,7 @@ async function shareRecipe(r) {
   const url = location.origin + location.pathname + '#recept=' + btoa(unescape(encodeURIComponent(JSON.stringify(r))));
   try { await navigator.clipboard.writeText(url); } catch {}
   const box = $('#rShare'); box.innerHTML = '<div id="qr"></div><small>Odkaz je zkopírovaný. Kamarád naskenuje QR nebo otevře odkaz a recept se mu přidá.</small>';
-  try { if (!window.QRCode) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'); new QRCode($('#qr'), { text: url, width: 164, height: 164, colorDark: '#0B0C0E', colorLight: '#F2EFE8', correctLevel: QRCode.CorrectLevel.L }); }
+  try { if (!window.QRCode) { const cdn = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'; if (window.QNATIVE) await loadScript('/offline/qrcode.min.js').catch(() => loadScript(cdn)); else await loadScript(cdn); } new QRCode($('#qr'), { text: url, width: 164, height: 164, colorDark: '#0B0C0E', colorLight: '#F2EFE8', correctLevel: QRCode.CorrectLevel.L }); }
   catch { $('#qr').remove(); box.querySelector('small').textContent = 'Odkaz je zkopírovaný: ' + url.slice(0, 60) + '…'; }
   if (navigator.share && matchMedia('(pointer:coarse)').matches) navigator.share({ title: 'Qamera recept ' + r.name, url }).catch(() => {});
 }

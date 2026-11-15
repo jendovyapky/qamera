@@ -10,7 +10,7 @@ import VideoToolbox
 // Tady se log (= skutečné světlo scény, bez úprav Applu) převede přesně jako vyvolaný RAW (RawDevelop): lineární Rec.709,
 // měkké rameno světel, sRGB → JPEG ~1280 px → web ho přes /__live dostane jako zdroj hledáčku a dá na něj stejný film jako na RAW.
 // Fotka bez RAW = plný snímek z logu (4K) vyvolaný stejně (RawDevelop bez měření expozice) – hledáček se kvůli ní nezastaví.
-final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
+final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureAudioDataOutputSampleBufferDelegate {
     static let shared = CameraEngine()
 
     private let q = DispatchQueue(label: "qamera.cam")
@@ -28,12 +28,45 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
     // klip ze stejné session (hledáček běží dál): snímky v logu jdou rovnou do AVAssetWriter; jen na frontě vq
     private final class Rec {
         let writer: AVAssetWriter, input: AVAssetWriterInput, url: URL, dur: Double
+        var audio: AVAssetWriterInput?
         var t0: CMTime?
         var started: (() -> Void)?
         var done: ((URL?, String?) -> Void)?
         init(writer: AVAssetWriter, input: AVAssetWriterInput, url: URL, dur: Double) { self.writer = writer; self.input = input; self.url = url; self.dur = dur }
     }
     private var rec: Rec?
+    // mikrofon jen v režimu KLIP (oranžová tečka a dotaz na mikrofon jen tam, kde se natáčí); přidá se do běžící session
+    private var audioOut: AVCaptureAudioDataOutput?
+    private var audioIn: AVCaptureDeviceInput?
+    private var wantAudio = false
+    func setAudio(_ on: Bool) { q.async { self.wantAudio = on; self.applyAudio() } }
+    // jen na frontě q
+    private func applyAudio() {
+        guard let s = session else { return }
+        if wantAudio, audioOut == nil {
+            let st = AVCaptureDevice.authorizationStatus(for: .audio)
+            if st == .notDetermined { AVCaptureDevice.requestAccess(for: .audio) { ok in if ok { self.q.async { self.applyAudio() } } }; return }
+            guard st == .authorized, let mic = AVCaptureDevice.default(for: .audio) else { Ladeni.log("mikrofon nepovolený / chybí"); return }
+            let exc = QCatch.run {
+                s.beginConfiguration()
+                defer { s.commitConfiguration() }
+                guard let i = try? AVCaptureDeviceInput(device: mic), s.canAddInput(i) else { return }
+                s.addInput(i)
+                let o = AVCaptureAudioDataOutput()
+                o.setSampleBufferDelegate(self, queue: self.vq)
+                guard s.canAddOutput(o) else { s.removeInput(i); return }
+                s.addOutput(o)
+                self.audioIn = i; self.audioOut = o
+            }
+            Ladeni.log("mikrofon zap=\(audioOut != nil)\(exc.map { " CHYBA " + $0 } ?? "")")
+        } else if !wantAudio, let o = audioOut {
+            _ = QCatch.run { s.beginConfiguration(); s.removeOutput(o); if let i = self.audioIn { s.removeInput(i) }; s.commitConfiguration() }
+            audioOut = nil; audioIn = nil
+            Ladeni.log("mikrofon vyp")
+        }
+    }
+    // spoušť během natáčení = konec klipu
+    func stopRecording() { vq.async { if let r = self.rec { self.finishRec(r) } } }
     private static let dbgCtx = CIContext(options: [.workingColorSpace: NSNull(), .outputColorSpace: NSNull()])
     private var lastFrame = 0.0
     private var sent = 0
@@ -112,6 +145,19 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
 
     // MARK: zařízení a formát
 
+    /// natočení telefonu z akcelerometru (WebApp): o kolik stupňů po směru hodin otočit snímek na výšku, aby byl rovně
+    static var orient = 0
+    /* úhel pro obraz na výšku: zadní kamery 90 (ověřené), přední se zeptá systému (RotationCoordinator dává úhel pro rovinu podle
+       natočení telefonu → odečte se natočení). Na 17 Pro má přední kamera jiný (čtvercový) senzor a napevno 90 ji otočilo a převrátilo */
+    static func portraitAngle(_ d: AVCaptureDevice) -> CGFloat {
+        guard d.position == .front else { return 90 }
+        let rc = AVCaptureDevice.RotationCoordinator(device: d, previewLayer: nil)
+        let lv = Int(rc.videoRotationAngleForHorizonLevelCapture.rounded())
+        let a = ((lv - orient) % 360 + 360) % 360
+        Ladeni.log("přední kamera: úhel pro rovinu \(lv), natočení \(orient) → na výšku \(a)")
+        return CGFloat(a)
+    }
+
     private func pick(_ lens: String) -> (AVCaptureDevice, Double)? {
         if lens == "front" {
             guard let d = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) else { return nil }
@@ -131,6 +177,14 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
     private func format(_ d: AVCaptureDevice) -> (AVCaptureDevice.Format, Bool)? {
         let fps30 = { (f: AVCaptureDevice.Format) in f.videoSupportedFrameRateRanges.contains { $0.maxFrameRate >= 29.9 && $0.minFrameRate <= 30.1 } }
         let w = { (f: AVCaptureDevice.Format) in Int(CMVideoFormatDescriptionGetDimensions(f.formatDescription).width) }
+        if d.position == .front {
+            // přední: nejširší záběr (celý senzor – u 17 Pro čtverec), pak nejvíc pixelů do 4096; log, když ho má
+            let dm = { (f: AVCaptureDevice.Format) in CMVideoFormatDescriptionGetDimensions(f.formatDescription) }
+            let fl = d.formats.filter { fps30($0) && Int(max(dm($0).width, dm($0).height)) <= 4096 && Int(min(dm($0).width, dm($0).height)) >= 720 }
+            Ladeni.log("přední formáty: " + fl.map { "\(dm($0).width)x\(dm($0).height) fov\(Int($0.videoFieldOfView))\($0.supportedColorSpaces.contains(.appleLog) ? " log" : "")" }.joined(separator: ", "))
+            let key = { (f: AVCaptureDevice.Format) in Double(f.videoFieldOfView).rounded() * 1e9 + Double(dm(f).width) * Double(dm(f).height) }
+            if let f = fl.max(by: { key($0) < key($1) }) { return (f, f.supportedColorSpaces.contains(.appleLog)) }
+        }
         let ok = d.formats.filter { fps30($0) && w($0) >= 1920 && w($0) <= 4096 }
         let logF = ok.filter { $0.supportedColorSpaces.contains(.appleLog) }
         if let f = logF.max(by: { w($0) < w($1) }) { return (f, true) }
@@ -156,6 +210,7 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
                         s.beginConfiguration()
                         defer { s.commitConfiguration() }
                         s.automaticallyConfiguresCaptureDeviceForWideColor = false
+                        s.automaticallyConfiguresApplicationAudioSession = false // audio session řídí VolumeShutter (s mikrofonem playAndRecord)
                         s.sessionPreset = .inputPriority
                         let input = try AVCaptureDeviceInput(device: dev)
                         guard s.canAddInput(input) else { throw QError(message: "kamera je obsazená") }
@@ -174,7 +229,7 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
                         }
                         if dev.isFocusModeSupported(.continuousAutoFocus) { dev.focusMode = .continuousAutoFocus }
                         if dev.isExposureModeSupported(.continuousAutoExposure) { dev.exposureMode = .continuousAutoExposure }
-                        dev.videoZoomFactor = max(1, min(dev.activeFormat.videoMaxZoomFactor, zoom))
+                        dev.videoZoomFactor = max(dev.minAvailableVideoZoomFactor, min(dev.activeFormat.videoMaxZoomFactor, zoom))
                         dev.unlockForConfiguration()
                         // pixely až po nastavení formátu (10 bit jen u formátu, který ho má) a jen z nabídky výstupu
                         let avail = out.availableVideoPixelFormatTypes
@@ -185,7 +240,8 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
                         }
                         if #available(iOS 18.0, *) { self.addControls(s) }
                         if let c = out.connection(with: .video) {
-                            if c.isVideoRotationAngleSupported(90) { c.videoRotationAngle = 90 }
+                            let ang = Self.portraitAngle(dev)
+                            if c.isVideoRotationAngleSupported(ang) { c.videoRotationAngle = ang }
                             if c.isVideoMirroringSupported { c.automaticallyAdjustsVideoMirroring = false; c.isVideoMirrored = false } // přední zrcadlí web sám
                         }
                     } catch { cfgErr = error }
@@ -199,6 +255,7 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
                 if let e2 = QCatch.run({ s.startRunning() }) { throw QError(message: e2) }
                 guard s.isRunning else { throw QError(message: "kamera se nespustila") }
                 if self.manIso != nil || self.manDur != nil { self.q.asyncAfter(deadline: .now() + 0.6) { self.applyExposure() } }
+                if self.wantAudio { self.applyAudio() }
                 Ladeni.log("kamera start \(lens) \(dev.localizedName) \(dm.width)x\(dm.height) log=\(log) lensZoom=\(String(format: "%.2f", lz)) pix=\(self.videoOut?.videoSettings?[kCVPixelBufferPixelFormatTypeKey as String] ?? "?")")
                 done(.success(["log": log, "lens": lens, "lensZoom": lz, "w": Int(self.size.width), "h": Int(self.size.height),
                                "maxZoom": Double(min(dev.activeFormat.videoMaxZoomFactor, 10)), "torch": dev.hasTorch,
@@ -211,7 +268,7 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
     func stop() { q.sync { self.stopNow() }; CameraEngine.markOk() }
     private func stopNow() {
         vq.sync { if let r = self.rec { self.rec = nil; r.writer.cancelWriting(); r.done?(nil, "kamera se zastavila") } }
-        session?.stopRunning(); session = nil; device = nil; videoOut = nil
+        session?.stopRunning(); session = nil; device = nil; videoOut = nil; paused = false; audioOut = nil; audioIn = nil
     }
 
     // Klip z běžící kamery: HEVC 1080p z těch samých snímků, které vidí hledáček. started = první zapsaný snímek.
@@ -241,11 +298,23 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
                 i.expectsMediaDataInRealTime = true
                 guard w.canAdd(i) else { err = "klip nejde přidat"; return }
                 w.add(i)
+                // zvuk z mikrofonu (jen když je v session – režim KLIP a povolený mikrofon); AAC
+                var ai: AVAssetWriterInput?
+                if let ao = self.audioOut {
+                    let rs = ao.recommendedAudioSettingsForAssetWriter(writingTo: .mov) as? [String: Any]
+                    let aset: [String: Any] = rs ?? [AVFormatIDKey: kAudioFormatMPEG4AAC, AVNumberOfChannelsKey: 1, AVSampleRateKey: 48000, AVEncoderBitRateKey: 128000]
+                    if w.canApply(outputSettings: aset, forMediaType: .audio) {
+                        let a = AVAssetWriterInput(mediaType: .audio, outputSettings: aset)
+                        a.expectsMediaDataInRealTime = true
+                        if w.canAdd(a) { w.add(a); ai = a }
+                    }
+                }
                 guard w.startWriting() else { err = w.error?.localizedDescription ?? "zápis nezačal"; return }
                 made = Rec(writer: w, input: i, url: url, dur: seconds)
+                made?.audio = ai
             }
             guard exc == nil, err == nil, let r = made else { Ladeni.log("klip ze session NEJDE: \(exc ?? err ?? "?")"); return done(.failure(QError(message: exc ?? err ?? "klip nejde natočit"))) }
-            Ladeni.log("klip ze session start \(Int(size.width))x\(Int(size.height)) → \(r.input.outputSettings?[AVVideoWidthKey] ?? "?")x\(r.input.outputSettings?[AVVideoHeightKey] ?? "?")")
+            Ladeni.log("klip ze session start zvuk=\(r.audio != nil) \(Int(size.width))x\(Int(size.height)) → \(r.input.outputSettings?[AVVideoWidthKey] ?? "?")x\(r.input.outputSettings?[AVVideoHeightKey] ?? "?")")
             r.started = started
             r.done = { u, e in
                 if let u { done(.success((u, log, lz))) } else { done(.failure(QError(message: e ?? "klip se nenatočil"))) }
@@ -262,11 +331,27 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
             let e = r.writer.error?.localizedDescription ?? "kamera neposlala snímky"
             r.writer.cancelWriting(); r.done?(nil, e); return
         }
-        _ = QCatch.run { r.input.markAsFinished() }
+        _ = QCatch.run { r.input.markAsFinished(); r.audio?.markAsFinished() }
         r.writer.finishWriting { Ladeni.log("klip ze session konec stav=\(r.writer.status.rawValue) \(r.writer.error?.localizedDescription ?? "ok")"); r.done?(r.writer.status == .completed ? r.url : nil, r.writer.error?.localizedDescription) }
     }
 
     var isOn: Bool { q.sync { session != nil } }
+
+    // mimo foťák: session se zastaví, ale zůstane nastavená (návrat = jen startRunning, žádné nové hledání formátu)
+    private var paused = false
+    func pause(_ off: Bool) {
+        q.async {
+            guard let s = self.session else { return }
+            if off {
+                guard !self.paused, self.vq.sync(execute: { self.rec == nil && self.stillWait == nil }) else { return }
+                s.stopRunning(); self.paused = true; Ladeni.log("kamera pauza (mimo foťák)")
+            } else if self.paused {
+                self.paused = false
+                if let e = QCatch.run({ s.startRunning() }) { Ladeni.log("kamera po pauze CHYBA \(e)") }
+                Ladeni.log("kamera po pauze běží=\(s.isRunning)")
+            }
+        }
+    }
 
     // jen na frontě q: AUTO, nebo ruční ISO / čas (chybějící hodnota = stejná expozice jako teď)
     private func applyExposure() {
@@ -292,7 +377,7 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
 
     func setZoom(_ z: Double) {
         q.async { guard let d = self.device, (try? d.lockForConfiguration()) != nil else { return }
-            d.videoZoomFactor = max(1, min(d.activeFormat.videoMaxZoomFactor, z)); d.unlockForConfiguration() }
+            d.videoZoomFactor = max(d.minAvailableVideoZoomFactor, min(d.activeFormat.videoMaxZoomFactor, z)); d.unlockForConfiguration() }
     }
     func torch(_ on: Bool) {
         q.async { guard let d = self.device, d.hasTorch, (try? d.lockForConfiguration()) != nil else { return }
@@ -314,6 +399,11 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
     // MARK: snímky
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sb: CMSampleBuffer, from connection: AVCaptureConnection) {
+        if output is AVCaptureAudioDataOutput { // zvuk jen do běžícího klipu, od prvního snímku obrazu (stejné hodiny session)
+            if let r = rec, let a = r.audio, let t0 = r.t0, r.writer.status == .writing, a.isReadyForMoreMediaData,
+               CMTimeCompare(CMSampleBufferGetPresentationTimeStamp(sb), t0) >= 0 { _ = QCatch.run { _ = a.append(sb) } }
+            return
+        }
         guard let pb = CMSampleBufferGetImageBuffer(sb) else { return }
         let img = CIImage(cvPixelBuffer: pb, options: [.colorSpace: NSNull()])
         if let w = stillWait { stillWait = nil; w(img) }

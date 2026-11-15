@@ -1,4 +1,5 @@
 import AVKit
+import CoreMotion
 import Photos
 import SwiftUI
 import UIKit
@@ -19,6 +20,11 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     private let clip = ClipCapture()
     private var vol: VolumeShutter?
     private var camWasOn = false
+    // natočení telefonu (UI je jen na výšku): kolik stupňů po směru hodin otočit snímek, aby byl rovně; jen když je otevřený foťák
+    private let motion = CMMotionManager()
+    private var orient = 0
+    private var camScreen = false
+    private var gx = 0.0, gy = -1.0
 
     override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
     override var prefersHomeIndicatorAutoHidden: Bool { true }
@@ -87,8 +93,24 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
         web.load(URLRequest(url: LocalServer.baseURL.appendingPathComponent("docs/preview/")))
     }
 
+    private func motionOn(_ on: Bool) {
+        if !on { if motion.isAccelerometerActive { motion.stopAccelerometerUpdates() }; return }
+        guard motion.isAccelerometerAvailable, !motion.isAccelerometerActive else { return }
+        motion.accelerometerUpdateInterval = 0.1
+        motion.startAccelerometerUpdates(to: .main) { [weak self] d, _ in
+            guard let self, let a = d?.acceleration else { return }
+            // vektor tíže v souřadnicích telefonu (na výšku rovně y = −1); hystereze 0,72, naplocho se nemění
+            self.gx = self.gx * 0.6 + a.x * 0.4; self.gy = self.gy * 0.6 + a.y * 0.4
+            var o = self.orient
+            if abs(self.gx) > 0.72, abs(self.gx) > abs(self.gy) { o = self.gx < 0 ? 270 : 90 }
+            else if abs(self.gy) > 0.72, abs(self.gy) > abs(self.gx) { o = self.gy < 0 ? 0 : 180 }
+            if o != self.orient { self.orient = o; CameraEngine.orient = o; self.js("window.__qOrient && window.__qOrient(\(o))") }
+        }
+    }
+
     @objc private func foreground() {
         Ladeni.log("návrat do popředí")
+        motionOn(camScreen)
         server?.restart()
         camWasOn = false
         js("window.__qCamResume && window.__qCamResume()")
@@ -98,6 +120,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     @objc private func background() {
         Ladeni.log("do pozadí, kamera běžela=\(CameraEngine.shared.isOn)")
         vol?.pause()
+        motionOn(false)
         if CameraEngine.shared.isOn { CameraEngine.shared.stop(); camWasOn = true }
         server?.liveClose()
     }
@@ -190,6 +213,11 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                 cam.setCtl(films: m["films"] as? [String], film: m["film"] as? Int, ev: m["ev"] as? Double,
                            lenses: m["lenses"] as? [String], lens: m["lens"] as? Int, str: m["str"] as? Double)
             case "stop": cam.stop(); server?.liveClose()
+            case "audio": // režim KLIP: mikrofon do session + audio session na nahrávání
+                let on = (m["on"] as? Bool) ?? false
+                vol?.setRecord(on)
+                if on { try? AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .videoRecording, options: [.mixWithOthers, .defaultToSpeaker, .allowBluetoothA2DP]); try? AVAudioSession.sharedInstance().setActive(true) }
+                cam.setAudio(on)
             case "zoom": cam.setZoom((m["z"] as? Double) ?? 1)
             case "torch": cam.torch((m["on"] as? Bool) ?? false)
             case "focus": cam.focus(x: (m["x"] as? Double) ?? 0.5, y: (m["y"] as? Double) ?? 0.5)
@@ -219,7 +247,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
             let id = m["id"] as? Int ?? 0
             let bayer = ((m["bayer"] as? Bool) ?? false) && !(isoNow > 320)
             raw.capture(zoom: (m["zoom"] as? Double) ?? 1, ultra: (m["ultra"] as? Bool) ?? false,
-                        flash: (m["flash"] as? Bool) ?? false, tele: (m["tele"] as? Bool) ?? false, bayer: bayer, mean: m["mean"] as? Double, manual: manual) { [weak self] result in
+                        flash: (m["flash"] as? Bool) ?? false, tele: (m["tele"] as? Bool) ?? false, front: (m["front"] as? Bool) ?? false, bayer: bayer, mean: m["mean"] as? Double, manual: manual) { [weak self] result in
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let r):
@@ -236,7 +264,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
         case "clip":
             let id = m["id"] as? Int ?? 0
             var o = ClipCapture.Opts()
-            o.seconds = min(10, max(1, (m["sec"] as? Double) ?? 5))
+            o.seconds = min(60, max(1, (m["sec"] as? Double) ?? 5))
             o.zoom = (m["zoom"] as? Double) ?? 1
             o.ultra = (m["ultra"] as? Bool) ?? false
             o.tele = (m["tele"] as? Bool) ?? false
@@ -252,6 +280,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
             o.gn = (m["gn"] as? Double) ?? 4250
             o.bloom = (m["bloom"] as? Double) ?? 0
             o.glow = (m["glow"] as? Double) ?? 0
+            o.rot = (m["rot"] as? Int) ?? 0
             if let s = m["lut"] as? String, let c = s.range(of: ",") { o.lut = Data(base64Encoded: String(s[c.upperBound...])) }
             let opts = o
             let recording: () -> Void = { [weak self] in
@@ -288,7 +317,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                         res.src = cid
                         let rid = UUID().uuidString
                         try ClipDevelop.process(src: srcURL, dst: RawCapture.dir.appendingPathComponent(rid + ".mp4"), thumb: RawCapture.dir.appendingPathComponent(rid + ".jpg"),
-                                                log: isLog, film: opts.film, str: opts.str, grain: opts.grain, hal: opts.hal, vig: opts.vig, apl: opts.apl, ev: opts.ev, con: opts.con, sat: opts.sat, gn: opts.gn, bloom: opts.bloom, glow: opts.glow, webLut: opts.lut, progress: progress)
+                                                log: isLog, film: opts.film, rot: opts.rot, str: opts.str, grain: opts.grain, hal: opts.hal, vig: opts.vig, apl: opts.apl, ev: opts.ev, con: opts.con, sat: opts.sat, gn: opts.gn, bloom: opts.bloom, glow: opts.glow, webLut: opts.lut, progress: progress)
                         res.mp4 = rid + ".mp4"; res.jpg = rid + ".jpg"
                         finish(.success(res), true)
                     } catch { finish(.failure(error), true) }
@@ -317,7 +346,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                                 let cid = UUID().uuidString
                                 let sj = RawCapture.dir.appendingPathComponent(cid + "-s.jpg")
                                 try ClipDevelop.process(src: url, dst: RawCapture.dir.appendingPathComponent(cid + ".mp4"), thumb: RawCapture.dir.appendingPathComponent(cid + ".jpg"),
-                                                        log: log, film: opts.film, str: opts.str, grain: opts.grain, hal: opts.hal, vig: opts.vig, apl: opts.apl, ev: opts.ev, con: opts.con, sat: opts.sat, gn: opts.gn, bloom: opts.bloom, glow: opts.glow, srcThumb: sj, webLut: opts.lut, progress: progress)
+                                                        log: log, film: opts.film, rot: opts.rot, str: opts.str, grain: opts.grain, hal: opts.hal, vig: opts.vig, apl: opts.apl, ev: opts.ev, con: opts.con, sat: opts.sat, gn: opts.gn, bloom: opts.bloom, glow: opts.glow, srcThumb: sj, webLut: opts.lut, progress: progress)
                                 // originál zůstane (ClipStore) → film jde změnit i později
                                 if let kid = ClipStore.keep(url) { res.src = kid; if FileManager.default.fileExists(atPath: sj.path) { res.sjpg = cid + "-s.jpg" } }
                                 res.mp4 = cid + ".mp4"; res.jpg = cid + ".jpg"
@@ -330,13 +359,22 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                     }
                 }
             } else { old() }
+        case "clipStop": // spoušť během natáčení = konec klipu
+            CameraEngine.shared.stopRecording()
+            clip.stopRecording()
         case "clipKeep": // úklid osiřelých originálů klipů
             let ids = (m["ids"] as? [String]) ?? []
             DispatchQueue.global(qos: .utility).async { ClipStore.sweep(keep: ids) }
         case "clipDel": // klip smazaný v galerii → smazat i jeho originál
             if let cid = m["src"] as? String { ClipStore.remove(cid) }
         case "cam":
-            vol?.set((m["on"] as? Bool) ?? false)
+            let on = (m["on"] as? Bool) ?? false
+            vol?.set(on)
+            camScreen = on
+            motionOn(on)
+            // kamera appky běží jen ve foťáku (galerie / editor = žádné snímky, méně baterky a tepla); session zůstane připravená
+            let cam = CameraEngine.shared
+            if cam.isOn { cam.pause(!on) } else if on { js("window.__qCamResume && window.__qCamResume()") }
         case "server": // web nedostal soubor ze serveru (Load failed) → nový listener
             server?.restart()
         case "rawDone":
@@ -455,7 +493,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     static let bridgeJS = """
     (() => {
       const post = (m) => window.webkit.messageHandlers.qamera.postMessage(m);
-      window.QNATIVE = Object.assign({ raw: 2, bayer: true, clip: 1, crec: 1, cedit: 1, ncam: window.__qNcamOff ? 0 : 1 }, window.__qLens || {});
+      window.QNATIVE = Object.assign({ raw: 2, rawf: 1, bayer: true, clip: 1, crec: 1, cedit: 1, ncam: window.__qNcamOff ? 0 : 1 }, window.__qLens || {});
       navigator.vibrate = (ms) => { post({ kind: 'vibrate', ms: Array.isArray(ms) ? (ms[0] || 6) : (+ms || 6) }); return true; };
       const pend = new Map(); let seq = 0;
       window.__qShareDone = (id, ok, abort) => {

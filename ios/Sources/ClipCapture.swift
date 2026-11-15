@@ -10,6 +10,8 @@ final class ClipCapture: NSObject, AVCaptureFileOutputRecordingDelegate {
     private let queue = DispatchQueue(label: "qamera.clip")
     private var session: AVCaptureSession?
     private var finished: ((URL?, Error?) -> Void)?
+    private var movieOut: AVCaptureMovieFileOutput?
+    func stopRecording() { movieOut?.stopRecording() }
 
     struct Opts {
         var seconds = 5.0
@@ -18,6 +20,7 @@ final class ClipCapture: NSObject, AVCaptureFileOutputRecordingDelegate {
         // z foťáku: korekce expozice (EV), kontrast a sytost (push / pull), počet zrn na delší stranu políčka – stejné hodnoty, jaké má hledáček
         var ev = 0.0, con = 0.0, sat = 0.0, gn = 4250.0
         var bloom = 0.0, glow = 0.0 // záře jako ve fotce (už vynásobené sílou filmu)
+        var rot = 0 // natočení telefonu při natáčení: o kolik stupňů po směru hodin otočit obraz (0 / 90 / 180 / 270)
         var lut: Data? // barevná tabulka z webu (PNG 64³) = přesně barvy fotky; když chybí, počítá se film postaru v ClipDevelop.cube
     }
 
@@ -99,11 +102,13 @@ final class ClipCapture: NSObject, AVCaptureFileOutputRecordingDelegate {
                 var recErr: Error?
                 var recURL: URL?
                 self.finished = { url, err in recURL = url; recErr = err; sem.signal() }
+                self.movieOut = out
                 out.startRecording(to: src, recordingDelegate: self)
                 recording()
                 if sem.wait(timeout: .now() + o.seconds + 6) == .timedOut { out.stopRecording(); _ = sem.wait(timeout: .now() + 3) }
                 s.stopRunning()
                 self.session = nil
+                self.movieOut = nil
                 guard let url = recURL else { throw recErr ?? QError(message: "klip se nenatočil") }
 
                 var res = Result()
@@ -112,7 +117,7 @@ final class ClipCapture: NSObject, AVCaptureFileOutputRecordingDelegate {
                 let mp4 = RawCapture.dir.appendingPathComponent(id + ".mp4"), jpg = RawCapture.dir.appendingPathComponent(id + ".jpg")
                 let sj = RawCapture.dir.appendingPathComponent(id + "-s.jpg")
                 do {
-                    try ClipDevelop.process(src: url, dst: mp4, thumb: jpg, log: log, film: o.film, str: o.str, grain: o.grain, hal: o.hal, vig: o.vig, apl: o.apl, ev: o.ev, con: o.con, sat: o.sat, gn: o.gn, bloom: o.bloom, glow: o.glow, srcThumb: sj, webLut: o.lut, progress: progress)
+                    try ClipDevelop.process(src: url, dst: mp4, thumb: jpg, log: log, film: o.film, rot: o.rot, str: o.str, grain: o.grain, hal: o.hal, vig: o.vig, apl: o.apl, ev: o.ev, con: o.con, sat: o.sat, gn: o.gn, bloom: o.bloom, glow: o.glow, srcThumb: sj, webLut: o.lut, progress: progress)
                 } catch { try? FileManager.default.removeItem(at: url); throw error }
                 if let cid = ClipStore.keep(url) { res.src = cid; if FileManager.default.fileExists(atPath: sj.path) { res.sjpg = id + "-s.jpg" } }
                 res.mp4 = id + ".mp4"; res.jpg = id + ".jpg"
@@ -288,7 +293,24 @@ enum ClipDevelop {
         return out.withUnsafeBufferPointer { Data(buffer: $0) }
     }
 
-    static func process(src: URL, dst: URL, thumb: URL, log: Bool, film: String, str: Double, grain: Double, hal: Double, vig: Double, apl: Double = 0.5, ev: Double = 0, con: Double = 0, sat: Double = 0, gn: Double = 4250, bloom: Double = 0, glow: Double = 0, srcThumb: URL? = nil, webLut: Data? = nil,
+    // zvuk na časovou osu hotového klipu (obraz začíná v nule)
+    static func retime(_ sb: CMSampleBuffer, by off: CMTime) -> CMSampleBuffer? {
+        if off.seconds == 0 || !off.isValid { return sb }
+        var n: CMItemCount = 0
+        CMSampleBufferGetSampleTimingInfoArray(sb, entryCount: 0, arrayToFill: nil, entriesNeededOut: &n)
+        guard n > 0 else { return sb }
+        var t = [CMSampleTimingInfo](repeating: CMSampleTimingInfo(), count: n)
+        CMSampleBufferGetSampleTimingInfoArray(sb, entryCount: n, arrayToFill: &t, entriesNeededOut: &n)
+        for i in 0..<n {
+            t[i].presentationTimeStamp = CMTimeSubtract(t[i].presentationTimeStamp, off)
+            if t[i].decodeTimeStamp.isValid { t[i].decodeTimeStamp = CMTimeSubtract(t[i].decodeTimeStamp, off) }
+        }
+        var o: CMSampleBuffer?
+        CMSampleBufferCreateCopyWithNewTiming(allocator: nil, sampleBuffer: sb, sampleTimingEntryCount: n, sampleTimingArray: &t, sampleBufferOut: &o)
+        return o
+    }
+
+    static func process(src: URL, dst: URL, thumb: URL, log: Bool, film: String, rot: Int = 0, str: Double, grain: Double, hal: Double, vig: Double, apl: Double = 0.5, ev: Double = 0, con: Double = 0, sat: Double = 0, gn: Double = 4250, bloom: Double = 0, glow: Double = 0, srcThumb: URL? = nil, webLut: Data? = nil,
                         progress: (Double) -> Void) throws {
         let tStart = Date()
         let asset = AVURLAsset(url: src)
@@ -309,12 +331,35 @@ enum ClipDevelop {
             AVVideoColorPropertiesKey: [AVVideoColorPrimariesKey: AVVideoColorPrimaries_ITU_R_709_2,
                                         AVVideoTransferFunctionKey: AVVideoTransferFunction_ITU_R_709_2,
                                         AVVideoYCbCrMatrixKey: AVVideoYCbCrMatrix_ITU_R_709_2]])
-        wi.transform = track.preferredTransform
+        /* natočení: originál zůstává na výšku, otočení je jen v metadatech hotového videa (přehrávač, Fotky i náhled ho použijí);
+           po transformaci originálu (záložní cesta ji má) se otočí ještě o rot po směru hodin */
+        let pref = track.preferredTransform, disp = CGRect(origin: .zero, size: size).applying(pref)
+        let dw = abs(disp.width), dh = abs(disp.height)
+        var rt = CGAffineTransform.identity
+        switch ((rot % 360) + 360) % 360 {
+        case 90: rt = CGAffineTransform(a: 0, b: 1, c: -1, d: 0, tx: dh, ty: 0)
+        case 180: rt = CGAffineTransform(a: -1, b: 0, c: 0, d: -1, tx: dw, ty: dh)
+        case 270: rt = CGAffineTransform(a: 0, b: -1, c: 1, d: 0, tx: 0, ty: dw)
+        default: break
+        }
+        let total = pref.concatenating(rt)
+        wi.transform = total
+        let ang = Int((atan2(Double(total.b), Double(total.a)) * 180 / .pi).rounded())
+        let thumbOr: CGImagePropertyOrientation = ang == 90 ? .right : (ang == -90 || ang == 270) ? .left : abs(ang) == 180 ? .down : .up
         wi.expectsMediaDataInRealTime = false
         let ad = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: wi, sourcePixelBufferAttributes: [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA, kCVPixelBufferWidthKey as String: w,
             kCVPixelBufferHeightKey as String: h, kCVPixelBufferIOSurfacePropertiesKey as String: [:]])
         writer.add(wi)
+        // zvuk z originálu beze změny (AAC) – vlastní fronta, aby se zápis obrazu a zvuku mohl prokládat
+        var aro: AVAssetReaderTrackOutput?, awi: AVAssetWriterInput?
+        if let at = asset.tracks(withMediaType: .audio).first, let fd = at.formatDescriptions.first {
+            let o = AVAssetReaderTrackOutput(track: at, outputSettings: nil)
+            let a = AVAssetWriterInput(mediaType: .audio, outputSettings: nil, sourceFormatHint: (fd as! CMFormatDescription))
+            a.expectsMediaDataInRealTime = false
+            if reader.canAdd(o), writer.canAdd(a) { reader.add(o); writer.add(a); aro = o; awi = a }
+        }
+        let vstart = track.timeRange.start
 
         let ctx = CIContext(options: [.workingColorSpace: NSNull(), .outputColorSpace: NSNull(), .workingFormat: CIFormat.RGBAh])
         let cubeF = CIFilter(name: "CIColorCube")!
@@ -396,6 +441,16 @@ enum ClipDevelop {
         guard reader.startReading() else { throw reader.error ?? QError(message: "klip nejde přečíst") }
         writer.startWriting()
         writer.startSession(atSourceTime: .zero)
+        let adone = DispatchSemaphore(value: 0)
+        if let aro, let awi {
+            awi.requestMediaDataWhenReady(on: DispatchQueue(label: "qamera.clip.audio")) {
+                while awi.isReadyForMoreMediaData {
+                    guard let sb = aro.copyNextSampleBuffer() else { awi.markAsFinished(); adone.signal(); return }
+                    guard let s2 = Self.retime(sb, by: vstart), CMSampleBufferGetPresentationTimeStamp(s2).seconds >= 0 else { continue }
+                    if !awi.append(s2) { awi.markAsFinished(); adone.signal(); return }
+                }
+            }
+        } else { adone.signal() }
         var frame = 0
         var t0: CMTime?
         while let sb = ro.copyNextSampleBuffer() {
@@ -407,7 +462,7 @@ enum ClipDevelop {
                 // první snímek originálu převedený jako hledáček (log → světlo → rameno → sRGB): web na něm ukáže náhled jiného filmu
                 var sv = src
                 if log { let vf = CameraEngine.cubeFilter(CameraEngine.logCube(n: 48, linearScale: nil)); vf.setValue(src, forKey: kCIInputImageKey); sv = vf.outputImage ?? src }
-                if let j = ctx.jpegRepresentation(of: sv.cropped(to: ext), colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!, options: [:]) { try? j.write(to: st) }
+                if let j = ctx.jpegRepresentation(of: sv.cropped(to: ext).oriented(thumbOr), colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!, options: [:]) { try? j.write(to: st) }
             }
             var img = src
             if gk > 0.0001 {
@@ -485,6 +540,7 @@ enum ClipDevelop {
             progress(min(1, CMTimeSubtract(pts, t0!).seconds / dur))
         }
         wi.markAsFinished()
+        if adone.wait(timeout: .now() + 15) == .timedOut { Ladeni.log("klip: zvuk nedoběhl"); awi?.markAsFinished() }
         let sem = DispatchSemaphore(value: 0)
         writer.finishWriting { sem.signal() }
         sem.wait()
