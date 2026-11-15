@@ -158,7 +158,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
         guard let m = message.body as? [String: Any], let kind = m["kind"] as? String else { return }
         if kind == "log" { Ladeni.log("web: " + ((m["t"] as? String) ?? "")); return }
         if kind != "vibrate", !(kind == "ncam" && ["ctl", "zoom", "focus"].contains((m["op"] as? String) ?? "")) {
-            let skip: Set<String> = ["kind", "op", "films", "files", "data", "datas", "items"]
+            let skip: Set<String> = ["kind", "op", "films", "files", "data", "datas", "items", "lut", "ids"]
             let args: [String] = m.filter { !skip.contains($0.key) }.map { $0.key + "=" + String(describing: $0.value) }.sorted()
             Ladeni.log("most " + kind + " " + ((m["op"] as? String) ?? "") + " " + String(args.joined(separator: " ").prefix(300)))
         }
@@ -250,6 +250,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
             o.gn = (m["gn"] as? Double) ?? 4250
             o.bloom = (m["bloom"] as? Double) ?? 0
             o.glow = (m["glow"] as? Double) ?? 0
+            if let s = m["lut"] as? String, let c = s.range(of: ",") { o.lut = Data(base64Encoded: String(s[c.upperBound...])) }
             let opts = o
             let recording: () -> Void = { [weak self] in
                 DispatchQueue.main.async { self?.js("window.__qClipRec && window.__qClipRec(\(id))") }
@@ -285,7 +286,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                         res.src = cid
                         let rid = UUID().uuidString
                         try ClipDevelop.process(src: srcURL, dst: RawCapture.dir.appendingPathComponent(rid + ".mp4"), thumb: RawCapture.dir.appendingPathComponent(rid + ".jpg"),
-                                                log: isLog, film: opts.film, str: opts.str, grain: opts.grain, hal: opts.hal, vig: opts.vig, apl: opts.apl, ev: opts.ev, con: opts.con, sat: opts.sat, gn: opts.gn, bloom: opts.bloom, glow: opts.glow, progress: progress)
+                                                log: isLog, film: opts.film, str: opts.str, grain: opts.grain, hal: opts.hal, vig: opts.vig, apl: opts.apl, ev: opts.ev, con: opts.con, sat: opts.sat, gn: opts.gn, bloom: opts.bloom, glow: opts.glow, webLut: opts.lut, progress: progress)
                         res.mp4 = rid + ".mp4"; res.jpg = rid + ".jpg"
                         finish(.success(res), true)
                     } catch { finish(.failure(error), true) }
@@ -314,7 +315,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                                 let cid = UUID().uuidString
                                 let sj = RawCapture.dir.appendingPathComponent(cid + "-s.jpg")
                                 try ClipDevelop.process(src: url, dst: RawCapture.dir.appendingPathComponent(cid + ".mp4"), thumb: RawCapture.dir.appendingPathComponent(cid + ".jpg"),
-                                                        log: log, film: opts.film, str: opts.str, grain: opts.grain, hal: opts.hal, vig: opts.vig, apl: opts.apl, ev: opts.ev, con: opts.con, sat: opts.sat, gn: opts.gn, bloom: opts.bloom, glow: opts.glow, srcThumb: sj, progress: progress)
+                                                        log: log, film: opts.film, str: opts.str, grain: opts.grain, hal: opts.hal, vig: opts.vig, apl: opts.apl, ev: opts.ev, con: opts.con, sat: opts.sat, gn: opts.gn, bloom: opts.bloom, glow: opts.glow, srcThumb: sj, webLut: opts.lut, progress: progress)
                                 // originál zůstane (ClipStore) → film jde změnit i později
                                 if let kid = ClipStore.keep(url) { res.src = kid; if FileManager.default.fileExists(atPath: sj.path) { res.sjpg = cid + "-s.jpg" } }
                                 res.mp4 = cid + ".mp4"; res.jpg = cid + ".jpg"
@@ -327,6 +328,9 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                     }
                 }
             } else { old() }
+        case "clipKeep": // úklid osiřelých originálů klipů
+            let ids = (m["ids"] as? [String]) ?? []
+            DispatchQueue.global(qos: .utility).async { ClipStore.sweep(keep: ids) }
         case "clipDel": // klip smazaný v galerii → smazat i jeho originál
             if let cid = m["src"] as? String { ClipStore.remove(cid) }
         case "cam":

@@ -18,6 +18,7 @@ final class ClipCapture: NSObject, AVCaptureFileOutputRecordingDelegate {
         // z foťáku: korekce expozice (EV), kontrast a sytost (push / pull), počet zrn na delší stranu políčka – stejné hodnoty, jaké má hledáček
         var ev = 0.0, con = 0.0, sat = 0.0, gn = 4250.0
         var bloom = 0.0, glow = 0.0 // záře jako ve fotce (už vynásobené sílou filmu)
+        var lut: Data? // barevná tabulka z webu (PNG 64³) = přesně barvy fotky; když chybí, počítá se film postaru v ClipDevelop.cube
     }
 
     struct Result {
@@ -111,7 +112,7 @@ final class ClipCapture: NSObject, AVCaptureFileOutputRecordingDelegate {
                 let mp4 = RawCapture.dir.appendingPathComponent(id + ".mp4"), jpg = RawCapture.dir.appendingPathComponent(id + ".jpg")
                 let sj = RawCapture.dir.appendingPathComponent(id + "-s.jpg")
                 do {
-                    try ClipDevelop.process(src: url, dst: mp4, thumb: jpg, log: log, film: o.film, str: o.str, grain: o.grain, hal: o.hal, vig: o.vig, apl: o.apl, ev: o.ev, con: o.con, sat: o.sat, gn: o.gn, bloom: o.bloom, glow: o.glow, srcThumb: sj, progress: progress)
+                    try ClipDevelop.process(src: url, dst: mp4, thumb: jpg, log: log, film: o.film, str: o.str, grain: o.grain, hal: o.hal, vig: o.vig, apl: o.apl, ev: o.ev, con: o.con, sat: o.sat, gn: o.gn, bloom: o.bloom, glow: o.glow, srcThumb: sj, webLut: o.lut, progress: progress)
                 } catch { try? FileManager.default.removeItem(at: url); throw error }
                 if let cid = ClipStore.keep(url) { res.src = cid; if FileManager.default.fileExists(atPath: sj.path) { res.sjpg = id + "-s.jpg" } }
                 res.mp4 = id + ".mp4"; res.jpg = id + ".jpg"
@@ -145,6 +146,17 @@ enum ClipStore {
         do { try FileManager.default.moveItem(at: tmp, to: url(id)); return id } catch { Ladeni.log("originál klipu se neuložil: \(error.localizedDescription)"); return nil }
     }
     static func remove(_ id: String) { try? FileManager.default.removeItem(at: url(id)) }
+    // úklid osiřelých originálů: smaže jen soubory, které web nezná A jsou starší než 2 dny (kdyby web seznam poslal špatně, nic čerstvého nezmizí)
+    static func sweep(keep ids: [String]) {
+        let fm = FileManager.default, known = Set(ids.map { url($0).lastPathComponent }), old = Date().addingTimeInterval(-2 * 86400)
+        guard let all = try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.contentModificationDateKey]) else { return }
+        var n = 0
+        for u in all where !known.contains(u.lastPathComponent) {
+            let d = (try? u.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? Date()
+            if d < old { try? fm.removeItem(at: u); n += 1 }
+        }
+        Ladeni.log("klipy: \(all.count) originálů, galerie zná \(ids.count), smazáno osiřelých \(n)")
+    }
 }
 
 // Film na klip: Apple Log (Rec.2020) → lineární světlo → log vstup filmu v2 (t = (log2(x/0,18)+8)/14) → LUT filmu.
@@ -165,6 +177,13 @@ enum ClipDevelop {
     static func filmLUT(_ code: String) -> (Int, [Float])? {
         guard code != "NONE", let url = Bundle.main.resourceURL?.appendingPathComponent("Web/luts/log/\(code).png"),
               let img = UIImage(contentsOfFile: url.path)?.cgImage else { return nil }
+        return lutPixels(img)
+    }
+    static func lutFromPNG(_ data: Data) -> (Int, [Float])? {
+        guard let img = UIImage(data: data)?.cgImage else { return nil }
+        return lutPixels(img)
+    }
+    private static func lutPixels(_ img: CGImage) -> (Int, [Float])? {
         let n = img.height, w = img.width
         guard w == n * n else { return nil }
         var px = [UInt8](repeating: 0, count: w * n * 4)
@@ -187,6 +206,29 @@ enum ClipDevelop {
             o[k] = (c00 * (1 - tg) + c10 * tg) * (1 - tb) + (c01 * (1 - tg) + c11 * tg) * tb
         }
         return (o[0], o[1], o[2])
+    }
+
+    /* Tabulka klipu z barevné tabulky webu: kód videa → formát zdroje hledáčku (log: světlo scény Rec.709 → rameno se zachovaným odstínem → sRGB,
+       přesně jako CameraEngine.logCube; běžné video: beze změny) → tabulka z foto shaderu. Barvy klipu = barvy fotky. */
+    static func cubeFromWeb(_ lut: (Int, [Float]), log: Bool) -> Data {
+        let n = 64
+        let M = [1.6605, -0.5876, -0.0728, -0.1246, 1.1329, -0.0083, -0.0182, -0.1006, 1.1187]
+        var out = [Float](repeating: 0, count: n * n * n * 4)
+        for bi in 0..<n { for gi in 0..<n { for ri in 0..<n {
+            let p = [Double(ri), Double(gi), Double(bi)].map { $0 / Double(n - 1) }
+            var v = p
+            if log {
+                let a = p.map(appleLogToLinear)
+                var l = [M[0] * a[0] + M[1] * a[1] + M[2] * a[2], M[3] * a[0] + M[4] * a[1] + M[5] * a[2], M[6] * a[0] + M[7] * a[1] + M[8] * a[2]].map { max($0, 0) }
+                let m = l.max() ?? 0
+                if m > 0.55 { let f = 0.55 + 0.45 * (1 - exp(-(m - 0.55) / 0.45)); l = l.map { $0 * f / m } }
+                v = l.map { linearToSrgb($0) }
+            }
+            let c = sample(lut, v[0], v[1], v[2])
+            let i = ((bi * n + gi) * n + ri) * 4
+            out[i] = Float(c.0); out[i + 1] = Float(c.1); out[i + 2] = Float(c.2); out[i + 3] = 1
+        } } }
+        return out.withUnsafeBufferPointer { Data(buffer: $0) }
     }
 
     // Tabulka 64³ RGBA float: vstup = kódové hodnoty videa (log nebo sRGB), výstup = sRGB po filmu
@@ -243,8 +285,9 @@ enum ClipDevelop {
         return out.withUnsafeBufferPointer { Data(buffer: $0) }
     }
 
-    static func process(src: URL, dst: URL, thumb: URL, log: Bool, film: String, str: Double, grain: Double, hal: Double, vig: Double, apl: Double = 0.5, ev: Double = 0, con: Double = 0, sat: Double = 0, gn: Double = 4250, bloom: Double = 0, glow: Double = 0, srcThumb: URL? = nil,
+    static func process(src: URL, dst: URL, thumb: URL, log: Bool, film: String, str: Double, grain: Double, hal: Double, vig: Double, apl: Double = 0.5, ev: Double = 0, con: Double = 0, sat: Double = 0, gn: Double = 4250, bloom: Double = 0, glow: Double = 0, srcThumb: URL? = nil, webLut: Data? = nil,
                         progress: (Double) -> Void) throws {
+        let tStart = Date()
         let asset = AVURLAsset(url: src)
         guard let track = asset.tracks(withMediaType: .video).first else { throw QError(message: "klip je prázdný") }
         let size = track.naturalSize, dur = max(asset.duration.seconds, 0.1)
@@ -274,7 +317,14 @@ enum ClipDevelop {
         let cubeF = CIFilter(name: "CIColorCube")!
         cubeF.setValue(64, forKey: "inputCubeDimension")
         var cut: String?
-        cubeF.setValue(cube(film: film, log: log, str: str, apl: apl, ev: ev, con: con, sat: sat), forKey: "inputCubeData")
+        // barvy: tabulka z foto shaderu webu (stejné jako fotka); bez ní vlastní výpočet filmu (starší web, chyba tabulky)
+        if let wl = webLut.flatMap({ lutFromPNG($0) }), wl.0 >= 17 {
+            cubeF.setValue(cubeFromWeb(wl, log: log), forKey: "inputCubeData")
+            Ladeni.log("klip: barvy z tabulky webu \(wl.0)³, film \(film)")
+        } else {
+            cubeF.setValue(cube(film: film, log: log, str: str, apl: apl, ev: ev, con: con, sat: sat), forKey: "inputCubeData")
+            Ladeni.log("klip: barvy vlastním výpočtem, film \(film)\(filmLUT(film) == nil && film != "NONE" ? " – LUT CHYBÍ" : "")")
+        }
         let ext = CGRect(x: 0, y: 0, width: w, height: h)
         /* zrno = šum v hustotě negativu: přidává se do logu PŘED filmem, takže ho křivka filmu sama zeslabí ve světlech
            (rameno) i ve stínech (pata) a nejvíc je vidět ve středních tónech – jako skutečné zrno. Dvě velikosti zrn
@@ -358,7 +408,19 @@ enum ClipDevelop {
             }
             var img = src
             if gk > 0.0001 {
-                img = negGrain(frame).applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: img]).cropped(to: ext)
+                var ng = negGrain(frame)
+                if log {
+                    // jako negGrain ve webu: × (1 + 0,75·smoothstep(−1,3 → −3,6 EV)) × (1 − 0,8·smoothstep(+3 → +5 EV)); EV = (kód − 0,488) / 0,0855
+                    let wl = CIVector(x: 0.3, y: 0.5, z: 0.2, w: 0), poly = CIVector(x: 0, y: 0, z: 3, w: -2), keepA = CIVector(x: 0, y: 1, z: 0, w: 0)
+                    func ramp(_ k: CGFloat, _ b: CGFloat, _ gain: CGFloat, _ base: CGFloat) -> CIImage {
+                        let t = src.applyingFilter("CIColorMatrix", parameters: ["inputRVector": CIVector(x: wl.x * k, y: wl.y * k, z: wl.z * k, w: 0), "inputGVector": CIVector(x: wl.x * k, y: wl.y * k, z: wl.z * k, w: 0),
+                            "inputBVector": CIVector(x: wl.x * k, y: wl.y * k, z: wl.z * k, w: 0), "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1), "inputBiasVector": CIVector(x: b, y: b, z: b, w: 0)]).applyingFilter("CIColorClamp")
+                            .applyingFilter("CIColorPolynomial", parameters: ["inputRedCoefficients": poly, "inputGreenCoefficients": poly, "inputBlueCoefficients": poly, "inputAlphaCoefficients": keepA])
+                        return fxScale(t, gain, bias: base)
+                    }
+                    ng = fxMul(fxMul(ng, ramp(-5.085, 1.9165, 0.75, 1)), ramp(5.848, -4.354, -0.8, 1))
+                }
+                img = ng.applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: img]).cropped(to: ext)
             }
             cubeF.setValue(img, forKey: kCIInputImageKey)
             img = (cubeF.outputImage ?? img).cropped(to: ext)
@@ -427,6 +489,8 @@ enum ClipDevelop {
         if let cut { Ladeni.log("klip vyvolání přerušeno po \(frame) snímcích: \(cut)"); throw QError(message: "klip se nevyvolal celý (" + cut + ")") }
         if reader.status == .failed { throw reader.error ?? QError(message: "klip nejde přečíst") }
 
+        let szIn = ((try? FileManager.default.attributesOfItem(atPath: src.path))?[.size] as? Int ?? 0) / 1024, szOut = ((try? FileManager.default.attributesOfItem(atPath: dst.path))?[.size] as? Int ?? 0) / 1024
+        Ladeni.log("klip vyvolán: \(frame) snímků za \(String(format: "%.1f", Date().timeIntervalSince(tStart))) s, originál \(szIn) kB → hotový \(szOut) kB, bloom \(bloom) glow \(glow)")
         // náhled = první snímek (otočený jako video)
         let gen = AVAssetImageGenerator(asset: AVURLAsset(url: dst))
         gen.appliesPreferredTrackTransform = true

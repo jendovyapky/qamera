@@ -2732,6 +2732,19 @@ window.__qClipProg = (id, p) => { const w = NCLIP.wait; if (!w || w.id !== id) r
 async function capGet(u) { if (!u) return null;
   for (let i = 0; ; i++) { try { const r = await fetch(u); if (!r.ok) throw new Error('soubor ' + r.status); return await r.blob(); }
     catch (e) { if (i >= 3) throw e; try { window.webkit.messageHandlers.qamera.postMessage({ kind: 'server' }); } catch {} await new Promise(r => setTimeout(r, 400 + i * 500)); } } }
+/* Barevná tabulka klipu = přesně barvy fotky. Identita 64³ ve formátu zdroje hledáčku projde stejným shaderem jako fotka (jen bez prostorových
+   efektů) a appka ji použije místo vlastního výpočtu filmu. Všechno, co je čistě barva – film, sken labu, filtr, expozice negativu, teplota,
+   EV, kontrast, sytost, křivky, HSL, tónování, fade, vlastní filmy – je tak v klipu stejné jako ve fotce a nic se nemusí přepisovat do Swiftu.
+   Prostorové efekty (zrno, halation, bloom, glow, vinětace) dělá appka zvlášť; Světla / Stíny, ostrost a vintage blesk klip neumí.
+   Rozložení jako LUT filmů: šířka n², výška n, řádek = zelená, sloupec = červená + modrá · n. sh = zdroj je log (rameno), st = statistiky pro vlastní filmy */
+const CLUTN = 64; let clutSrc = null;
+function clipLut(P, sh, st) { const n = CLUTN;
+  if (!clutSrc) { clutSrc = mk(n * n, n); const g = clutSrc.getContext('2d'), im = g.createImageData(n * n, n), d = im.data, q = 255 / (n - 1);
+    for (let y = 0; y < n; y++) for (let b = 0; b < n; b++) for (let x = 0; x < n; x++) { const i = (y * n * n + b * n + x) * 4; d[i] = Math.round(x * q); d[i + 1] = Math.round(y * q); d[i + 2] = Math.round(b * q); d[i + 3] = 255; }
+    g.putImageData(im, 0, 0); }
+  clutSrc._sh = !!sh; const P2 = Object.assign({}, P, { grain: 0, hal: 0, bloom: 0, glow: 0, vig: 0, sharp: 0, shad: 0, hil: 0, ffmt: '35', depth: null, frame: null, style: null, dx: null }); delete P2.vflash;
+  if (!util.e || util.e.dead) utilReset(); util.e.size(n * n, n); util.e.setSource(clutSrc); if (st) util.e.st = st; util.e.render(P2, { seed: 7 });
+  return util.e.c.toDataURL('image/png'); }
 /* parametry vyvolání klipu z receptu P (stejné hodnoty, jaké dostane shader fotky): film, síla, zrno (citlivost, velikost, ČB), EV, kontrast, sytost, záře, vinětace */
 function clipParams(P, iso, apl) { const f = FILM[P.film] || {}, film = f.base || P.film, vm = f.vm || { str: 1, grain: 1 }, k = clamp(P.str * (vm.str || 1), 0, 1);
   const cIso = Math.sqrt((iso || f.iso || 400) / 400), cG = .84 + .16 * cIso, cBw = (FILM[film] || {}).bw && (FILM[film] || {}).lg ? 1.7 : 1;
@@ -2741,8 +2754,9 @@ const CLIPKEYS = ['str', 'grain', 'gsize', 'hal', 'bloom', 'glow', 'vig', 'exp',
 /* Změna filmu u hotového klipu (appka má jeho originál v logu, ph.csrc): nové vyvolání jde vždy z originálu, hotové video se jen nahradí */
 async function redevelopClip(ph, film, onProg) {
   const P2 = Object.assign(DEF(), ph.P.cp || {}, { film }), msg = clipParams(P2, (FILM[film] || {}).iso, 0);
+  let lut = null; try { let st = null; if (ph.cframe && (FILM[film] || {}).scan) { const fr = await decodeTo(ph.cframe, 640); st = stats(fr); freeCanvas(fr); } lut = clipLut(P2, !!ph.P.clog, st); } catch (e) { qlog('tabulka klipu se nepovedla', String(e.message || e)); }
   const r = await new Promise((res, rej) => { const id = ++NCLIP.seq; NCLIP.wait = { id, res, rej, prog: onProg }; setTimeout(() => { if (NCLIP.wait && NCLIP.wait.id === id) { NCLIP.wait = null; rej(new Error('appka neodpověděla')); } }, 180000);
-    window.webkit.messageHandlers.qamera.postMessage(Object.assign({ kind: 'clip', id, src: ph.csrc, log: !!ph.P.clog, sec: NCLIP.sec, same: true }, msg)); });
+    window.webkit.messageHandlers.qamera.postMessage(Object.assign({ kind: 'clip', id, src: ph.csrc, log: !!ph.P.clog, sec: NCLIP.sec, same: true }, msg, lut ? { lut } : {})); });
   const [bv, bj] = await Promise.all([capGet(r.mp4), capGet(r.jpg)]); window.webkit.messageHandlers.qamera.postMessage({ kind: 'rawDone', files: [r.mp4, r.jpg].filter(Boolean) });
   if (!bv || !bv.size) throw new Error('prázdný soubor');
   ph.clip = bv; if (bj) { ph.blob = bj; ph.src = await decodeTo(bj, PREV); } ph.P.cf = msg.film; ph.film = msg.film === 'NONE' ? 'KLIP' : msg.film; rethumb(ph); await dbPut(ph);
@@ -2757,7 +2771,8 @@ async function captureNativeClip() {
   let r;
   const done = () => { clearInterval(NCLIP.iv); S.busy = null; drawShutter(); hud(); if (same && (!r || r.same)) return; if (S.screen === 'camera') { NCAM.wd = performance.now(); liveOn(); } else { CAM.switching = false; cc.style.filter = ''; } };
   try { r = await new Promise((res, rej) => { const id = ++NCLIP.seq; NCLIP.wait = { id, res, rej }; setTimeout(() => { if (NCLIP.wait && NCLIP.wait.id === id) { NCLIP.wait = null; rej(new Error('kamera neodpověděla')); } }, 90000);
-      window.webkit.messageHandlers.qamera.postMessage(Object.assign({ kind: 'clip', id, sec: NCLIP.sec, zoom, ultra: !!CAM.ultra, tele: !!CAM.tele, same }, cmsg)); }); }
+      let lut = null; try { lut = clipLut(P, CAM.nat && CAM.nlog, camE && camE.st); } catch (e) { qlog('tabulka klipu se nepovedla', String(e.message || e)); }
+      window.webkit.messageHandlers.qamera.postMessage(Object.assign({ kind: 'clip', id, sec: NCLIP.sec, zoom, ultra: !!CAM.ultra, tele: !!CAM.tele, same }, cmsg, lut ? { lut } : {})); }); }
   catch (e) { done(); toast('Klip se nepovedl: ' + e.message); return; }
   done();
   try {
@@ -2765,7 +2780,7 @@ async function captureNativeClip() {
     window.webkit.messageHandlers.qamera.postMessage({ kind: 'rawDone', files: [r.mp4, r.jpg, r.sjpg].filter(Boolean) });
     if (!bv || !bv.size) throw new Error('prázdný soubor');
     const src = bj ? await decodeTo(bj, PREV) : mk(360, 640);
-    const N = Object.assign(DEF(), { film: 'NONE', str: 0, grain: 0, hal: 0, bloom: 0, glow: 0, vig: 0, cf: film, clog: !!r.log, cp: Object.fromEntries(CLIPKEYS.filter(k => P[k] != null).map(k => [k, P[k]])) });
+    const N = Object.assign(DEF(), { film: 'NONE', str: 0, grain: 0, hal: 0, bloom: 0, glow: 0, vig: 0, cf: film, clog: !!r.log, cp: (() => { const c = JSON.parse(JSON.stringify(P)); delete c.film; delete c.apl; delete c.vflash; return c; })() });
     const ph = addPhoto(src, N, 'klip', ['klip', 'video'].concat(r.log ? ['log'] : []), true, uid()); ph.clip = bv; ph.blob = bj || null; if (r.src) { ph.csrc = r.src; ph.cframe = bs || null; } ph.film = film === 'NONE' ? 'KLIP' : film;
     keep(ph); $('#galThumb').src = ph.thumb; const gb = $('#galBtn'); spring(.85, 1, v => gb.style.transform = `scale(${v})`, { k: 300, c: 12 });
     toast(r.log ? 'Klip hotový · Apple Log + ' + ph.film : 'Klip hotový (bez Apple Logu) · ' + ph.film);
@@ -2922,6 +2937,7 @@ async function dbLoad() {
       if (it.hl) { try { ph.hl = await decodeTo(it.hl, 1024); ph.hlBlob = it.hl; withHl(ph.src, ph.hl); rethumb(ph); } catch {} } if (it.kind === 'arch') ph.film = 'ARCH';
       if (it.depth) { try { ph.depth = await decodeTo(it.depth, PREV); ph.depthBlob = it.depth; if (ph.P.depth || ph.P.lidar) rethumb(ph); } catch {} } }
     if (S.dispo) updDispo();
+    clipSweep(all.map(it => it.csrc).filter(Boolean)); // jen po úspěšném načtení databáze a podle všech záznamů (i těch, co se nepovedlo zobrazit)
     if (all.length) { $('#galThumb').src = S.photos[0].thumb; if (S.screen === 'gallery') renderGallery(); }
   } catch {}
 }
@@ -3061,8 +3077,8 @@ function openActs(html, bind) { const a = $('#acts'); a.style.maxHeight = Math.r
 function closeActs() { $('#scrim').classList.remove('on'); if ($('#actSheet')._open) sheet($('#actSheet'), false); }
 const actBtn = (k, ic, l, cls = '') => `<button data-a="${k}" class="${cls}">${iconSVG(ic)}${l}</button>`;
 function photoActs(ph, el) {
-  if (ph.clip) return openActs(`<h4><img src="${ph.thumb}" alt="">${ph.film} · klip · ${ph.date.toLocaleDateString('cs-CZ')}</h4>${actBtn('play', 'clip', 'Přehrát')}${actBtn('exp', 'share', 'Export')}${actBtn('del', 'trash', 'Smazat', 'danger')}`, root => {
-    $$('[data-a]', root).forEach(b => b.onclick = () => { closeActs(); const a = b.dataset.a; if (a === 'play') openClip(ph); if (a === 'exp') exportClip(ph); if (a === 'del') deletePhoto(ph, el); }); });
+  if (ph.clip) return openActs(`<h4><img src="${ph.thumb}" alt="">${ph.film} · klip · ${ph.date.toLocaleDateString('cs-CZ')}</h4>${actBtn('play', 'clip', 'Přehrát')}${actBtn('exp', 'share', 'Export')}${ph.csrc ? actBtn('orig', 'film', 'Zahodit originál (už nepůjde změnit film)') : ''}${actBtn('del', 'trash', 'Smazat', 'danger')}`, root => {
+    $$('[data-a]', root).forEach(b => b.onclick = () => { closeActs(); const a = b.dataset.a; if (a === 'play') openClip(ph); if (a === 'exp') exportClip(ph); if (a === 'del') deletePhoto(ph, el); if (a === 'orig') dropClipSrc(ph); }); });
   openActs(`<h4><img src="${ph.thumb}" alt="">${ph.film} · ${ph.date.toLocaleDateString('cs-CZ')}</h4>${actBtn('edit', 'sliders', 'Upravit')}${actBtn('blob', 'blob', 'Blob karta')}${actBtn('dx', 'double', 'Double s jinou fotkou')}${actBtn('pick', 'gallery', 'Vybrat víc fotek')}${actBtn('exp', 'share', 'Export')}${actBtn('copy', 'recipe', 'Kopírovat úpravy')}${CLIP ? actBtn('paste', 'sliders', 'Vložit úpravy') : ''}${actBtn('del', 'trash', 'Smazat', 'danger')}`, root => {
     $$('[data-a]', root).forEach(b => b.onclick = () => { closeActs(); const a = b.dataset.a;
       if (a === 'edit') openEditor(ph, el.querySelector('img'));
@@ -3075,6 +3091,12 @@ function photoActs(ph, el) {
       if (a === 'del') deletePhoto(ph, el); });
   });
 }
+/* originál klipu (~15 MB v appce) jde zahodit a nechat jen hotové video; dá se vrátit, dokud svítí hláška */
+function dropClipSrc(ph) { const id = ph.csrc, fr = ph.cframe; if (!id) return; ph.csrc = null; ph.cframe = null; dbPut(ph); buzz(8);
+  const t = setTimeout(() => { if (!ph.csrc) natPost({ kind: 'clipDel', src: id }); }, 8000);
+  toast('Originál klipu zahozen', { label: 'Vrátit', fn: () => { clearTimeout(t); ph.csrc = id; ph.cframe = fr; dbPut(ph); } }); }
+/* úklid: originály klipů, ke kterým v galerii nic není (appka spadla mezi natočením a uložením…). Appka smaže jen ty starší než 2 dny */
+function clipSweep(ids) { if (!(window.QNATIVE && QNATIVE.cedit && window.webkit)) return; natPost({ kind: 'clipKeep', ids }); }
 function deleteMany(list) { const keep2 = S.photos.slice(); list.forEach(ph => { const i = S.photos.indexOf(ph); if (i >= 0) S.photos.splice(i, 1); if (ph.saved) dbDel(ph.id); });
   filterGallery(); if (S.photos[0]) $('#galThumb').src = S.photos[0].thumb; buzz(10);
   toast(`Smazáno: ${list.length}`, { label: 'Vrátit', fn: () => { S.photos.length = 0; S.photos.push(...keep2); list.forEach(dbPut); filterGallery(); if (S.view === 'pc') openPc(); } }); }
