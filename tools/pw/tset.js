@@ -10,7 +10,7 @@ const { chromium } = require('playwright-core'); const fs = require('fs'), path 
   await p.route('**/__f', r => r.fulfill({ body: fs.readFileSync(dev), contentType: 'image/png' }));
   await p.goto('http://localhost:8765/docs/preview/#nahled'); await p.waitForTimeout(5000);
   const res = await p.evaluate(async () => {
-    const src0 = await decodeTo(await (await fetch('/__f')).blob(), 4096), src = mk(1200, Math.round(1200 * src0.height / src0.width)); src.getContext('2d').drawImage(src0, 0, 0, src.width, src.height); src._sh = true;
+    const src0 = await decodeTo(await (await fetch('/__f')).blob(), 4096), W = Math.min(2400, src0.width), src = mk(W, Math.round(W * src0.height / src0.width)); src.getContext('2d').drawImage(src0, 0, 0, src.width, src.height); src._sh = true;
     const o = {}, info = {};
     for (const film of filmsOrdered().map(f => f.code)) { const P = Object.assign(DEF(), { film, hal: 0, bloom: 0, glow: 0, vig: 0 }); if (!util.e || util.e.dead) utilReset();
       utilRender(src, P, src.width, src.height, { seed: 7 }); const cv = copyCanvas(utilRender(src, P, src.width, src.height, { seed: 7 })); o[film] = cv.toDataURL('image/jpeg', .9);

@@ -1297,12 +1297,29 @@ FILMS.push({ code: 'IR400', sub: 'infrared 400', chem: 'ČB infračervený', des
 const GLOW = { P160: .2, P400: .18, P800: .22, E100: .08, G200: .18, UM400: .12, KC64: .05, EC100: .06, 'V3-50D': .15, 'V3-250D': .2, 'V3-500T': .3, C200: .12, '400H': .28, SX400: .1, PV100: .05, VEL: .05, IR: .25 };
 FILMS.forEach(f => f.gl = GLOW[f.code] ?? .12);
 const FILM = Object.fromEntries(FILMS.map(f => [f.code, f]));
+/* Recepty jako filmy (15. 11., Honza: použít na fotku, klip i v hledáčku): LUT základního filmu (base) + kreativní vzhled `look`
+   (teplota, tint, kontrast, sytost, fade, HSL, tónování). Filmy samotné se nemění; vzhled se v enginu přičte k úpravám × síla filmu (applyLook).
+   Klip ho dostane přes tabulku barev (clipLut jede stejným shaderem). Inspirace: krátké filmy Wynne – ne kopie. */
+const RFILMS = [
+  { code: 'ULICE', base: 'P800C', sub: 'recept · noc v ulici', desc: 'Recept nad P800C: azurové stíny, teplá světla, sytější červená, zeleň k tyrkysové. Nejlíp v noci pod lampami a neony.', c: ['#f2c37a', '#1f6b6e', '#c8323a'],
+    look: { con: .1, temp: .04, fade: .06, grade: { sh: [3.3, .5], mid: [0, 0], hi: [.55, .35] }, hsl: { 0: [0, .25, 0], 3: [.12, -.15, -.05], 4: [0, .1, 0] } } },
+  { code: 'RING', base: 'G200P', sub: 'recept · jantarové světlo', desc: 'Recept nad G200P: jantarové střední tóny, hlubší a kontrastnější obraz, tlumená modrá. Pro žárovky, cihlu, tmavé pozadí.', c: ['#e8a24a', '#5a2a1c', '#b8322c'],
+    look: { exp: -.2, con: .2, temp: .2, grade: { sh: [3.4, .2], mid: [.6, .4], hi: [.5, .15] }, hsl: { 0: [0, .2, 0], 1: [0, .1, -.05], 5: [0, -.4, 0] } } },
+  { code: 'PRACH', base: 'P400', sub: 'recept · tlumený den', desc: 'Recept nad P400: méně sytý, lehce vybledlý, krémová světla, tlumená zeleň a modrá.', c: ['#efe2c4', '#8a8a6a', '#6b6a74'],
+    look: { con: -.1, sat: -.25, fade: .15, temp: .08, grade: { sh: [0, 0], mid: [0, 0], hi: [.9, .25] }, hsl: { 3: [0, -.3, 0], 5: [0, -.3, 0] } } },
+];
+RFILMS.forEach(r => { const f = Object.assign(JSON.parse(JSON.stringify(FILM[r.base])), r, { rc: 1, fav: undefined }); delete f.v2; FILMS.push(f); FILM[r.code] = f; });
+function applyLook(P, f, k) { const L = f && f.look; if (!L || !k) return P;
+  const Q = Object.assign({}, P); ['exp', 'temp', 'tint', 'con', 'sat', 'fade'].forEach(n => { if (L[n]) Q[n] = (P[n] || 0) + L[n] * k; });
+  if (L.hsl) Q.hsl = P.hsl.map((v, i) => v.map((x, j) => x + ((L.hsl[i] || [])[j] || 0) * k));
+  if (L.grade) { Q.grade = {}; for (const n of ['sh', 'mid', 'hi']) { const a = P.grade[n], b = L.grade[n] || [0, 0], x = Math.cos(a[0]) * a[1] + Math.cos(b[0]) * b[1] * k, y = Math.sin(a[0]) * a[1] + Math.sin(b[0]) * b[1] * k; Q.grade[n] = [Math.atan2(y, x), Math.hypot(x, y)]; } }
+  return Q; }
 FILM.NONE = { code: 'NONE', sub: 'bez filmu', chem: '', desc: 'Původní fotka bez filmu.', iso: 400, g: 'classic', sh: [0, 0, 0], hi: [1, 1, 1], con: 1, sat: 1, fade: 0, hal: 1, gl: 0, chr: 0, c: ['#333', '#999', '#eee'] };
 let FAV = store.get('fav', []);
 let HIDDEN = store.get('hiddenFilms', []);
 /* DEV (dev.qamera.pages.dev a appka): ve výběru jen sada, kterou Honza vybral 15. 11. – z každé skupiny skoro stejných filmů jeden
    (změřená ΔE mezi všemi filmy, nic v sadě není blíž než 2,4) + 4 nové černobílé. Ostatní filmy mají definice dál (uložené fotky se vykreslí) */
-const DEVSET = ['P400', 'G200', 'P800P', 'C200', '400H', 'P400U', 'P800C', 'G200P', 'V3-500T', 'C200C', 'TX400', 'AC100', 'PAN50', 'ORTHO'], DEVHIDE = !!(window.QDEV || window.QNATIVE);
+const DEVSET = ['P400', 'G200', 'P800P', 'C200', '400H', 'P400U', 'P800C', 'G200P', 'V3-500T', 'C200C', 'TX400', 'AC100', 'PAN50', 'ORTHO', 'ULICE', 'RING', 'PRACH'], DEVHIDE = !!(window.QDEV || window.QNATIVE);
 const devOut = f => DEVHIDE && !f.own && !f.scan && f.code !== 'NONE' && !DEVSET.includes(f.code);
 const filmsOrdered = () => { let vis = FILMS.filter(f => (!HIDDEN.includes(f.code) && !devOut(f)) || f.code === S.film || (S.P && f.code === S.P.film));
   if (DEVHIDE) { const ix = f => { const i = DEVSET.indexOf(f.code); return i < 0 ? (f.code === 'NONE' ? 999 : -1) : i; }; vis = vis.slice().sort((a, b) => ix(a) - ix(b)); return [...vis.filter(f => FAV.includes(f.code)), ...vis.filter(f => !FAV.includes(f.code))]; }
@@ -1868,6 +1885,7 @@ class Engine {
   size(w, h) { if (this.c.width !== w || this.c.height !== h) { this.c.width = w; this.c.height = h; return true; } return false; }
   render(P, o = {}) {
     if (this.dead) return; const gl = this.gl, u = this.u, f = FILM[P.film] || FILM.P400, G = GRAINS[gtypeOf(P)];
+    if (f.look) P = applyLook(P, f, clamp(P.str * ((f.vm || {}).str || 1), 0, 1)); // recept jako film: vzhled navíc k úpravám
     gl.viewport(0, 0, this.c.width, this.c.height);
     const key = JSON.stringify(P.curve);
     if (key !== this.curveKey) { this.curveKey = key; const m = monoCurve(P.curve.rgb), cr = monoCurve(P.curve.r), cg = monoCurve(P.curve.g), cb = monoCurve(P.curve.b), d = new Uint8Array(256 * 4);
@@ -1941,7 +1959,7 @@ function ensureScan(sc) { if (SCANLD[sc] || !LUTSC[sc] || location.protocol === 
     .then(() => { S.photos.filter(ph => ph.P && ph.P.scan === sc).forEach(rethumb); if (S.cur) renderEd(true); if (S.screen === 'gallery') renderGallery(); }); }
 async function loadLuts() {
   if (location.protocol === 'file:') return; // z disku se PNG nedá přečíst – zůstane jednoduchý shader
-  await Promise.all(FILMS.filter(f => !f.ir && !f.scan && (!f.bw || f.lg) && !f.own).map(async f => { try {
+  await Promise.all(FILMS.filter(f => !f.ir && !f.scan && (!f.bw || f.lg) && !f.own && !f.base).map(async f => { try {
     for (const [dir, dst] of (f.lg || f.v2 === 4 ? [['log/', LUTL]] : [['', LUTD], ['log/', LUTL]])) { const out = await lutPng(`../../luts/${dir}${encodeURIComponent(f.code)}.png`); if (out) dst[f.code] = out; } } catch {} }));
   if (!Object.keys(LUTD).length) return;
   S.photos.forEach(rethumb); if (S.screen === 'gallery') renderGallery(); if (S.cur) renderEd(true); if (S.screen === 'editor' && S.tab === 'film' && !S.adv) drawFilmThumbs(); if (typeof buildCarousel === 'function') buildCarousel();
