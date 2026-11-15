@@ -2,7 +2,7 @@ import Foundation
 import Photos
 
 // Ladění (jen Qamera DEV): ke každé fotce se uloží i to, co appka dostala z kamery (DNG ze senzoru / snímek v Apple Logu)
-// + parametry vyvolání. Složka je vidět v appce Soubory → Na mém iPhonu → Qamera DEV → Ladeni. Drží se posledních 12 souborů.
+// + parametry vyvolání. Složka je vidět v appce Soubory → Na mém iPhonu → Qamera DEV → Ladeni. Drží se poslední 2 fotky (4 soubory), nejdéle 3 dny.
 // Honza je pošle a stejný postup (raw.js = stejná matematika jako RawDevelop, stejný shader filmu) jde na PC zopakovat a doladit
 // na skutečných datech, ne naslepo podle výsledné fotky.
 enum Ladeni {
@@ -63,6 +63,11 @@ enum Ladeni {
             let db = (try? b.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
             return da > db
         }
-        for u in sorted.dropFirst(12) { try? fm.removeItem(at: u) }
+        // jen poslední 2 fotky (originál + parametry) a nic staršího než 3 dny – jeden ProRAW má 60–120 MB
+        let old = Date().addingTimeInterval(-3 * 86400)
+        for (i, u) in sorted.enumerated() {
+            let d = (try? u.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+            if i >= 4 || d < old { try? fm.removeItem(at: u) }
+        }
     }
 }
