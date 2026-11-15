@@ -12,7 +12,7 @@ const { chromium } = require('playwright-core'); const fs = require('fs'), path 
   const res = await p.evaluate(async () => {
     const src0 = await decodeTo(await (await fetch('/__f')).blob(), 4096), W = Math.min(2400, src0.width), src = mk(W, Math.round(W * src0.height / src0.width)); src.getContext('2d').drawImage(src0, 0, 0, src.width, src.height); src._sh = true;
     const o = {}, info = {};
-    for (const film of filmsOrdered().map(f => f.code)) { const P = Object.assign(DEF(), { film, hal: 0, bloom: 0, glow: 0, vig: 0 }); if (!util.e || util.e.dead) utilReset();
+    for (const film of filmsOrdered().map(f => f.code)) { const fb = FILM[film].base || film; for (let i = 0; i < 150 && !LUTL[fb]; i++) await new Promise(r => setTimeout(r, 100)); const P = Object.assign(DEF(), { film, hal: 0, bloom: 0, glow: 0, vig: 0 }); if (!util.e || util.e.dead) utilReset();
       utilRender(src, P, src.width, src.height, { seed: 7 }); const cv = copyCanvas(utilRender(src, P, src.width, src.height, { seed: 7 })); o[film] = cv.toDataURL('image/jpeg', .9);
       const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data; let m = [0, 0, 0], ch = 0; for (let i = 0; i < d.length; i += 4) { m[0] += d[i]; m[1] += d[i + 1]; m[2] += d[i + 2]; ch += Math.abs(d[i] - d[i + 2]); }
       info[film] = { mean: m.map(v => Math.round(v / (d.length / 4))), chroma: +(ch / (d.length / 4)).toFixed(1), log: !!LUTL[film] }; }
