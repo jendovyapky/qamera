@@ -24,7 +24,10 @@ enum Ladeni {
     }
     // Originál z kamery i do Fotek (Honza posílá vždy složku z Fotek, do Souborů nechodí). Parametry vyvolání jsou v názvu souboru,
     // protože JSON do Fotek uložit nejde: qamera-raw-<čas>-m<jas hledáčku>-ev<expozice>-<ProRAW|RAW>.dng / qamera-log-<čas>-ev…-iso….tiff
+    // Vypnuto 15. 11. (Honza: fotky už jsou v pohodě, zabíralo to 60–120 MB na fotku). Kdyby bylo potřeba ladit znovu, stačí přepnout na true.
+    static let photosOn = false
     static func toPhotos(_ file: String, as name: String) {
+        guard photosOn else { return }
         let src = dir.appendingPathComponent(file)
         guard FileManager.default.fileExists(atPath: src.path) else { return }
         PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
