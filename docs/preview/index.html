@@ -249,6 +249,13 @@ a{color:var(--amber)}
 .pill.on{color:var(--amber);border-color:rgba(255,196,61,.35)}
 #pIso{width:86px}#pEv{width:82px;cursor:pointer}
 .zoomgrp{display:inline-flex;gap:2px;padding:2px;border-radius:999px;background:rgba(10,9,8,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);pointer-events:auto;border:1px solid rgba(255,255,255,.08)}
+#s-camera{--orot:0deg}
+html.mvf,html.mvf body,html.mvf .stage,html.mvf .phone,html.mvf #s-camera,html.mvf .vfwrap,html.mvf .vf{background:transparent!important}
+html.mvf #camCanvas{visibility:hidden}
+#s-camera .ib>svg,#zoomGrp .zr,#galThumb,#cassBtn>svg{transform:rotate(var(--orot));transition:transform .6s cubic-bezier(.3,1.5,.45,1)}
+.zr{display:inline-block;font-style:normal}
+#s-camera #hud{transform:translate(-50%,-50%) rotate(var(--orot));transition:transform .6s cubic-bezier(.3,1.5,.45,1)}
+.zoomgrp.front button[data-z]:not([data-z='.5']):not([data-z='1']){display:none}
 .zoomgrp button{width:44px;height:30px;border-radius:999px;font-family:var(--f-px);font-size:11px;color:#cfc7bc;transition:background .25s,color .25s}
 .zoomgrp button.on{background:rgba(255,196,61,.18);color:var(--amber)}
 .vtools{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}
@@ -1491,6 +1498,24 @@ function liveStop() { if (CAM.nat) natStop(); if (CAM.stream) CAM.stream.getTrac
    (videoWidth/readyState jako <video>), CAM.track = náhrada MediaStreamTrack (zoom, svítilna) → zbytek foťáku beze změny. */
 const NATCAM = !!(window.QNATIVE && QNATIVE.ncam && window.webkit && window.webkit.messageHandlers);
 const NCAM = { seq: 0, wait: null, ctrl: null, info: null, last: 0 };
+/* Hledáček v Metalu (appka, QNATIVE.mvf): snímky z kamery appky vyvolává GPU stejným řetězcem jako klip (tabulka z foto shaderu =
+   clipLut + zrno, halation, bloom, glow, vinětace) a kreslí je pod průhledný web na místo #vf. Web posílá obdélník, zoom, zrcadlení,
+   rozmazání a vzhled; vlastní render vypne až po prvním nakresleném snímku (__qMvf). Dlouhý čas, half, double a zebra kreslí web. */
+function natVf() {
+  const ok = !!(window.QNATIVE && QNATIVE.mvf && !NCAM.mvfBad && S.screen === 'camera' && !S.timeIdx && S.fmt !== 'half' && !S.dbl && !S.zebra && !capturing);
+  const want = ok && ((CAM.nat && CAM.live && CAM.nlog) || (NCAM.mvf && CAM.switching)); // při přepínání objektivu / RAW drží appka poslední snímek rozmazaný
+  const vf = $('#vf'), r = vf.getBoundingClientRect();
+  const st = { on: want, x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height), r: 22, mir: CAM.facing === 'user', zoom: +(S.zoom || 1).toFixed(3), blur: !!CAM.switching };
+  const k = JSON.stringify(st); if (k !== NCAM.vfKey) { NCAM.vfKey = k; NCAM.vfOn = want; natPost(Object.assign({ kind: 'ncam', op: 'vf' }, st)); }
+  if (!want) { if (NCAM.mvf) { NCAM.mvf = false; document.documentElement.classList.remove('mvf'); } return false; }
+  const now = performance.now(), P = camParams(), lk = JSON.stringify(P) + '|' + camIso();
+  if (lk !== NCAM.lookKey && now - (NCAM.lookT || 0) > 150) { NCAM.lookKey = lk; NCAM.lookT = now; let lut = null;
+    try { lut = clipLut(P, true, camE && camE.st); } catch (e) { qlog('tabulka hledáčku se nepovedla', String(e.message || e)); }
+    if (lut) natPost(Object.assign({ kind: 'ncam', op: 'look', lut }, clipParams(P, camIso(), 0))); }
+  return !!NCAM.mvf;
+}
+window.__qMvf = (ok, msg) => { if (ok) { if (NCAM.vfOn) { NCAM.mvf = true; document.documentElement.classList.add('mvf'); qlog('hledáček v Metalu jede'); } return; }
+  NCAM.mvfBad = true; NCAM.mvf = false; document.documentElement.classList.remove('mvf'); NCAM.vfKey = ''; qlog('hledáček v Metalu vypnutý', msg || ''); };
 if (window.__qNcamOff) setTimeout(() => toast('Kamera appky minule spadla – foťák jede postaru'), 4500);
 window.__qCam = (id, ok, a) => { const w = NCAM.wait; if (!w || w.id !== id) return; NCAM.wait = null; ok ? w.res(a) : w.rej(new Error(a || 'chyba')); };
 /* oživení hledáčku kamery appky (návrat z pozadí, přerušení kamery, spadlé spojení): nejvýš jednou za 5 s a nikdy přes rozjetý start */
@@ -1531,7 +1556,7 @@ async function natLiveOn(revive) {
   try {
     const info = await new Promise((res, rej) => { const id = ++NCAM.seq; NCAM.wait = { id, res, rej };
       setTimeout(() => { if (NCAM.wait && NCAM.wait.id === id) { NCAM.wait = null; rej(new Error('kamera neodpověděla')); } }, 8000);
-      natCtl(true); natPost({ kind: 'ncam', op: 'start', id, lens, zoom: 1 }); });
+      natCtl(true); natPost({ kind: 'ncam', op: 'start', id, lens, zoom: 1, full: lens === 'front' && !!S.ffull }); });
     NCAM.info = info; CAM.nat = true; CAM.nlog = !!info.log; natAudioOn = null; natAudio();
     const nv = CAM.nv || (CAM.nv = document.createElement('canvas')); CAM.video = nv;
     CAM.track = natTrack(info); CAM.caps = CAM.track.getCapabilities(); CAM.stream = null;
@@ -1542,7 +1567,7 @@ async function natLiveOn(revive) {
     LIVE.w = nw; LIVE.h = nh; LIVE.canvas = (nw === LIVE.canvas.width && nh === LIVE.canvas.height) ? LIVE.canvas : mk(nw, nh);
     CAM.live = true; CAM.switching = false; drawLive(0);
     spring(1, 0, x => cc.style.filter = x > .01 ? `blur(${x * 14}px) brightness(${1 - x * .35})` : '', { k: 140, c: 22 });
-    CAM.err = ''; NCAM.fails = 0; store.set('cam', true); updLive(); renderCamInfo(); qlog('hledáček jede', nw + 'x' + nh, 'log', CAM.nlog, lens); return true;
+    CAM.err = ''; NCAM.fails = 0; store.set('cam', true); updLive(); syncZoomBtns(); renderCamInfo(); qlog('hledáček jede', nw + 'x' + nh, 'log', CAM.nlog, lens); return true;
   } catch (e) {
     /* oživení po přerušení (jiná appka, Ovládací centrum, uspání): kamera ještě nemusí být volná → foťák zůstane zapnutý s rozmazaným
        posledním snímkem a hlídač to za 5 s zkusí znovu; hlášku ukáže až po několika marných pokusech */
@@ -2519,7 +2544,8 @@ function startCam() {
     const vf = $('#vf'), dpr = Math.min(2, devicePixelRatio || 1);
     camE.size(Math.round(vf.clientWidth * dpr), Math.round(vf.clientHeight * dpr));
     if (fresh) { const st = camE.st; camE.setSource(LIVE.canvas); if (++camN % 30) camE.st = st; } // statistiky pro vlastní filmy jen občas
-    camE.render(camParams(), { time: LOWMO ? null : t, zoom: S.zoom, iso: camIso(), zebra: S.zebra });
+    const mv = window.QNATIVE && QNATIVE.mvf ? natVf() : false; // hledáček kreslí appka v Metalu → web nekreslí
+    if (!mv) camE.render(camParams(), { time: LOWMO ? null : t, zoom: S.zoom, iso: camIso(), zebra: S.zebra });
     tickMascots(now);
   };
   camRaf = requestAnimationFrame(loop);
@@ -2575,7 +2601,9 @@ function zoomStrip() { // proužek nad kolečkem času: digitální zoom 1×–5
   return { sync() { x = -(S.zoom - 1) * PX; apply(); } };
 }
 let zoomApi = null;
-function syncZoomBtns() { const eff = S.zoom * (CAM.tele || 1); $$('#zoomGrp button').forEach(b => b.classList.toggle('on', CAM.ultra ? +b.dataset.z < 1 : Math.abs(+b.dataset.z - eff) < .06)); }
+function syncZoomBtns() { const fr = !!(CAM.live && CAM.nat && CAM.facing === 'user'), zg = $('#zoomGrp'); zg.classList.toggle('front', fr); orientUi();
+  if (fr) { $$('#zoomGrp button').forEach(b => b.classList.toggle('on', S.ffull ? +b.dataset.z < 1 : b.dataset.z === '1')); return; }
+  const eff = S.zoom * (CAM.tele || 1); $$('#zoomGrp button').forEach(b => b.classList.toggle('on', CAM.ultra ? +b.dataset.z < 1 : Math.abs(+b.dataset.z - eff) < .06)); }
 function fmtEv(v) { if (Math.abs(v) < .01) return '±0'; return (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1).replace('.', ','); }
 function updLcd() {
   const iso = ISO_STOPS[S.isoIdx], slow = S.timeIdx > 0, k = pushK();
@@ -2687,9 +2715,15 @@ const nativeRawOk = () => !!(window.QNATIVE && QNATIVE.raw && S.nraw && CAM.live
 window.__qRaw = (id, ok, a) => { const w = NRAW.wait; if (!w || w.id !== id) return; NRAW.wait = null; ok ? w.res(a) : w.rej(new Error(a || 'chyba')); };
 // appka hlídá tlačítka hlasitosti jen ve foťáku (jinak hlasitost funguje normálně)
 function natCam() { if (window.QNATIVE && window.webkit) window.webkit.messageHandlers.qamera.postMessage({ kind: 'cam', on: S.screen === 'camera' });
-  if (S.screen === 'camera' && CAM.nat) NCAM.last = performance.now(); } // mimo foťák appka kameru pozastaví → po návratu hlídač chvíli počká na první snímek
+  if (S.screen === 'camera' && CAM.nat) NCAM.last = performance.now(); if (window.QNATIVE && QNATIVE.mvf) natVf(); } // mimo foťák appka kameru pozastaví → po návratu hlídač chvíli počká na první snímek
 /* natočení telefonu (appka, akcelerometr): o kolik stupňů po směru hodin otočit snímek na výšku, aby byl rovně; ovládání zůstává na výšku */
-S.orient = 0; window.__qOrient = d => { S.orient = ((+d || 0) % 360 + 360) % 360; };
+S.orient = 0; S.orot = 0; S.ffull = !!store.get('ffull', false); window.__qOrient = d => { S.orient = ((+d || 0) % 360 + 360) % 360; orientUi(); };
+/* telefon na šířku: ikony, popisky objektivů, náhledy a HUD ve foťáku se otočí (nejkratší cestou), rozložení zůstává na výšku */
+function orientUi() {
+  const t = -S.orient, d = ((t - S.orot) % 360 + 540) % 360 - 180; S.orot += d;
+  $$('#zoomGrp button').forEach(b => { if (!b.querySelector('.zr')) b.innerHTML = '<span class="zr">' + b.textContent + '</span>'; });
+  const s = $('#s-camera'); if (s) s.style.setProperty('--orot', S.orot + 'deg');
+}
 const rotOk = () => S.fmt !== 'half' && !S.dbl && !S.dispo;
 function rotCanvas(c, deg) { if (!c || !deg) return c; const sw = deg % 180 !== 0, o = mk(sw ? c.height : c.width, sw ? c.width : c.height), g = o.getContext('2d');
   g.translate(o.width / 2, o.height / 2); g.rotate(deg * Math.PI / 180); g.drawImage(c, -c.width / 2, -c.height / 2); return o; }
@@ -2912,6 +2946,7 @@ function finishCapture(src0, x) {
 }
 async function setZoom(z) {
   $$('#zoomGrp button').forEach(x => x.classList.toggle('on', +x.dataset.z === z)); buzz(4);
+  if (CAM.live && CAM.nat && CAM.facing === 'user') { const f = z < 1; if (f !== !!S.ffull) { S.ffull = f; store.set('ffull', f); await liveOn(); } syncZoomBtns(); return; }
   if (CAM.live) {
     const c = CAM.caps.zoom;
     if (z < 1) {

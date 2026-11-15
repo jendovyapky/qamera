@@ -25,6 +25,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     private var orient = 0
     private var camScreen = false
     private var gx = 0.0, gy = -1.0
+    private var mvf: MetalViewfinder?   // hledáček v Metalu pod průhledným webem
 
     override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
     override var prefersHomeIndicatorAutoHidden: Bool { true }
@@ -59,8 +60,8 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
         web = WKWebView(frame: view.bounds, configuration: cfg)
         web.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         web.isOpaque = false
-        web.backgroundColor = view.backgroundColor
-        web.scrollView.backgroundColor = view.backgroundColor
+        web.backgroundColor = .clear   // pod webem je hledáček v Metalu (stránka ve foťáku průhledná jen v místě #vf)
+        web.scrollView.backgroundColor = .clear
         web.scrollView.contentInsetAdjustmentBehavior = .never
         web.scrollView.bounces = false
         web.allowsLinkPreview = false
@@ -70,6 +71,10 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
         web.isInspectable = true
         #endif
         view.addSubview(web)
+        let mv = MetalViewfinder(frame: .zero)
+        view.insertSubview(mv, belowSubview: web)
+        mv.onState = { [weak self] ok, msg in self?.js("window.__qMvf && window.__qMvf(\(ok), \(Self.jsStr(msg ?? "")))") }
+        mvf = mv
 
         // Boční tlačítko Ovládání fotoaparátu a tlačítka hlasitosti = spoušť (iOS je pošle, jen když běží kamera)
         if #available(iOS 17.2, *) {
@@ -196,7 +201,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
             switch op {
             case "start":
                 let id = m["id"] as? Int ?? 0
-                cam.start(lens: (m["lens"] as? String) ?? "wide", zoom: (m["zoom"] as? Double) ?? 1) { [weak self] r in
+                cam.start(lens: (m["lens"] as? String) ?? "wide", zoom: (m["zoom"] as? Double) ?? 1, full: (m["full"] as? Bool) ?? false) { [weak self] r in
                     DispatchQueue.main.async {
                         switch r {
                         case .success(let o):
@@ -218,6 +223,8 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                 vol?.setRecord(on)
                 if on { try? AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .videoRecording, options: [.mixWithOthers, .defaultToSpeaker, .allowBluetoothA2DP]); try? AVAudioSession.sharedInstance().setActive(true) }
                 cam.setAudio(on)
+            case "vf": mvf?.configure(m)
+            case "look": mvf?.setLook(m)
             case "zoom": cam.setZoom((m["z"] as? Double) ?? 1)
             case "torch": cam.torch((m["on"] as? Bool) ?? false)
             case "focus": cam.focus(x: (m["x"] as? Double) ?? 0.5, y: (m["y"] as? Double) ?? 0.5)
@@ -493,7 +500,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     static let bridgeJS = """
     (() => {
       const post = (m) => window.webkit.messageHandlers.qamera.postMessage(m);
-      window.QNATIVE = Object.assign({ raw: 2, rawf: 1, bayer: true, clip: 1, crec: 1, cedit: 1, ncam: window.__qNcamOff ? 0 : 1 }, window.__qLens || {});
+      window.QNATIVE = Object.assign({ raw: 2, rawf: 1, mvf: 1, bayer: true, clip: 1, crec: 1, cedit: 1, ncam: window.__qNcamOff ? 0 : 1 }, window.__qLens || {});
       navigator.vibrate = (ms) => { post({ kind: 'vibrate', ms: Array.isArray(ms) ? (ms[0] || 6) : (+ms || 6) }); return true; };
       const pend = new Map(); let seq = 0;
       window.__qShareDone = (id, ok, abort) => {

@@ -174,15 +174,15 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
     }
 
     // 4K s Apple Logem a 30 fps (fotka z logu 8 Mpx); jinak 1080p; když log není (přední, starší iPhone), běžné video (web pak dá převod jako dřív)
-    private func format(_ d: AVCaptureDevice) -> (AVCaptureDevice.Format, Bool)? {
+    private func format(_ d: AVCaptureDevice, full: Bool = false) -> (AVCaptureDevice.Format, Bool)? {
         let fps30 = { (f: AVCaptureDevice.Format) in f.videoSupportedFrameRateRanges.contains { $0.maxFrameRate >= 29.9 && $0.minFrameRate <= 30.1 } }
         let w = { (f: AVCaptureDevice.Format) in Int(CMVideoFormatDescriptionGetDimensions(f.formatDescription).width) }
         if d.position == .front {
-            // přední: nejširší záběr (celý senzor – u 17 Pro čtverec), pak nejvíc pixelů do 4096; log, když ho má
+            // přední: full = nejširší záběr (celý senzor – u 17 Pro čtverec), jinak běžný (nejužší) záběr; pak nejvíc pixelů do 4096; log, když ho má
             let dm = { (f: AVCaptureDevice.Format) in CMVideoFormatDescriptionGetDimensions(f.formatDescription) }
             let fl = d.formats.filter { fps30($0) && Int(max(dm($0).width, dm($0).height)) <= 4096 && Int(min(dm($0).width, dm($0).height)) >= 720 }
             Ladeni.log("přední formáty: " + fl.map { "\(dm($0).width)x\(dm($0).height) fov\(Int($0.videoFieldOfView))\($0.supportedColorSpaces.contains(.appleLog) ? " log" : "")" }.joined(separator: ", "))
-            let key = { (f: AVCaptureDevice.Format) in Double(f.videoFieldOfView).rounded() * 1e9 + Double(dm(f).width) * Double(dm(f).height) }
+            let key = { (f: AVCaptureDevice.Format) in (full ? 1 : -1) * Double(f.videoFieldOfView).rounded() * 1e9 + Double(dm(f).width) * Double(dm(f).height) }
             if let f = fl.max(by: { key($0) < key($1) }) { return (f, f.supportedColorSpaces.contains(.appleLog)) }
         }
         let ok = d.formats.filter { fps30($0) && w($0) >= 1920 && w($0) <= 4096 }
@@ -194,14 +194,14 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
 
     // MARK: ovládání (z mostu WebApp)
 
-    func start(lens: String, zoom: Double, done: @escaping (Swift.Result<[String: Any], Error>) -> Void) {
+    func start(lens: String, zoom: Double, full: Bool = false, done: @escaping (Swift.Result<[String: Any], Error>) -> Void) {
         CameraEngine.markStarting()
         q.async {
             self.stopNow()
             self.sent = 0
             do {
                 guard let (dev, lz) = self.pick(lens) else { throw QError(message: "kamera nenalezena") }
-                guard let (fmt, log) = self.format(dev) else { throw QError(message: "kamera neumí video") }
+                guard let (fmt, log) = self.format(dev, full: full) else { throw QError(message: "kamera neumí video") }
                 let s = AVCaptureSession()
                 var cfgErr: Error?
                 // celé nastavení v QCatch: špatná kombinace (formát, pixely, fps) = výjimka ObjC → chyba v hledáčku místo pádu appky
@@ -256,7 +256,7 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
                 guard s.isRunning else { throw QError(message: "kamera se nespustila") }
                 if self.manIso != nil || self.manDur != nil { self.q.asyncAfter(deadline: .now() + 0.6) { self.applyExposure() } }
                 if self.wantAudio { self.applyAudio() }
-                Ladeni.log("kamera start \(lens) \(dev.localizedName) \(dm.width)x\(dm.height) log=\(log) lensZoom=\(String(format: "%.2f", lz)) pix=\(self.videoOut?.videoSettings?[kCVPixelBufferPixelFormatTypeKey as String] ?? "?")")
+                Ladeni.log("kamera start \(lens)\(full ? " full" : "") fov\(Int(fmt.videoFieldOfView)) \(dev.localizedName) \(dm.width)x\(dm.height) log=\(log) lensZoom=\(String(format: "%.2f", lz)) pix=\(self.videoOut?.videoSettings?[kCVPixelBufferPixelFormatTypeKey as String] ?? "?")")
                 done(.success(["log": log, "lens": lens, "lensZoom": lz, "w": Int(self.size.width), "h": Int(self.size.height),
                                "maxZoom": Double(min(dev.activeFormat.videoMaxZoomFactor, 10)), "torch": dev.hasTorch,
                                "label": dev.localizedName]))
@@ -419,8 +419,11 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
             Ladeni.log("snímky \(sent) iso=\(Int(d.iso)) čas=1/\(Int((1 / max(d.exposureDuration.seconds, 0.0001)).rounded())) zoom=\(String(format: "%.2f", Double(d.videoZoomFactor))) posláno=\(framesOut) převod=\(String(format: "%.1f", pktMs)) ms")
         }
         if sent == 90 { CameraEngine.markOk() } // ~3 s snímků bez pádu = kamera appky v pořádku
-        let now = CACurrentMediaTime()
-        guard onFrame != nil, canSend(), now - lastFrame > 1 / 31 else { return }
+        // hledáček v Metalu kreslí každý snímek sám; web pak dostává JPEG jen ~8/s (měření jasu, RAW na hledáček, hlídač)
+        let mv = MetalViewfinder.current
+        mv?.frame(img, log: log)
+        let now = CACurrentMediaTime(), minDt = (mv?.live ?? false) ? 1.0 / 8 : 1.0 / 31
+        guard onFrame != nil, canSend(), now - lastFrame > minDt else { return }
         lastFrame = now
         var pkt: Data?
         if QCatch.run({ pkt = self.packet(img) }) != nil { return }
