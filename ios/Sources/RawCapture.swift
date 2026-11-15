@@ -40,9 +40,11 @@ final class RawCapture: NSObject {
 
     // zoom = optický zoom webového hledáčku (1 = hlavní objektiv), ultra = ultraširokáč, tele = hledáček je na teleobjektivu
     var targetMean: Double?
-    func capture(zoom: Double, ultra: Bool, flash: Bool, tele: Bool = false, bayer: Bool = false, mean: Double? = nil, done: @escaping (Swift.Result<Result, Error>) -> Void) {
+    var manual: (Float, Double)?   // ruční ISO a čas z bočního tlačítka (nil = AUTO)
+    func capture(zoom: Double, ultra: Bool, flash: Bool, tele: Bool = false, bayer: Bool = false, mean: Double? = nil, manual: (Float, Double)? = nil, done: @escaping (Swift.Result<Result, Error>) -> Void) {
         queue.async {
             self.targetMean = mean
+            self.manual = manual
             // Web právě pustil kameru; WebKit ji uvolní během pár ms
             Thread.sleep(forTimeInterval: 0.15)
             do {
@@ -112,7 +114,12 @@ final class RawCapture: NSObject {
 
         if (try? device.lockForConfiguration()) != nil {
             if device.isFocusModeSupported(.continuousAutoFocus) { device.focusMode = .continuousAutoFocus }
-            if device.isExposureModeSupported(.continuousAutoExposure) { device.exposureMode = .continuousAutoExposure }
+            if let (iso, dur) = manual, device.isExposureModeSupported(.custom) {
+                // RAW se stejným ISO a časem jako hledáček (fotoformát má širší rozsah – oříznout do něj)
+                let f = device.activeFormat
+                let d = min(max(dur, f.minExposureDuration.seconds), f.maxExposureDuration.seconds)
+                device.setExposureModeCustom(duration: CMTime(seconds: d, preferredTimescale: 1_000_000), iso: min(max(iso, f.minISO), f.maxISO), completionHandler: nil)
+            } else if device.isExposureModeSupported(.continuousAutoExposure) { device.exposureMode = .continuousAutoExposure }
             device.unlockForConfiguration()
         }
         session = s

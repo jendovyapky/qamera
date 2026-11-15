@@ -42,23 +42,36 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
     var onFrame: ((Data) -> Void)?   // LocalServer → /__live
     private var lastISO: Float = 0
     var currentISO: Float { device?.iso ?? lastISO }
-    // boční tlačítko Ovládání fotoaparátu (iOS 18+): posun = film / EV
+    // boční tlačítko Ovládání fotoaparátu (iOS 18+): film, objektiv, EV, ruční ISO a čas, síla filmu
     private var ctlFilms: [String] = []
     private var ctlFilm = 0
     private var ctlEv = 0.0
+    private var ctlLenses: [String] = []
+    private var ctlLens = 0
+    private var ctlStr = 100.0
     private var ctlObjs: [AnyObject] = []
+    // ruční expozice (nil = AUTO); když je nastavená jen jedna hodnota, druhá se dopočítá ze stejné expozice
+    private var manIso: Float?
+    private var manDur: Double?
+    private var isoTitles: [Float] = []
+    private var durTitles: [Double] = []
     var onCtl: ((String, Any) -> Void)?
-    func setCtl(films: [String]?, film: Int?, ev: Double?) {
+    /// skutečné ISO a čas, když je zapnutá ruční expozice (RAW je pak fotí stejně); nil = AUTO
+    var manualNow: (Float, Double)? { q.sync { (manIso == nil && manDur == nil) ? nil : device.map { ($0.iso, $0.exposureDuration.seconds) } } }
+    func setCtl(films: [String]?, film: Int?, ev: Double?, lenses: [String]? = nil, lens: Int? = nil, str: Double? = nil) {
         var rebuild = false
         if let films, films != ctlFilms { ctlFilms = films; rebuild = true }
+        if let lenses, lenses != ctlLenses { ctlLenses = lenses; rebuild = true }
         if let film { ctlFilm = film }
         if let ev { ctlEv = ev }
+        if let lens { ctlLens = lens }
+        if let str { ctlStr = str }
         guard #available(iOS 18.0, *) else { return }
         if rebuild {
             // názvy v nabídce bočního tlačítka jsou dané při vytvoření → nový seznam (oblíbené, jiná sada) = ovládání postavit znovu
             q.async {
                 guard let s = self.session else { return }
-                Ladeni.log("boční tlačítko: nový seznam filmů (\(self.ctlFilms.count)), vybraný \(self.ctlFilm)")
+                Ladeni.log("boční tlačítko: nový seznam filmů (\(self.ctlFilms.count)) / objektivů (\(self.ctlLenses.count)), vybraný \(self.ctlFilm)")
                 _ = QCatch.run { s.beginConfiguration(); self.addControls(s); s.commitConfiguration() }
             }
         } else { DispatchQueue.main.async { self.syncCtl() } }
@@ -185,6 +198,7 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
                 self.size = CGSize(width: Int(min(dm.width, dm.height)), height: Int(max(dm.width, dm.height)))
                 if let e2 = QCatch.run({ s.startRunning() }) { throw QError(message: e2) }
                 guard s.isRunning else { throw QError(message: "kamera se nespustila") }
+                if self.manIso != nil || self.manDur != nil { self.q.asyncAfter(deadline: .now() + 0.6) { self.applyExposure() } }
                 Ladeni.log("kamera start \(lens) \(dev.localizedName) \(dm.width)x\(dm.height) log=\(log) lensZoom=\(String(format: "%.2f", lz)) pix=\(self.videoOut?.videoSettings?[kCVPixelBufferPixelFormatTypeKey as String] ?? "?")")
                 done(.success(["log": log, "lens": lens, "lensZoom": lz, "w": Int(self.size.width), "h": Int(self.size.height),
                                "maxZoom": Double(min(dev.activeFormat.videoMaxZoomFactor, 10)), "torch": dev.hasTorch,
@@ -254,6 +268,28 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
 
     var isOn: Bool { q.sync { session != nil } }
 
+    // jen na frontě q: AUTO, nebo ruční ISO / čas (chybějící hodnota = stejná expozice jako teď)
+    private func applyExposure() {
+        guard let d = device, (try? d.lockForConfiguration()) != nil else { return }
+        defer { d.unlockForConfiguration() }
+        if manIso == nil && manDur == nil {
+            if d.isExposureModeSupported(.continuousAutoExposure) { d.exposureMode = .continuousAutoExposure }
+            Ladeni.log("expozice AUTO"); return
+        }
+        guard d.isExposureModeSupported(.custom) else { return }
+        let f = d.activeFormat
+        let maxDur = min(f.maxExposureDuration.seconds, 1.0 / 30) // hledáček jede 30 snímků/s → nejdelší čas 1/30
+        let curIso = Double(d.iso), curDur = max(d.exposureDuration.seconds, 1e-6), ev = curIso * curDur
+        var dur = manDur ?? (manIso.map { ev / Double($0) } ?? curDur)
+        dur = min(max(dur, f.minExposureDuration.seconds), maxDur)
+        var iso = Double(manIso ?? Float(ev / dur))
+        iso = min(max(iso, Double(f.minISO)), Double(f.maxISO))
+        d.setExposureModeCustom(duration: CMTime(seconds: dur, preferredTimescale: 1_000_000), iso: Float(iso), completionHandler: nil)
+        Ladeni.log("expozice ručně iso=\(Int(iso)) čas=1/\(Int((1 / dur).rounded()))")
+        onCtl?("expo", "[\(Int(iso.rounded())), \(dur)]")
+    }
+    static func durLabel(_ s: Double) -> String { s >= 0.3 ? String(format: "%.1f s", s) : "1/\(Int((1 / s).rounded()))" }
+
     func setZoom(_ z: Double) {
         q.async { guard let d = self.device, (try? d.lockForConfiguration()) != nil else { return }
             d.videoZoomFactor = max(1, min(d.activeFormat.videoMaxZoomFactor, z)); d.unlockForConfiguration() }
@@ -267,7 +303,7 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
         q.async { guard let d = self.device, (try? d.lockForConfiguration()) != nil else { return }
             let p = CGPoint(x: y, y: 1 - x)
             if d.isFocusPointOfInterestSupported { d.focusPointOfInterest = p; if d.isFocusModeSupported(.autoFocus) { d.focusMode = .autoFocus } }
-            if d.isExposurePointOfInterestSupported { d.exposurePointOfInterest = p; if d.isExposureModeSupported(.continuousAutoExposure) { d.exposureMode = .continuousAutoExposure } }
+            if d.isExposurePointOfInterestSupported, self.manIso == nil, self.manDur == nil { d.exposurePointOfInterest = p; if d.isExposureModeSupported(.continuousAutoExposure) { d.exposureMode = .continuousAutoExposure } }
             d.unlockForConfiguration()
             // po zaostření zpět na průběžné ostření (až se scéna změní)
             self.q.asyncAfter(deadline: .now() + 3) { guard let d = self.device, (try? d.lockForConfiguration()) != nil else { return }
@@ -394,6 +430,15 @@ extension CameraEngine: AVCaptureSessionControlsDelegate {
             }
             if s.canAddControl(p) { s.addControl(p); objs.append(p) }
         }
+        if ctlLenses.count > 1 {
+            let l = AVCaptureIndexPicker("Objektiv", symbolName: "camera.aperture", localizedIndexTitles: ctlLenses)
+            l.selectedIndex = min(max(0, ctlLens), ctlLenses.count - 1)
+            l.setActionQueue(.main) { [weak self] i in
+                guard let self, i != self.ctlLens else { return }
+                self.ctlLens = i; self.onCtl?("lens", i)
+            }
+            if s.canAddControl(l) { s.addControl(l); objs.append(l) }
+        }
         let e = AVCaptureSlider("EV", symbolName: "plusminus.circle", values: Self.evStops)
         e.value = Float((ctlEv * 3).rounded() / 3)
         e.setActionQueue(.main) { [weak self] v in
@@ -401,12 +446,51 @@ extension CameraEngine: AVCaptureSessionControlsDelegate {
             self.ctlEv = Double(v); self.onCtl?("ev", Double(v))
         }
         if s.canAddControl(e) { s.addControl(e); objs.append(e) }
+        // ruční ISO a čas (třetiny clony), první položka AUTO
+        if let d = s.inputs.compactMap({ ($0 as? AVCaptureDeviceInput)?.device }).first, d.isExposureModeSupported(.custom) {
+            let f = d.activeFormat
+            isoTitles = Self.isoStops.filter { $0 >= f.minISO && $0 <= f.maxISO }
+            let maxDur = min(f.maxExposureDuration.seconds, 1.0 / 30)
+            durTitles = Self.durStops.filter { $0 >= f.minExposureDuration.seconds && $0 <= maxDur + 1e-6 }
+            let ip = AVCaptureIndexPicker("ISO", symbolName: "camera.metering.matrix", localizedIndexTitles: ["AUTO"] + isoTitles.map { String(Int($0)) })
+            if let m = manIso, let i = isoTitles.firstIndex(where: { abs($0 - m) < 1 }) { ip.selectedIndex = i + 1 }
+            ip.setActionQueue(.main) { [weak self] i in
+                guard let self else { return }
+                let v: Float? = i == 0 ? nil : self.isoTitles[i - 1]
+                guard v != self.manIso else { return }
+                self.manIso = v; self.q.async { self.applyExposure() }
+                self.onCtl?("iso", Int(v ?? 0))
+            }
+            if s.canAddControl(ip) { s.addControl(ip); objs.append(ip) }
+            let tp = AVCaptureIndexPicker("Čas", symbolName: "timer", localizedIndexTitles: ["AUTO"] + durTitles.map { Self.durLabel($0) })
+            if let m = manDur, let i = durTitles.firstIndex(where: { abs($0 / m - 1) < 0.02 }) { tp.selectedIndex = i + 1 }
+            tp.setActionQueue(.main) { [weak self] i in
+                guard let self else { return }
+                let v: Double? = i == 0 ? nil : self.durTitles[i - 1]
+                guard v != self.manDur else { return }
+                self.manDur = v; self.q.async { self.applyExposure() }
+                self.onCtl?("dur", v ?? 0)
+            }
+            if s.canAddControl(tp) { s.addControl(tp); objs.append(tp) }
+        }
+        let st = AVCaptureSlider("Síla filmu", symbolName: "circle.lefthalf.filled", in: 0...100, step: 5)
+        st.value = Float(ctlStr)
+        st.setActionQueue(.main) { [weak self] v in
+            guard let self, abs(Double(v) - self.ctlStr) > 0.5 else { return }
+            self.ctlStr = Double(v); self.onCtl?("str", Double(v))
+        }
+        if s.canAddControl(st) { s.addControl(st); objs.append(st) }
         ctlObjs = objs
+        Ladeni.log("boční tlačítko: \(objs.count) ovládání (max \(s.maxControlsCount))")
     }
+    fileprivate static let isoStops: [Float] = [25, 32, 40, 50, 64, 80, 100, 125, 160, 200, 250, 320, 400, 500, 640, 800, 1000, 1250, 1600, 2000, 2500, 3200, 4000, 5000, 6400, 8000, 10000, 12800]
+    fileprivate static let durStops: [Double] = [8000, 6400, 5000, 4000, 3200, 2500, 2000, 1600, 1250, 1000, 800, 640, 500, 400, 320, 250, 200, 160, 125, 100, 80, 60, 50, 40, 30].map { 1 / $0 }
     func syncCtl() {
         for o in ctlObjs {
-            if let p = o as? AVCaptureIndexPicker, ctlFilm >= 0, ctlFilm < p.localizedIndexTitles.count, p.selectedIndex != ctlFilm { p.selectedIndex = ctlFilm }
-            if let e = o as? AVCaptureSlider, abs(Double(e.value) - ctlEv) > 0.01 { e.value = Float(ctlEv) }
+            if let p = o as? AVCaptureIndexPicker, p.localizedTitle == "Film", ctlFilm >= 0, ctlFilm < p.localizedIndexTitles.count, p.selectedIndex != ctlFilm { p.selectedIndex = ctlFilm }
+            if let p = o as? AVCaptureIndexPicker, p.localizedTitle == "Objektiv", ctlLens >= 0, ctlLens < p.localizedIndexTitles.count, p.selectedIndex != ctlLens { p.selectedIndex = ctlLens }
+            if let e = o as? AVCaptureSlider, e.localizedTitle == "EV", abs(Double(e.value) - ctlEv) > 0.01 { e.value = Float(ctlEv) }
+            if let e = o as? AVCaptureSlider, e.localizedTitle == "Síla filmu", abs(Double(e.value) - ctlStr) > 0.5 { e.value = Float(ctlStr) }
         }
     }
     func sessionControlsDidBecomeActive(_ session: AVCaptureSession) {}

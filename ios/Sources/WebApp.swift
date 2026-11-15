@@ -187,7 +187,8 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                 }
             case "ctl":
                 cam.onCtl = { [weak self] k, v in DispatchQueue.main.async { self?.js("window.__qCtl && window.__qCtl('\(k)', \(v))") } }
-                cam.setCtl(films: m["films"] as? [String], film: m["film"] as? Int, ev: m["ev"] as? Double)
+                cam.setCtl(films: m["films"] as? [String], film: m["film"] as? Int, ev: m["ev"] as? Double,
+                           lenses: m["lenses"] as? [String], lens: m["lens"] as? Int, str: m["str"] as? Double)
             case "stop": cam.stop(); server?.liveClose()
             case "zoom": cam.setZoom((m["z"] as? Double) ?? 1)
             case "torch": cam.torch((m["on"] as? Bool) ?? false)
@@ -213,11 +214,12 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
         case "raw":
             // RAW bez úprav = jeden snímek bez skládání: v tmě (vysoké ISO hledáčku) by byl jen šum → automaticky ProRAW (skládaný z víc snímků)
             let isoNow = CameraEngine.shared.currentISO
+            let manual = CameraEngine.shared.manualNow // ruční ISO / čas z bočního tlačítka → RAW stejně
             CameraEngine.shared.stop() // RAW si zatím otevírá vlastní session (krok 2: ze stejné)
             let id = m["id"] as? Int ?? 0
             let bayer = ((m["bayer"] as? Bool) ?? false) && !(isoNow > 320)
             raw.capture(zoom: (m["zoom"] as? Double) ?? 1, ultra: (m["ultra"] as? Bool) ?? false,
-                        flash: (m["flash"] as? Bool) ?? false, tele: (m["tele"] as? Bool) ?? false, bayer: bayer, mean: m["mean"] as? Double) { [weak self] result in
+                        flash: (m["flash"] as? Bool) ?? false, tele: (m["tele"] as? Bool) ?? false, bayer: bayer, mean: m["mean"] as? Double, manual: manual) { [weak self] result in
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let r):

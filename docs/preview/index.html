@@ -1552,18 +1552,28 @@ async function natLiveOn(revive) {
     CAM.err = 'Kameru appky se nepodařilo spustit (' + e.message + ').'; toast(CAM.err); CAM.live = false; CAM.switching = false; cc.style.filter = ''; updLive(); renderCamInfo(); return false;
   }
 }
-// boční tlačítko Ovládání fotoaparátu: přejetí = film (pořadí jako karusel), v nabídce i EV; změny z webu se posílají zpět
+// boční tlačítko Ovládání fotoaparátu: film (pořadí jako karusel), objektiv (tlačítka zoomu), EV, ruční ISO / čas (jen v appce), síla filmu; změny z webu se posílají zpět
 let natCtlLast = '', natCtlFilms = '';
+const camStr = () => { const v = (camSetOf(S.film) || {}).str ?? filmBase(S.film).str; return Math.round(clamp(v ?? 1, 0, 1) * 100); };
 function natCtl(full) {
   if (!(window.QNATIVE && QNATIVE.ncam && window.webkit)) return;
-  const films = filmsOrdered().map(f => f.code), film = films.indexOf(S.film), fk = films.join(','), key = film + '|' + S.ev;
+  const films = filmsOrdered().map(f => f.code), film = films.indexOf(S.film), zb = $$('#zoomGrp button'), lenses = zb.map(b => b.textContent.trim()), lens = Math.max(0, zb.findIndex(b => b.classList.contains('on'))), str = camStr();
+  const fk = films.join(',') + '|' + lenses.join(','), key = [film, S.ev, lens, str].join('|');
   if (fk !== natCtlFilms) full = true;
   if (!full && key === natCtlLast) return; natCtlLast = key; natCtlFilms = fk;
-  natPost(Object.assign({ kind: 'ncam', op: 'ctl', film, ev: S.ev }, full ? { films } : {}));
+  natPost(Object.assign({ kind: 'ncam', op: 'ctl', film, ev: S.ev, lens, str }, full ? { films, lenses } : {}));
 }
+const ctlHud = (t, ic) => { hud('raw', [t, 1, ic]); clearTimeout(window.__qEvT); window.__qEvT = setTimeout(() => hud(null), 1100); };
+const durTxt = s => s >= .3 ? (Math.round(s * 10) / 10 + ' s').replace('.', ',') : '1/' + Math.round(1 / s);
 window.__qCtl = (k, v) => {
   if (k === 'film') { const code = filmsOrdered().map(f => f.code)[v]; if (code && FILM[code] && code !== S.film) { setFilm(code); const c = $('#carousel'); if (c && c._sync) c._sync(); buzz(4); } }
   else if (k === 'ev') { S.ev = Math.round(clamp(+v, -3, 3) * 3) / 3; if (evApi) evApi.sync(); updLcd(); hud('ev'); clearTimeout(window.__qEvT); window.__qEvT = setTimeout(() => hud(null), 900); }
+  else if (k === 'lens') { const b = $$('#zoomGrp button')[v]; if (b && !b.classList.contains('on')) { setZoom(+b.dataset.z); ctlHud('OBJEKTIV ' + b.textContent.trim(), 'camera'); } }
+  else if (k === 'str') { const B = filmBase(S.film), o = CAMSET[S.film] || (CAMSET[S.film] = {}), s = clamp(+v, 0, 100) / 100;
+    if (Math.abs(s - (B.str ?? 1)) < .005) delete o.str; else o.str = s; store.set('camSet', CAMSET); updTune(); if ($('#filmSheet').classList.contains('tune')) renderCamTune(); ctlHud('SÍLA FILMU ' + Math.round(s * 100) + ' %', 'sliders'); }
+  else if (k === 'iso') { NCAM.iso = +v; ctlHud(v ? 'ISO ' + v : 'ISO AUTO', 'sun'); }
+  else if (k === 'dur') { NCAM.dur = +v; ctlHud(v ? 'ČAS ' + durTxt(+v) : 'ČAS AUTO', 'clock'); }
+  else if (k === 'expo') { const [iso, d] = v || []; if (iso && d) { NCAM.expo = [iso, d]; ctlHud('ISO ' + iso + ' · ' + durTxt(d), 'sun'); qlog('ruční expozice', iso, durTxt(d)); } }
 };
 /* RAW a KLIP jsou dva režimy spouště: když je zapnutý KLIP, spoušť točí a RAW se nepoužije → svítí jen jeden */
 function updModes() { const r = $('#tRaw'), c = $('#tClip'); if (c) c.classList.toggle('on', !!S.nclip); if (r) r.classList.toggle('on', !!S.nraw && !S.nclip); }
