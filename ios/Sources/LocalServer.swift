@@ -67,7 +67,7 @@ final class LocalServer {
             var buf = buffer
             if let data { buf.append(data) }
             if let end = buf.range(of: Data("\r\n\r\n".utf8)) {
-                self.respond(c, head: String(decoding: buf[..<end.lowerBound], as: UTF8.self))
+                self.respond(c, head: String(decoding: buf[..<end.lowerBound], as: UTF8.self), rest: Data(buf[end.upperBound...]))
             } else if done || err != nil || buf.count > 65536 {
                 c.cancel()
             } else {
@@ -76,13 +76,33 @@ final class LocalServer {
         }
     }
 
-    private func respond(_ c: NWConnection, head: String) {
-        let parts = (head.split(separator: "\r\n").first ?? "").split(separator: " ")
+    private func respond(_ c: NWConnection, head: String, rest: Data) {
+        let lines = head.components(separatedBy: "\r\n")
+        let parts = (lines.first ?? "").split(separator: " ")
         guard parts.count >= 2 else { return send(c, status: "400 Bad Request", type: "text/plain", body: Data()) }
         let method = String(parts[0])
         var path = String(parts[1])
-        if let q = path.firstIndex(where: { $0 == "?" || $0 == "#" }) { path = String(path[..<q]) }
+        var query: [String: String] = [:]
+        if let q = path.firstIndex(where: { $0 == "?" || $0 == "#" }) {
+            for kv in path[path.index(after: q)...].split(separator: "&") {
+                let p = kv.split(separator: "=", maxSplits: 1).map { String($0).removingPercentEncoding ?? String($0) }
+                if p.count == 2 { query[p[0]] = p[1] }
+            }
+            path = String(path[..<q])
+        }
         path = path.removingPercentEncoding ?? path
+        var hdr: [String: String] = [:]
+        for l in lines.dropFirst() { if let i = l.firstIndex(of: ":") { hdr[l[..<i].trimmingCharacters(in: .whitespaces).lowercased()] = l[l.index(after: i)...].trimmingCharacters(in: .whitespaces) } }
+
+        // /__st/… = galerie appky (GalleryStore): seznam, záznamy, data fotek a klipů
+        if path.hasPrefix("/__st/") {
+            let len = Int(hdr["content-length"] ?? "") ?? 0
+            if method == "PUT" || method == "POST" {
+                guard len >= 0, len < 4_000_000_000 else { return send(c, status: "413 Payload Too Large", type: "text/plain", body: Data()) }
+                return readBody(c, have: rest, total: len) { body in self.store(c, method: method, path: path, query: query, hdr: hdr, body: body) }
+            }
+            return store(c, method: method, path: path, query: query, hdr: hdr, body: nil)
+        }
         if path.hasSuffix("/") { path += "index.html" }
 
         // /__live = snímky hledáčku z CameraEngine (otevřené spojení, snímek za snímkem: u32 délka · u16 délka meta · meta JSON · JPEG)
@@ -103,6 +123,93 @@ final class LocalServer {
             return send(c, status: "404 Not Found", type: "text/plain", body: Data("404".utf8))
         }
         send(c, status: "200 OK", type: Self.mime(url.pathExtension), body: method == "HEAD" ? Data() : body, length: body.count)
+    }
+
+    // MARK: galerie appky
+    private func store(_ c: NWConnection, method: String, path: String, query: [String: String], hdr: [String: String], body: URL?) {
+        defer { if let body { try? FileManager.default.removeItem(at: body) } }
+        let rest = String(path.dropFirst("/__st/".count))
+        let json = { (o: Any) -> Data in (try? JSONSerialization.data(withJSONObject: o)) ?? Data("{}".utf8) }
+        if rest == "list" { return send(c, status: "200 OK", type: "application/json", body: GalleryStore.list()) }
+        if rest == "info" { let s = GalleryStore.summary(); return send(c, status: "200 OK", type: "application/json", body: json(["n": s.n, "bytes": s.bytes])) }
+        if rest.hasPrefix("rec/"), method == "PUT", let body {
+            let ok = GalleryStore.putRecord(String(rest.dropFirst(4)), body: body)
+            return send(c, status: ok ? "200 OK" : "400 Bad Request", type: "application/json", body: json(["ok": ok]))
+        }
+        if rest.hasPrefix("f/") {
+            let name = String(rest.dropFirst(2))
+            if method == "PUT", let body {
+                guard let n = GalleryStore.putFile(name, body: body) else { return send(c, status: "400 Bad Request", type: "application/json", body: json(["ok": false])) }
+                return send(c, status: "200 OK", type: "application/json", body: json(["ok": true, "n": n]))
+            }
+            guard let u = GalleryStore.file(name), FileManager.default.fileExists(atPath: u.path) else { return send(c, status: "404 Not Found", type: "text/plain", body: Data("404".utf8)) }
+            return sendFile(c, url: u, range: hdr["range"], head: method == "HEAD")
+        }
+        if rest == "adopt", method == "POST" {
+            guard let from = query["from"], let to = query["to"], let n = GalleryStore.adopt(from: from, to: to) else { return send(c, status: "404 Not Found", type: "application/json", body: json(["ok": false])) }
+            return send(c, status: "200 OK", type: "application/json", body: json(["ok": true, "n": n]))
+        }
+        if rest.hasPrefix("del/"), method == "DELETE" || method == "POST" {
+            GalleryStore.remove(String(rest.dropFirst(4)))
+            return send(c, status: "200 OK", type: "application/json", body: json(["ok": true]))
+        }
+        send(c, status: "400 Bad Request", type: "text/plain", body: Data())
+    }
+
+    /// tělo požadavku rovnou do dočasného souboru (klip může mít stovky MB)
+    private func readBody(_ c: NWConnection, have: Data, total: Int, done: @escaping (URL?) -> Void) {
+        let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("st-up-" + UUID().uuidString)
+        FileManager.default.createFile(atPath: tmp.path, contents: nil)
+        guard let fh = try? FileHandle(forWritingTo: tmp) else { return done(nil) }
+        var got = 0
+        func put(_ d: Data) { let n = min(d.count, total - got); if n > 0 { fh.write(d.prefix(n)); got += n } }
+        put(have)
+        func step() {
+            if got >= total { try? fh.close(); return done(tmp) }
+            c.receive(minimumIncompleteLength: 1, maximumLength: 1 << 20) { data, _, fin, err in
+                if let data { put(data) }
+                if got >= total { try? fh.close(); return done(tmp) }
+                if fin || err != nil { try? fh.close(); try? FileManager.default.removeItem(at: tmp); c.cancel(); return }
+                step()
+            }
+        }
+        step()
+    }
+
+    /// soubor po kouscích (1 MB) a s Range – přehrávání videa ve WebKitu chce 206 Partial Content
+    private func sendFile(_ c: NWConnection, url: URL, range: String?, head: Bool) {
+        guard let fh = try? FileHandle(forReadingFrom: url) else { return send(c, status: "404 Not Found", type: "text/plain", body: Data("404".utf8)) }
+        let size = ((try? FileManager.default.attributesOfItem(atPath: url.path))?[.size] as? NSNumber)?.intValue ?? 0
+        var a = 0, b = size - 1, partial = false
+        if let r = range, r.hasPrefix("bytes="), size > 0 {
+            let s = r.dropFirst(6).split(separator: ",").first.map { $0.split(separator: "-", omittingEmptySubsequences: false) } ?? []
+            if s.count == 2 {
+                if let x = Int(s[0].trimmingCharacters(in: .whitespaces)) { a = x; if let y = Int(s[1].trimmingCharacters(in: .whitespaces)) { b = min(y, size - 1) } }
+                else if let y = Int(s[1].trimmingCharacters(in: .whitespaces)) { a = max(0, size - y) }
+                partial = true
+            }
+        }
+        if partial && (a > b || a >= size) {
+            try? fh.close()
+            let h = "HTTP/1.1 416 Range Not Satisfiable\r\nContent-Range: bytes */\(size)\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+            return c.send(content: Data(h.utf8), completion: .contentProcessed { _ in c.cancel() })
+        }
+        let len = max(0, b - a + 1)
+        var h = "HTTP/1.1 \(partial ? "206 Partial Content" : "200 OK")\r\nContent-Type: \(Self.mime(url.pathExtension))\r\nContent-Length: \(len)\r\nAccept-Ranges: bytes\r\n"
+        if partial { h += "Content-Range: bytes \(a)-\(b)/\(size)\r\n" }
+        h += "Cache-Control: no-cache\r\nConnection: close\r\n\r\n"
+        try? fh.seek(toOffset: UInt64(a))
+        var left = head ? 0 : len
+        func pump() {
+            if left <= 0 { try? fh.close(); c.cancel(); return }
+            let d = fh.readData(ofLength: min(left, 1 << 20))
+            if d.isEmpty { try? fh.close(); c.cancel(); return }
+            left -= d.count
+            c.send(content: d, completion: .contentProcessed { [weak self] err in
+                if err != nil { try? fh.close(); c.cancel() } else { self?.queue.async { pump() } } })
+        }
+        c.send(content: Data(h.utf8), completion: .contentProcessed { [weak self] err in
+            if err != nil { try? fh.close(); c.cancel() } else { self?.queue.async { pump() } } })
     }
 
     // MARK: hledáček – jeden posluchač (nový nahradí starý), posílá se vždy jen nejnovější snímek, dokud předchozí neodešel

@@ -38,6 +38,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
             let s = LocalServer(root: webRoot)
             s.start()
             server = s
+            let gs = GalleryStore.summary(); Ladeni.log("galerie v appce: \(gs.n) záznamů, \(gs.bytes / 1_000_000) MB")
             // vlastní kamera appky: snímky hledáčku jdou rovnou do /__live
             let cam = CameraEngine.shared
             cam.onFrame = { [weak s] d in s?.pushFrame(d) }
@@ -195,6 +196,13 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
             thump.impactOccurred(intensity: min(1, max(0.3, CGFloat((m["ms"] as? Double) ?? 6) / 20)))
         case "share":
             share(m)
+        case "shareStored":
+            let id = m["id"] as? Int ?? 0
+            guard let name = m["name"] as? String, let src = GalleryStore.file(name) else { return finish(id, ok: false, abort: false) }
+            let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("v-\(id)-" + name)
+            try? FileManager.default.removeItem(at: tmp)
+            guard (try? FileManager.default.copyItem(at: src, to: tmp)) != nil else { return finish(id, ok: false, abort: false) }
+            saveVideoFile(tmp, id: id)
         case "ncam": // vlastní kamera appky (CameraEngine): start / stop / zoom / torch / focus
             let op = m["op"] as? String ?? ""
             let cam = CameraEngine.shared
@@ -461,6 +469,11 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     private func saveVideoToPhotos(_ data: Data, name: String, id: Int) {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("v-\(id)-" + name)
         guard (try? data.write(to: url)) != nil else { return finish(id, ok: false, abort: false) }
+        saveVideoFile(url, id: id)
+    }
+
+    /// video (dočasný soubor, po uložení se smaže) do Fotek
+    private func saveVideoFile(_ url: URL, id: Int) {
         PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
             guard status == .authorized || status == .limited else {
                 try? FileManager.default.removeItem(at: url)
@@ -501,7 +514,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
     static let bridgeJS = """
     (() => {
       const post = (m) => window.webkit.messageHandlers.qamera.postMessage(m);
-      window.QNATIVE = Object.assign({ raw: 2, rawf: 1, mvf: 1, bayer: true, clip: 1, crec: 1, cedit: 1, ncam: window.__qNcamOff ? 0 : 1 }, window.__qLens || {});
+      window.QNATIVE = Object.assign({ store: 1, raw: 2, rawf: 1, mvf: 1, bayer: true, clip: 1, crec: 1, cedit: 1, ncam: window.__qNcamOff ? 0 : 1 }, window.__qLens || {});
       navigator.vibrate = (ms) => { post({ kind: 'vibrate', ms: Array.isArray(ms) ? (ms[0] || 6) : (+ms || 6) }); return true; };
       const pend = new Map(); let seq = 0;
       window.__qShareDone = (id, ok, abort) => {
@@ -516,6 +529,8 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
         const id = ++seq;
         return new Promise((res, rej) => { pend.set(id, { res, rej }); post({ kind: 'share', id, files, url: d.url || null, title: d.title || null }); });
       };
+      // soubor z galerie appky (klip) rovnou do Fotek – bez převodu přes most
+      window.__qSaveStored = (name) => { const id = ++seq; return new Promise((res, rej) => { pend.set(id, { res, rej }); post({ kind: 'shareStored', id, name }); }); };
     })();
     """
 }
