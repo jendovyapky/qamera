@@ -41,3 +41,5 @@ Upravil: Qamera (jendovyapky), skript tools/bake_luts.py
 2026-11-14  luts/log/P400C.png rebaked: kodak_portra_400 negative printed on kodak_2383 (same method as the other log LUTs, no custom grading); the 'kino' scanner version above was withdrawn.
 2026-11-14  luts/log/G200C.png (kodak_gold_200 -> kodak_2383) and luts/log/P160C.png (kodak_portra_160 -> kodak_2383): log LUTs, same method as the other log LUTs.
 2026-11-14  luts/log/G200C.png removed (not used).
+2026-11-15  luts/log/P400U.png (kodak_portra_400 -> kodak_ultra_endura), P800C.png (kodak_portra_800 -> kodak_2383), G200P.png (kodak_gold_200 -> kodak_2393), C200C.png (fujifilm_c200 -> kodak_2383): log LUTs, same method as the other log LUTs.
+2026-11-15  luts/log/TX400.png, AC100.png, PAN50.png, ORTHO.png: black-and-white films, Qamera's own model (not spektrafilm film profiles): channel weights (spectral sensitivity estimate) -> exposure -> tone curve taken from the neutral axis of luts/log/P400.png (spektrafilm kodak_portra_400 -> kodak_portra_endura) scaled by a per-film contrast, plus paper black level. Log input -8..+6 EV around 0.18.

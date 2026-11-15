@@ -46,14 +46,37 @@ FILMS = {
     'P800P':   ('kodak_portra_800_push2', 'kodak_portra_endura'),
     'E100C':   ('kodak_ektar_100', 'kodak_2383'),
     'P400C':   ('kodak_portra_400', 'kodak_2383'),
-    'P160C':   ('kodak_portra_160', 'kodak_2383'),  # film V2: Portra na kinový tisk (jen --log; skener 'kino' Honza zamítl – moc přebarvené)
+    'P160C':   ('kodak_portra_160', 'kodak_2383'),
+    # sada 15. 11.: z každé skupiny skoro stejných filmů jeden (měřeno ΔE, spektra/filmcmp.py); jen --log
+    'P400U':   ('kodak_portra_400', 'kodak_ultra_endura'),  # sytý papír – nejodlišnější ze všech
+    'P800C':   ('kodak_portra_800', 'kodak_2383'),          # Honza: o trochu lepší než P400C (ΔE 1,2)
+    'G200P':   ('kodak_gold_200', 'kodak_2393'),            # Gold na sytějším kino tisku
+    'C200C':   ('fujifilm_c200', 'kodak_2383'),             # Fuji na kino tisku  # film V2: Portra na kinový tisk (jen --log; skener 'kino' Honza zamítl – moc přebarvené)
     'C200':    ('fujifilm_c200', 'fujifilm_crystal_archive_typeii'),
     '400H':    ('fujifilm_pro_400h', 'fujifilm_crystal_archive_typeii'),
     'SX400':   ('fujifilm_xtra_400', 'fujifilm_crystal_archive_typeii'),
     'PV100':   ('fujifilm_provia_100f', None),
     'VEL':     ('fujifilm_velvia_100', None),
 }
-V2_LOG_ONLY = {'P400C', 'P160C'}
+V2_LOG_ONLY = {'P400C', 'P160C', 'P400U', 'P800C', 'G200P', 'C200C'}
+# Černobílé (vlastní model Qamery, spektrafilm ČB profily nemá): citlivost emulze (váhy R, G, B) → expozice → tónová křivka
+# negativ + papír = neutrální osa Portry 400 ze spektrafilmu (luts/log/P400.png) s kontrastem filmu → pata (černá papíru).
+# Tón papíru dělá až shader (uBTone). kód: (váhy, kontrast v log expozici, pata)
+BW_FILMS = {'TX400': ([.36, .5, .14], 1.14, 0.), 'AC100': ([.2, .62, .18], 1.06, .005), 'PAN50': ([.33, .52, .15], 1.24, 0.), 'ORTHO': ([.04, .58, .38], 1.1, .02)}
+
+
+def bake_bw(out, n):
+    from PIL import Image
+    im = np.asarray(Image.open(os.path.join(out, 'P400.png')).convert('RGB')).astype(np.float64) / 255
+    m = im.shape[0]; p4 = im.reshape(m, m, m, 3); neu = np.array([p4[i, i, i].mean() for i in range(m)])
+    x = log_identity(n)  # (n*n, n, 3) lineární světlo, pořadí [b, g, r]
+    for code, (w, g, toe) in BW_FILMS.items():
+        lg = np.log2(np.maximum(x @ np.array(w), 1e-6) / .18) * g
+        y = np.interp(np.clip((lg - LOG_LO) / (LOG_HI - LOG_LO), 0, 1) * (m - 1), np.arange(m), neu)
+        lut = np.repeat((toe + (1 - toe) * y).reshape(n, n, n, 1), 3, -1)
+        img = np.zeros((n, n * n, 3), np.uint8)
+        for b in range(n): img[:, b * n:(b + 1) * n] = np.round(lut[b] * 255)
+        Image.fromarray(img).save(os.path.join(out, f'{code}.png'), optimize=True); print(code, 'ČB', flush=True)
 HEADER = ['Qamera film LUT {code} ({film})',
           'Derived from spektrafilm by Andrea Volpato',
           'https://github.com/andreavolpato/spektrafilm',
@@ -198,8 +221,10 @@ def main():
     ap.add_argument('--log', action='store_true', help='film v2: log vstup ze scénického světla → luts/log/')
     ap.add_argument('--scanner', default=None, choices=list(SCANNERS), help='sken negativu místo tisku → luts/scan/<skener>/')
     ap.add_argument('--out', default=None)
+    ap.add_argument('--bw', action='store_true', help='černobílé filmy (vlastní model) do luts/log/ – potřebuje luts/log/P400.png')
     a = ap.parse_args()
     a.out = a.out or os.path.join(os.path.dirname(__file__), '..', 'luts', *(['scan', a.scanner] if a.scanner else ['log'] if a.log else []))
+    if a.bw: return bake_bw(os.path.join(os.path.dirname(__file__), '..', 'luts', 'log'), a.size)
     if a.spektrafilm: sys.path.insert(0, a.spektrafilm)
     SOFTEN_SET(a.soften)
     from spektrafilm import init_params, simulate

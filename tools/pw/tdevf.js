@@ -4,5 +4,5 @@ const { chromium } = require('playwright-core');
   for (const nat of [false, true]) { const c = await b.newContext({ serviceWorkers: 'block', viewport: { width: 390, height: 844 } }), p = await c.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
     if (nat) await p.addInitScript(() => { window.QNATIVE = {}; });
     await p.goto('http://localhost:8765/docs/preview/#nahled'); await p.waitForTimeout(3000);
-    console.log(nat ? 'DEV' : 'produkce', await p.evaluate(() => { const l = filmsOrdered().map(f => f.code); return [l.length, l.slice(0, 5).join(','), l.filter(c => OWNF.has(c)).length]; }), errs); await c.close(); }
+    console.log(nat ? 'DEV' : 'produkce', await p.evaluate(() => { const l = filmsOrdered().map(f => f.code); return [l.length, l.slice(0, 5).join(','), l.join(',')]; }), errs); await c.close(); }
   await b.close(); })();

@@ -119,6 +119,34 @@
   "input": "log2(x/0.18) -8..+6 EV"
  },
  {
+  "code": "P400U",
+  "film": "kodak_portra_400",
+  "print": "kodak_ultra_endura",
+  "size": 33,
+  "input": "log2(x/0.18) -8..+6 EV"
+ },
+ {
+  "code": "P800C",
+  "film": "kodak_portra_800",
+  "print": "kodak_2383",
+  "size": 33,
+  "input": "log2(x/0.18) -8..+6 EV"
+ },
+ {
+  "code": "G200P",
+  "film": "kodak_gold_200",
+  "print": "kodak_2393",
+  "size": 33,
+  "input": "log2(x/0.18) -8..+6 EV"
+ },
+ {
+  "code": "C200C",
+  "film": "fujifilm_c200",
+  "print": "kodak_2383",
+  "size": 33,
+  "input": "log2(x/0.18) -8..+6 EV"
+ },
+ {
   "code": "C200",
   "film": "fujifilm_c200",
   "print": "fujifilm_crystal_archive_typeii",

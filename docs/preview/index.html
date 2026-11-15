@@ -1268,15 +1268,19 @@ const FILMS = [
   { code: 'E100C', sub: 'ektar cine', chem: 'barevný negativ · tisk na kinofilm', desc: 'Ektar vyvolaný a tištěný na kino tiskový film (styl 2383). Sytý, kontrastní, filmové stíny.', iso: 100, g: 'fine', sh: [-.01, .01, .04], hi: [1.06, .99, .92], con: 1.12, sat: 1.15, fade: .0, hal: .3, c: ['#f1e9dc', '#e2362b', '#1d3b5c'] },
   { code: 'P400C', v2: 1, sub: 'portrait cine', chem: 'barevný negativ · tisk na kinofilm', desc: 'Portra 400 vytištěná na kino tiskový film (styl 2383). Tlumené barvy, hutné stíny, filmová videa.', iso: 400, g: 'classic', sh: [-.01, .01, .04], hi: [1.06, .99, .92], con: 1.08, sat: 1.05, fade: .0, hal: .35, c: ['#e9e3d6', '#1f5c63', '#e8823a'] },
   { code: 'P160C', v2: 1, sub: 'portrait 160 cine', chem: 'barevný negativ · tisk na kinofilm', desc: 'Portra 160 vytištěná na kino tiskový film (styl 2383). Jemné zrno, měkká pleť, tlumené barvy.', iso: 160, g: 'fine', sh: [.0, .012, .022], hi: [1.03, 1.0, .95], con: .94, sat: .9, fade: .0, hal: .25, c: ['#e9e3d6', '#1f5c63', '#c44b2e'] },
+  { code: 'P400U', v2: 4, sub: 'portrait ultra', chem: 'barevný negativ · sytý papír', desc: 'Portra 400 zvětšená na sytý kontrastní papír (styl Ultra Endura). Hluboká červená a oranžová – podzim, západy slunce.', iso: 400, g: 'classic', sh: [0, 0, 0], hi: [1, 1, 1], con: 1.0, sat: 1, fade: 0, hal: .35, c: ['#e9e3d6', '#b3261e', '#f0b43c'] },
+  { code: 'P800C', v2: 4, sub: 'portrait 800 cine', chem: 'barevný negativ · tisk na kinofilm', desc: 'Portra 800 vytištěná na kino tiskový film (styl 2383). Tlumená filmová barevnost, azurové stíny.', iso: 800, g: 'classic', sh: [0, 0, 0], hi: [1, 1, 1], con: 1.0, sat: 1, fade: 0, hal: .4, c: ['#e9e3d6', '#1f5c63', '#7d2a8f'] },
+  { code: 'G200P', v2: 4, sub: 'gold premier', chem: 'barevný negativ · sytý kino tisk', desc: 'Gold 200 vytištěný na sytější kino tiskový film (styl 2393). Zlatá světla, hlubší barvy.', iso: 200, g: 'classic', sh: [0, 0, 0], hi: [1, 1, 1], con: 1.0, sat: 1, fade: 0, hal: .3, c: ['#f3d24a', '#1f5c63', '#c8281e'] },
+  { code: 'C200C', v2: 4, sub: 'fuji 200 cine', chem: 'barevný negativ · tisk na kinofilm', desc: 'Fujicolor C200 vytištěný na kino tiskový film (styl 2383). Chladnější zeleň, filmové stíny.', iso: 200, g: 'classic', sh: [0, 0, 0], hi: [1, 1, 1], con: 1.0, sat: 1, fade: 0, hal: .3, c: ['#e6efe2', '#2e8f4a', '#1f5c63'] },
   /* černobílé: bw = spektrální citlivost (váhy R,G,B), tone = tón papíru, toe = černá papíru */
   { code: 'BW400', sub: 'classic 400', chem: 'černobílý · ISO 400', desc: 'Univerzální černobílý film ve stylu Ilford HP5 Plus. Měkký, široká latitude, výrazné zrno.', iso: 400, g: 'mono', bw: [.34, .5, .16], tone: [1, 1, 1], toe: .03, sh: [0, 0, 0], hi: [1, 1, 1], con: 1.0, sat: 0, fade: .03, hal: .12, c: ['#1a1a1a', '#e9e9e9', '#8a8a8a'] },
-  { code: 'TX400', sub: 'tri 400', chem: 'černobílý · ISO 400', desc: 'Reportážní klasika ve stylu Kodak Tri-X. Tvrdý kontrast, hluboké černé, ostré zrno.', iso: 400, g: 'mono', bw: [.36, .5, .14], tone: [1, 1, .99], toe: .0, sh: [0, 0, 0], hi: [1, 1, 1], con: 1.24, sat: 0, fade: 0, hal: .12, c: ['#111', '#f2f2f2', '#d9261c'] },
+  { code: 'TX400', lg: 1, sub: 'tri 400', chem: 'černobílý · ISO 400', desc: 'Reportážní klasika ve stylu Kodak Tri-X. Tvrdý kontrast, hluboké černé, ostré zrno.', iso: 400, g: 'mono', bw: [.36, .5, .14], tone: [1, 1, .99], toe: .0, sh: [0, 0, 0], hi: [1, 1, 1], con: 1.24, sat: 0, fade: 0, hal: .12, c: ['#111', '#f2f2f2', '#d9261c'] },
   { code: 'TM100', sub: 't-grain 100', chem: 'černobílý · ISO 100', desc: 'Jemný černobílý film ve stylu Kodak T-Max 100. Hladké přechody, skoro bez zrna.', iso: 100, g: 'fine', bw: [.3, .56, .14], tone: [1, 1, 1], toe: .015, sh: [0, 0, 0], hi: [1, 1, 1], con: 1.06, sat: 0, fade: 0, hal: .08, c: ['#222', '#f4f4f4', '#2a5fc4'] },
   { code: 'D3200', sub: 'delta 3200', chem: 'černobílý · ISO 3200', desc: 'Velmi citlivý černobílý film ve stylu Ilford Delta 3200. Hrubé zrno, šedé černé, noční nálada.', iso: 3200, g: 'push', bw: [.36, .48, .16], tone: [1, 1, 1], toe: .07, sh: [0, 0, 0], hi: [1, 1, 1], con: .92, sat: 0, fade: .06, hal: .2, c: ['#2a2a2a', '#dcdcdc', '#e3a32b'] },
-  { code: 'AC100', sub: 'acros 100', chem: 'černobílý · ISO 100', desc: 'Černobílý film ve stylu Fuji Acros. Méně citlivý na červenou: tmavší pleť a západy, stříbrné nebe.', iso: 100, g: 'fine', bw: [.2, .62, .18], tone: [.99, 1, 1.02], toe: .01, sh: [0, 0, 0], hi: [1, 1, 1], con: 1.12, sat: 0, fade: 0, hal: .08, c: ['#1c1c1c', '#eef1f4', '#2e8f4a'] },
-  { code: 'PAN50', sub: 'pan 50', chem: 'černobílý · ISO 50', desc: 'Pomalý černobílý film ve stylu Ilford Pan F 50. Velmi kontrastní, sametové černé, téměř bez zrna.', iso: 50, g: 'fine', bw: [.33, .52, .15], tone: [1, 1, 1], toe: 0, sh: [0, 0, 0], hi: [1, 1, 1], con: 1.34, sat: 0, fade: 0, hal: .06, c: ['#0e0e0e', '#f6f6f6', '#7d2a8f'] },
+  { code: 'AC100', lg: 1, sub: 'acros 100', chem: 'černobílý · ISO 100', desc: 'Černobílý film ve stylu Fuji Acros. Méně citlivý na červenou: tmavší pleť a západy, stříbrné nebe.', iso: 100, g: 'fine', bw: [.2, .62, .18], tone: [.99, 1, 1.02], toe: .01, sh: [0, 0, 0], hi: [1, 1, 1], con: 1.12, sat: 0, fade: 0, hal: .08, c: ['#1c1c1c', '#eef1f4', '#2e8f4a'] },
+  { code: 'PAN50', lg: 1, sub: 'pan 50', chem: 'černobílý · ISO 50', desc: 'Pomalý černobílý film ve stylu Ilford Pan F 50. Velmi kontrastní, sametové černé, téměř bez zrna.', iso: 50, g: 'fine', bw: [.33, .52, .15], tone: [1, 1, 1], toe: 0, sh: [0, 0, 0], hi: [1, 1, 1], con: 1.34, sat: 0, fade: 0, hal: .06, c: ['#0e0e0e', '#f6f6f6', '#7d2a8f'] },
   { code: 'FOMA', sub: 'foma 100', chem: 'černobílý · ISO 100', desc: 'Český klasický černobílý film ve stylu Fomapan 100. Teplý tón papíru, staromódní měkké světlo.', iso: 100, g: 'classic', bw: [.32, .52, .16], tone: [1.04, 1, .9], toe: .035, sh: [0, 0, 0], hi: [1, 1, 1], con: 1.08, sat: 0, fade: .04, hal: .15, c: ['#2b2218', '#efe3c8', '#c44b2e'] },
-  { code: 'ORTHO', sub: 'ortho 25', chem: 'ortochromatický · ISO 25', desc: 'Starý ortochromatický film necitlivý na červenou: rty a červená ztmavnou, nebe vybledne. Vzhled fotek z počátku 20. století.', iso: 25, g: 'fine', bw: [.04, .58, .38], tone: [1.02, 1, .95], toe: .02, sh: [0, 0, 0], hi: [1, 1, 1], con: 1.18, sat: 0, fade: .02, hal: .05, c: ['#1a1712', '#e6dcc6', '#4a6b8a'] },
+  { code: 'ORTHO', lg: 1, sub: 'ortho 25', chem: 'ortochromatický · ISO 25', desc: 'Starý ortochromatický film necitlivý na červenou: rty a červená ztmavnou, nebe vybledne. Vzhled fotek z počátku 20. století.', iso: 25, g: 'fine', bw: [.04, .58, .38], tone: [1.02, 1, .95], toe: .02, sh: [0, 0, 0], hi: [1, 1, 1], con: 1.18, sat: 0, fade: .02, hal: .05, c: ['#1a1712', '#e6dcc6', '#4a6b8a'] },
 ];
 FILMS.push({ code: 'IR', sub: 'infrared color', chem: 'barevný infračervený', desc: 'Infračervený vzhled jako z přestavěného foťáku: zeleň a tráva do růžovobílé, nebe tyrkysové, beton do pudrové.', iso: 400, g: 'classic', sh: [0, 0, 0], hi: [1, 1, 1], con: 1.02, sat: 1, fade: .02, hal: .3, gl: .28, ir: 1, c: ['#5fb7b4', '#f2a7bc', '#fbe9ee'] });
 FILMS.push({ code: 'IRC', sub: 'infra red', chem: 'barevný infračervený', desc: 'Sytá infra jako Aerochrome: listí a tráva rudé, nebe tyrkysové, oblaka bílá.', iso: 400, g: 'fine', sh: [0, 0, 0], hi: [1, 1, 1], con: 1.06, sat: 1.1, fade: 0, hal: .25, gl: .2, ir: 3, c: ['#d81b2a', '#4fb3b0', '#f4f1ee'] });
@@ -1290,10 +1294,13 @@ const FILM = Object.fromEntries(FILMS.map(f => [f.code, f]));
 FILM.NONE = { code: 'NONE', sub: 'bez filmu', chem: '', desc: 'Původní fotka bez filmu.', iso: 400, g: 'classic', sh: [0, 0, 0], hi: [1, 1, 1], con: 1, sat: 1, fade: 0, hal: 1, gl: 0, chr: 0, c: ['#333', '#999', '#eee'] };
 let FAV = store.get('fav', []);
 let HIDDEN = store.get('hiddenFilms', []);
-/* DEV (dev.qamera.pages.dev a appka): ve výběru jen filmy ze spektrafilmu. Černobílé a infra jsou vlastní odhad (ne měřený profil) → schované,
-   dokud nebudou předělané; fotky, které je už mají, se vykreslí dál a film u nich ve výběru zůstane */
-const OWNF = new Set(['BW400', 'TX400', 'TM100', 'D3200', 'AC100', 'PAN50', 'FOMA', 'ORTHO', 'IR', 'IRC', 'IRR', 'IRG', 'IR400']), DEVHIDE = !!(window.QDEV || window.QNATIVE);
-const filmsOrdered = () => { const vis = FILMS.filter(f => (!HIDDEN.includes(f.code) && !(DEVHIDE && OWNF.has(f.code))) || f.code === S.film || (S.P && f.code === S.P.film)); const fav = f => FAV.includes(f.code); return [...vis.filter(fav), ...vis.filter(f => !fav(f) && f.v2), ...vis.filter(f => !fav(f) && !f.v2)]; };
+/* DEV (dev.qamera.pages.dev a appka): ve výběru jen sada, kterou Honza vybral 15. 11. – z každé skupiny skoro stejných filmů jeden
+   (změřená ΔE mezi všemi filmy, nic v sadě není blíž než 2,4) + 4 nové černobílé. Ostatní filmy mají definice dál (uložené fotky se vykreslí) */
+const DEVSET = ['P400', 'G200', 'P800P', 'C200', '400H', 'P400U', 'P800C', 'G200P', 'V3-500T', 'C200C', 'TX400', 'AC100', 'PAN50', 'ORTHO'], DEVHIDE = !!(window.QDEV || window.QNATIVE);
+const devOut = f => DEVHIDE && !f.own && !f.scan && f.code !== 'NONE' && !DEVSET.includes(f.code);
+const filmsOrdered = () => { let vis = FILMS.filter(f => (!HIDDEN.includes(f.code) && !devOut(f)) || f.code === S.film || (S.P && f.code === S.P.film));
+  if (DEVHIDE) { const ix = f => { const i = DEVSET.indexOf(f.code); return i < 0 ? (f.code === 'NONE' ? 999 : -1) : i; }; vis = vis.slice().sort((a, b) => ix(a) - ix(b)); return [...vis.filter(f => FAV.includes(f.code)), ...vis.filter(f => !FAV.includes(f.code))]; }
+  const fav = f => FAV.includes(f.code); return [...vis.filter(fav), ...vis.filter(f => !fav(f) && f.v2), ...vis.filter(f => !fav(f) && !f.v2)]; };
 function addFilm(f) { if (FILM[f.code]) return; FILMS.unshift(f); FILM[f.code] = f; }
 /* Typy grainu: f = hustota zrn, sh = ostrost/„krystaličnost“, ch = barevnost (oblaka barviv), cl = shlukování, a = síla, mot = skvrnitost (prošlý film) */
 const GRAINS = {
@@ -1573,7 +1580,7 @@ uniform sampler2D uTex, uCurve, uHL;
 uniform vec2 uCover, uOff, uRes; uniform float uZoom, uRot, uTime, uBypass, uStatic;
 uniform float uExp,uTemp,uTint,uCon,uSat,uStr,uHal,uBloom,uVig,uFade,uSharp,uShad,uHil;
 uniform float uGrain,uGFreq,uGSharp,uGChroma,uGClump,uGMot,uGN; uniform vec3 uGE;
-uniform vec3 uSh,uHi; uniform float uFCon,uFSat,uFFade, uChar, uFSoft, uIRHue; uniform vec3 uBW, uBTone; uniform float uBToe;
+uniform vec3 uSh,uHi; uniform float uFCon,uFSat,uFFade, uChar, uFSoft, uIRHue; uniform vec3 uBW, uBTone; uniform float uBToe, uBWL;
 uniform vec3 uHsl[8]; uniform vec3 uGSh,uGMid,uGHi;
 uniform vec3 uTrMs,uTrSs,uTrMr,uTrSr; uniform float uTr;
 uniform float uSeed, uGlow, uIR, uStyle, uCells, uLevels, uPalN, uZebra;
@@ -1736,7 +1743,7 @@ void main(){
     else { float g = shd1(max(ir * 1.05 - blu * .15, 0.)); vec3 hue = uIRHue > .5 ? vec3(1., .72, .18) : vec3(1., .16, .2);  // IRR / IRG: ČB + listí v jedné barvě
       f = mix(vec3(g), hue * (.35 + g * .85), veg * .92); }
     f = shd(max(f, 0.)) * .97; fl = clamp(luma(f),0.,1.); }
-  if (uBW.r + uBW.g + uBW.b > .01) { // černobílý film: spektrální citlivost emulze (kanálový mix), charakteristická křivka, tón papíru
+  if (uBW.r + uBW.g + uBW.b > .01 && uBWL < .5) { // černobílý film (starý): spektrální citlivost emulze (kanálový mix), charakteristická křivka, tón papíru; nový ČB (uBWL) jde přes log LUT níž
     float y = clamp(dot(clamp(f, 0., 1.), uBW), 0., 1.); y = (y - .5) * uFCon + .5; y = mix(y, y * y * (3. - 2. * y), clamp(uFCon - .9, 0., .6));
     y = uBToe + clamp(y, 0., 1.) * (1. - uBToe - uFFade * .4); f = vec3(y) * uBTone; fl = y;
   } else if (uLut > .5 && uFV > 1.5) { f = filmLog(lin); gLgD = gLgT; // film v2: negativ → tisk → sken ze spektrafilmu, bez vlastního „charakteru“ navrch
@@ -1854,14 +1861,14 @@ class Engine {
       const at = (arr, v) => arr[clamp(Math.round(v * 255), 0, 255)];
       for (let i = 0; i < 256; i++) { const v = m[i]; d[i * 4] = at(cr, v) * 255; d[i * 4 + 1] = at(cg, v) * 255; d[i * 4 + 2] = at(cb, v) * 255; d[i * 4 + 3] = 255; }
       gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, this.ctex); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 256, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, d); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); }
-    const fb = f.base || P.film, fv = ((P.fv || 1) > 1 || (FILM[fb] || {}).v2) && LUTL[fb] ? 2 : 1, sc = fv > 1 && P.scan && LUTSC[P.scan] ? P.scan : null, scL = sc && LUTSC[sc][fb];
+    const fb = f.base || P.film, fbF = FILM[fb] || {}, bwL = !!(fbF.bw && fbF.lg && (P.grv || 1) >= 3 && LUTL[fb]), fv = (fbF.bw ? bwL : ((P.fv || 1) > 1 || fbF.v2) && LUTL[fb]) ? 2 : 1, sc = fv > 1 && P.scan && LUTSC[P.scan] ? P.scan : null, scL = sc && LUTSC[sc][fb];
     if (sc && !scL && SCAN_OK.has(fb)) ensureScan(sc); // sken labu: LUT se teprve načítá → zatím tisk
     const lk = scL ? 'sc:' + sc + ':' + fb : (fv > 1 ? 'log:' : '') + fb, L = !o.noLut && (scL || (fv > 1 ? LUTL : LUTD)[fb]); // LUT filmu (varianta bere LUT základního filmu; film v2 = log LUT) (3D textura, každý WebGL kontext má svoji)
     if (L) { let t = this.luts[lk]; gl.activeTexture(gl.TEXTURE3);
       if (!t) { t = this.luts[lk] = gl.createTexture(); gl.bindTexture(gl.TEXTURE_3D, t); [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER].forEach(k => gl.texParameteri(gl.TEXTURE_3D, k, gl.LINEAR)); [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T, gl.TEXTURE_WRAP_R].forEach(k => gl.texParameteri(gl.TEXTURE_3D, k, gl.CLAMP_TO_EDGE));
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.texImage3D(gl.TEXTURE_3D, 0, gl.RGBA8, LUTN, LUTN, LUTN, 0, gl.RGBA, gl.UNSIGNED_BYTE, L); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); }
       else gl.bindTexture(gl.TEXTURE_3D, t); }
-    gl.uniform1f(u.uLut, L ? 1 : 0); gl.uniform1f(u.uFV, fv); const v2 = (FILM[fb] || {}).v2; gl.uniform1f(u.uNeg, fv > 1 && v2 && (v2 !== 3 || (P.fv || 1) >= 3) ? 1 : 0); // V2: zrno podle hustoty + pleť (v2 3 = starý film, jen nové úpravy fv 3)
+    gl.uniform1f(u.uLut, L ? 1 : 0); gl.uniform1f(u.uFV, fv); const v2 = (FILM[fb] || {}).v2; gl.uniform1f(u.uNeg, fv > 1 && v2 && v2 !== 4 && (v2 !== 3 || (P.fv || 1) >= 3) ? 1 : 0); gl.uniform1f(u.uBWL, bwL ? 1 : 0); // V2: zrno podle hustoty + pleť (v2 3 = starý film, jen nové úpravy fv 3)
     const D = P.depth && o.depth ? o.depth : null; // hloubková mapa fotky
     if (D) { gl.activeTexture(gl.TEXTURE2); if (!this.dtex) { this.dtex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, this.dtex); [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER].forEach(k => gl.texParameteri(gl.TEXTURE_2D, k, gl.LINEAR)); [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(k => gl.texParameteri(gl.TEXTURE_2D, k, gl.CLAMP_TO_EDGE)); }
       gl.bindTexture(gl.TEXTURE_2D, this.dtex); if (this.dSrc !== D) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, D); gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); this.dSrc = D; } }
@@ -1880,8 +1887,8 @@ class Engine {
     const fk = (FFMT[P.ffmt] || FFMT['35']).k, nx = P.nexp || 0, latG = 1 + .3 * Math.max(-nx, 0) - .1 * Math.max(nx, 0); // větší negativ = jemnější zrno; podexpozice = víc zrna
     const g2 = (P.grv || 1) >= 2, gNeg = fv > 1 && v2 && (v2 !== 3 || (P.fv || 1) >= 3); // grv 2: klidnější zrno (jen nové úpravy)
     // grv 3: zrno v negativu před tabulkou filmu (jen filmy s log LUT); 35mm políčko = 4250 zrn na delší stranu (pixel 8,2 µm, na kterém je změřená σ), větší formát / menší zrno = víc
-    const g3 = (P.grv || 1) >= 3 && fv > 1 && !!L && !f.bw, gW = this.c.width, gH = this.c.height;
-    const gNf = o.gn || 4250 * gH / Math.max(gW, gH) * fk / (P.gsize * vm.gsize) / (.84 + .16 * isoK) / (o.zoom || 1), gNe = Math.min(gNf, gH), gA = g3 ? P.grain / .5 * vm.grain * (.84 + .16 * isoK) * k * latG * gNe / gNf : 0;
+    const g3 = (P.grv || 1) >= 3 && fv > 1 && !!L && (!f.bw || bwL), gW = this.c.width, gH = this.c.height;
+    const gNf = o.gn || 4250 * gH / Math.max(gW, gH) * fk / (P.gsize * vm.gsize) / (.84 + .16 * isoK) / (o.zoom || 1), gNe = Math.min(gNf, gH), gA = g3 ? P.grain / .5 * vm.grain * (.84 + .16 * isoK) * k * latG * gNe / gNf * (bwL ? 1.7 : 1) : 0; // ČB: tři vrstvy se sečtou do jedné → šum by se zprůměroval
     gl.uniform3f(u.uGE, .232 * gA, .152 * gA, .208 * gA); gl.uniform1f(u.uGN, gNe);
     gl.uniform1f(u.uGrain, g3 ? 0 : P.grain * vm.grain * G.a * (g2 ? (.74 + .16 * isoK) * (gNeg ? .7 : .85) : .6 + .4 * isoK) * k * latG / Math.sqrt(fk)); gl.uniform1f(u.uGFreq, 560 / (P.gsize * vm.gsize) * G.f / (g2 ? .86 + .24 * isoK : .72 + .38 * isoK) * fk);
     const lt = LFS[P.lf], lw = f.bw || [.2126, .7152, .0722], ln = lt ? lt[0] * lw[0] + lt[1] * lw[1] + lt[2] * lw[2] : 1;
@@ -1921,8 +1928,8 @@ function ensureScan(sc) { if (SCANLD[sc] || !LUTSC[sc] || location.protocol === 
     .then(() => { S.photos.filter(ph => ph.P && ph.P.scan === sc).forEach(rethumb); if (S.cur) renderEd(true); if (S.screen === 'gallery') renderGallery(); }); }
 async function loadLuts() {
   if (location.protocol === 'file:') return; // z disku se PNG nedá přečíst – zůstane jednoduchý shader
-  await Promise.all(FILMS.filter(f => !f.ir && !f.scan && !f.bw && !f.own).map(async f => { try {
-    for (const [dir, dst] of [['', LUTD], ['log/', LUTL]]) { const out = await lutPng(`../../luts/${dir}${encodeURIComponent(f.code)}.png`); if (out) dst[f.code] = out; } } catch {} }));
+  await Promise.all(FILMS.filter(f => !f.ir && !f.scan && (!f.bw || f.lg) && !f.own).map(async f => { try {
+    for (const [dir, dst] of (f.lg || f.v2 === 4 ? [['log/', LUTL]] : [['', LUTD], ['log/', LUTL]])) { const out = await lutPng(`../../luts/${dir}${encodeURIComponent(f.code)}.png`); if (out) dst[f.code] = out; } } catch {} }));
   if (!Object.keys(LUTD).length) return;
   S.photos.forEach(rethumb); if (S.screen === 'gallery') renderGallery(); if (S.cur) renderEd(true); if (S.screen === 'editor' && S.tab === 'film' && !S.adv) drawFilmThumbs(); if (typeof buildCarousel === 'function') buildCarousel();
 }
@@ -2253,7 +2260,7 @@ function setFmSample(src) { FMS = cropAr(src, .8); const c = mk(400, 500); c.get
 async function fmFromFile(f) { if (!f) return; try { const url = URL.createObjectURL(f), img = new Image(); img.src = url; await img.decode(); const k = Math.min(1, 900 / Math.max(img.naturalWidth, img.naturalHeight)), c = mk(Math.round(img.naturalWidth * k), Math.round(img.naturalHeight * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); setFmSample(c); } catch { toast('Fotku se nepodařilo načíst'); } }
 function renderFilmsMgr() { // všechny filmy na tvojí fotce: podrž = před/po, srdíčko = oblíbený, oko = skrýt z výběru
   const ph = S.photos.find(p => p.kind !== 'arch') || S.photos[0], src = fmSample() || srcOf(ph, ph.P);
-  $('#fmg').innerHTML = `<p class="note">Ukázka na tvojí fotce (změníš ji dole). Podrž náhled = původní fotka. Skryté filmy nebudou ve výběru ve foťáku ani v editoru.</p>` + FILMS.filter(f => !(DEVHIDE && OWNF.has(f.code))).map(f => `<div class="fcard ${HIDDEN.includes(f.code) ? 'off' : ''}" data-c="${f.code}"><canvas width="240" height="300"></canvas>
+  $('#fmg').innerHTML = `<p class="note">Ukázka na tvojí fotce (změníš ji dole). Podrž náhled = původní fotka. Skryté filmy nebudou ve výběru ve foťáku ani v editoru.</p>` + FILMS.filter(f => !devOut(f)).map(f => `<div class="fcard ${HIDDEN.includes(f.code) ? 'off' : ''}" data-c="${f.code}"><canvas width="240" height="300"></canvas>
     <div class="ft"><div><b>${f.code}</b><small>${f.sub}</small></div><div class="fa"><button class="heart ${FAV.includes(f.code) ? 'on' : ''}" aria-label="Oblíbený">${iconSVG(FAV.includes(f.code) ? 'heart' : 'heartO')}</button><button class="vis ${HIDDEN.includes(f.code) ? '' : 'on'}" aria-label="Zobrazit ve výběru">${iconSVG('eye')}</button></div></div></div>`).join('')
     + `<button class="fcard addcard" id="fmAdd"><span class="ab">+</span><div class="ft"><div><b>NOVÝ FILM</b><small>film scan z fotky</small></div></div></button>`;
   const P = fmSample() ? DEF() : JSON.parse(JSON.stringify(ph.P)); P.crop = DEF().crop; P.gtype = null;
