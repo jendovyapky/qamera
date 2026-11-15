@@ -1,5 +1,6 @@
 import AVFoundation
 import CoreImage
+import Metal
 import UIKit
 
 // 5s klip z webové spouště (režim KLIP): web pustí svou kameru, appka na chvíli spustí AVCaptureSession,
@@ -21,6 +22,7 @@ final class ClipCapture: NSObject, AVCaptureFileOutputRecordingDelegate {
         var ev = 0.0, con = 0.0, sat = 0.0, gn = 4250.0
         var bloom = 0.0, glow = 0.0 // záře jako ve fotce (už vynásobené sílou filmu)
         var rot = 0 // natočení telefonu při natáčení: o kolik stupňů po směru hodin otočit obraz (0 / 90 / 180 / 270)
+        var shader: [String: Any]? // hodnoty filmového shaderu z webu (Engine.render) → klip vyvolá FilmShader stejně jako fotku
         var lut: Data? // barevná tabulka z webu (PNG 64³) = přesně barvy fotky; když chybí, počítá se film postaru v ClipDevelop.cube
     }
 
@@ -117,7 +119,7 @@ final class ClipCapture: NSObject, AVCaptureFileOutputRecordingDelegate {
                 let mp4 = RawCapture.dir.appendingPathComponent(id + ".mp4"), jpg = RawCapture.dir.appendingPathComponent(id + ".jpg")
                 let sj = RawCapture.dir.appendingPathComponent(id + "-s.jpg")
                 do {
-                    try ClipDevelop.process(src: url, dst: mp4, thumb: jpg, log: log, film: o.film, rot: o.rot, str: o.str, grain: o.grain, hal: o.hal, vig: o.vig, apl: o.apl, ev: o.ev, con: o.con, sat: o.sat, gn: o.gn, bloom: o.bloom, glow: o.glow, srcThumb: sj, webLut: o.lut, progress: progress)
+                    try ClipDevelop.process(src: url, dst: mp4, thumb: jpg, log: log, film: o.film, rot: o.rot, str: o.str, grain: o.grain, hal: o.hal, vig: o.vig, apl: o.apl, ev: o.ev, con: o.con, sat: o.sat, gn: o.gn, bloom: o.bloom, glow: o.glow, srcThumb: sj, webLut: o.lut, shader: o.shader, progress: progress)
                 } catch { try? FileManager.default.removeItem(at: url); throw error }
                 if let cid = ClipStore.keep(url) { res.src = cid; if FileManager.default.fileExists(atPath: sj.path) { res.sjpg = id + "-s.jpg" } }
                 res.mp4 = id + ".mp4"; res.jpg = id + ".jpg"
@@ -188,7 +190,7 @@ enum ClipDevelop {
         guard let img = UIImage(data: data)?.cgImage else { return nil }
         return lutPixels(img)
     }
-    private static func lutPixels(_ img: CGImage) -> (Int, [Float])? {
+    static func lutPixels(_ img: CGImage) -> (Int, [Float])? {
         let n = img.height, w = img.width
         guard w == n * n else { return nil }
         var px = [UInt8](repeating: 0, count: w * n * 4)
@@ -310,7 +312,7 @@ enum ClipDevelop {
         return o
     }
 
-    static func process(src: URL, dst: URL, thumb: URL, log: Bool, film: String, rot: Int = 0, str: Double, grain: Double, hal: Double, vig: Double, apl: Double = 0.5, ev: Double = 0, con: Double = 0, sat: Double = 0, gn: Double = 4250, bloom: Double = 0, glow: Double = 0, srcThumb: URL? = nil, webLut: Data? = nil,
+    static func process(src: URL, dst: URL, thumb: URL, log: Bool, film: String, rot: Int = 0, str: Double, grain: Double, hal: Double, vig: Double, apl: Double = 0.5, ev: Double = 0, con: Double = 0, sat: Double = 0, gn: Double = 4250, bloom: Double = 0, glow: Double = 0, srcThumb: URL? = nil, webLut: Data? = nil, shader: [String: Any]? = nil,
                         progress: (Double) -> Void) throws {
         let tStart = Date()
         let asset = AVURLAsset(url: src)
@@ -349,7 +351,7 @@ enum ClipDevelop {
         wi.expectsMediaDataInRealTime = false
         let ad = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: wi, sourcePixelBufferAttributes: [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA, kCVPixelBufferWidthKey as String: w,
-            kCVPixelBufferHeightKey as String: h, kCVPixelBufferIOSurfacePropertiesKey as String: [:]])
+            kCVPixelBufferHeightKey as String: h, kCVPixelBufferIOSurfacePropertiesKey as String: [:], kCVPixelBufferMetalCompatibilityKey as String: true])
         writer.add(wi)
         // zvuk z originálu beze změny (AAC) – vlastní fronta, aby se zápis obrazu a zvuku mohl prokládat
         var aro: AVAssetReaderTrackOutput?, awi: AVAssetWriterInput?
@@ -375,6 +377,13 @@ enum ClipDevelop {
         let ext = CGRect(x: 0, y: 0, width: w, height: h)
         // zrno v negativu, tabulka filmu, halation, bloom, glow, vinětace = stejný řetězec jako hledáček v Metalu (FilmLook)
         let look = FilmLook(w: w, h: h, log: log, cube: cubeData, str: str, grain: grain, hal: hal, bloom: bloom, glow: glow, vig: vig, gn: gn)
+        /* nově: filmový shader fotky v Metalu (hodnoty z webu) → klip vypadá jako fotka; FilmLook zůstává jako záloha */
+        var fsh: FilmShader?, tcache: CVMetalTextureCache?
+        if let sh = shader, let f = FilmShader() {
+            f.configure(sh)
+            if f.ready, CVMetalTextureCacheCreate(nil, nil, f.gpu.dev, nil, &tcache) == kCVReturnSuccess, tcache != nil { fsh = f }
+        }
+        Ladeni.log(fsh != nil ? "klip: filmový shader fotky (Metal), LUT \((shader?["lut"] as? String) ?? "–")" : "klip: řetězec FilmLook")
 
         guard reader.startReading() else { throw reader.error ?? QError(message: "klip nejde přečíst") }
         writer.startWriting()
@@ -402,14 +411,23 @@ enum ClipDevelop {
                 if log { let vf = CameraEngine.cubeFilter(CameraEngine.logCube(n: 48, linearScale: nil)); vf.setValue(src, forKey: kCIInputImageKey); sv = vf.outputImage ?? src }
                 if let j = ctx.jpegRepresentation(of: sv.cropped(to: ext).oriented(thumbOr), colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!, options: [:]) { try? j.write(to: st) }
             }
-            let img = look.apply(src, frame: frame)
             while !wi.isReadyForMoreMediaData && writer.status == .writing { Thread.sleep(forTimeInterval: 0.005) }
             if writer.status != .writing { cut = writer.error?.localizedDescription ?? "zápis se zastavil"; break }
             guard let pool = ad.pixelBufferPool else { cut = "došla paměť na snímky"; break }
             var outPB: CVPixelBuffer?
             CVPixelBufferPoolCreatePixelBuffer(nil, pool, &outPB)
             guard let opb = outPB else { cut = "došla paměť na snímky"; break }
-            ctx.render(img, to: opb, bounds: ext, colorSpace: nil)
+            if let f = fsh, let tc = tcache {
+                var cvt: CVMetalTexture?
+                CVMetalTextureCacheCreateTextureFromImage(nil, tc, opb, nil, .bgra8Unorm, w, h, 0, &cvt)
+                guard let cvt, let mt = CVMetalTextureGetTexture(cvt), let cb = f.gpu.queue.makeCommandBuffer() else { cut = "Metal: textura snímku"; break }
+                do { try f.encode(src, log: log, mirror: false, zoom: 1, time: Float(frame) / 30, est: log ? 0 : 1, maxSide: 4096, out: mt, cb: cb) }
+                catch { cut = "Metal: " + error.localizedDescription; break }
+                cb.commit(); cb.waitUntilCompleted()
+                if cb.status == .error { cut = "Metal: " + (cb.error?.localizedDescription ?? "chyba GPU"); break }
+            } else {
+                ctx.render(look.apply(src, frame: frame), to: opb, bounds: ext, colorSpace: nil)
+            }
             CVBufferSetAttachment(opb, kCVImageBufferColorPrimariesKey, kCVImageBufferColorPrimaries_ITU_R_709_2, .shouldPropagate)
             CVBufferSetAttachment(opb, kCVImageBufferTransferFunctionKey, kCVImageBufferTransferFunction_ITU_R_709_2, .shouldPropagate)
             CVBufferSetAttachment(opb, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_709_2, .shouldPropagate)

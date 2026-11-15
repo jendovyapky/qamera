@@ -22,16 +22,17 @@ const { chromium } = require('playwright-core');
   const vfs = () => p.evaluate(() => __m.filter(m => m.op === 'vf'));
   const last = async () => { const v = await vfs(); return v[v.length - 1]; };
   console.log('vf', JSON.stringify(await last()));
-  console.log('look', JSON.stringify(await p.evaluate(() => { const l = __m.filter(m => m.op === 'look'); const x = l[l.length - 1]; return x && { n: l.length, lut: x.lut, str: x.str, grain: x.grain, vig: x.vig, gn: Math.round(x.gn) }; })));
+  console.log('uni', JSON.stringify(await p.evaluate(() => { const l = __m.filter(m => m.op === 'uni'); const x = l[l.length - 1]; return x && { n: l.length, lut: x.lut, curve: (x.curve || '').length, pocet: Object.keys(x.u).length, uExp: x.u.uExp, uGE: x.u.uGE, uHsl: (x.u.uHsl || []).length, uEst: x.u.uEst, uLF: x.u.uLF, uGN: x.u.uGN, uStr: x.u.uStr }; })));
+  console.log('klíče', await p.evaluate(() => { const l = __m.filter(m => m.op === 'uni'); return Object.keys(l[l.length - 1].u).sort().join(' '); }));
   // bez potvrzení appky web kreslí dál
   const rc = async () => p.evaluate(async () => { let n = 0; const o = camE.render; camE.render = function () { n++; return o.apply(this, arguments); }; await new Promise(r => setTimeout(r, 500)); camE.render = o; return n; });
   console.log('render před potvrzením', await rc(), 'třída', await p.evaluate(() => document.documentElement.className));
   await p.evaluate(() => __qMvf(true));
   console.log('render po potvrzení', await rc(), 'třída', await p.evaluate(() => document.documentElement.className), 'pozadí', await p.evaluate(() => getComputedStyle(document.querySelector('#vf')).backgroundColor));
   // změna EV → nová tabulka
-  const n0 = await p.evaluate(() => __m.filter(m => m.op === 'look').length);
+  const n0 = await p.evaluate(() => __m.filter(m => m.op === 'uni').length);
   await p.evaluate(() => { S.ev = 1; updLcd(); }); await p.waitForTimeout(400);
-  console.log('nová tabulka po EV', (await p.evaluate(() => __m.filter(m => m.op === 'look').length)) - n0);
+  console.log('nové hodnoty po EV', (await p.evaluate(() => __m.filter(m => m.op === 'uni').length)) - n0, await p.evaluate(() => { const l = __m.filter(m => m.op === 'uni'); return l[l.length - 1].u.uExp; }));
   // dlouhý čas → web kreslí sám
   await p.evaluate(() => { S.timeIdx = 2; }); await p.waitForTimeout(300);
   console.log('dlouhý čas: vf.on', (await last()).on, 'třída', JSON.stringify(await p.evaluate(() => document.documentElement.className)), 'render', await rc());
