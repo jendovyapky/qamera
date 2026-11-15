@@ -15,6 +15,8 @@ final class ClipCapture: NSObject, AVCaptureFileOutputRecordingDelegate {
         var seconds = 5.0
         var zoom = 1.0, ultra = false, tele = false
         var film = "NONE", str = 1.0, grain = 0.5, hal = 0.5, vig = 0.0, apl = 0.5
+        // z foťáku: korekce expozice (EV), kontrast a sytost (push / pull), počet zrn na delší stranu políčka – stejné hodnoty, jaké má hledáček
+        var ev = 0.0, con = 0.0, sat = 0.0, gn = 4250.0
     }
 
     struct Result {
@@ -105,7 +107,7 @@ final class ClipCapture: NSObject, AVCaptureFileOutputRecordingDelegate {
                 res.log = log
                 res.lensZoom = lensZoom
                 let mp4 = RawCapture.dir.appendingPathComponent(id + ".mp4"), jpg = RawCapture.dir.appendingPathComponent(id + ".jpg")
-                try ClipDevelop.process(src: url, dst: mp4, thumb: jpg, log: log, film: o.film, str: o.str, grain: o.grain, hal: o.hal, vig: o.vig, apl: o.apl, progress: progress)
+                try ClipDevelop.process(src: url, dst: mp4, thumb: jpg, log: log, film: o.film, str: o.str, grain: o.grain, hal: o.hal, vig: o.vig, apl: o.apl, ev: o.ev, con: o.con, sat: o.sat, gn: o.gn, progress: progress)
                 try? FileManager.default.removeItem(at: url)
                 res.mp4 = id + ".mp4"; res.jpg = id + ".jpg"
                 done(.success(res))
@@ -191,7 +193,7 @@ enum ClipDevelop {
         return x.map { max(L + ($0 - L) / s, 0) }
     }
 
-    static func cube(film: String, log: Bool, str: Double, apl: Double = 0.5) -> Data {
+    static func cube(film: String, log: Bool, str: Double, apl: Double = 0.5, ev: Double = 0, con: Double = 0, sat: Double = 0) -> Data {
         let n = 64, lut = filmLUT(film)
         // Rec.2020 → Rec.709/sRGB (lineárně)
         let M = [1.6605, -0.5876, -0.0728, -0.1246, 1.1329, -0.0083, -0.0182, -0.1006, 1.1187]
@@ -205,11 +207,14 @@ enum ClipDevelop {
             } else { l = p.map(srgbToLinear) }
             l = l.map { max($0, 0) }
             if apl > 0 { l = log ? aplFwd(l, apl) : aplInv(l, apl) }
+            // jako filmLog ve webu: korekce expozice, sytost a kontrast (v log expozici) PŘED tabulkou filmu
+            if ev != 0 { let k = pow(2, ev); l = l.map { $0 * k } }
+            if sat != 0 { let L = luma(l); l = l.map { max(L + ($0 - L) * (1 + sat), 0) } }
             // bez filmu: lineární → sRGB s měkkým ramenem (log jinak přepálí)
             let plain = l.map { linearToSrgb($0 / (1 + $0 * 0.18)) }
             var c = plain
             if let lut {
-                let t = l.map { min(max((log2(max($0, 1e-6) / 0.18) + 8) / 14, 0), 1) }
+                let t = l.map { min(max((log2(max($0, 1e-6) / 0.18) * (1 + con * 0.5) + 8) / 14, 0), 1) }
                 let f = sample(lut, t[0], t[1], t[2])
                 c = [plain[0] + (f.0 - plain[0]) * str, plain[1] + (f.1 - plain[1]) * str, plain[2] + (f.2 - plain[2]) * str]
             }
@@ -219,7 +224,7 @@ enum ClipDevelop {
         return out.withUnsafeBufferPointer { Data(buffer: $0) }
     }
 
-    static func process(src: URL, dst: URL, thumb: URL, log: Bool, film: String, str: Double, grain: Double, hal: Double, vig: Double, apl: Double = 0.5,
+    static func process(src: URL, dst: URL, thumb: URL, log: Bool, film: String, str: Double, grain: Double, hal: Double, vig: Double, apl: Double = 0.5, ev: Double = 0, con: Double = 0, sat: Double = 0, gn: Double = 4250,
                         progress: (Double) -> Void) throws {
         let asset = AVURLAsset(url: src)
         guard let track = asset.tracks(withMediaType: .video).first else { throw QError(message: "klip je prázdný") }
@@ -249,7 +254,8 @@ enum ClipDevelop {
         let ctx = CIContext(options: [.workingColorSpace: NSNull(), .outputColorSpace: NSNull(), .workingFormat: CIFormat.RGBAh])
         let cubeF = CIFilter(name: "CIColorCube")!
         cubeF.setValue(64, forKey: "inputCubeDimension")
-        cubeF.setValue(cube(film: film, log: log, str: str, apl: apl), forKey: "inputCubeData")
+        var cut: String?
+        cubeF.setValue(cube(film: film, log: log, str: str, apl: apl, ev: ev, con: con, sat: sat), forKey: "inputCubeData")
         let ext = CGRect(x: 0, y: 0, width: w, height: h)
         /* zrno = šum v hustotě negativu: přidává se do logu PŘED filmem, takže ho křivka filmu sama zeslabí ve světlech
            (rameno) i ve stínech (pata) a nejvíc je vidět ve středních tónech – jako skutečné zrno. Dvě velikosti zrn
@@ -268,7 +274,7 @@ enum ClipDevelop {
         /* Zrno jako ve fotce (grv 3, kalibrované na spektrafilm): každá barevná vrstva negativu šumí zvlášť (σ 0,232 / 0,152 / 0,208 EV
            na pixel 8,2 µm, vrstvy se míchají jen z desetiny), jemné – jeden pixel klipu průměruje víc zrn (4250 zrn na delší stranu políčka).
            1 EV ≈ 0,0855 kódu Apple Logu; CIRandomGenerator = nezávislé kanály 0…1 (σ 0,2887), rozostření 0,5 px ubere σ na 0,564 */
-        let gk = grain / 0.5 * max(str, 0.15) * (log ? 0.0855 : 0.052) * min(1, Double(max(w, h)) / 4250) / (0.2887 * 0.564)
+        let gk = grain / 0.5 * str * (log ? 0.0855 : 0.052) * min(1, Double(max(w, h)) / max(gn, 500)) / (0.2887 * 0.564)
         func negGrain(_ frame: Int) -> CIImage {
             let off = CGAffineTransform(translationX: CGFloat((frame * 977 + 331) % 8192), y: CGFloat((frame * 613 + 173) % 8192))
             let n = noiseBase.transformed(by: off).applyingGaussianBlur(sigma: 0.5).cropped(to: ext)
@@ -313,7 +319,7 @@ enum ClipDevelop {
             if t0 == nil { t0 = pts }
             let src = CIImage(cvPixelBuffer: pb, options: [.colorSpace: NSNull()])
             var img = src
-            if sd > 0.0005 {
+            if gk > 0.0001 {
                 img = negGrain(frame).applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: img]).cropped(to: ext)
             }
             cubeF.setValue(img, forKey: kCIInputImageKey)
@@ -339,16 +345,17 @@ enum ClipDevelop {
                 img = tint.applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: img]).cropped(to: ext)
             }
             if let v = vigImg { img = img.applyingFilter("CIMultiplyCompositing", parameters: [kCIInputBackgroundImageKey: v]).cropped(to: ext) }
-            while !wi.isReadyForMoreMediaData { Thread.sleep(forTimeInterval: 0.005) }
-            guard let pool = ad.pixelBufferPool else { break }
+            while !wi.isReadyForMoreMediaData && writer.status == .writing { Thread.sleep(forTimeInterval: 0.005) }
+            if writer.status != .writing { cut = writer.error?.localizedDescription ?? "zápis se zastavil"; break }
+            guard let pool = ad.pixelBufferPool else { cut = "došla paměť na snímky"; break }
             var outPB: CVPixelBuffer?
             CVPixelBufferPoolCreatePixelBuffer(nil, pool, &outPB)
-            guard let opb = outPB else { break }
+            guard let opb = outPB else { cut = "došla paměť na snímky"; break }
             ctx.render(img, to: opb, bounds: ext, colorSpace: nil)
             CVBufferSetAttachment(opb, kCVImageBufferColorPrimariesKey, kCVImageBufferColorPrimaries_ITU_R_709_2, .shouldPropagate)
             CVBufferSetAttachment(opb, kCVImageBufferTransferFunctionKey, kCVImageBufferTransferFunction_ITU_R_709_2, .shouldPropagate)
             CVBufferSetAttachment(opb, kCVImageBufferYCbCrMatrixKey, kCVImageBufferYCbCrMatrix_ITU_R_709_2, .shouldPropagate)
-            ad.append(opb, withPresentationTime: CMTimeSubtract(pts, t0!))
+            if !ad.append(opb, withPresentationTime: CMTimeSubtract(pts, t0!)) { cut = writer.error?.localizedDescription ?? "snímek se nezapsal"; break }
             frame += 1
             progress(min(1, CMTimeSubtract(pts, t0!).seconds / dur))
         }
@@ -357,6 +364,7 @@ enum ClipDevelop {
         writer.finishWriting { sem.signal() }
         sem.wait()
         guard writer.status == .completed else { throw writer.error ?? QError(message: "klip se nepodařilo uložit") }
+        if let cut { Ladeni.log("klip vyvolání přerušeno po \(frame) snímcích: \(cut)"); throw QError(message: "klip se nevyvolal celý (" + cut + ")") }
         if reader.status == .failed { throw reader.error ?? QError(message: "klip nejde přečíst") }
 
         // náhled = první snímek (otočený jako video)

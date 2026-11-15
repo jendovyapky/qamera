@@ -49,10 +49,19 @@ final class CameraEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate
     private var ctlObjs: [AnyObject] = []
     var onCtl: ((String, Any) -> Void)?
     func setCtl(films: [String]?, film: Int?, ev: Double?) {
-        if let films { ctlFilms = films }
+        var rebuild = false
+        if let films, films != ctlFilms { ctlFilms = films; rebuild = true }
         if let film { ctlFilm = film }
         if let ev { ctlEv = ev }
-        if #available(iOS 18.0, *) { DispatchQueue.main.async { self.syncCtl() } }
+        guard #available(iOS 18.0, *) else { return }
+        if rebuild {
+            // názvy v nabídce bočního tlačítka jsou dané při vytvoření → nový seznam (oblíbené, jiná sada) = ovládání postavit znovu
+            q.async {
+                guard let s = self.session else { return }
+                Ladeni.log("boční tlačítko: nový seznam filmů (\(self.ctlFilms.count)), vybraný \(self.ctlFilm)")
+                _ = QCatch.run { s.beginConfiguration(); self.addControls(s); s.commitConfiguration() }
+            }
+        } else { DispatchQueue.main.async { self.syncCtl() } }
     }
     var canSend: () -> Bool = { true }
 
