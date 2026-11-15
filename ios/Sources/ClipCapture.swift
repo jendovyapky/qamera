@@ -219,8 +219,11 @@ enum ClipDevelop {
             var v = p
             if log {
                 let a = p.map(appleLogToLinear)
-                var l = [M[0] * a[0] + M[1] * a[1] + M[2] * a[2], M[3] * a[0] + M[4] * a[1] + M[5] * a[2], M[6] * a[0] + M[7] * a[1] + M[8] * a[2]].map { max($0, 0) }
-                let m = l.max() ?? 0
+                var r1: Double = M[0] * a[0]; r1 += M[1] * a[1]; r1 += M[2] * a[2]
+                var g1: Double = M[3] * a[0]; g1 += M[4] * a[1]; g1 += M[5] * a[2]
+                var b1: Double = M[6] * a[0]; b1 += M[7] * a[1]; b1 += M[8] * a[2]
+                var l: [Double] = [max(r1, 0), max(g1, 0), max(b1, 0)]
+                let m: Double = l.max() ?? 0
                 if m > 0.55 { let f = 0.55 + 0.45 * (1 - exp(-(m - 0.55) / 0.45)); l = l.map { $0 * f / m } }
                 v = l.map { linearToSrgb($0) }
             }
