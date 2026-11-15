@@ -17,6 +17,7 @@ final class ClipCapture: NSObject, AVCaptureFileOutputRecordingDelegate {
         var film = "NONE", str = 1.0, grain = 0.5, hal = 0.5, vig = 0.0, apl = 0.5
         // z foťáku: korekce expozice (EV), kontrast a sytost (push / pull), počet zrn na delší stranu políčka – stejné hodnoty, jaké má hledáček
         var ev = 0.0, con = 0.0, sat = 0.0, gn = 4250.0
+        var bloom = 0.0, glow = 0.0 // záře jako ve fotce (už vynásobené sílou filmu)
     }
 
     struct Result {
@@ -107,7 +108,7 @@ final class ClipCapture: NSObject, AVCaptureFileOutputRecordingDelegate {
                 res.log = log
                 res.lensZoom = lensZoom
                 let mp4 = RawCapture.dir.appendingPathComponent(id + ".mp4"), jpg = RawCapture.dir.appendingPathComponent(id + ".jpg")
-                try ClipDevelop.process(src: url, dst: mp4, thumb: jpg, log: log, film: o.film, str: o.str, grain: o.grain, hal: o.hal, vig: o.vig, apl: o.apl, ev: o.ev, con: o.con, sat: o.sat, gn: o.gn, progress: progress)
+                try ClipDevelop.process(src: url, dst: mp4, thumb: jpg, log: log, film: o.film, str: o.str, grain: o.grain, hal: o.hal, vig: o.vig, apl: o.apl, ev: o.ev, con: o.con, sat: o.sat, gn: o.gn, bloom: o.bloom, glow: o.glow, progress: progress)
                 try? FileManager.default.removeItem(at: url)
                 res.mp4 = id + ".mp4"; res.jpg = id + ".jpg"
                 done(.success(res))
@@ -224,7 +225,7 @@ enum ClipDevelop {
         return out.withUnsafeBufferPointer { Data(buffer: $0) }
     }
 
-    static func process(src: URL, dst: URL, thumb: URL, log: Bool, film: String, str: Double, grain: Double, hal: Double, vig: Double, apl: Double = 0.5, ev: Double = 0, con: Double = 0, sat: Double = 0, gn: Double = 4250,
+    static func process(src: URL, dst: URL, thumb: URL, log: Bool, film: String, str: Double, grain: Double, hal: Double, vig: Double, apl: Double = 0.5, ev: Double = 0, con: Double = 0, sat: Double = 0, gn: Double = 4250, bloom: Double = 0, glow: Double = 0,
                         progress: (Double) -> Void) throws {
         let asset = AVURLAsset(url: src)
         guard let track = asset.tracks(withMediaType: .video).first else { throw QError(message: "klip je prázdný") }
@@ -287,6 +288,19 @@ enum ClipDevelop {
         /* halation = červenooranžová záře kolem opravdu přepálených světel (v logu nad ~1 EV nad bílou), jen kolem, ne přes světlo samo */
         let t0h: CGFloat = log ? 0.70 : 0.93, t1h: CGFloat = log ? 0.86 : 1.0, hk = CGFloat(0.45 * hal)
         let q: CGFloat = 0.25, hh = CGFloat(h) * q
+        /* Bloom a Glow jako ve fotce. Čísla napasovaná na výstup foto shaderu na Honzově snímku se sluncem (test-raw/honza/b/fit.py):
+           Bloom = měkká záře jen z opravdu přepálených světel (scéna 2× nad bílou = kód Apple Logu nad ~0,78), tři rozostření
+           0,6 / 1,6 / 4,5 % delší strany s vahami 0,5 / 0,8 / 1, přičtené „screen“ (v už světlém místě přidá míň), síla 1,25 × bloom.
+           Glow = difúze: rozostřený hotový obraz (1,2 % delší strany) vážený jasem (smoothstep 0,4…0,95) × 0,85, screen s vahou glow · 0,6,
+           a nepatrné zvednutí černé (glow · 0,15). Počítá se ve čtvrtinovém rozlišení (jako halation). */
+        let fxQ: CGFloat = 0.25, fxM = Double(max(w, h)) * Double(fxQ), bloomK = CGFloat(1.25 * bloom), glowK = CGFloat(glow)
+        func fxScale(_ i: CIImage, _ k: CGFloat, bias: CGFloat = 0, alpha: CGFloat = 1) -> CIImage {
+            i.applyingFilter("CIColorMatrix", parameters: ["inputRVector": CIVector(x: k, y: 0, z: 0, w: 0), "inputGVector": CIVector(x: 0, y: k, z: 0, w: 0),
+                "inputBVector": CIVector(x: 0, y: 0, z: k, w: 0), "inputAVector": CIVector(x: 0, y: 0, z: 0, w: alpha), "inputBiasVector": CIVector(x: bias, y: bias, z: bias, w: 0)])
+        }
+        func fxMul(_ a: CIImage, _ b: CIImage) -> CIImage { a.applyingFilter("CIMultiplyCompositing", parameters: [kCIInputBackgroundImageKey: b]) }
+        func fxAdd(_ a: CIImage, _ b: CIImage) -> CIImage { a.applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: b]) }
+        func fxUp(_ i: CIImage) -> CIImage { i.transformed(by: CGAffineTransform(scaleX: 1 / fxQ, y: 1 / fxQ)).cropped(to: ext) }
         // vinětace stejně jako v hledáčku: c *= mix(1, smoothstep(.95, .2, |q|·1,15), vig), q = střed ±0,5 přepočtený na kratší stranu
         var vigImg: CIImage?
         if vig > 0.005 {
@@ -343,6 +357,28 @@ enum ClipDevelop {
                     "inputBiasVector": CIVector(x: 0, y: 0, z: 0, w: 0)])
                     .transformed(by: CGAffineTransform(scaleX: 1 / q, y: 1 / q)).cropped(to: ext)
                 img = tint.applyingFilter("CIAdditionCompositing", parameters: [kCIInputBackgroundImageKey: img]).cropped(to: ext)
+            }
+            if bloomK > 0.002 {
+                // energie světla: log 0,779 → 0,375, 0,885 → 1 (pod prahem nic, jako ve fotce); běžné video: jen skoro bílá
+                let mx = src.applyingFilter("CIMaximumComponent")
+                let ramp = (log ? fxScale(mx, 5.848, bias: -4.18) : fxScale(mx, 14.3, bias: -13.3)).applyingFilter("CIColorClamp")
+                let gate = (log ? fxScale(mx, 200, bias: -155.8) : fxScale(mx, 200, bias: -186)).applyingFilter("CIColorClamp")
+                let hm = fxMul(fxMul(ramp, gate), img).transformed(by: CGAffineTransform(scaleX: fxQ, y: fxQ)).clampedToExtent()
+                let b = fxAdd(fxAdd(fxScale(hm.applyingGaussianBlur(sigma: fxM * 0.006), 0.5), fxScale(hm.applyingGaussianBlur(sigma: fxM * 0.016), 0.8)), hm.applyingGaussianBlur(sigma: fxM * 0.045))
+                let inv = fxScale(img, -1, bias: 1)
+                img = fxAdd(fxScale(fxMul(fxUp(b), inv), bloomK, alpha: 0), img).cropped(to: ext)
+            }
+            if glowK > 0.002 {
+                let dg = fxUp(img.transformed(by: CGAffineTransform(scaleX: fxQ, y: fxQ)).clampedToExtent().applyingGaussianBlur(sigma: fxM * 0.012))
+                // gw = smoothstep(0,4…0,95) z jasu rozostřeného obrazu
+                let s: CGFloat = 1 / 0.55
+                let t = dg.applyingFilter("CIColorMatrix", parameters: ["inputRVector": CIVector(x: 0.2126 * s, y: 0.7152 * s, z: 0.0722 * s, w: 0), "inputGVector": CIVector(x: 0.2126 * s, y: 0.7152 * s, z: 0.0722 * s, w: 0),
+                    "inputBVector": CIVector(x: 0.2126 * s, y: 0.7152 * s, z: 0.0722 * s, w: 0), "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1), "inputBiasVector": CIVector(x: -0.4 * s, y: -0.4 * s, z: -0.4 * s, w: 0)]).applyingFilter("CIColorClamp")
+                let poly = CIVector(x: 0, y: 0, z: 3, w: -2)
+                let gw = t.applyingFilter("CIColorPolynomial", parameters: ["inputRedCoefficients": poly, "inputGreenCoefficients": poly, "inputBlueCoefficients": poly, "inputAlphaCoefficients": CIVector(x: 0, y: 1, z: 0, w: 0)])
+                let a = fxMul(fxMul(dg, gw), fxScale(img, -1, bias: 1))
+                img = fxAdd(fxScale(a, 0.85 * 0.6 * glowK, alpha: 0), img).cropped(to: ext)
+                img = fxScale(img, 1 - 0.15 * glowK * 0.04, bias: 0.15 * glowK * 0.025)
             }
             if let v = vigImg { img = img.applyingFilter("CIMultiplyCompositing", parameters: [kCIInputBackgroundImageKey: v]).cropped(to: ext) }
             while !wi.isReadyForMoreMediaData && writer.status == .writing { Thread.sleep(forTimeInterval: 0.005) }

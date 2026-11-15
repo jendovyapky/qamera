@@ -248,6 +248,8 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
             o.con = (m["con"] as? Double) ?? 0
             o.sat = (m["sat"] as? Double) ?? 0
             o.gn = (m["gn"] as? Double) ?? 4250
+            o.bloom = (m["bloom"] as? Double) ?? 0
+            o.glow = (m["glow"] as? Double) ?? 0
             let opts = o
             let recording: () -> Void = { [weak self] in
                 DispatchQueue.main.async { self?.js("window.__qClipRec && window.__qClipRec(\(id))") }
@@ -289,7 +291,7 @@ final class WebAppController: UIViewController, WKUIDelegate, WKNavigationDelega
                                 res.lensZoom = lz
                                 let cid = UUID().uuidString
                                 try ClipDevelop.process(src: url, dst: RawCapture.dir.appendingPathComponent(cid + ".mp4"), thumb: RawCapture.dir.appendingPathComponent(cid + ".jpg"),
-                                                        log: log, film: opts.film, str: opts.str, grain: opts.grain, hal: opts.hal, vig: opts.vig, apl: opts.apl, ev: opts.ev, con: opts.con, sat: opts.sat, gn: opts.gn, progress: progress)
+                                                        log: log, film: opts.film, str: opts.str, grain: opts.grain, hal: opts.hal, vig: opts.vig, apl: opts.apl, ev: opts.ev, con: opts.con, sat: opts.sat, gn: opts.gn, bloom: opts.bloom, glow: opts.glow, progress: progress)
                                 try? FileManager.default.removeItem(at: url)
                                 res.mp4 = cid + ".mp4"; res.jpg = cid + ".jpg"
                                 finish(.success(res), true)
