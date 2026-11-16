@@ -1,12 +1,12 @@
 import Foundation
 
-/* Galerie appky jako soubory (Documents/Galerie, vidět v Souborech → Na mém iPhonu → Qamera DEV, zálohuje se se zařízením):
+/* Galerie appky jako soubory v Library/Application Support/Galerie – v Souborech NENÍ vidět (nejde omylem smazat), zálohuje se se zařízením:
    <id>.json = záznam (úpravy, štítky, datum…, místo dat odkazy {__n: jméno souboru}), <id>-<pole>-<náhoda>.<přípona> = data
    (originál, mapa světel, hloubka, hotový klip, první snímek klipu). Web je nahrává přes LocalServer (/__st/…), hotový klip
    z vyvolání se jen přesune (adopt) – nic velkého neputuje přes most ani do paměti webu.
    Úklid: při zápisu záznamu se smažou soubory dané fotky, na které záznam neodkazuje (stará verze klipu po novém vyvolání …). */
 enum GalleryStore {
-    static let dir: URL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Galerie", isDirectory: true)
+    static let dir: URL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Galerie", isDirectory: true)
 
     /// jen bezpečná jména (bez lomítek a „..“)
     static func safe(_ s: String) -> String? {

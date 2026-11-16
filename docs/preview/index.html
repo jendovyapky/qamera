@@ -3004,7 +3004,7 @@ let uidN = 0; const uid = () => Date.now() * 10 + (uidN++ % 10);
 const DBP = { p: null };
 function idb() { return DBP.p || (DBP.p = new Promise((res, rej) => { const r = indexedDB.open('qamera', 1); r.onupgradeneeded = () => r.result.createObjectStore('photos', { keyPath: 'id' }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); })); }
 function keep(ph) { ph.saved = true; dbPut(ph); return ph; }
-/* V appce (QNATIVE.store) je galerie soubory appky (Documents/Galerie – zálohuje se se zařízením, vidět v Souborech), ne IndexedDB webu.
+/* V appce (QNATIVE.store) je galerie soubory appky (Library/Application Support/Galerie – zálohuje se se zařízením, v Souborech není vidět), ne IndexedDB webu.
    Data se nahrají jednou, ve fotce i záznamu pak zůstane jen odkaz {__n: jméno souboru} a čtou se až při potřebě (dekódování, přehrávání).
    Hotový klip se z vyvolání jen přesune (adopt) – nejde přes most ani do paměti webu. Zápisy jedné fotky jdou po sobě (stQ), aby úklid
    v appce (smaže soubory fotky, na které záznam neodkazuje) nesmazal něco, co se právě nahrává. */
